@@ -407,6 +407,7 @@
     <script src="https://www.gstatic.com/firebasejs/11.6.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/11.6.1/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/11.6.1/firebase-analytics-compat.js"></script>
 
     <script>
         document.addEventListener('DOMContentLoaded', () => {
@@ -675,20 +676,18 @@
             };
 
             function initializeFirebase() {
+                // This will be replaced by the user's actual config when deploying
                 const firebaseConfig = {
-  apiKey: "AIzaSyC7smDYoy-LT58xCwjJsc9uZU9CgHQv5dM",
-  authDomain: "ya-buxgalter.firebaseapp.com",
-  projectId: "ya-buxgalter",
-  storageBucket: "ya-buxgalter.firebasestorage.app",
-  messagingSenderId: "640345805387",
-  appId: "1:640345805387:web:a1adade77f809af84cb3ce",
-  measurementId: "G-0TKE25JVXG"
-};
+                    apiKey: "AIzaSyC7smDYoy-LT58xCwjJsc9uZU9CgHQv5dM",
+                    authDomain: "ya-buxgalter.firebaseapp.com",
+                    projectId: "ya-buxgalter",
+                    storageBucket: "ya-buxgalter.appspot.com",
+                    messagingSenderId: "640345805387",
+                    appId: "1:640345805387:web:a1adade77f809af84cb3ce",
+                    measurementId: "G-0TKE25JVXG"
+                };
 
-// Initialize Firebase
-const app = initializeApp(firebaseConfig);
-const analytics = getAnalytics(app);
-                if (!firebaseConfig || !firebaseConfig.apiKey) {
+                if (!firebaseConfig.apiKey) {
                     console.warn("Firebase config not found. Database features will be disabled.");
                     document.getElementById('offline-banner').classList.remove('hidden');
                     return;
@@ -697,6 +696,7 @@ const analytics = getAnalytics(app);
                     firebase.initializeApp(firebaseConfig);
                     db = firebase.firestore();
                     const auth = firebase.auth();
+                    firebase.analytics(); // Initialize Analytics
                     auth.signInAnonymously()
                         .then(() => {
                              console.log("Firebase authenticated successfully.");
@@ -709,7 +709,7 @@ const analytics = getAnalytics(app);
             }
             
             function setupDatabaseListeners() {
-        
+                const appId = "ya-buxgalter"; // Hardcoded for simplicity as per user's config
                 document.getElementById('request-form').addEventListener('submit', (e) => handleFormSubmit(e, 'requests', appId));
                 document.getElementById('register-form').addEventListener('submit', (e) => handleRegistrationSubmit(e, appId));
                 document.getElementById('add-video-form').addEventListener('submit', (e) => handleAddVideo(e, appId));
@@ -736,12 +736,16 @@ const analytics = getAnalytics(app);
                 }
                 
                 try {
-                    const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+                    const appId = "ya-buxgalter";
                     const collectionPath = `/artifacts/${appId}/public/data/registrations`;
                     
-                    const fullPhone = identity.startsWith('+998') ? identity : `+998${identity.replace(/\s/g, '')}`;
-
-                    const querySnapshot = await db.collection(collectionPath).where("phone", "==", fullPhone).where("password", "==", password).get();
+                    let identityField = 'phone';
+                    let identityValue = identity;
+                    if (!identity.startsWith('+998')) {
+                         identityValue = `+998${identity.replace(/\s/g, '')}`;
+                    }
+                    
+                    const querySnapshot = await db.collection(collectionPath).where(identityField, "==", identityValue).where("password", "==", password).get();
                     
                     if (querySnapshot.empty) {
                         loginError.innerText = translations[currentLang].login_error;
@@ -937,7 +941,7 @@ const analytics = getAnalytics(app);
 
             // --- Firestore Listeners ---
             function listenForItems(itemType, callback) {
-                const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+                const appId = "ya-buxgalter";
                 if (!db || !appId) return null;
                 const collectionPath = `/artifacts/${appId}/public/data/${itemType}`;
                 return db.collection(collectionPath).orderBy("timestamp", "desc").onSnapshot((querySnapshot) => {
