@@ -38,7 +38,9 @@
             100% { transform: rotate(360deg); }
         }
         .hero-bg {
-            background: linear-gradient(to right, #1e1b4b, #b91c1c);
+            background-image: linear-gradient(rgba(0,0,0,0.7), rgba(0,0,0,0.7)), url('https://images.unsplash.com/photo-1554224155-1696413565d3?q=80&w=2070&auto=format&fit=crop');
+            background-size: cover;
+            background-position: center;
         }
         .card-glow:hover {
             box-shadow: 0 0 35px rgba(220, 38, 38, 0.4);
@@ -323,28 +325,17 @@
             <button id="close-login-modal" class="absolute top-4 right-4 text-gray-400 hover:text-white text-2xl">&times;</button>
             <h2 class="text-2xl font-bold mb-6 text-center text-white" data-translate-key="login_modal_title">Вход</h2>
             <div id="login-error" class="hidden text-red-500 text-center mb-4">Неверные учетные данные.</div>
-            <div id="login-form-container">
-                <form id="login-form">
-                    <div class="mb-4">
-                        <label for="login-identity" class="block text-gray-300 mb-2" data-translate-key="username_or_phone">Логин или телефон</label>
-                        <input type="text" id="login-identity" class="w-full px-4 py-2 border rounded-md bg-gray-700 border-gray-600 text-white focus:outline-none focus:ring-2 focus:ring-red-500" data-placeholder-key="username_or_phone_placeholder">
-                    </div>
-                    <div class="mb-6">
-                        <label for="login-password" class="block text-gray-300 mb-2" data-translate-key="password">Пароль</label>
-                        <input type="password" id="login-password" class="w-full px-4 py-2 border rounded-md bg-gray-700 border-gray-600 text-white focus:outline-none focus:ring-2 focus:ring-red-500" placeholder="********">
-                    </div>
-                    <button type="submit" class="w-full btn-juicy py-2 rounded-md" data-translate-key="signin">Войти</button>
-                </form>
-                <div class="my-4 flex items-center">
-                    <hr class="flex-grow border-gray-600">
-                    <span class="px-2 text-gray-400 text-sm">OR</span>
-                    <hr class="flex-grow border-gray-600">
+            <form id="login-form">
+                <div class="mb-4">
+                    <label for="login-identity" class="block text-gray-300 mb-2" data-translate-key="username_or_phone">Логин или телефон</label>
+                    <input type="text" id="login-identity" class="w-full px-4 py-2 border rounded-md bg-gray-700 border-gray-600 text-white focus:outline-none focus:ring-2 focus:ring-red-500" data-placeholder-key="username_or_phone_placeholder">
                 </div>
-                <button id="google-signin-btn" class="w-full flex items-center justify-center space-x-2 bg-white text-gray-800 font-medium py-2 px-4 rounded-md hover:bg-gray-200 transition-colors">
-                    <svg class="w-5 h-5" viewBox="0 0 48 48"><path fill="#4285F4" d="M43.611,20.083H42V20H24v8h11.303c-1.649,4.657-6.08,8-11.303,8c-6.627,0-12-5.373-12-12s5.373-12,12-12c3.059,0,5.842,1.154,7.961,3.039l5.657-5.657C34.046,6.053,29.268,4,24,4C12.955,4,4,12.955,4,24s8.955,20,20,20s20-8.955,20-20C44,22.659,43.862,21.35,43.611,20.083z"></path><path fill="#34A853" d="M43.611,20.083H42V20H24v8h11.303c-1.649,4.657-6.08,8-11.303,8c-6.627,0-12-5.373-12-12s5.373-12,12-12c3.059,0,5.842,1.154,7.961,3.039l5.657-5.657C34.046,6.053,29.268,4,24,4C12.955,4,4,12.955,4,24s8.955,20,20,20s20-8.955,20-20C44,22.659,43.862,21.35,43.611,20.083z" transform="rotate(90 24 24)"></path><path fill="#FBBC05" d="M43.611,20.083H42V20H24v8h11.303c-1.649,4.657-6.08,8-11.303,8c-6.627,0-12-5.373-12-12s5.373-12,12-12c3.059,0,5.842,1.154,7.961,3.039l5.657-5.657C34.046,6.053,29.268,4,24,4C12.955,4,4,12.955,4,24s8.955,20,20,20s20-8.955,20-20C44,22.659,43.862,21.35,43.611,20.083z" transform="rotate(180 24 24)"></path><path fill="#EA4335" d="M43.611,20.083H42V20H24v8h11.303c-1.649,4.657-6.08,8-11.303,8c-6.627,0-12-5.373-12-12s5.373-12,12-12c3.059,0,5.842,1.154,7.961,3.039l5.657-5.657C34.046,6.053,29.268,4,24,4C12.955,4,4,12.955,4,24s8.955,20,20,20s20-8.955,20-20C44,22.659,43.862,21.35,43.611,20.083z" transform="rotate(-90 24 24)"></path></svg>
-                    <span data-translate-key="google_signin">Sign in with Google</span>
-                </button>
-            </div>
+                <div class="mb-6">
+                    <label for="login-password" class="block text-gray-300 mb-2" data-translate-key="password">Пароль</label>
+                    <input type="password" id="login-password" class="w-full px-4 py-2 border rounded-md bg-gray-700 border-gray-600 text-white focus:outline-none focus:ring-2 focus:ring-red-500" placeholder="********">
+                </div>
+                <button type="submit" class="w-full btn-juicy py-2 rounded-md" data-translate-key="signin">Войти</button>
+            </form>
         </div>
     </div>
 
@@ -354,35 +345,28 @@
             <button id="close-register-modal" class="absolute top-4 right-4 text-gray-400 hover:text-white text-2xl">&times;</button>
             <h2 class="text-2xl font-bold mb-6 text-center text-white" data-translate-key="register_modal_title">Регистрация на курс</h2>
             <div id="register-error" class="hidden text-red-500 text-center mb-4"></div>
-            <div id="register-form-container">
-                <form id="register-form">
-                    <div class="mb-4">
-                        <label for="register-name" class="block text-gray-300 mb-2" data-translate-key="full_name">Полное имя</label>
-                        <input type="text" id="register-name" required class="w-full px-4 py-2 border rounded-md bg-gray-700 border-gray-600 text-white focus:outline-none focus:ring-2 focus:ring-red-500" data-placeholder-key="full_name_placeholder">
-                    </div>
-                    <div class="mb-4">
-                        <label for="register-phone" class="block text-gray-300 mb-2" data-translate-key="phone_number">Номер телефона</label>
-                         <div class="flex">
-                            <span class="inline-flex items-center px-3 text-sm text-gray-300 bg-gray-600 border border-r-0 border-gray-500 rounded-l-md">+998</span>
-                            <input type="tel" id="register-phone" required class="rounded-none rounded-r-lg bg-gray-700 border-gray-600 text-white focus:ring-red-500 focus:border-red-500 block flex-1 min-w-0 w-full text-sm border-l-0 p-2.5" placeholder="XX XXX XX XX">
-                        </div>
-                    </div>
-                    <div class="mb-6">
-                        <label for="register-password" class="block text-gray-300 mb-2" data-translate-key="password">Пароль</label>
-                        <input type="password" id="register-password" required class="w-full px-4 py-2 border rounded-md bg-gray-700 border-gray-600 text-white focus:outline-none focus:ring-2 focus:ring-red-500" data-placeholder-key="password_placeholder">
-                    </div>
-                    <button type="submit" class="w-full btn-juicy py-2 rounded-md" data-translate-key="register_now">Зарегистрироваться</button>
-                </form>
-                <div class="my-4 flex items-center">
-                    <hr class="flex-grow border-gray-600">
-                    <span class="px-2 text-gray-400 text-sm">OR</span>
-                    <hr class="flex-grow border-gray-600">
+            <form id="register-form">
+                 <div class="mb-4">
+                    <label for="register-name" class="block text-gray-300 mb-2" data-translate-key="full_name">Полное имя</label>
+                    <input type="text" id="register-name" required class="w-full px-4 py-2 border rounded-md bg-gray-700 border-gray-600 text-white focus:outline-none focus:ring-2 focus:ring-red-500" data-placeholder-key="full_name_placeholder">
                 </div>
-                 <button id="google-register-btn" class="w-full flex items-center justify-center space-x-2 bg-white text-gray-800 font-medium py-2 px-4 rounded-md hover:bg-gray-200 transition-colors">
-                    <svg class="w-5 h-5" viewBox="0 0 48 48"><path fill="#4285F4" d="M43.611,20.083H42V20H24v8h11.303c-1.649,4.657-6.08,8-11.303,8c-6.627,0-12-5.373-12-12s5.373-12,12-12c3.059,0,5.842,1.154,7.961,3.039l5.657-5.657C34.046,6.053,29.268,4,24,4C12.955,4,4,12.955,4,24s8.955,20,20,20s20-8.955,20-20C44,22.659,43.862,21.35,43.611,20.083z"></path><path fill="#34A853" d="M43.611,20.083H42V20H24v8h11.303c-1.649,4.657-6.08,8-11.303,8c-6.627,0-12-5.373-12-12s5.373-12,12-12c3.059,0,5.842,1.154,7.961,3.039l5.657-5.657C34.046,6.053,29.268,4,24,4C12.955,4,4,12.955,4,24s8.955,20,20,20s20-8.955,20-20C44,22.659,43.862,21.35,43.611,20.083z" transform="rotate(90 24 24)"></path><path fill="#FBBC05" d="M43.611,20.083H42V20H24v8h11.303c-1.649,4.657-6.08,8-11.303,8c-6.627,0-12-5.373-12-12s5.373-12,12-12c3.059,0,5.842,1.154,7.961,3.039l5.657-5.657C34.046,6.053,29.268,4,24,4C12.955,4,4,12.955,4,24s8.955,20,20,20s20-8.955,20-20C44,22.659,43.862,21.35,43.611,20.083z" transform="rotate(180 24 24)"></path><path fill="#EA4335" d="M43.611,20.083H42V20H24v8h11.303c-1.649,4.657-6.08,8-11.303,8c-6.627,0-12-5.373-12-12s5.373-12,12-12c3.059,0,5.842,1.154,7.961,3.039l5.657-5.657C34.046,6.053,29.268,4,24,4C12.955,4,4,12.955,4,24s8.955,20,20,20s20-8.955,20-20C44,22.659,43.862,21.35,43.611,20.083z" transform="rotate(-90 24 24)"></path></svg>
-                    <span data-translate-key="google_register">Register with Google</span>
-                </button>
-            </div>
+                <div class="mb-4">
+                    <label for="register-phone" class="block text-gray-300 mb-2" data-translate-key="phone_number">Номер телефона</label>
+                     <div class="flex">
+                        <span class="inline-flex items-center px-3 text-sm text-gray-300 bg-gray-600 border border-r-0 border-gray-500 rounded-l-md">+998</span>
+                        <input type="tel" id="register-phone" required class="rounded-none rounded-r-lg bg-gray-700 border-gray-600 text-white focus:ring-red-500 focus:border-red-500 block flex-1 min-w-0 w-full text-sm border-l-0 p-2.5" placeholder="XX XXX XX XX">
+                    </div>
+                </div>
+                <div class="mb-4">
+                    <label for="register-password" class="block text-gray-300 mb-2" data-translate-key="password">Пароль</label>
+                    <input type="password" id="register-password" required class="w-full px-4 py-2 border rounded-md bg-gray-700 border-gray-600 text-white focus:outline-none focus:ring-2 focus:ring-red-500" data-placeholder-key="password_placeholder">
+                </div>
+                <div class="mb-6">
+                    <label for="register-confirm-password" class="block text-gray-300 mb-2" data-translate-key="confirm_password">Подтвердите пароль</label>
+                    <input type="password" id="register-confirm-password" required class="w-full px-4 py-2 border rounded-md bg-gray-700 border-gray-600 text-white focus:outline-none focus:ring-2 focus:ring-red-500" data-placeholder-key="password_placeholder">
+                </div>
+                <button type="submit" class="w-full btn-juicy py-2 rounded-md" data-translate-key="register_now">Зарегистрироваться</button>
+            </form>
         </div>
     </div>
 
@@ -447,7 +431,7 @@
                     about_title: "Почему выбирают Ya_Buxgalter?", about_desc: "Мы — команда сертифицированных бухгалтеров и опытных преподавателей, посвященных предоставлению качественного и практического обучения.", feature_1: "<strong>Эксперты-инструкторы</strong>", feature_2: "<strong>Практическая направленность</strong>", feature_3: "<strong>Маленькие группы</strong>",
                     pricing_title: "Гибкие Тарифные Планы", single_course: "Один Курс", accountant_pro: "Бухгалтер Про", corporate: "Корпоративный", apply: "Подать заявку", months: "Месяцы", most_popular: "САМЫЙ ПОПУЛЯРНЫЙ",
                     login_modal_title: "Вход", login_error: "Неверные учетные данные.", username_or_phone: "Логин или телефон", password: "Пароль", signin: "Войти", phone_number: "Номер телефона", google_signin: "Войти через Google",
-                    request_modal_title: "Подать заявку", request_success: "Ваша заявка отправлена!", register_modal_title: "Регистрация на курс", register_success: "Вы были успешно зарегистрированы!", full_name: "Полное имя", confirm_password: "Подтвердите пароль", send_request: "Отправить заявку", register_now: "Зарегистрироваться", full_name_placeholder: "Ваше имя", phone_number_placeholder: "XX XXX XX XX", password_placeholder: "********", password_mismatch: "Пароли не совпадают.", phone_taken: "Этот номер телефона уже занят.", google_register: "Зарегистрироваться через Google",
+                    request_modal_title: "Подать заявку", request_success: "Ваша заявка отправлена!", register_modal_title: "Регистрация на курс", register_success: "Вы были успешно зарегистрированы!", full_name: "Полное имя", confirm_password: "Подтвердите пароль", send_request: "Отправить заявку", register_now: "Зарегистрироваться", full_name_placeholder: "Ваше имя", phone_number_placeholder: "XX XXX XX XX", password_placeholder: "********", password_mismatch: "Пароли не совпадают.", phone_taken: "Этот номер телефона уже занят.",
                     admin_dashboard_title: "Панель администратора", logout: "Выйти", submitted_requests: "Поданные заявки", submitted_registrations: "Регистрации на курс", no_requests: "Заявок пока нет.", no_registrations: "Регистраций пока нет.", table_header_date: "Дата", table_header_name: "Имя", table_header_phone: "Номер телефона",
                     user_dashboard_info: "Это ваша личная панель. Скоро здесь появятся новые функции!", welcome: "Добро пожаловать", video_lessons: "Видеоуроки", lesson: "Урок", lesson_desc: "Краткое описание урока",
                     learning_plan_title: "✨ Ваш Персональный План Обучения", generate_plan_btn: "Создать план", welcome_letter_title: "✨ Добро пожаловать в Ya_Buxgalter!",
@@ -461,7 +445,7 @@
                     about_title: "Nima uchun Ya_Buxgalter'ni tanlashadi?", about_desc: "Biz yuqori sifatli, amaliy ta'lim berishga bag'ishlangan sertifikatlangan buxgalterlar va tajribali o'qituvchilar jamoasimiz.", feature_1: "<strong>Ekspert o'qituvchilar</strong>", feature_2: "<strong>Amaliy yo'nalish</strong>", feature_3: "<strong>Kichik guruhlar</strong>",
                     pricing_title: "Moslashuvchan Narx Rejalari", single_course: "Bitta Kurs", accountant_pro: "Buxgalter Pro", corporate: "Korporativ", apply: "Ariza berish", months: "Oylar", most_popular: "ENG OMMABOP",
                     login_modal_title: "Kirish", login_error: "Noto'g'ri ma'lumotlar.", username_or_phone: "Foydalanuvchi nomi yoki telefon", password: "Parol", signin: "Kirish", phone_number: "Telefon raqami", google_signin: "Google bilan kirish",
-                    request_modal_title: "Ariza yuborish", request_success: "Arizangiz yuborildi!", register_modal_title: "Kursga yozilish", register_success: "Siz muvaffaqiyatli ro'yxatdan o'tdingiz!", full_name: "To'liq ism", confirm_password: "Parolni tasdiqlang", send_request: "So'rov yuborish", register_now: "Ro'yxatdan o'tish", full_name_placeholder: "Ismingiz", phone_number_placeholder: "XX XXX XX XX", password_placeholder: "********", password_mismatch: "Parollar mos kelmadi.", phone_taken: "Bu telefon raqami allaqachon band.", google_register: "Google bilan ro'yxatdan o'tish",
+                    request_modal_title: "Ariza yuborish", request_success: "Arizangiz yuborildi!", register_modal_title: "Kursga yozilish", register_success: "Siz muvaffaqiyatli ro'yxatdan o'tdingiz!", full_name: "To'liq ism", confirm_password: "Parolni tasdiqlang", send_request: "So'rov yuborish", register_now: "Ro'yxatdan o'tish", full_name_placeholder: "Ismingiz", phone_number_placeholder: "XX XXX XX XX", password_placeholder: "********", password_mismatch: "Parollar mos kelmadi.", phone_taken: "Bu telefon raqami allaqachon band.",
                     admin_dashboard_title: "Administrator paneli", logout: "Chiqish", submitted_requests: "Yuborilgan arizalar", submitted_registrations: "Kursga yozilishlar", no_requests: "Hozircha arizalar yo'q.", no_registrations: "Hozircha ro'yxatdan o'tganlar yo'q.", table_header_date: "Sana", table_header_name: "Ism", table_header_phone: "Telefon raqami",
                     user_dashboard_info: "Bu sizning shaxsiy panelingiz. Tez orada yangi funksiyalar qo'shiladi!", welcome: "Xush kelibsiz", video_lessons: "Videodarslar", lesson: "Dars", lesson_desc: "Darsning qisqacha tavsifi",
                     learning_plan_title: "✨ Sizning Shaxsiy O'quv Rejangiz", generate_plan_btn: "Reja yaratish", welcome_letter_title: "✨ Ya_Buxgalter'ga Xush Kelibsiz!",
@@ -475,7 +459,7 @@
                     about_title: "Why Choose Ya_Buxgalter?", about_desc: "We are a team of certified accountants and experienced educators dedicated to providing high-quality, practical training.", feature_1: "<strong>Expert Instructors</strong>", feature_2: "<strong>Practical Focus</strong>", feature_3: "<strong>Small Group Sizes</strong>",
                     pricing_title: "Flexible Pricing Plans", single_course: "Single Course", accountant_pro: "Accountant Pro", corporate: "Corporate", apply: "Apply", months: "Months", most_popular: "MOST POPULAR",
                     login_modal_title: "Login", login_error: "Invalid credentials.", username_or_phone: "Username or Phone", password: "Password", signin: "Sign In", phone_number: "Phone Number", google_signin: "Sign in with Google",
-                    request_modal_title: "Submit a Request", request_success: "Your request has been sent!", register_modal_title: "Register for a Course", register_success: "You have been registered successfully!", full_name: "Full Name", confirm_password: "Confirm Password", send_request: "Send Request", register_now: "Register Now", full_name_placeholder: "Your Name", phone_number_placeholder: "XX XXX XX XX", password_placeholder: "********", password_mismatch: "Passwords do not match.", phone_taken: "This phone number is already taken.", google_register: "Register with Google",
+                    request_modal_title: "Submit a Request", request_success: "Your request has been sent!", register_modal_title: "Register for a Course", register_success: "You have been registered successfully!", full_name: "Full Name", confirm_password: "Confirm Password", send_request: "Send Request", register_now: "Register Now", full_name_placeholder: "Your Name", phone_number_placeholder: "XX XXX XX XX", password_placeholder: "********", password_mismatch: "Passwords do not match.", phone_taken: "This phone number is already taken.",
                     admin_dashboard_title: "Admin Dashboard", logout: "Logout", submitted_requests: "Submitted Requests", submitted_registrations: "Course Registrations", no_requests: "No requests yet.", no_registrations: "No registrations yet.", table_header_date: "Date", table_header_name: "Name", table_header_phone: "Phone Number",
                     user_dashboard_info: "This is your personal dashboard. More features coming soon!", welcome: "Welcome", video_lessons: "Video Lessons", lesson: "Lesson", lesson_desc: "Brief description of the lesson",
                     learning_plan_title: "✨ Your Personal Learning Plan", generate_plan_btn: "Create Plan", welcome_letter_title: "✨ Welcome to Ya_Buxgalter!",
