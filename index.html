@@ -11,7 +11,7 @@
     <!-- Google Fonts: Inter -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
     
     <style>
         body {
@@ -38,12 +38,21 @@
             100% { transform: rotate(360deg); }
         }
         .hero-bg {
-            background-image: linear-gradient(rgba(0,0,0,0.7), rgba(0,0,0,0.7)), url('https://images.unsplash.com/photo-1554224155-1696413565d3?q=80&w=2070&auto=format&fit=crop');
-            background-size: cover;
-            background-position: center;
+            background: linear-gradient(to right, #1e1b4b, #b91c1c);
         }
         .card-glow:hover {
-            box-shadow: 0 0 25px rgba(220, 38, 38, 0.3);
+            box-shadow: 0 0 35px rgba(220, 38, 38, 0.4);
+            transform: translateY(-4px);
+        }
+        .btn-juicy {
+            background-image: linear-gradient(to right, #ef4444 0%, #f87171  51%, #ef4444  100%);
+            transition: 0.5s;
+            background-size: 200% auto;
+            color: white;            
+            box-shadow: 0 0 20px #ef444455;
+        }
+        .btn-juicy:hover {
+            background-position: right center;
         }
     </style>
 </head>
@@ -86,7 +95,7 @@
                     <div id="header-auth-buttons" class="flex items-center space-x-4">
                         <button id="login-btn-desktop" class="btn text-gray-300 hover:text-red-500" data-translate-key="login">Login</button>
                         <button id="register-btn-desktop" class="btn text-gray-300 hover:text-red-500" data-translate-key="register">Register</button>
-                        <button id="request-btn-desktop" class="btn bg-red-600 text-white px-4 py-2 rounded-md hover:bg-red-700" data-translate-key="submit_request">Submit a Request</button>
+                        <button id="request-btn-desktop" class="btn btn-juicy px-4 py-2 rounded-md" data-translate-key="submit_request">Submit a Request</button>
                     </div>
 
                     <div id="header-user-info" class="hidden relative">
@@ -131,7 +140,7 @@
                     <div id="mobile-auth-buttons">
                         <button id="login-btn-mobile" class="w-full btn text-gray-300 hover:text-red-500 py-2" data-translate-key="login">Login</button>
                         <button id="register-btn-mobile" class="w-full mt-2 btn text-gray-300 hover:text-red-500 py-2" data-translate-key="register">Register</button>
-                        <button id="request-btn-mobile" class="w-full mt-2 btn bg-red-600 text-white px-4 py-2 rounded-md hover:bg-red-700" data-translate-key="submit_request">Submit a Request</button>
+                        <button id="request-btn-mobile" class="w-full mt-2 btn btn-juicy px-4 py-2 rounded-md" data-translate-key="submit_request">Submit a Request</button>
                     </div>
                      <div id="mobile-user-info" class="hidden">
                         <div class="flex items-center justify-center space-x-3 py-2">
@@ -142,7 +151,7 @@
                             </div>
                             <span id="mobile-username" class="font-medium text-lg"></span>
                         </div>
-                        <button id="mobile-logout-btn" class="w-full mt-2 btn bg-red-600 text-white px-4 py-2 rounded-md hover:bg-red-700" data-translate-key="logout">Выйти</button>
+                        <button id="mobile-logout-btn" class="w-full mt-2 btn btn-juicy px-4 py-2 rounded-md" data-translate-key="logout">Выйти</button>
                     </div>
                 </div>
             </div>
@@ -155,7 +164,7 @@
                 <div class="container mx-auto px-6 py-32 text-center">
                     <h1 class="text-4xl md:text-6xl font-extrabold leading-tight" data-translate-key="hero_title">Освойте Современный Бухгалтерский Учет</h1>
                     <p class="mt-4 text-lg md:text-xl text-gray-300 max-w-3xl mx-auto" data-translate-key="hero_subtitle">Получите практические навыки в 1C, Didox.uz и My.gov.uz, чтобы ускорить свою карьеру. Экспертные курсы для начинающих и профессионалов.</p>
-                    <a href="#pricing" class="btn mt-8 inline-block bg-red-600 text-white font-bold px-8 py-3 rounded-md text-lg hover:bg-red-700 transform hover:scale-105" data-translate-key="enroll_now">Записаться сейчас</a>
+                    <a href="#pricing" class="btn mt-8 inline-block btn-juicy font-bold px-8 py-3 rounded-md text-lg transform hover:scale-105" data-translate-key="enroll_now">Записаться сейчас</a>
                 </div>
             </section>
 
@@ -164,15 +173,15 @@
                 <div class="container mx-auto px-6">
                     <h2 class="text-3xl font-bold text-center mb-12" data-translate-key="courses_title">Наши Основные Программы</h2>
                     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                        <div class="bg-gray-800 p-8 rounded-lg card-glow transform hover:-translate-y-2 transition-all duration-300">
+                        <div class="bg-gray-800 p-8 rounded-lg card-glow transition-all duration-300">
                             <h3 class="text-2xl font-bold mb-3 text-red-500" data-translate-key="course_1c_title">1С: Бухгалтерия 8.3</h3>
                             <p class="text-gray-400" data-translate-key="course_1c_desc">Комплексное обучение от базовых операций до расширенной отчетности. Научитесь эффективно управлять заработной платой, запасами и финансовыми отчетами.</p>
                         </div>
-                        <div class="bg-gray-800 p-8 rounded-lg card-glow transform hover:-translate-y-2 transition-all duration-300">
+                        <div class="bg-gray-800 p-8 rounded-lg card-glow transition-all duration-300">
                             <h3 class="text-2xl font-bold mb-3 text-red-500" data-translate-key="course_didox_title">Электронные счета-фактуры (Didox.uz)</h3>
                             <p class="text-gray-400" data-translate-key="course_didox_desc">Освойте официальную платформу для электронных счетов-фактур в Узбекистане. Поймите юридические требования и оптимизируйте процесс выставления счетов.</p>
                         </div>
-                        <div class="bg-gray-800 p-8 rounded-lg card-glow transform hover:-translate-y-2 transition-all duration-300">
+                        <div class="bg-gray-800 p-8 rounded-lg card-glow transition-all duration-300">
                             <h3 class="text-2xl font-bold mb-3 text-red-500" data-translate-key="course_mygov_title">Государственные порталы (My.gov.uz)</h3>
                             <p class="text-gray-400" data-translate-key="course_mygov_desc">Научитесь навигировать и использовать портал государственных услуг Узбекистана для регистрации бизнеса, налоговой отчетности и других важных задач.</p>
                         </div>
@@ -206,13 +215,13 @@
                         <div class="border border-gray-700 rounded-lg p-8 text-center flex flex-col bg-gray-800 card-glow">
                             <h3 class="text-2xl font-bold mb-3" data-translate-key="single_course">Один Курс</h3>
                             <p class="text-4xl font-extrabold my-4">1,200,000 <span class="text-lg font-medium text-gray-500">UZS</span></p>
-                            <button class="btn apply-btn mt-auto w-full bg-red-600 text-white font-bold py-3 rounded-md hover:bg-red-700" data-translate-key="apply">Подать заявку</button>
+                            <button class="btn apply-btn mt-auto w-full btn-juicy font-bold py-3 rounded-md" data-translate-key="apply">Подать заявку</button>
                         </div>
                         <div class="border-2 border-red-600 rounded-lg p-8 text-center relative flex flex-col bg-gray-800 shadow-2xl shadow-red-900/40">
                             <span class="absolute top-0 -translate-y-1/2 left-1/2 -translate-x-1/2 bg-red-600 text-white text-xs font-bold px-3 py-1" data-translate-key="most_popular">MOST POPULAR</span>
                             <h3 class="text-2xl font-bold mb-3" data-translate-key="accountant_pro">Бухгалтер Про</h3>
                             <p class="text-4xl font-extrabold my-4 text-red-500">2,500,000 <span class="text-lg font-medium text-gray-500">UZS</span></p>
-                            <button class="btn apply-btn mt-auto w-full bg-red-600 text-white font-bold py-3 rounded-md hover:bg-red-700" data-translate-key="apply">Подать заявку</button>
+                            <button class="btn apply-btn mt-auto w-full btn-juicy font-bold py-3 rounded-md" data-translate-key="apply">Подать заявку</button>
                         </div>
                         <div class="border border-gray-700 rounded-lg p-8 text-center flex flex-col bg-gray-800 card-glow">
                             <h3 class="text-2xl font-bold mb-3" data-translate-key="corporate">Корпоративный</h3>
@@ -246,7 +255,7 @@
         <div class="container mx-auto">
              <div class="flex justify-between items-center mb-8">
                 <h1 class="text-3xl font-bold text-red-500" data-translate-key="video_lessons">Видеоуроки</h1>
-                <button id="video-logout-btn" class="btn bg-red-600 text-white px-4 py-2 rounded-md hover:bg-red-700" data-translate-key="logout">Выйти</button>
+                <button id="video-logout-btn" class="btn btn-juicy px-4 py-2 rounded-md" data-translate-key="logout">Выйти</button>
             </div>
             <div id="video-lessons-container" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
                 <!-- Video lessons will be dynamically inserted here -->
@@ -254,7 +263,7 @@
             <!-- Gemini Feature: Learning Plan -->
             <div class="mt-10 bg-gray-800 p-6 rounded-lg">
                 <h2 class="text-2xl font-bold mb-4" data-translate-key="learning_plan_title">✨ Ваш Персональный План Обучения</h2>
-                <button id="generate-plan-btn" class="btn bg-red-600 text-white px-6 py-2 rounded-md hover:bg-red-700" data-translate-key="generate_plan_btn">Создать план</button>
+                <button id="generate-plan-btn" class="btn btn-juicy px-6 py-2 rounded-md" data-translate-key="generate_plan_btn">Создать план</button>
                 <div id="plan-loader" class="hidden my-4 flex justify-center">
                     <div class="loader"></div>
                 </div>
@@ -269,7 +278,7 @@
         <div class="container mx-auto">
             <div class="flex justify-between items-center mb-8">
                 <h1 class="text-3xl font-bold text-red-500" data-translate-key="admin_dashboard_title">Admin Dashboard</h1>
-                <button id="admin-logout-btn" class="btn bg-red-600 text-white px-4 py-2 rounded-md hover:bg-red-700" data-translate-key="logout">Выйти</button>
+                <button id="admin-logout-btn" class="btn btn-juicy px-4 py-2 rounded-md" data-translate-key="logout">Выйти</button>
             </div>
             
             <!-- Video Management Section -->
@@ -288,7 +297,7 @@
                         <label for="video-url" class="block text-sm font-medium text-gray-300" data-translate-key="video_url">URL видео (YouTube)</label>
                         <input type="url" id="video-url" required class="mt-1 block w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-md text-white focus:outline-none focus:ring-red-500 focus:border-red-500" placeholder="https://www.youtube.com/watch?v=...">
                     </div>
-                    <button type="submit" class="btn bg-red-600 text-white px-6 py-2 rounded-md hover:bg-red-700" data-translate-key="add_video">Добавить видео</button>
+                    <button type="submit" class="btn btn-juicy px-6 py-2 rounded-md" data-translate-key="add_video">Добавить видео</button>
                 </form>
             </div>
 
@@ -323,7 +332,7 @@
                     <label for="login-password" class="block text-gray-300 mb-2" data-translate-key="password">Пароль</label>
                     <input type="password" id="login-password" class="w-full px-4 py-2 border rounded-md bg-gray-700 border-gray-600 text-white focus:outline-none focus:ring-2 focus:ring-red-500" placeholder="********">
                 </div>
-                <button type="submit" class="w-full bg-red-600 text-white py-2 rounded-md hover:bg-red-700" data-translate-key="signin">Войти</button>
+                <button type="submit" class="w-full btn-juicy py-2 rounded-md" data-translate-key="signin">Войти</button>
             </form>
         </div>
     </div>
@@ -354,7 +363,7 @@
                     <label for="register-confirm-password" class="block text-gray-300 mb-2" data-translate-key="confirm_password">Подтвердите пароль</label>
                     <input type="password" id="register-confirm-password" required class="w-full px-4 py-2 border rounded-md bg-gray-700 border-gray-600 text-white focus:outline-none focus:ring-2 focus:ring-red-500" data-placeholder-key="password_placeholder">
                 </div>
-                <button type="submit" class="w-full bg-red-600 text-white py-2 rounded-md hover:bg-red-700" data-translate-key="register_now">Зарегистрироваться</button>
+                <button type="submit" class="w-full btn-juicy py-2 rounded-md" data-translate-key="register_now">Зарегистрироваться</button>
             </form>
         </div>
     </div>
@@ -377,7 +386,7 @@
                         <input type="tel" id="request-phone" required class="rounded-none rounded-r-lg bg-gray-700 border-gray-600 text-white focus:ring-red-500 focus:border-red-500 block flex-1 min-w-0 w-full text-sm border-l-0 p-2.5" placeholder="XX XXX XX XX">
                     </div>
                 </div>
-                <button type="submit" class="w-full bg-red-600 text-white py-2 rounded-md hover:bg-red-700" data-translate-key="send_request">Отправить заявку</button>
+                <button type="submit" class="w-full btn-juicy py-2 rounded-md" data-translate-key="send_request">Отправить заявку</button>
             </form>
         </div>
     </div>
