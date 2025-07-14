@@ -739,13 +739,12 @@
                     const appId = "ya-buxgalter";
                     const collectionPath = `/artifacts/${appId}/public/data/registrations`;
                     
-                    let identityField = 'phone';
                     let identityValue = identity;
                     if (!identity.startsWith('+998')) {
                          identityValue = `+998${identity.replace(/\s/g, '')}`;
                     }
                     
-                    const querySnapshot = await db.collection(collectionPath).where(identityField, "==", identityValue).where("password", "==", password).get();
+                    const querySnapshot = await db.collection(collectionPath).where("phone", "==", identityValue).where("password", "==", password).get();
                     
                     if (querySnapshot.empty) {
                         loginError.innerText = translations[currentLang].login_error;
