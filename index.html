@@ -1,1092 +1,552 @@
-<!DOCTYPE html>
-<html lang="ru">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Ya_Buxgalter - Training Center</title>
-    
-    <!-- Tailwind CSS -->
-    <script src="https://cdn.tailwindcss.com"></script>
-    
-    <!-- Google Fonts: Inter -->
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
-    
-    <style>
-        body {
-            font-family: 'Inter', sans-serif;
-            background-color: #0a0a0a;
-        }
-        html { scroll-behavior: smooth; }
-        .btn, .nav-link, .lang-switcher-item { transition: all 0.3s ease; }
-        ::-webkit-scrollbar { width: 8px; }
-        ::-webkit-scrollbar-track { background: #1f2937; }
-        ::-webkit-scrollbar-thumb { background: #dc2626; border-radius: 4px; }
-        ::-webkit-scrollbar-thumb:hover { background: #b91c1c; }
-        .lang-switcher-item.active { color: #dc2626; }
-        .loader {
-            border: 4px solid #4b5563;
-            border-top: 4px solid #dc2626;
-            border-radius: 50%;
-            width: 32px;
-            height: 32px;
-            animation: spin 1s linear infinite;
-        }
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
-        .hero-bg {
-            background-image: linear-gradient(rgba(0,0,0,0.7), rgba(0,0,0,0.7)), url('https://images.unsplash.com/photo-1554224155-1696413565d3?q=80&w=2070&auto=format&fit=crop');
-            background-size: cover;
-            background-position: center;
-        }
-        .card-glow:hover {
-            box-shadow: 0 0 35px rgba(220, 38, 38, 0.4);
-            transform: translateY(-4px);
-        }
-        .btn-juicy {
-            background-image: linear-gradient(to right, #ef4444 0%, #f87171  51%, #ef4444  100%);
-            transition: 0.5s;
-            background-size: 200% auto;
-            color: white;            
-            box-shadow: 0 0 20px #ef444455;
-        }
-        .btn-juicy:hover {
-            background-position: right center;
-        }
-    </style>
-</head>
-<body class="bg-gray-900 text-gray-200">
-    
-    <!-- Offline/Local Mode Banner -->
-    <div id="offline-banner" class="hidden bg-yellow-500 text-black text-center p-2 text-sm">
-        <span data-translate-key="offline_banner">Функции регистрации и входа доступны только в онлайн-версии.</span>
+import React, { useState, useEffect } from 'react';
+import { initializeApp } from 'firebase/app';
+import { 
+    getAuth, 
+    signInWithPopup, 
+    GoogleAuthProvider, 
+    onAuthStateChanged, 
+    signOut 
+} from 'firebase/auth';
+import { 
+    getFirestore, 
+    collection, 
+    onSnapshot, 
+    addDoc, 
+    doc, 
+    deleteDoc,
+    setDoc,
+    query,
+    where
+} from 'firebase/firestore';
+
+// --- Firebase Configuration ---
+// ВАЖНО: Используйте вашу конфигурацию Firebase
+const firebaseConfig = {
+    apiKey: "AIzaSyC7smDYoy-LT58xCwjJsc9uZU9CgHQv5dM",
+    authDomain: "ya-buxgalter.firebaseapp.com",
+    projectId: "ya-buxgalter",
+    storageBucket: "ya-buxgalter.appspot.com", // Убедитесь, что домен правильный
+    messagingSenderId: "640345805387",
+    appId: "1:640345805387:web:a1adade77f809af84cb3ce",
+    measurementId: "G-0TKE25JVXG"
+};
+
+// --- Initialize Firebase ---
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db = getFirestore(app);
+const provider = new GoogleAuthProvider();
+
+// --- Admin Configuration ---
+// ЗАМЕНИТЕ 'YOUR_ADMIN_UID' на UID вашего аккаунта после первого входа через Google
+const ADMIN_UID = 'YOUR_ADMIN_UID'; 
+
+// --- Helper Components ---
+
+const Logo = () => (
+    <div className="flex items-center space-x-2">
+        <img 
+            src="http://googleusercontent.com/file_content/0" 
+            alt="Asonik Store Logo" 
+            className="h-12 w-12 object-contain"
+        />
+        <span className="text-2xl md:text-3xl font-bold text-white tracking-wider">
+            Asonik <span className="text-purple-300">Store</span>
+        </span>
     </div>
+);
 
-    <!-- This div wraps the entire public-facing website -->
-    <div id="main-website">
-        <!-- Header -->
-        <header class="bg-gray-900/80 backdrop-blur-sm shadow-md shadow-red-900/20 sticky top-0 z-50">
-            <nav class="container mx-auto px-6 py-4 flex justify-between items-center">
-                <a href="#" class="text-2xl font-bold text-red-600">Ya_Buxgalter</a>
-                
-                <div class="hidden md:flex items-center space-x-6">
-                    <!-- Desktop Navigation -->
-                    <a href="#courses" class="nav-link text-gray-300 hover:text-red-500" data-translate-key="nav_courses">Курсы</a>
-                    <a href="#about" class="nav-link text-gray-300 hover:text-red-500" data-translate-key="nav_about">О нас</a>
-                    <a href="#pricing" class="nav-link text-gray-300 hover:text-red-500" data-translate-key="nav_pricing">Цены</a>
-                    <a href="#contact" class="nav-link text-gray-300 hover:text-red-500" data-translate-key="nav_contact">Контакты</a>
-                    
-                    <!-- Dropdown Language Switcher -->
-                    <div class="relative" id="language-switcher-container-desktop">
-                        <button id="language-switcher-button-desktop" class="flex items-center space-x-2 border border-gray-700 rounded-full px-3 py-1.5 text-sm">
-                            <span id="current-lang-text-desktop">RU</span>
-                            <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
-                        </button>
-                        <div id="language-dropdown-desktop" class="hidden absolute top-full right-0 mt-2 w-32 bg-gray-800 border border-gray-700 rounded-md shadow-lg z-20">
-                            <a href="#" class="lang-switcher-item block px-4 py-2 text-sm text-gray-300 hover:bg-gray-700 active" data-lang="ru">Русский</a>
-                            <a href="#" class="lang-switcher-item block px-4 py-2 text-sm text-gray-300 hover:bg-gray-700" data-lang="uz">O'zbekcha</a>
-                            <a href="#" class="lang-switcher-item block px-4 py-2 text-sm text-gray-300 hover:bg-gray-700" data-lang="en">English</a>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="hidden md:flex items-center space-x-4">
-                    <div id="header-auth-buttons" class="flex items-center space-x-4">
-                        <button id="login-btn-desktop" class="btn text-gray-300 hover:text-red-500" data-translate-key="login">Login</button>
-                        <button id="register-btn-desktop" class="btn text-gray-300 hover:text-red-500" data-translate-key="register">Register</button>
-                        <button id="request-btn-desktop" class="btn btn-juicy px-4 py-2 rounded-md" data-translate-key="submit_request">Submit a Request</button>
-                    </div>
-
-                    <div id="header-user-info" class="hidden relative">
-                        <div id="header-user-trigger" class="flex items-center space-x-3 cursor-pointer">
-                            <span id="header-username" class="font-medium"></span>
-                            <div class="w-8 h-8 bg-red-600 rounded-full flex items-center justify-center">
-                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-white" viewBox="0 0 20 20" fill="currentColor">
-                                    <path fill-rule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clip-rule="evenodd" />
-                                </svg>
-                            </div>
-                        </div>
-                        <div id="user-dropdown" class="hidden absolute top-full right-0 mt-2 w-40 bg-gray-800 border border-gray-700 rounded-md shadow-lg z-20">
-                            <button id="user-logout-btn-dropdown" class="block w-full text-left px-4 py-2 text-sm text-gray-300 hover:bg-gray-700" data-translate-key="logout">Выйти</button>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Mobile Menu Button -->
-                <div class="md:hidden">
-                    <button id="mobile-menu-button" class="text-gray-300 hover:text-red-500 focus:outline-none">
-                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16m-7 6h7"></path></svg>
-                    </button>
-                </div>
-            </nav>
-
-            <!-- Mobile Menu -->
-            <div id="mobile-menu" class="hidden md:hidden px-6 pb-4">
-                <a href="#courses" class="block py-2 text-gray-300 hover:text-red-500" data-translate-key="nav_courses">Курсы</a>
-                <a href="#about" class="block py-2 text-gray-300 hover:text-red-500" data-translate-key="nav_about">О нас</a>
-                <a href="#pricing" class="block py-2 text-gray-300 hover:text-red-500" data-translate-key="nav_pricing">Цены</a>
-                <a href="#contact" class="block py-2 text-gray-300 hover:text-red-500" data-translate-key="nav_contact">Контакты</a>
-                <div class="mt-4 border-t border-gray-700 pt-4">
-                    <div class="flex justify-center items-center space-x-4 mb-4">
-                         <div class="flex items-center space-x-2 border border-gray-700 rounded-full px-3 py-1 text-sm">
-                            <button class="lang-switcher font-semibold" data-lang="ru">RU</button>
-                            <div class="h-4 w-px bg-gray-600"></div>
-                            <button class="lang-switcher text-gray-400" data-lang="uz">UZ</button>
-                            <div class="h-4 w-px bg-gray-600"></div>
-                            <button class="lang-switcher text-gray-400" data-lang="en">EN</button>
-                        </div>
-                    </div>
-                    <div id="mobile-auth-buttons">
-                        <button id="login-btn-mobile" class="w-full btn text-gray-300 hover:text-red-500 py-2" data-translate-key="login">Login</button>
-                        <button id="register-btn-mobile" class="w-full mt-2 btn text-gray-300 hover:text-red-500 py-2" data-translate-key="register">Register</button>
-                        <button id="request-btn-mobile" class="w-full mt-2 btn btn-juicy px-4 py-2 rounded-md" data-translate-key="submit_request">Submit a Request</button>
-                    </div>
-                     <div id="mobile-user-info" class="hidden">
-                        <div class="flex items-center justify-center space-x-3 py-2">
-                            <div class="w-8 h-8 bg-red-600 rounded-full flex items-center justify-center">
-                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-white" viewBox="0 0 20 20" fill="currentColor">
-                                    <path fill-rule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clip-rule="evenodd" />
-                                </svg>
-                            </div>
-                            <span id="mobile-username" class="font-medium text-lg"></span>
-                        </div>
-                        <button id="mobile-logout-btn" class="w-full mt-2 btn btn-juicy px-4 py-2 rounded-md" data-translate-key="logout">Выйти</button>
-                    </div>
-                </div>
-            </div>
-        </header>
-
-        <!-- Main Content -->
-        <main>
-            <!-- Hero Section -->
-            <section class="hero-bg text-white">
-                <div class="container mx-auto px-6 py-32 text-center">
-                    <h1 class="text-4xl md:text-6xl font-extrabold leading-tight" data-translate-key="hero_title">Освойте Современный Бухгалтерский Учет</h1>
-                    <p class="mt-4 text-lg md:text-xl text-gray-300 max-w-3xl mx-auto" data-translate-key="hero_subtitle">Получите практические навыки в 1C, Didox.uz и My.gov.uz, чтобы ускорить свою карьеру. Экспертные курсы для начинающих и профессионалов.</p>
-                    <a href="#pricing" class="btn mt-8 inline-block btn-juicy font-bold px-8 py-3 rounded-md text-lg transform hover:scale-105" data-translate-key="enroll_now">Записаться сейчас</a>
-                </div>
-            </section>
-
-            <!-- Courses Section -->
-            <section id="courses" class="py-20 bg-gray-900">
-                <div class="container mx-auto px-6">
-                    <h2 class="text-3xl font-bold text-center mb-12" data-translate-key="courses_title">Наши Основные Программы</h2>
-                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                        <div class="bg-gray-800 p-8 rounded-lg card-glow transition-all duration-300">
-                            <h3 class="text-2xl font-bold mb-3 text-red-500" data-translate-key="course_1c_title">1С: Бухгалтерия 8.3</h3>
-                            <p class="text-gray-400" data-translate-key="course_1c_desc">Комплексное обучение от базовых операций до расширенной отчетности. Научитесь эффективно управлять заработной платой, запасами и финансовыми отчетами.</p>
-                        </div>
-                        <div class="bg-gray-800 p-8 rounded-lg card-glow transition-all duration-300">
-                            <h3 class="text-2xl font-bold mb-3 text-red-500" data-translate-key="course_didox_title">Электронные счета-фактуры (Didox.uz)</h3>
-                            <p class="text-gray-400" data-translate-key="course_didox_desc">Освойте официальную платформу для электронных счетов-фактур в Узбекистане. Поймите юридические требования и оптимизируйте процесс выставления счетов.</p>
-                        </div>
-                        <div class="bg-gray-800 p-8 rounded-lg card-glow transition-all duration-300">
-                            <h3 class="text-2xl font-bold mb-3 text-red-500" data-translate-key="course_mygov_title">Государственные порталы (My.gov.uz)</h3>
-                            <p class="text-gray-400" data-translate-key="course_mygov_desc">Научитесь навигировать и использовать портал государственных услуг Узбекистана для регистрации бизнеса, налоговой отчетности и других важных задач.</p>
-                        </div>
-                    </div>
-                </div>
-            </section>
-
-            <!-- About Us Section -->
-            <section id="about" class="py-20 bg-black">
-                <div class="container mx-auto px-6 flex flex-col md:flex-row items-center gap-12">
-                    <div class="md:w-1/2">
-                        <img src="https://images.unsplash.com/photo-1521737711867-e3b97375f902?q=80&w=1974&auto=format&fit=crop" alt="Training center classroom" class="rounded-lg shadow-xl w-full border-2 border-red-900">
-                    </div>
-                    <div class="md:w-1/2">
-                        <h2 class="text-3xl font-bold mb-4" data-translate-key="about_title">Почему выбирают Ya_Buxgalter?</h2>
-                        <p class="text-gray-400 mb-4" data-translate-key="about_desc">Мы — команда сертифицированных бухгалтеров и опытных преподавателей, посвященных предоставлению качественного и практического обучения. Наша миссия — преодолеть разрыв между академическими знаниями и реальными требованиями работы.</p>
-                        <ul class="space-y-3">
-                            <li class="flex items-start"><span class="text-red-500 mr-3 mt-1">&#10003;</span><span data-translate-key="feature_1"><strong>Эксперты-инструкторы</strong></span></li>
-                            <li class="flex items-start"><span class="text-red-500 mr-3 mt-1">&#10003;</span><span data-translate-key="feature_2"><strong>Практическая направленность</strong></span></li>
-                            <li class="flex items-start"><span class="text-red-500 mr-3 mt-1">&#10003;</span><span data-translate-key="feature_3"><strong>Маленькие группы</strong></span></li>
-                        </ul>
-                    </div>
-                </div>
-            </section>
-
-            <!-- Pricing Section -->
-            <section id="pricing" class="py-20 bg-gray-900">
-                <div class="container mx-auto px-6">
-                    <h2 class="text-3xl font-bold text-center mb-12" data-translate-key="pricing_title">Гибкие Тарифные Планы</h2>
-                    <div class="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-4xl mx-auto">
-                        <div class="border border-gray-700 rounded-lg p-8 text-center flex flex-col bg-gray-800 card-glow">
-                            <h3 class="text-2xl font-bold mb-3" data-translate-key="single_course">Один Курс</h3>
-                            <p class="text-4xl font-extrabold my-4">1,200,000 <span class="text-lg font-medium text-gray-500">UZS</span></p>
-                            <button class="btn apply-btn mt-auto w-full btn-juicy font-bold py-3 rounded-md" data-translate-key="apply">Подать заявку</button>
-                        </div>
-                        <div class="border-2 border-red-600 rounded-lg p-8 text-center relative flex flex-col bg-gray-800 shadow-2xl shadow-red-900/40">
-                            <span class="absolute top-0 -translate-y-1/2 left-1/2 -translate-x-1/2 bg-red-600 text-white text-xs font-bold px-3 py-1" data-translate-key="most_popular">MOST POPULAR</span>
-                            <h3 class="text-2xl font-bold mb-3" data-translate-key="accountant_pro">Бухгалтер Про</h3>
-                            <p class="text-4xl font-extrabold my-4 text-red-500">2,500,000 <span class="text-lg font-medium text-gray-500">UZS</span></p>
-                            <button class="btn apply-btn mt-auto w-full btn-juicy font-bold py-3 rounded-md" data-translate-key="apply">Подать заявку</button>
-                        </div>
-                        <div class="border border-gray-700 rounded-lg p-8 text-center flex flex-col bg-gray-800 card-glow">
-                            <h3 class="text-2xl font-bold mb-3" data-translate-key="corporate">Корпоративный</h3>
-                            <div class="my-4">
-                                <label for="corporate-slider" class="block text-sm font-medium text-gray-400" data-translate-key="months">Месяцы</label>
-                                <div class="flex items-center gap-4 mt-2">
-                                    <span>1</span>
-                                    <input id="corporate-slider" type="range" min="1" max="4" value="1" class="w-full h-2 bg-gray-600 rounded-lg appearance-none cursor-pointer">
-                                    <span>4</span>
-                                </div>
-                            </div>
-                            <p id="corporate-price" class="text-4xl font-extrabold text-red-500">1,500,000 <span class="text-lg font-medium text-gray-500">UZS</span></p>
-                        </div>
-                    </div>
-                </div>
-            </section>
-        </main>
-        
-        <!-- Footer -->
-        <footer id="contact" class="bg-black">
-            <div class="container mx-auto px-6 py-12">
-                <div class="mt-8 border-t border-gray-800 pt-6 text-center text-gray-500 text-sm">
-                    <p data-translate-key="footer_text">&copy; 2024 Ya_Buxgalter. Все права защищены.</p>
-                </div>
-            </div>
-        </footer>
+const LoadingSpinner = () => (
+    <div className="flex justify-center items-center h-full">
+        <div className="animate-spin rounded-full h-32 w-32 border-t-4 border-b-4 border-purple-400"></div>
     </div>
+);
 
-    <!-- Video Lessons Dashboard (hidden by default) -->
-    <div id="video-dashboard" class="hidden min-h-screen bg-gray-900 p-4 sm:p-6 lg:p-8">
-        <div class="container mx-auto">
-             <div class="flex justify-between items-center mb-8">
-                <h1 class="text-3xl font-bold text-red-500" data-translate-key="video_lessons">Видеоуроки</h1>
-                <button id="video-logout-btn" class="btn btn-juicy px-4 py-2 rounded-md" data-translate-key="logout">Выйти</button>
-            </div>
-            <div id="video-lessons-container" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-                <!-- Video lessons will be dynamically inserted here -->
-            </div>
-            <!-- Gemini Feature: Learning Plan -->
-            <div class="mt-10 bg-gray-800 p-6 rounded-lg">
-                <h2 class="text-2xl font-bold mb-4" data-translate-key="learning_plan_title">✨ Ваш Персональный План Обучения</h2>
-                <button id="generate-plan-btn" class="btn btn-juicy px-6 py-2 rounded-md" data-translate-key="generate_plan_btn">Создать план</button>
-                <div id="plan-loader" class="hidden my-4 flex justify-center">
-                    <div class="loader"></div>
-                </div>
-                <div id="learning-plan-output" class="mt-4 p-4 bg-gray-900 rounded-md whitespace-pre-wrap text-gray-300" style="max-height: 400px; overflow-y: auto;"></div>
-            </div>
+const Modal = ({ children, onClose }) => (
+    <div className="fixed inset-0 bg-black bg-opacity-70 z-50 flex justify-center items-center p-4">
+        <div className="bg-gray-800 rounded-2xl shadow-2xl p-6 md:p-8 w-full max-w-md relative border border-purple-700">
+            <button
+                onClick={onClose}
+                className="absolute top-4 right-4 text-gray-400 hover:text-white transition-colors"
+            >
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+            </button>
+            {children}
         </div>
     </div>
+);
 
 
-    <!-- Admin Panel (hidden by default) -->
-    <div id="admin-panel" class="hidden min-h-screen bg-gray-900 p-4 sm:p-6 lg:p-8">
-        <div class="container mx-auto">
-            <div class="flex justify-between items-center mb-8">
-                <h1 class="text-3xl font-bold text-red-500" data-translate-key="admin_dashboard_title">Admin Dashboard</h1>
-                <button id="admin-logout-btn" class="btn btn-juicy px-4 py-2 rounded-md" data-translate-key="logout">Выйти</button>
+// --- Main Components ---
+
+function Header({ user, onLogin, onLogout, setPage, isAdmin }) {
+    return (
+        <header className="bg-gray-900 bg-opacity-80 backdrop-blur-md p-4 shadow-lg sticky top-0 z-40 border-b border-purple-800">
+            <div className="container mx-auto flex justify-between items-center">
+                <div onClick={() => setPage('home')} className="cursor-pointer">
+                    <Logo />
+                </div>
+                <nav className="flex items-center space-x-4 md:space-x-6">
+                    <button onClick={() => setPage('home')} className="text-gray-300 hover:text-white font-medium transition-colors">Главная</button>
+                    <button onClick={() => setPage('support')} className="text-gray-300 hover:text-white font-medium transition-colors">Поддержка</button>
+                    {isAdmin && (
+                        <button onClick={() => setPage('admin')} className="text-purple-400 hover:text-purple-300 font-bold transition-colors">Админ</button>
+                    )}
+                    {user ? (
+                        <div className="flex items-center space-x-4">
+                            <img src={user.photoURL} alt={user.displayName} className="h-10 w-10 rounded-full border-2 border-purple-500" />
+                            <button
+                                onClick={onLogout}
+                                className="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded-lg transition-transform transform hover:scale-105"
+                            >
+                                Выйти
+                            </button>
+                        </div>
+                    ) : (
+                        <button
+                            onClick={onLogin}
+                            className="bg-purple-600 hover:bg-purple-700 text-white font-bold py-2 px-4 rounded-lg transition-transform transform hover:scale-105 flex items-center space-x-2"
+                        >
+                             <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                                <path d="M10 2a8 8 0 100 16 8 8 0 000-16zM5.122 8.756a.75.75 0 011.06 0l2.5 2.5a.75.75 0 01-1.06 1.06l-2.5-2.5a.75.75 0 010-1.06zM10 12.5a.75.75 0 01.75-.75h3.5a.75.75 0 010 1.5h-3.5a.75.75 0 01-.75-.75zM14.878 8.756a.75.75 0 111.06-1.06l2.5 2.5a.75.75 0 11-1.06 1.06l-2.5-2.5z" />
+                             </svg>
+                            <span>Войти с Google</span>
+                        </button>
+                    )}
+                </nav>
             </div>
+        </header>
+    );
+}
+
+function ProductCard({ product, onBuy, user }) {
+    return (
+        <div className="bg-gray-800 rounded-2xl overflow-hidden shadow-lg border border-gray-700 transform hover:-translate-y-2 transition-transform duration-300 flex flex-col">
+            <img className="w-full h-56 object-cover" src={product.imageUrl} alt={product.name} />
+            <div className="p-6 flex flex-col flex-grow">
+                <h3 className="text-2xl font-bold text-white mb-2">{product.name}</h3>
+                <p className="text-gray-400 text-base mb-4 flex-grow">{product.description}</p>
+                <div className="flex justify-between items-center">
+                    <span className="text-3xl font-bold text-purple-400">{product.price} ₽</span>
+                    <button
+                        onClick={() => user ? onBuy(product) : alert('Пожалуйста, войдите в аккаунт, чтобы совершить покупку.')}
+                        className={`font-bold py-2 px-6 rounded-lg transition-all duration-300 ${
+                            user 
+                            ? 'bg-purple-600 hover:bg-purple-700 text-white shadow-md hover:shadow-lg' 
+                            : 'bg-gray-600 text-gray-400 cursor-not-allowed'
+                        }`}
+                        disabled={!user}
+                    >
+                        Купить
+                    </button>
+                </div>
+            </div>
+        </div>
+    );
+}
+
+
+function PurchaseModal({ product, onClose, onConfirm }) {
+    const handleContactSeller = async () => {
+        await onConfirm(product);
+        window.open('https://t.me/asonikofficial', '_blank');
+        onClose();
+    };
+
+    return (
+        <Modal onClose={onClose}>
+            <div className="text-center">
+                <h2 className="text-3xl font-bold text-white mb-2">Оформление заказа</h2>
+                <p className="text-gray-400 mb-6">Вы покупаете: <span className="font-bold text-purple-300">{product.name}</span></p>
+                
+                <div className="space-y-4">
+                    <h3 className="text-xl text-white">Выберите способ оплаты:</h3>
+                    
+                    <button
+                        onClick={handleContactSeller}
+                        className="w-full bg-teal-500 hover:bg-teal-600 text-white font-bold py-3 px-4 rounded-lg transition-transform transform hover:scale-105 flex items-center justify-center space-x-3"
+                    >
+                        <span>Связаться с продавцом (Telegram)</span>
+                    </button>
+
+                    <button
+                        disabled
+                        className="w-full bg-gray-600 text-gray-400 font-bold py-3 px-4 rounded-lg cursor-not-allowed flex items-center justify-center"
+                    >
+                        <span>YooMoney (Недоступно)</span>
+                    </button>
+
+                    <button
+                        disabled
+                        className="w-full bg-gray-600 text-gray-400 font-bold py-3 px-4 rounded-lg cursor-not-allowed"
+                    >
+                        <span>Оплата картой (Недоступно)</span>
+                    </button>
+
+                    <button
+                        disabled
+                        className="w-full bg-gray-600 text-gray-400 font-bold py-3 px-4 rounded-lg cursor-not-allowed"
+                    >
+                        <span>Безналичный расчет (Недоступно)</span>
+                    </button>
+                </div>
+            </div>
+        </Modal>
+    );
+}
+
+function HomePage({ products, onBuy, user }) {
+    return (
+        <main className="container mx-auto p-4 md:p-8">
+            <h1 className="text-4xl md:text-5xl font-bold text-white text-center mb-12">Каталог товаров</h1>
+            {products.length === 0 ? (
+                 <p className="text-center text-gray-400 text-xl">Товары скоро появятся...</p>
+            ) : (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                    {products.map(product => (
+                        <ProductCard key={product.id} product={product} onBuy={onBuy} user={user} />
+                    ))}
+                </div>
+            )}
+        </main>
+    );
+}
+
+function AdminPage({ products, orders, tickets }) {
+    const [name, setName] = useState('');
+    const [description, setDescription] = useState('');
+    const [price, setPrice] = useState('');
+    const [imageUrl, setImageUrl] = useState('');
+    const [editingProduct, setEditingProduct] = useState(null);
+
+    const handleSubmit = async (e) => {
+        e.preventDefault();
+        if (!name || !description || !price || !imageUrl) {
+            alert("Пожалуйста, заполните все поля.");
+            return;
+        }
+        
+        const productData = { name, description, price: Number(price), imageUrl };
+
+        try {
+            if (editingProduct) {
+                // Update existing product
+                const productRef = doc(db, 'products', editingProduct.id);
+                await setDoc(productRef, productData);
+                alert('Товар успешно обновлен!');
+            } else {
+                // Add new product
+                await addDoc(collection(db, 'products'), productData);
+                alert('Товар успешно добавлен!');
+            }
+            // Reset form
+            setName('');
+            setDescription('');
+            setPrice('');
+            setImageUrl('');
+            setEditingProduct(null);
+        } catch (error) {
+            console.error("Ошибка при добавлении/обновлении товара: ", error);
+            alert("Произошла ошибка. Попробуйте снова.");
+        }
+    };
+
+    const handleDelete = async (productId) => {
+        if (window.confirm("Вы уверены, что хотите удалить этот товар?")) {
+            try {
+                await deleteDoc(doc(db, 'products', productId));
+                alert('Товар удален.');
+            } catch (error) {
+                console.error("Ошибка при удалении товара: ", error);
+                alert("Произошла ошибка при удалении.");
+            }
+        }
+    };
+    
+    const handleEdit = (product) => {
+        setEditingProduct(product);
+        setName(product.name);
+        setDescription(product.description);
+        setPrice(product.price);
+        setImageUrl(product.imageUrl);
+        window.scrollTo(0, 0);
+    };
+
+    return (
+        <div className="container mx-auto p-4 md:p-8 text-white">
+            <h1 className="text-4xl font-bold mb-8 text-center">Панель администратора</h1>
             
-            <!-- Video Management Section -->
-            <div class="mb-10 bg-gray-800 p-6 rounded-lg">
-                <h2 class="text-2xl font-semibold mb-4 text-gray-200" data-translate-key="video_management">Управление Видео</h2>
-                <form id="add-video-form" class="space-y-4">
-                    <div>
-                        <label for="video-title" class="block text-sm font-medium text-gray-300" data-translate-key="video_title">Название видео</label>
-                        <input type="text" id="video-title" required class="mt-1 block w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-md text-white focus:outline-none focus:ring-red-500 focus:border-red-500">
+            {/* Product Form */}
+            <div className="bg-gray-800 p-8 rounded-2xl mb-12 border border-purple-700">
+                <h2 className="text-2xl font-bold mb-6">{editingProduct ? 'Редактировать товар' : 'Добавить новый товар'}</h2>
+                <form onSubmit={handleSubmit} className="space-y-4">
+                    <input type="text" placeholder="Название товара" value={name} onChange={e => setName(e.target.value)} className="w-full p-3 bg-gray-700 rounded-lg border border-gray-600 focus:outline-none focus:ring-2 focus:ring-purple-500" />
+                    <textarea placeholder="Описание" value={description} onChange={e => setDescription(e.target.value)} className="w-full p-3 bg-gray-700 rounded-lg border border-gray-600 focus:outline-none focus:ring-2 focus:ring-purple-500 h-32"></textarea>
+                    <input type="number" placeholder="Цена (в рублях)" value={price} onChange={e => setPrice(e.target.value)} className="w-full p-3 bg-gray-700 rounded-lg border border-gray-600 focus:outline-none focus:ring-2 focus:ring-purple-500" />
+                    <input type="text" placeholder="URL изображения" value={imageUrl} onChange={e => setImageUrl(e.target.value)} className="w-full p-3 bg-gray-700 rounded-lg border border-gray-600 focus:outline-none focus:ring-2 focus:ring-purple-500" />
+                    <div className="flex space-x-4">
+                        <button type="submit" className="w-full bg-purple-600 hover:bg-purple-700 text-white font-bold py-3 px-4 rounded-lg transition-colors">{editingProduct ? 'Обновить товар' : 'Добавить товар'}</button>
+                        {editingProduct && <button type="button" onClick={() => setEditingProduct(null)} className="w-full bg-gray-500 hover:bg-gray-600 text-white font-bold py-3 px-4 rounded-lg transition-colors">Отмена</button>}
                     </div>
-                    <div>
-                        <label for="video-desc" class="block text-sm font-medium text-gray-300" data-translate-key="video_desc">Описание видео</label>
-                        <textarea id="video-desc" rows="3" required class="mt-1 block w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-md text-white focus:outline-none focus:ring-red-500 focus:border-red-500"></textarea>
-                    </div>
-                    <div>
-                        <label for="video-url" class="block text-sm font-medium text-gray-300" data-translate-key="video_url">URL видео (YouTube)</label>
-                        <input type="url" id="video-url" required class="mt-1 block w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-md text-white focus:outline-none focus:ring-red-500 focus:border-red-500" placeholder="https://www.youtube.com/watch?v=...">
-                    </div>
-                    <button type="submit" class="btn btn-juicy px-6 py-2 rounded-md" data-translate-key="add_video">Добавить видео</button>
                 </form>
             </div>
 
-            <div class="mb-10">
-                <h2 class="text-2xl font-semibold mb-4 text-gray-200" data-translate-key="submitted_registrations">Регистрации на курс</h2>
-                <div id="registrations-container" class="bg-gray-800 rounded-lg shadow-lg p-6">
-                    <!-- Registrations will be dynamically inserted here -->
+            {/* Product List */}
+            <div className="bg-gray-800 p-8 rounded-2xl mb-12 border border-purple-700">
+                <h2 className="text-2xl font-bold mb-6">Список товаров</h2>
+                <div className="space-y-4">
+                    {products.map(p => (
+                        <div key={p.id} className="bg-gray-700 p-4 rounded-lg flex justify-between items-center">
+                            <div>
+                                <p className="font-bold">{p.name} - {p.price}₽</p>
+                                <p className="text-sm text-gray-400">{p.id}</p>
+                            </div>
+                            <div className="flex space-x-2">
+                                <button onClick={() => handleEdit(p)} className="bg-blue-500 hover:bg-blue-600 text-white py-1 px-3 rounded">Редакт.</button>
+                                <button onClick={() => handleDelete(p.id)} className="bg-red-500 hover:bg-red-600 text-white py-1 px-3 rounded">Удалить</button>
+                            </div>
+                        </div>
+                    ))}
                 </div>
             </div>
 
-            <div>
-                <h2 class="text-2xl font-semibold mb-4 text-gray-200" data-translate-key="submitted_requests">Поданные заявки</h2>
-                <div id="requests-container" class="bg-gray-800 rounded-lg shadow-lg p-6">
-                    <!-- Requests will be dynamically inserted here -->
+            {/* Orders List */}
+            <div className="bg-gray-800 p-8 rounded-2xl mb-12 border border-purple-700">
+                <h2 className="text-2xl font-bold mb-6">Заявки на покупку</h2>
+                <div className="space-y-4">
+                    {orders.length > 0 ? orders.map(o => (
+                        <div key={o.id} className="bg-gray-700 p-4 rounded-lg">
+                            <p>Товар: <span className="font-semibold">{o.productName}</span> (ID: {o.productId})</p>
+                            <p>Пользователь: <span className="font-semibold">{o.userEmail}</span> (UID: {o.userId})</p>
+                            <p>Время: <span className="font-semibold">{new Date(o.timestamp?.toDate()).toLocaleString()}</span></p>
+                        </div>
+                    )) : <p>Новых заявок нет.</p>}
+                </div>
+            </div>
+            
+            {/* Support Tickets */}
+            <div className="bg-gray-800 p-8 rounded-2xl border border-purple-700">
+                <h2 className="text-2xl font-bold mb-6">Обращения в поддержку</h2>
+                <div className="space-y-4">
+                    {tickets.length > 0 ? tickets.map(t => (
+                        <div key={t.id} className="bg-gray-700 p-4 rounded-lg">
+                            <p className="mb-2">
+                                От: <span className="font-semibold">{t.userEmail || 'Аноним'}</span> (UID: {t.userId})
+                            </p>
+                            <p className="mb-2">
+                                Время: <span className="font-semibold">{new Date(t.timestamp?.toDate()).toLocaleString()}</span>
+                            </p>
+                            <p className="bg-gray-600 p-3 rounded">{t.message}</p>
+                        </div>
+                    )) : <p>Новых обращений нет.</p>}
                 </div>
             </div>
         </div>
-    </div>
+    );
+}
 
-    <!-- Universal Login Modal -->
-    <div id="login-modal" class="hidden fixed inset-0 bg-black bg-opacity-70 z-50 flex items-center justify-center p-4">
-        <div class="bg-gray-800 border border-red-700 rounded-lg shadow-xl p-8 w-full max-w-md relative">
-            <button id="close-login-modal" class="absolute top-4 right-4 text-gray-400 hover:text-white text-2xl">&times;</button>
-            <h2 class="text-2xl font-bold mb-6 text-center text-white" data-translate-key="login_modal_title">Вход</h2>
-            <div id="login-error" class="hidden text-red-500 text-center mb-4">Неверные учетные данные.</div>
-            <form id="login-form">
-                <div class="mb-4">
-                    <label for="login-identity" class="block text-gray-300 mb-2" data-translate-key="username_or_phone">Логин или телефон</label>
-                    <input type="text" id="login-identity" class="w-full px-4 py-2 border rounded-md bg-gray-700 border-gray-600 text-white focus:outline-none focus:ring-2 focus:ring-red-500" data-placeholder-key="username_or_phone_placeholder">
-                </div>
-                <div class="mb-6">
-                    <label for="login-password" class="block text-gray-300 mb-2" data-translate-key="password">Пароль</label>
-                    <input type="password" id="login-password" class="w-full px-4 py-2 border rounded-md bg-gray-700 border-gray-600 text-white focus:outline-none focus:ring-2 focus:ring-red-500" placeholder="********">
-                </div>
-                <button type="submit" class="w-full btn-juicy py-2 rounded-md" data-translate-key="signin">Войти</button>
-                <button type="button" id="google-signin-btn" class="w-full mt-4 btn-juicy py-2 rounded-md flex items-center justify-center gap-2">
-                    <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="" class="w-5 h-5">
-                    <span data-translate-key="google_signin">Войти через Google</span>
-                </button>
-            </form>
-        </div>
-    </div>
+function SupportPage({ user }) {
+    const [message, setMessage] = useState('');
+    const [isSent, setIsSent] = useState(false);
 
-    <!-- User Registration Modal -->
-    <div id="register-modal" class="hidden fixed inset-0 bg-black bg-opacity-70 z-50 flex items-center justify-center p-4">
-        <div class="bg-gray-800 border border-red-700 rounded-lg shadow-xl p-8 w-full max-w-md relative">
-            <button id="close-register-modal" class="absolute top-4 right-4 text-gray-400 hover:text-white text-2xl">&times;</button>
-            <h2 class="text-2xl font-bold mb-6 text-center text-white" data-translate-key="register_modal_title">Регистрация на курс</h2>
-            <div id="register-error" class="hidden text-red-500 text-center mb-4"></div>
-            <form id="register-form">
-                 <div class="mb-4">
-                    <label for="register-name" class="block text-gray-300 mb-2" data-translate-key="full_name">Полное имя</label>
-                    <input type="text" id="register-name" required class="w-full px-4 py-2 border rounded-md bg-gray-700 border-gray-600 text-white focus:outline-none focus:ring-2 focus:ring-red-500" data-placeholder-key="full_name_placeholder">
-                </div>
-                <div class="mb-4">
-                    <label for="register-phone" class="block text-gray-300 mb-2" data-translate-key="phone_number">Номер телефона</label>
-                     <div class="flex">
-                        <span class="inline-flex items-center px-3 text-sm text-gray-300 bg-gray-600 border border-r-0 border-gray-500 rounded-l-md">+998</span>
-                        <input type="tel" id="register-phone" required class="rounded-none rounded-r-lg bg-gray-700 border-gray-600 text-white focus:ring-red-500 focus:border-red-500 block flex-1 min-w-0 w-full text-sm border-l-0 p-2.5" placeholder="XX XXX XX XX">
+    const handleSubmit = async (e) => {
+        e.preventDefault();
+        if (!message.trim()) {
+            alert("Пожалуйста, введите ваше сообщение.");
+            return;
+        }
+        try {
+            await addDoc(collection(db, 'supportTickets'), {
+                message: message,
+                userId: user ? user.uid : 'anonymous',
+                userEmail: user ? user.email : 'anonymous',
+                timestamp: new Date()
+            });
+            setMessage('');
+            setIsSent(true);
+            setTimeout(() => setIsSent(false), 5000);
+        } catch (error) {
+            console.error("Ошибка при отправке сообщения: ", error);
+            alert("Произошла ошибка. Попробуйте еще раз.");
+        }
+    };
+
+    return (
+        <div className="container mx-auto p-4 md:p-8 text-white flex-grow flex flex-col items-center justify-center">
+            <div className="w-full max-w-2xl bg-gray-800 p-8 rounded-2xl border border-purple-700">
+                <h1 className="text-4xl font-bold mb-6 text-center">Служба поддержки</h1>
+                <p className="text-center text-gray-400 mb-8">
+                    Есть вопросы или предложения? Напишите нам! Мы постараемся ответить как можно скорее.
+                </p>
+                {isSent ? (
+                    <div className="bg-green-500 text-white text-center p-4 rounded-lg">
+                        Ваше сообщение успешно отправлено!
                     </div>
-                </div>
-                <div class="mb-4">
-                    <label for="register-password" class="block text-gray-300 mb-2" data-translate-key="password">Пароль</label>
-                    <input type="password" id="register-password" required class="w-full px-4 py-2 border rounded-md bg-gray-700 border-gray-600 text-white focus:outline-none focus:ring-2 focus:ring-red-500" data-placeholder-key="password_placeholder">
-                </div>
-                <div class="mb-6">
-                    <label for="register-confirm-password" class="block text-gray-300 mb-2" data-translate-key="confirm_password">Подтвердите пароль</label>
-                    <input type="password" id="register-confirm-password" required class="w-full px-4 py-2 border rounded-md bg-gray-700 border-gray-600 text-white focus:outline-none focus:ring-2 focus:ring-red-500" data-placeholder-key="password_placeholder">
-                </div>
-                <button type="submit" class="w-full btn-juicy py-2 rounded-md" data-translate-key="register_now">Зарегистрироваться</button>
-                <button type="button" id="google-register-btn" class="w-full mt-4 btn-juicy py-2 rounded-md flex items-center justify-center gap-2">
-                    <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="" class="w-5 h-5">
-                    <span data-translate-key="google_signin">Войти через Google</span>
-                </button>
-            </form>
-        </div>
-    </div>
-
-    <!-- User Request Modal -->
-    <div id="request-modal" class="hidden fixed inset-0 bg-black bg-opacity-70 z-50 flex items-center justify-center p-4">
-        <div class="bg-gray-800 border border-red-700 rounded-lg shadow-xl p-8 w-full max-w-md relative">
-            <button id="close-request-modal" class="absolute top-4 right-4 text-gray-400 hover:text-white text-2xl">&times;</button>
-            <h2 class="text-2xl font-bold mb-6 text-center text-white" data-translate-key="request_modal_title">Подать заявку</h2>
-            <div id="request-success" class="hidden text-green-500 text-center mb-4" data-translate-key="request_success">Ваша заявка отправлена!</div>
-            <form id="request-form">
-                 <div class="mb-4">
-                    <label for="request-name" class="block text-gray-300 mb-2" data-translate-key="full_name">Полное имя</label>
-                    <input type="text" id="request-name" required class="w-full px-4 py-2 border rounded-md bg-gray-700 border-gray-600 text-white focus:outline-none focus:ring-2 focus:ring-red-500" data-placeholder-key="full_name_placeholder">
-                </div>
-                <div class="mb-4">
-                    <label for="request-phone" class="block text-gray-300 mb-2" data-translate-key="phone_number">Номер телефона</label>
-                     <div class="flex">
-                        <span class="inline-flex items-center px-3 text-sm text-gray-300 bg-gray-600 border border-r-0 border-gray-500 rounded-l-md">+998</span>
-                        <input type="tel" id="request-phone" required class="rounded-none rounded-r-lg bg-gray-700 border-gray-600 text-white focus:ring-red-500 focus:border-red-500 block flex-1 min-w-0 w-full text-sm border-l-0 p-2.5" placeholder="XX XXX XX XX">
-                    </div>
-                </div>
-                <button type="submit" class="w-full btn-juicy py-2 rounded-md" data-translate-key="send_request">Отправить заявку</button>
-            </form>
-        </div>
-    </div>
-
-    <!-- Welcome Letter Modal -->
-    <div id="welcome-letter-modal" class="hidden fixed inset-0 bg-black bg-opacity-80 z-50 flex items-center justify-center p-4">
-        <div class="bg-gray-800 border border-red-700 rounded-lg shadow-xl p-8 w-full max-w-2xl relative">
-            <button id="close-welcome-letter-modal" class="absolute top-4 right-4 text-gray-400 hover:text-white text-2xl">&times;</button>
-            <h2 class="text-2xl font-bold mb-4 text-center text-white" data-translate-key="welcome_letter_title">✨ Добро пожаловать в Ya_Buxgalter!</h2>
-            <div id="welcome-letter-loader" class="my-4 flex justify-center">
-                <div class="loader"></div>
+                ) : (
+                    <form onSubmit={handleSubmit} className="space-y-6">
+                        <textarea
+                            value={message}
+                            onChange={(e) => setMessage(e.target.value)}
+                            placeholder="Введите ваше сообщение здесь..."
+                            className="w-full p-4 bg-gray-700 rounded-lg border border-gray-600 focus:outline-none focus:ring-2 focus:ring-purple-500 h-48 resize-none"
+                        ></textarea>
+                        <button
+                            type="submit"
+                            className="w-full bg-purple-600 hover:bg-purple-700 text-white font-bold py-3 px-4 rounded-lg transition-transform transform hover:scale-105"
+                        >
+                            Отправить
+                        </button>
+                    </form>
+                )}
             </div>
-            <div id="welcome-letter-output" class="mt-4 p-4 bg-gray-900 rounded-md whitespace-pre-wrap text-gray-300" style="max-height: 50vh; overflow-y: auto;"></div>
         </div>
-    </div>
+    );
+}
+
+function Footer() {
+    return (
+        <footer className="bg-gray-900 text-gray-400 p-6 mt-12 border-t border-purple-800">
+            <div className="container mx-auto text-center">
+                <p>&copy; {new Date().getFullYear()} Asonik Store. Все права защищены.</p>
+                <p className="text-sm mt-2">Дизайн и разработка с ❤️</p>
+            </div>
+        </footer>
+    );
+}
+
+
+// --- Main App Component ---
+export default function App() {
+    const [user, setUser] = useState(null);
+    const [loading, setLoading] = useState(true);
+    const [products, setProducts] = useState([]);
+    const [orders, setOrders] = useState([]);
+    const [tickets, setTickets] = useState([]);
+    const [selectedProduct, setSelectedProduct] = useState(null);
+    const [page, setPage] = useState('home'); // 'home', 'admin', 'support'
     
-    <!-- Video Player Modal -->
-    <div id="video-player-modal" class="hidden fixed inset-0 bg-black bg-opacity-80 z-50 flex items-center justify-center p-4">
-        <div class="bg-gray-800 border border-red-700 rounded-lg shadow-xl w-full max-w-4xl relative aspect-video">
-            <button id="close-video-player-modal" class="absolute -top-3 -right-3 text-white bg-red-600 rounded-full h-8 w-8 flex items-center justify-center text-2xl">&times;</button>
-            <iframe id="video-player" class="w-full h-full" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
-        </div>
-    </div>
+    const isAdmin = user && user.uid === ADMIN_UID;
 
-
-    <!-- Firebase SDK -->
-    <script src="https://www.gstatic.com/firebasejs/11.6.1/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/11.6.1/firebase-auth-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/11.6.1/firebase-analytics-compat.js"></script>
-
-    <script>
-        document.addEventListener('DOMContentLoaded', () => {
-            // --- Translation Data ---
-            const translations = {
-                ru: {
-                    nav_courses: "Курсы", nav_about: "О нас", nav_pricing: "Цены", nav_contact: "Контакты", login: "Вход", submit_request: "Подать заявку", register: "Регистрация",
-                    hero_title: "Освойте Современный Бухгалтерский Учет", hero_subtitle: "Получите практические навыки в 1C, Didox.uz и My.gov.uz, чтобы ускорить свою карьеру. Экспертные курсы для начинающих и профессионалов.", enroll_now: "Записаться сейчас",
-                    courses_title: "Наши Основные Программы", course_1c_title: "1С: Бухгалтерия 8.3", course_1c_desc: "Комплексное обучение от базовых операций до расширенной отчетности.", course_didox_title: "Электронные счета-фактуры (Didox.uz)", course_didox_desc: "Освойте официальную платформу для электронных счетов-фактур в Узбекистане.", course_mygov_title: "Государственные порталы (My.gov.uz)", course_mygov_desc: "Научитесь навигировать и использовать портал государственных услуг Узбекистана.",
-                    about_title: "Почему выбирают Ya_Buxgalter?", about_desc: "Мы — команда сертифицированных бухгалтеров и опытных преподавателей, посвященных предоставлению качественного и практического обучения.", feature_1: "<strong>Эксперты-инструкторы</strong>", feature_2: "<strong>Практическая направленность</strong>", feature_3: "<strong>Маленькие группы</strong>",
-                    pricing_title: "Гибкие Тарифные Планы", single_course: "Один Курс", accountant_pro: "Бухгалтер Про", corporate: "Корпоративный", apply: "Подать заявку", months: "Месяцы", most_popular: "САМЫЙ ПОПУЛЯРНЫЙ",
-                    login_modal_title: "Вход", login_error: "Неверные учетные данные.", username_or_phone: "Логин или телефон", password: "Пароль", signin: "Войти", phone_number: "Номер телефона", google_signin: "Войти через Google",
-                    request_modal_title: "Подать заявку", request_success: "Ваша заявка отправлена!", register_modal_title: "Регистрация на курс", register_success: "Вы были успешно зарегистрированы!", full_name: "Полное имя", confirm_password: "Подтвердите пароль", send_request: "Отправить заявку", register_now: "Зарегистрироваться", full_name_placeholder: "Ваше имя", phone_number_placeholder: "XX XXX XX XX", password_placeholder: "********", password_mismatch: "Пароли не совпадают.", phone_taken: "Этот номер телефона уже занят.",
-                    admin_dashboard_title: "Панель администратора", logout: "Выйти", submitted_requests: "Поданные заявки", submitted_registrations: "Регистрации на курс", no_requests: "Заявок пока нет.", no_registrations: "Регистраций пока нет.", table_header_date: "Дата", table_header_name: "Имя", table_header_phone: "Номер телефона",
-                    user_dashboard_info: "Это ваша личная панель. Скоро здесь появятся новые функции!", welcome: "Добро пожаловать", video_lessons: "Видеоуроки", lesson: "Урок", lesson_desc: "Краткое описание урока",
-                    learning_plan_title: "✨ Ваш Персональный План Обучения", generate_plan_btn: "Создать план", welcome_letter_title: "✨ Добро пожаловать в Ya_Buxgalter!",
-                    video_management: "Управление Видео", video_title: "Название видео", video_desc: "Описание видео", video_url: "URL видео (YouTube)", add_video: "Добавить видео",
-                    footer_text: "© 2024 Ya_Buxgalter. Все права защищены."
-                },
-                uz: {
-                    nav_courses: "Kurslar", nav_about: "Biz haqimizda", nav_pricing: "Narxlar", nav_contact: "Aloqa", login: "Kirish", submit_request: "Ariza yuborish", register: "Ro'yxatdan o'tish",
-                    hero_title: "Zamonaviy Buxgalteriya Hisobini O'zlashtiring", hero_subtitle: "Karyerangizni tezlashtirish uchun 1C, Didox.uz va My.gov.uz bo'yicha amaliy ko'nikmalarga ega bo'ling.", enroll_now: "Hozir yozilish",
-                    courses_title: "Bizning Asosiy Dasturlarimiz", course_1c_title: "1C: Buxgalteriya 8.3", course_1c_desc: "Asosiy operatsiyalardan tortib kengaytirilgan hisobotlargacha bo'lgan keng qamrovli trening.", course_didox_title: "Elektron hisob-fakturalar (Didox.uz)", course_didox_desc: "O'zbekistondagi elektron hisob-fakturalar uchun rasmiy platformani o'zlashtiring.", course_mygov_title: "Davlat portallari (My.gov.uz)", course_mygov_desc: "Biznesni ro'yxatdan o'tkazish uchun O'zbekiston davlat xizmatlari portalidan foydalanishni o'rganing.",
-                    about_title: "Nima uchun Ya_Buxgalter'ni tanlashadi?", about_desc: "Biz yuqori sifatli, amaliy ta'lim berishga bag'ishlangan sertifikatlangan buxgalterlar va tajribali o'qituvchilar jamoasimiz.", feature_1: "<strong>Ekspert o'qituvchilar</strong>", feature_2: "<strong>Amaliy yo'nalish</strong>", feature_3: "<strong>Kichik guruhlar</strong>",
-                    pricing_title: "Moslashuvchan Narx Rejalari", single_course: "Bitta Kurs", accountant_pro: "Buxgalter Pro", corporate: "Korporativ", apply: "Ariza berish", months: "Oylar", most_popular: "ENG OMMABOP",
-                    login_modal_title: "Kirish", login_error: "Noto'g'ri ma'lumotlar.", username_or_phone: "Foydalanuvchi nomi yoki telefon", password: "Parol", signin: "Kirish", phone_number: "Telefon raqami", google_signin: "Google bilan kirish",
-                    request_modal_title: "Ariza yuborish", request_success: "Arizangiz yuborildi!", register_modal_title: "Kursga yozilish", register_success: "Siz muvaffaqiyatli ro'yxatdan o'tdingiz!", full_name: "To'liq ism", confirm_password: "Parolni tasdiqlang", send_request: "So'rov yuborish", register_now: "Ro'yxatdan o'tish", full_name_placeholder: "Ismingiz", phone_number_placeholder: "XX XXX XX XX", password_placeholder: "********", password_mismatch: "Parollar mos kelmadi.", phone_taken: "Bu telefon raqami allaqachon band.",
-                    admin_dashboard_title: "Administrator paneli", logout: "Chiqish", submitted_requests: "Yuborilgan arizalar", submitted_registrations: "Kursga yozilishlar", no_requests: "Hozircha arizalar yo'q.", no_registrations: "Hozircha ro'yxatdan o'tganlar yo'q.", table_header_date: "Sana", table_header_name: "Ism", table_header_phone: "Telefon raqami",
-                    user_dashboard_info: "Bu sizning shaxsiy panelingiz. Tez orada yangi funksiyalar qo'shiladi!", welcome: "Xush kelibsiz", video_lessons: "Videodarslar", lesson: "Dars", lesson_desc: "Darsning qisqacha tavsifi",
-                    learning_plan_title: "✨ Sizning Shaxsiy O'quv Rejangiz", generate_plan_btn: "Reja yaratish", welcome_letter_title: "✨ Ya_Buxgalter'ga Xush Kelibsiz!",
-                    video_management: "Videolarni Boshqarish", video_title: "Video nomi", video_desc: "Video tavsifi", video_url: "Video URL (YouTube)", add_video: "Video qo'shish",
-                    footer_text: "© 2024 Ya_Buxgalter. Barcha huquqlar himoyalangan."
-                },
-                en: {
-                    nav_courses: "Courses", nav_about: "About Us", nav_pricing: "Pricing", nav_contact: "Contact", login: "Login", submit_request: "Submit a Request", register: "Register",
-                    hero_title: "Master Modern Accounting", hero_subtitle: "Gain practical skills in 1C, Didox.uz, and My.gov.uz to accelerate your career. Expert-led courses for beginners and professionals.", enroll_now: "Enroll Now",
-                    courses_title: "Our Core Programs", course_1c_title: "1C: Accounting 8.3", course_1c_desc: "Comprehensive training from basic operations to advanced reporting.", course_didox_title: "Electronic Invoicing (Didox.uz)", course_didox_desc: "Master the official platform for electronic invoices in Uzbekistan.", course_mygov_title: "Government Portals (My.gov.uz)", course_mygov_desc: "Learn to navigate and utilize Uzbekistan's government services portal.",
-                    about_title: "Why Choose Ya_Buxgalter?", about_desc: "We are a team of certified accountants and experienced educators dedicated to providing high-quality, practical training.", feature_1: "<strong>Expert Instructors</strong>", feature_2: "<strong>Practical Focus</strong>", feature_3: "<strong>Small Group Sizes</strong>",
-                    pricing_title: "Flexible Pricing Plans", single_course: "Single Course", accountant_pro: "Accountant Pro", corporate: "Corporate", apply: "Apply", months: "Months", most_popular: "MOST POPULAR",
-                    login_modal_title: "Login", login_error: "Invalid credentials.", username_or_phone: "Username or Phone", password: "Password", signin: "Sign In", phone_number: "Phone Number", google_signin: "Sign in with Google",
-                    request_modal_title: "Submit a Request", request_success: "Your request has been sent!", register_modal_title: "Register for a Course", register_success: "You have been registered successfully!", full_name: "Full Name", confirm_password: "Confirm Password", send_request: "Send Request", register_now: "Register Now", full_name_placeholder: "Your Name", phone_number_placeholder: "XX XXX XX XX", password_placeholder: "********", password_mismatch: "Passwords do not match.", phone_taken: "This phone number is already taken.",
-                    admin_dashboard_title: "Admin Dashboard", logout: "Logout", submitted_requests: "Submitted Requests", submitted_registrations: "Course Registrations", no_requests: "No requests yet.", no_registrations: "No registrations yet.", table_header_date: "Date", table_header_name: "Name", table_header_phone: "Phone Number",
-                    user_dashboard_info: "This is your personal dashboard. More features coming soon!", welcome: "Welcome", video_lessons: "Video Lessons", lesson: "Lesson", lesson_desc: "Brief description of the lesson",
-                    learning_plan_title: "✨ Your Personal Learning Plan", generate_plan_btn: "Create Plan", welcome_letter_title: "✨ Welcome to Ya_Buxgalter!",
-                    video_management: "Video Management", video_title: "Video Title", video_desc: "Video Description", video_url: "Video URL (YouTube)", add_video: "Add Video",
-                    footer_text: "© 2024 Ya_Buxgalter. All Rights Reserved."
-                }
-            };
-            
-            let currentLang = localStorage.getItem('language') || 'ru';
-            let db;
-            let requestsListener = null;
-            let registrationsListener = null;
-            let videoLessonsListener = null;
-            let currentUser = null;
-
-            // --- UI Initialization and Management ---
-            // This function is defined once and contains all UI logic.
-            const manageUI = () => {
-                const mainWebsite = document.getElementById('main-website');
-                const adminPanel = document.getElementById('admin-panel');
-                const userDashboard = document.getElementById('video-dashboard'); // Changed to video dashboard
-                
-                const mobileMenuButton = document.getElementById('mobile-menu-button');
-                const mobileMenu = document.getElementById('mobile-menu');
-                
-                const loginModal = document.getElementById('login-modal');
-                const requestModal = document.getElementById('request-modal');
-                const registerModal = document.getElementById('register-modal');
-                const welcomeLetterModal = document.getElementById('welcome-letter-modal');
-                const videoPlayerModal = document.getElementById('video-player-modal');
-
-                const loginBtns = [document.getElementById('login-btn-desktop'), document.getElementById('login-btn-mobile')];
-                const requestBtns = [document.getElementById('request-btn-desktop'), document.getElementById('request-btn-mobile')];
-                const registerBtns = [document.getElementById('register-btn-desktop'), document.getElementById('register-btn-mobile')];
-                const applyBtns = document.querySelectorAll('.apply-btn');
-                
-                const closeLoginModalBtn = document.getElementById('close-login-modal');
-                const closeRequestModalBtn = document.getElementById('close-request-modal');
-                const closeRegisterModalBtn = document.getElementById('close-register-modal');
-                const closeWelcomeLetterModalBtn = document.getElementById('close-welcome-letter-modal');
-                const closeVideoPlayerModalBtn = document.getElementById('close-video-player-modal');
-
-                const loginForm = document.getElementById('login-form');
-                const adminLogoutBtn = document.getElementById('admin-logout-btn');
-                const userLogoutBtn = document.getElementById('video-logout-btn');
-                const userLogoutBtnDropdown = document.getElementById('user-logout-btn-dropdown');
-                const mobileLogoutBtn = document.getElementById('mobile-logout-btn');
-                const loginError = document.getElementById('login-error');
-                const corporateSlider = document.getElementById('corporate-slider');
-                
-                // Language Switcher Elements
-                const langSwitcherButton = document.getElementById('language-switcher-button-desktop');
-                const langDropdown = document.getElementById('language-dropdown-desktop');
-                const langSwitcherItems = document.querySelectorAll('.lang-switcher-item');
-                const currentLangText = document.getElementById('current-lang-text-desktop');
-                const mobileLangSwitchers = document.querySelectorAll('#mobile-menu .lang-switcher');
-                
-                const setLanguage = (lang) => {
-                    if (!translations[lang]) return;
-                    currentLang = lang;
-                    localStorage.setItem('language', lang);
-                    document.documentElement.lang = lang;
-
-                    document.querySelectorAll('[data-translate-key]').forEach(el => {
-                        const key = el.getAttribute('data-translate-key');
-                        if (el.dataset.lessonNumber) {
-                             el.innerHTML = `${translations[lang][key]} ${el.dataset.lessonNumber}`;
-                        } else if (translations[lang][key]) {
-                            el.innerHTML = translations[lang][key];
-                        }
-                    });
-                    
-                    document.querySelectorAll('[data-placeholder-key]').forEach(el => {
-                        const key = el.getAttribute('data-placeholder-key');
-                        if (translations[lang][key]) el.placeholder = translations[lang][key];
-                    });
-                    
-                    currentLangText.innerText = lang.toUpperCase();
-                    langSwitcherItems.forEach(item => {
-                        item.classList.toggle('active', item.dataset.lang === lang);
-                    });
-                     mobileLangSwitchers.forEach(item => {
-                        item.classList.toggle('active', item.dataset.lang === lang);
-                        item.classList.toggle('text-gray-400', item.dataset.lang !== lang);
-                    });
-                    
-                    if (!adminPanel.classList.contains('hidden')) {
-                         renderItems([], 'requests');
-                         renderItems([], 'registrations');
-                         if(db) {
-                            listenForRequests();
-                            listenForRegistrations();
-                         }
-                    }
-                    updateCorporatePrice();
-                };
-
-                langSwitcherButton.addEventListener('click', (e) => {
-                    e.stopPropagation();
-                    langDropdown.classList.toggle('hidden');
-                });
-
-                document.addEventListener('click', () => {
-                    if (!langDropdown.classList.contains('hidden')) {
-                        langDropdown.classList.add('hidden');
-                    }
-                });
-                
-                const allLangSwitchers = document.querySelectorAll('.lang-switcher-item, #mobile-menu .lang-switcher');
-                allLangSwitchers.forEach(item => {
-                    item.addEventListener('click', (e) => {
-                        e.preventDefault();
-                        setLanguage(item.dataset.lang);
-                        langDropdown.classList.add('hidden');
-                    });
-                });
-
-                mobileMenuButton.addEventListener('click', () => mobileMenu.classList.toggle('hidden'));
-                loginBtns.forEach(btn => btn.addEventListener('click', () => loginModal.classList.remove('hidden')));
-                
-                requestBtns.forEach(btn => btn.addEventListener('click', () => {
-                    requestModal.classList.remove('hidden');
-                    document.getElementById('request-success').classList.add('hidden');
-                    document.getElementById('request-form').reset();
-                }));
-                
-                const openRegisterModal = () => {
-                    registerModal.classList.remove('hidden');
-                    document.getElementById('register-error').classList.add('hidden');
-                    document.getElementById('register-form').reset();
-                };
-                registerBtns.forEach(btn => btn.addEventListener('click', openRegisterModal));
-                applyBtns.forEach(btn => btn.addEventListener('click', openRegisterModal));
-
-                closeLoginModalBtn.addEventListener('click', () => loginModal.classList.add('hidden'));
-                closeRequestModalBtn.addEventListener('click', () => requestModal.classList.add('hidden'));
-                closeRegisterModalBtn.addEventListener('click', () => registerModal.classList.add('hidden'));
-                closeWelcomeLetterModalBtn.addEventListener('click', () => welcomeLetterModal.classList.add('hidden'));
-                closeVideoPlayerModalBtn.addEventListener('click', () => {
-                    videoPlayerModal.classList.add('hidden');
-                    document.getElementById('video-player').src = '';
-                });
-                
-                loginForm.addEventListener('submit', handleLogin);
-                
-                const logout = () => {
-                    currentUser = null;
-                    showPublicView();
-                };
-                adminLogoutBtn.addEventListener('click', logout);
-                userLogoutBtn.addEventListener('click', logout);
-                userLogoutBtnDropdown.addEventListener('click', logout);
-                mobileLogoutBtn.addEventListener('click', logout);
-                
-                function showAdminView() {
-                    mainWebsite.classList.add('hidden');
-                    userDashboard.classList.add('hidden');
-                    adminPanel.classList.remove('hidden');
-                    loginModal.classList.add('hidden');
-                    loginError.classList.add('hidden');
-                    loginForm.reset();
-                    updateHeaderForLoggedInUser('Admin');
-                    listenForRequests();
-                    listenForRegistrations();
-                }
-
-                function showUserView(userName) {
-                    mainWebsite.classList.add('hidden');
-                    adminPanel.classList.add('hidden');
-                    userDashboard.classList.remove('hidden');
-                    loginModal.classList.add('hidden');
-                    loginError.classList.add('hidden');
-                    loginForm.reset();
-                    updateHeaderForLoggedInUser(userName);
-                    listenForVideoLessons();
-                }
-
-                function showPublicView() {
-                    mainWebsite.classList.remove('hidden');
-                    adminPanel.classList.add('hidden');
-                    userDashboard.classList.add('hidden');
-                    document.getElementById('header-auth-buttons').classList.remove('hidden');
-                    document.getElementById('header-user-info').classList.add('hidden');
-                    document.getElementById('mobile-auth-buttons').classList.remove('hidden');
-                    document.getElementById('mobile-user-info').classList.add('hidden');
-                    if (requestsListener) requestsListener();
-                    if (registrationsListener) registrationsListener();
-                    if (videoLessonsListener) videoLessonsListener();
-                }
-
-                function updateHeaderForLoggedInUser(name) {
-                    document.getElementById('header-auth-buttons').classList.add('hidden');
-                    document.getElementById('header-user-info').classList.remove('hidden');
-                    document.getElementById('header-username').innerText = name;
-                    
-                    document.getElementById('mobile-auth-buttons').classList.add('hidden');
-                    document.getElementById('mobile-user-info').classList.remove('hidden');
-                    document.getElementById('mobile-username').innerText = name;
-                }
-
-                function updateCorporatePrice() {
-                    const months = corporateSlider.value;
-                    const price = (1500000 * months).toLocaleString('fr-FR');
-                    document.getElementById('corporate-price').innerHTML = `${price} <span class="text-lg font-medium text-gray-500">UZS</span>`;
-                }
-                corporateSlider.addEventListener('input', updateCorporatePrice);
-                
-                const userDropdown = document.getElementById('user-dropdown');
-                document.getElementById('header-user-trigger').addEventListener('click', (e) => {
-                    e.stopPropagation();
-                    userDropdown.classList.toggle('hidden');
-                });
-                document.addEventListener('click', () => {
-                    if (!userDropdown.classList.contains('hidden')) {
-                        userDropdown.classList.add('hidden');
-                    }
-                });
-
-
-                setLanguage(currentLang);
-
-                // Make view functions available globally for event listeners
-                window.showAdminView = showAdminView;
-                window.showUserView = showUserView;
-            };
-
-            function initializeFirebase() {
-                // This will be replaced by the user's actual config when deploying
-                const firebaseConfig = {
-                    apiKey: "AIzaSyC7smDYoy-LT58xCwjJsc9uZU9CgHQv5dM",
-                    authDomain: "ya-buxgalter.firebaseapp.com",
-                    projectId: "ya-buxgalter",
-                    storageBucket: "ya-buxgalter.appspot.com",
-                    messagingSenderId: "640345805387",
-                    appId: "1:640345805387:web:a1adade77f809af84cb3ce",
-                    measurementId: "G-0TKE25JVXG"
-                };
-
-                if (!firebaseConfig.apiKey) {
-                    console.warn("Firebase config not found. Database features will be disabled.");
-                    document.getElementById('offline-banner').classList.remove('hidden');
-                    return;
-                }
-                try {
-                    firebase.initializeApp(firebaseConfig);
-                    db = firebase.firestore();
-                    const auth = firebase.auth();
-                    firebase.analytics(); // Initialize Analytics
-                    auth.signInAnonymously()
-                        .then(() => {
-                             console.log("Firebase authenticated successfully.");
-                             setupDatabaseListeners();
-                        })
-                        .catch(error => console.error("Firebase anonymous sign-in failed:", error));
-                } catch (e) {
-                    console.error("Firebase initialization failed:", e);
-                }
+    // --- Authentication Effect ---
+    useEffect(() => {
+        const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
+            setUser(currentUser);
+            if (currentUser) {
+                console.log("Пользователь вошел:", currentUser.uid);
+                // Если вы хотите увидеть свой UID для установки ADMIN_UID
+                // console.log("Ваш UID:", currentUser.uid);
             }
-            
-            function setupDatabaseListeners() {
-                const appId = "ya-buxgalter"; // Hardcoded for simplicity as per user's config
-                document.getElementById('request-form').addEventListener('submit', (e) => handleFormSubmit(e, 'requests', appId));
-                document.getElementById('register-form').addEventListener('submit', (e) => handleRegistrationSubmit(e, appId));
-                document.getElementById('add-video-form').addEventListener('submit', (e) => handleAddVideo(e, appId));
-                document.getElementById('generate-plan-btn').addEventListener('click', generateLearningPlan);
-                document.getElementById('google-signin-btn').addEventListener('click', () => signInWithGoogle(appId));
-                document.getElementById('google-register-btn').addEventListener('click', () => signInWithGoogle(appId));
-            }
-
-            async function handleLogin(event) {
-                event.preventDefault();
-                const identity = document.getElementById('login-identity').value.trim();
-                const password = document.getElementById('login-password').value;
-                const loginError = document.getElementById('login-error');
-                
-                loginError.classList.add('hidden');
-
-                if (identity === 'admin' && password === 'admin') {
-                    window.showAdminView();
-                    return;
-                }
-
-                if (!db) {
-                    loginError.innerText = translations[currentLang].login_error;
-                    loginError.classList.remove('hidden');
-                    return;
-                }
-                
-                try {
-                    const appId = "ya-buxgalter";
-                    const collectionPath = `/artifacts/${appId}/public/data/registrations`;
-                    
-                    let identityValue = identity;
-                    if (!identity.startsWith('+998')) {
-                         identityValue = `+998${identity.replace(/\s/g, '')}`;
-                    }
-                    
-                    const querySnapshot = await db.collection(collectionPath).where("phone", "==", identityValue).where("password", "==", password).get();
-                    
-                    if (querySnapshot.empty) {
-                        loginError.innerText = translations[currentLang].login_error;
-                        loginError.classList.remove('hidden');
-                    } else {
-                        currentUser = querySnapshot.docs[0].data();
-                        window.showUserView(currentUser.name);
-                    }
-                } catch (error) {
-                    console.error("User login error:", error);
-                    loginError.innerText = "An error occurred.";
-                    loginError.classList.remove('hidden');
-                }
-            }
-            
-            async function handleRegistrationSubmit(event, appId) {
-                event.preventDefault();
-                if (!db) {
-                    alert("Registration is only available in the online environment.");
-                    return;
-                }
-                
-                const form = event.target;
-                const name = form.querySelector('#register-name').value;
-                const phoneInput = form.querySelector('#register-phone').value.replace(/\s/g, '');
-                const fullPhone = `+998${phoneInput}`;
-                const password = form.querySelector('#register-password').value;
-                const confirmPassword = form.querySelector('#register-confirm-password').value;
-                const errorDiv = document.getElementById('register-error');
-                
-                errorDiv.classList.add('hidden');
-
-                if (password !== confirmPassword) {
-                    errorDiv.innerText = translations[currentLang].password_mismatch;
-                    errorDiv.classList.remove('hidden');
-                    return;
-                }
-
-                try {
-                    const collectionPath = `/artifacts/${appId}/public/data/registrations`;
-                    const existingUserQuery = await db.collection(collectionPath).where("phone", "==", fullPhone).get();
-                    if (!existingUserQuery.empty) {
-                        errorDiv.innerText = translations[currentLang].phone_taken;
-                        errorDiv.classList.remove('hidden');
-                        return;
-                    }
-                    
-                    // Add user to DB
-                    await db.collection(collectionPath).add({
-                        name: name,
-                        phone: fullPhone,
-                        password: password, // In a real app, hash this password!
-                        timestamp: firebase.firestore.FieldValue.serverTimestamp()
-                    });
-
-                    // Set current user and show dashboard
-                    currentUser = { name, phone: fullPhone };
-                    window.showUserView(name);
-                    
-                    // Show welcome letter
-                    generateWelcomeLetter(name);
-                    
-                    // Hide registration modal
-                    document.getElementById('register-modal').classList.add('hidden');
-                    
-                } catch(e) {
-                    console.error("Registration check failed", e);
-                    errorDiv.innerText = "An error occurred during registration.";
-                    errorDiv.classList.remove('hidden');
-                }
-            }
-
-            async function handleFormSubmit(event, type, appId) {
-                const form = event.target;
-                const name = form.querySelector('input[id*="-name"]').value;
-                const phoneInput = form.querySelector('input[id*="-phone"]').value.replace(/\s/g, '');
-                const fullPhone = `+998${phoneInput}`;
-                const collectionPath = `/artifacts/${appId}/public/data/${type}`;
-                const successMessage = document.getElementById('request-success');
-                const modal = form.closest('.fixed');
-
-                try {
-                    await db.collection(collectionPath).add({
-                        name: name,
-                        phone: fullPhone,
-                        timestamp: firebase.firestore.FieldValue.serverTimestamp()
-                    });
-                    
-                    form.reset();
-                    successMessage.classList.remove('hidden');
-                    setTimeout(() => modal.classList.add('hidden'), 2000);
-                } catch (error) {
-                    console.error("Error adding document: ", error);
-                    alert("An error occurred while submitting data.");
-                }
-            }
-
-            async function handleAddVideo(event, appId) {
-                event.preventDefault();
-                if (!db) return;
-
-                const form = event.target;
-                const title = form.querySelector('#video-title').value;
-                const description = form.querySelector('#video-desc').value;
-                let url = form.querySelector('#video-url').value;
-
-                // Convert YouTube watch URL to embed URL
-                if (url.includes("youtube.com/watch?v=")) {
-                    const videoId = url.split('v=')[1].split('&')[0];
-                    url = `https://www.youtube.com/embed/${videoId}`;
-                }
-
-                const collectionPath = `/artifacts/${appId}/public/data/video_lessons`;
-                try {
-                    await db.collection(collectionPath).add({
-                        title,
-                        description,
-                        url,
-                        timestamp: firebase.firestore.FieldValue.serverTimestamp()
-                    });
-                    form.reset();
-                    alert("Видео успешно добавлено!");
-                } catch (error) {
-                    console.error("Error adding video:", error);
-                    alert("Произошла ошибка при добавлении видео.");
-                }
-            }
-            
-            async function signInWithGoogle(appId) {
-                if (!db) {
-                    alert("Google Sign-In is only available in the online environment.");
-                    return;
-                }
-                const provider = new firebase.auth.GoogleAuthProvider();
-                try {
-                    const result = await firebase.auth().signInWithPopup(provider);
-                    const user = result.user;
-                    const collectionPath = `/artifacts/${appId}/public/data/registrations`;
-                    
-                    // Check if user already exists
-                    const existingUserQuery = await db.collection(collectionPath).where("email", "==", user.email).get();
-                    if (existingUserQuery.empty) {
-                        // New user, add to database
-                        await db.collection(collectionPath).add({
-                            name: user.displayName,
-                            email: user.email,
-                            phone: user.phoneNumber || '',
-                            timestamp: firebase.firestore.FieldValue.serverTimestamp()
-                        });
-                    }
-                    
-                    currentUser = { name: user.displayName, email: user.email };
-                    window.showUserView(user.displayName);
-                    document.getElementById('login-modal').classList.add('hidden');
-                    document.getElementById('register-modal').classList.add('hidden');
-
-                } catch (error) {
-                    console.error("Google Sign-In Error:", error);
-                    alert("Failed to sign in with Google.");
-                }
-            }
-
-            // --- Gemini API Functions ---
-            async function callGemini(prompt) {
-                const apiKey = ""; 
-                const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`;
-                const payload = { contents: [{ parts: [{ text: prompt }] }] };
-                
-                try {
-                    const response = await fetch(apiUrl, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify(payload)
-                    });
-                    if (!response.ok) {
-                        throw new Error(`API call failed with status: ${response.status}`);
-                    }
-                    const result = await response.json();
-                    if (result.candidates && result.candidates.length > 0 && result.candidates[0].content.parts.length > 0) {
-                        return result.candidates[0].content.parts[0].text;
-                    }
-                } catch (error) {
-                    console.error("Gemini API call failed:", error);
-                    return "Error generating content.";
-                }
-                return "Could not generate content.";
-            }
-
-            async function generateWelcomeLetter(userName) {
-                const modal = document.getElementById('welcome-letter-modal');
-                const loader = document.getElementById('welcome-letter-loader');
-                const output = document.getElementById('welcome-letter-output');
-                
-                modal.classList.remove('hidden');
-                loader.classList.remove('hidden');
-                output.innerHTML = '';
-
-                const prompt = `Напиши дружелюбное и информативное приветственное письмо для нового студента по имени ${userName}, который только что зарегистрировался в учебном центре "Ya_Buxgalter". В письме нужно: 1. Поздравить с регистрацией. 2. Кратко рассказать о трех основных курсах: "1С: Бухгалтерия 8.3", "Электронные счета-фактуры (Didox.uz)" и "Государственные порталы (My.gov.uz)". 3. Объяснить, что скоро с ним свяжется менеджер для уточнения деталей. 4. Закончить письмо на позитивной ноте. Письмо должно быть на русском языке.`;
-                
-                const letter = await callGemini(prompt);
-                
-                loader.classList.add('hidden');
-                output.innerText = letter;
-            }
-
-            async function generateLearningPlan() {
-                if (!currentUser) {
-                    alert("Please log in to generate a plan.");
-                    return;
-                }
-                const btn = document.getElementById('generate-plan-btn');
-                const loader = document.getElementById('plan-loader');
-                const output = document.getElementById('learning-plan-output');
-
-                btn.classList.add('hidden');
-                loader.classList.remove('hidden');
-                output.innerHTML = '';
-
-                const prompt = `Создай персонализированный план обучения на 4 недели для студента по имени ${currentUser.name} в учебном центре "Ya_Buxgalter". План должен охватывать все три курса: "1С: Бухгалтерия 8.3", "Электронные счета-фактуры (Didox.uz)" и "Государственные порталы (My.gov.uz)". Распредели темы по неделям, чтобы обучение было логичным и последовательным. Начинай с основ 1С, затем переходи к Didox и My.gov. План должен быть представлен в виде маркированного списка по неделям. Язык: русский.`;
-
-                const plan = await callGemini(prompt);
-
-                loader.classList.add('hidden');
-                btn.classList.remove('hidden');
-                output.innerText = plan;
-            }
-
-            // --- Firestore Listeners ---
-            function listenForItems(itemType, callback) {
-                const appId = "ya-buxgalter";
-                if (!db || !appId) return null;
-                const collectionPath = `/artifacts/${appId}/public/data/${itemType}`;
-                return db.collection(collectionPath).orderBy("timestamp", "desc").onSnapshot((querySnapshot) => {
-                    const items = [];
-                    querySnapshot.forEach((doc) => items.push({ id: doc.id, ...doc.data() }));
-                    callback(items);
-                }, (error) => {
-                    console.error(`Error listening for ${itemType}:`, error);
-                    document.getElementById(`${itemType}-container`).innerHTML = `<p class="text-red-500">Error loading ${itemType}.</p>`;
-                });
-            }
-
-            function listenForRequests() {
-                if (requestsListener) requestsListener();
-                requestsListener = listenForItems('requests', (items) => renderItems(items, 'requests'));
-            }
-
-            function listenForRegistrations() {
-                if (registrationsListener) registrationsListener();
-                registrationsListener = listenForItems('registrations', (items) => renderItems(items, 'registrations'));
-            }
-            
-            function listenForVideoLessons() {
-                if (videoLessonsListener) videoLessonsListener();
-                videoLessonsListener = listenForItems('video_lessons', renderVideoLessons);
-            }
-
-            function renderItems(items, type) {
-                const container = document.getElementById(`${type}-container`);
-                const noItemsKey = type === 'requests' ? 'no_requests' : 'no_registrations';
-                if (items.length === 0) {
-                    container.innerHTML = `<p class="text-gray-400">${translations[currentLang][noItemsKey]}</p>`;
-                    return;
-                }
-                container.innerHTML = `
-                    <div class="overflow-x-auto">
-                        <table class="w-full text-left">
-                            <thead>
-                                <tr class="border-b border-gray-600">
-                                    <th class="p-3">${translations[currentLang].table_header_date}</th>
-                                    <th class="p-3">${translations[currentLang].table_header_name}</th>
-                                    <th class="p-3">${translations[currentLang].table_header_phone}</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                ${items.map(item => `
-                                    <tr class="border-b border-gray-700 hover:bg-gray-700">
-                                        <td class="p-3 text-gray-400">${item.timestamp ? new Date(item.timestamp.toDate()).toLocaleString() : 'N/A'}</td>
-                                        <td class="p-3 font-medium">${item.name}</td>
-                                        <td class="p-3">${item.phone}</td>
-                                    </tr>
-                                `).join('')}
-                            </tbody>
-                        </table>
-                    </div>`;
-            }
-            
-            function renderVideoLessons(videos) {
-                const container = document.getElementById('video-lessons-container');
-                if (!container) return;
-                
-                if (videos.length === 0) {
-                    container.innerHTML = `<p class="text-gray-400 col-span-full text-center">Видеоуроки пока не добавлены.</p>`;
-                    return;
-                }
-                
-                container.innerHTML = videos.map(video => `
-                    <div class="bg-gray-800 rounded-lg shadow-lg overflow-hidden cursor-pointer card-glow transform hover:-translate-y-1" data-video-url="${video.url}">
-                        <div class="w-full h-40 bg-gray-700 flex items-center justify-center">
-                            <svg class="w-16 h-16 text-red-500" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z" clip-rule="evenodd"></path></svg>
-                        </div>
-                        <div class="p-4">
-                            <h3 class="font-bold text-lg mb-2">${video.title}</h3>
-                            <p class="text-gray-400 text-sm">${video.description}</p>
-                        </div>
-                    </div>
-                `).join('');
-                
-                document.querySelectorAll('[data-video-url]').forEach(card => {
-                    card.addEventListener('click', () => {
-                        const videoUrl = card.dataset.videoUrl;
-                        document.getElementById('video-player').src = videoUrl;
-                        document.getElementById('video-player-modal').classList.remove('hidden');
-                    });
-                });
-            }
-
-            // --- Application Entry Point ---
-            manageUI();
-            initializeFirebase();
+            setLoading(false);
         });
-    </script>
-</body>
-</html>
+        return () => unsubscribe();
+    }, []);
+
+    // --- Firestore Data Effect ---
+    useEffect(() => {
+        // Fetch products
+        const productsUnsub = onSnapshot(collection(db, "products"), (snapshot) => {
+            const productsData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+            setProducts(productsData);
+        });
+
+        // Fetch orders (only for admin)
+        let ordersUnsub = () => {};
+        if (isAdmin) {
+             ordersUnsub = onSnapshot(collection(db, "orders"), (snapshot) => {
+                const ordersData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                setOrders(ordersData);
+            });
+        }
+        
+        // Fetch tickets (only for admin)
+        let ticketsUnsub = () => {};
+        if (isAdmin) {
+            ticketsUnsub = onSnapshot(collection(db, "supportTickets"), (snapshot) => {
+                const ticketsData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                setTickets(ticketsData);
+            });
+        }
+
+        return () => {
+            productsUnsub();
+            ordersUnsub();
+            ticketsUnsub();
+        };
+    }, [isAdmin]); // Re-run if admin status changes
+
+    const handleLogin = async () => {
+        try {
+            await signInWithPopup(auth, provider);
+        } catch (error) {
+            console.error("Ошибка входа:", error);
+        }
+    };
+
+    const handleLogout = async () => {
+        try {
+            await signOut(auth);
+            setPage('home'); // Redirect to home on logout
+        } catch (error) {
+            console.error("Ошибка выхода:", error);
+        }
+    };
+
+    const handleBuy = (product) => {
+        setSelectedProduct(product);
+    };
+
+    const handleConfirmPurchase = async (product) => {
+        if (!user) return;
+        try {
+            await addDoc(collection(db, 'orders'), {
+                userId: user.uid,
+                userEmail: user.email,
+                productId: product.id,
+                productName: product.name,
+                timestamp: new Date()
+            });
+            console.log('Заявка на покупку создана');
+        } catch (error) {
+            console.error("Ошибка при создании заявки: ", error);
+        }
+    };
+
+    const renderPage = () => {
+        switch (page) {
+            case 'admin':
+                return isAdmin ? <AdminPage products={products} orders={orders} tickets={tickets} /> : <HomePage products={products} onBuy={handleBuy} user={user} />;
+            case 'support':
+                return <SupportPage user={user} />;
+            case 'home':
+            default:
+                return <HomePage products={products} onBuy={handleBuy} user={user} />;
+        }
+    };
+
+    if (loading) {
+        return (
+             <div className="bg-gray-900 min-h-screen flex items-center justify-center">
+                <LoadingSpinner />
+            </div>
+        );
+    }
+
+    return (
+        <div className="bg-gray-900 min-h-screen font-sans bg-gradient-to-br from-gray-900 via-purple-900 to-gray-900 flex flex-col">
+            <Header user={user} onLogin={handleLogin} onLogout={handleLogout} setPage={setPage} isAdmin={isAdmin} />
+            <div className="flex-grow">
+                {renderPage()}
+            </div>
+            {selectedProduct && (
+                <PurchaseModal 
+                    product={selectedProduct} 
+                    onClose={() => setSelectedProduct(null)}
+                    onConfirm={handleConfirmPurchase}
+                />
+            )}
+            <Footer />
+        </div>
+    );
+}
