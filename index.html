@@ -50,8 +50,8 @@
             --bg-tertiary: #6d28d9; /* purple-700 */
             --text-primary: #f5d0fe; /* purple-100 */
             --text-secondary: #e9d5ff; /* purple-200 */
-            --accent-primary: #f5d0fe;
-            --accent-secondary: #ffffff;
+            --accent-primary: #c084fc; /* purple-400 */
+            --accent-secondary: #e9d5ff;
             --border-color: #6b21a8;
         }
 
@@ -100,10 +100,10 @@
         const db = getFirestore(app);
         const provider = new GoogleAuthProvider();
 
-        const logoBase64 = "data:image/jpeg;base64,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AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA-";
+        const logoUrl = "https://i.ibb.co/s9gGbyXx/Chat-GPT-Image-16-2025-15-06-27.png";
 
         // --- Helper Components ---
-        const Logo = () => ( <div className="flex items-center space-x-2 cursor-pointer"> <img src={logoBase64} alt="Asonik Store Logo" className="h-12 w-12 object-contain"/> <span className="text-2xl md:text-3xl font-bold text-primary tracking-wider"> Asonik <span className="accent-text">Store</span> </span> </div> );
+        const Logo = () => ( <div className="flex items-center space-x-2 cursor-pointer"> <img src={logoUrl} alt="Asonik Store Logo" className="h-12 w-12 object-contain"/> <span className="text-2xl md:text-3xl font-bold text-primary tracking-wider"> Asonik <span className="accent-text">Store</span> </span> </div> );
         const LoadingSpinner = () => ( <div className="bg-primary min-h-screen flex items-center justify-center"><div className="animate-spin rounded-full h-32 w-32 border-t-4 border-b-4 accent-border"></div></div> );
         const Modal = ({ children, onClose, size = 'max-w-md' }) => ( <div className="fixed inset-0 bg-black bg-opacity-75 z-50 flex justify-center items-center p-4 transition-opacity duration-300"> <div className={`bg-secondary rounded-2xl shadow-2xl p-6 md:p-8 w-full ${size} relative border-color transform transition-transform duration-300 scale-95 animate-scale-in`}> <button onClick={onClose} className="absolute top-4 right-4 text-secondary hover:text-primary transition-colors z-10"> <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg> </button> {children} </div> <style>{` @keyframes scale-in { from { transform: scale(0.9); opacity: 0; } to { transform: scale(1); opacity: 1; } } .animate-scale-in { animation: scale-in 0.3s ease-out forwards; } `}</style> </div> );
         const AlertModal = ({ message, onConfirm, onCancel, t }) => ( <Modal onClose={onCancel}> <div className="text-center"> <h2 className="text-2xl font-bold text-primary mb-4">{t.confirmation}</h2> <p className="text-secondary mb-6">{message}</p> <div className={`flex ${onConfirm ? 'justify-between' : 'justify-center'} space-x-4`}> <button onClick={onCancel} className="bg-tertiary hover:bg-gray-700 text-primary font-bold py-2 px-6 rounded-lg transition-colors">{onConfirm ? t.cancel : t.ok}</button> {onConfirm && ( <button onClick={onConfirm} className="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-6 rounded-lg transition-colors">{t.confirm}</button> )} </div> </div> </Modal> );
@@ -111,6 +111,7 @@
         const ProfileModal = ({ user, onClose, t, setAlertInfo }) => {
             const [isUploading, setIsUploading] = useState(false);
             const [color, setColor] = useState('#8b5cf6');
+            const [borderColor, setBorderColor] = useState('#a78bfa');
             const fileInputRef = useRef(null);
 
             const handleImageUpload = async (file) => {
@@ -162,7 +163,7 @@
                 <Modal onClose={onClose}>
                     <div className="text-center text-primary">
                         <h2 className="text-3xl font-bold mb-4">{t.profile}</h2>
-                        <img src={user.photoURL} alt={user.displayName} className="w-24 h-24 rounded-full mx-auto mb-4 border-4 accent-border object-cover"/>
+                        <img src={user.photoURL} alt={user.displayName} className="w-24 h-24 rounded-full mx-auto mb-4 border-4 object-cover" style={{ borderColor: borderColor }}/>
                         <p className="text-xl mb-2">{user.displayName}</p>
                         <p className="text-secondary mb-6">{user.email}</p>
                         <div className="space-y-3">
@@ -170,6 +171,10 @@
                             <div className="flex items-center space-x-2">
                                 <button onClick={handleColorAvatar} className="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded-lg transition-colors">{t.setColorAvatar}</button>
                                 <input type="color" value={color} onChange={e => setColor(e.target.value)} className="p-1 h-10 w-14 block bg-tertiary border-color cursor-pointer rounded-lg"/>
+                            </div>
+                             <div className="flex items-center space-x-2">
+                                <span className="text-secondary">{t.frameColor}:</span>
+                                <input type="color" value={borderColor} onChange={e => setBorderColor(e.target.value)} className="p-1 h-10 w-full block bg-tertiary border-color cursor-pointer rounded-lg"/>
                             </div>
                             <button onClick={handleRevertAvatar} className="w-full bg-gray-600 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded-lg transition-colors">{t.revertAvatar}</button>
                         </div>
@@ -278,7 +283,7 @@
             );
         }
         
-        function HomePage({ products, onProductClick, user, setAlertInfo, t, currency, convertPrice }) {
+        function HomePage({ products, onProductClick, user, setAlertInfo, t, currency, convertPrice, categories }) {
             const [searchTerm, setSearchTerm] = useState('');
             const [filterCategory, setFilterCategory] = useState('all');
             const [sortBy, setSortBy] = useState('new');
@@ -304,13 +309,13 @@
                 </button>
             );
 
-            const categories = useMemo(() => {
-                const cats = { all: t.all };
-                products.forEach(p => {
-                    if (p.category) cats[p.category] = p.category;
+            const categoryOptions = useMemo(() => {
+                const cats = [{ value: 'all', label: t.all }];
+                categories.forEach(cat => {
+                    cats.push({ value: cat.id, label: cat.name });
                 });
-                return Object.keys(cats).map(key => ({ value: key, label: t[key.toLowerCase()] || key }));
-            }, [products, t]);
+                return cats;
+            }, [categories, t]);
 
             return (
                 <main className="container mx-auto p-4 md:p-8">
@@ -327,7 +332,7 @@
                         />
                         <div className="flex items-center gap-2">
                             <span className="text-secondary font-semibold">{t.category}:</span>
-                            <div className="w-40"><CustomSelector value={filterCategory} onChange={e => setFilterCategory(e.target.value)} options={categories} /></div>
+                            <div className="w-40"><CustomSelector value={filterCategory} onChange={e => setFilterCategory(e.target.value)} options={categoryOptions} /></div>
                         </div>
                         <div className="flex items-center gap-2 ml-auto">
                             <span className="text-secondary font-semibold">{t.sortBy}:</span>
@@ -361,6 +366,10 @@
             return (
                 <div onClick={handleCardClick} className="bg-secondary rounded-2xl overflow-hidden shadow-lg border-color transform hover:-translate-y-2 transition-transform duration-300 flex flex-col cursor-pointer">
                     {product.pinned && <div className="absolute top-0 right-0 accent-bg text-white text-xs font-bold px-3 py-1 rounded-bl-lg">{t.pinned}</div>}
+                    <div className="absolute top-2 left-2 bg-black bg-opacity-50 text-white text-xs px-2 py-1 rounded-full flex items-center">
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1 text-green-400" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M6.267 3.455a3.066 3.066 0 001.745-.723 3.066 3.066 0 013.976 0 3.066 3.066 0 001.745.723 3.066 3.066 0 012.812 2.812c.051.643.304 1.254.723 1.745a3.066 3.066 0 010 3.976 3.066 3.066 0 00-.723 1.745 3.066 3.066 0 01-2.812 2.812 3.066 3.066 0 00-1.745.723 3.066 3.066 0 01-3.976 0 3.066 3.066 0 00-1.745-.723 3.066 3.066 0 01-2.812-2.812 3.066 3.066 0 00-.723-1.745 3.066 3.066 0 010-3.976 3.066 3.066 0 00.723-1.745 3.066 3.066 0 012.812-2.812z" clipRule="evenodd" /></svg>
+                        {t.official}
+                    </div>
                     <img className="w-full h-56 object-cover" src={product.imageUrl} alt={product.name} onError={(e) => { e.target.onerror = null; e.target.src=`https://placehold.co/600x400/1f2937/374151?text=${encodeURIComponent(t.imageNotFound)}`; }}/>
                     <div className="p-6 flex flex-col flex-grow">
                         <h3 className="text-2xl font-bold text-primary mb-1">{product.name}</h3>
@@ -553,7 +562,7 @@
             );
         }
 
-        function AdminPage({ products, faqs, setAlertInfo, t, setActiveTicketId }) {
+        function AdminPage({ products, faqs, categories, setAlertInfo, t, setActiveTicketId }) {
             const [view, setView] = useState('dashboard');
             const [tickets, setTickets] = useState([]);
             const [orders, setOrders] = useState([]);
@@ -571,6 +580,7 @@
             const [faqQuestion, setFaqQuestion] = useState('');
             const [faqAnswer, setFaqAnswer] = useState('');
             const [editingFaq, setEditingFaq] = useState(null);
+            const [newCategory, setNewCategory] = useState('');
 
             useEffect(() => {
                 const ticketsQuery = query(collection(db, 'supportTickets'), orderBy('lastUpdated', 'desc'));
@@ -684,6 +694,17 @@
                 await deleteDoc(doc(db, 'faq', id));
             };
 
+            const handleCategorySubmit = async (e) => {
+                e.preventDefault();
+                if (!newCategory) return;
+                await addDoc(collection(db, 'categories'), { name: newCategory });
+                setNewCategory('');
+            };
+
+            const handleDeleteCategory = async (id) => {
+                await deleteDoc(doc(db, 'categories', id));
+            };
+
             return (
                 <div className="container mx-auto p-4 md:p-8 text-primary">
                     <h1 className="text-4xl font-bold mb-8 text-center">{t.adminPanelTitle}</h1>
@@ -692,6 +713,7 @@
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
                             <button onClick={() => setView('viewProducts')} className="bg-purple-600 hover:bg-purple-700 p-8 rounded-lg text-2xl font-bold text-white">{t.manageProducts}</button>
                             <button onClick={() => { setEditingProduct(null); resetForm(); setView('addProduct'); }} className="bg-green-600 hover:bg-green-700 p-8 rounded-lg text-2xl font-bold text-white">{t.addProduct}</button>
+                            <button onClick={() => setView('manageCategories')} className="bg-blue-600 hover:bg-blue-700 p-8 rounded-lg text-2xl font-bold text-white">{t.manageCategories}</button>
                             <button onClick={() => setView('manageFAQ')} className="bg-yellow-500 hover:bg-yellow-600 p-8 rounded-lg text-2xl font-bold text-white">{t.manageFaq}</button>
                         </div>
                     )}
@@ -719,7 +741,10 @@
                                     <div className="flex justify-between items-center">
                                         <div className="flex items-center space-x-3">
                                             <label htmlFor="category" className="text-secondary">{t.category}:</label>
-                                            <input type="text" id="category" value={category} onChange={e => setCategory(e.target.value)} className="p-2 bg-tertiary rounded-lg border-color text-primary" placeholder="e.g., Shooters"/>
+                                            <select id="category" value={category} onChange={e => setCategory(e.target.value)} className="p-2 bg-tertiary rounded-lg border-color text-primary">
+                                                <option value="">{t.selectCategory}</option>
+                                                {categories.map(cat => <option key={cat.id} value={cat.name}>{cat.name}</option>)}
+                                            </select>
                                         </div>
                                         <div className="flex items-center space-x-3">
                                             <input type="checkbox" id="isPinned" checked={isPinned} onChange={e => setIsPinned(e.target.checked)} className="h-5 w-5 rounded accent-bg focus:ring-purple-500"/>
@@ -825,6 +850,27 @@
                             </div>
                         </div>
                     )}
+
+                     {view === 'manageCategories' && (
+                        <div>
+                            <button onClick={() => setView('dashboard')} className="mb-4 bg-tertiary p-2 rounded-lg">← {t.backToPanel}</button>
+                            <div className="bg-secondary p-8 rounded-2xl border-color">
+                                <h2 className="text-2xl font-bold mb-6 text-primary">{t.manageCategories}</h2>
+                                <form onSubmit={handleCategorySubmit} className="flex space-x-2 mb-8">
+                                    <input type="text" placeholder={t.newCategory} value={newCategory} onChange={e => setNewCategory(e.target.value)} className="w-full p-3 bg-tertiary rounded-lg border-color text-primary" />
+                                    <button type="submit" className="accent-bg hover:accent-bg-secondary text-white font-bold py-2 px-4 rounded-lg">{t.add}</button>
+                                </form>
+                                <div className="space-y-2">
+                                    {categories.map(cat => (
+                                        <div key={cat.id} className="bg-tertiary p-3 rounded-lg flex justify-between items-center">
+                                            <span className="text-primary">{cat.name}</span>
+                                            <button onClick={() => handleDeleteCategory(cat.id)} className="text-red-400">✕</button>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        </div>
+                    )}
                 </div>
             );
         }
@@ -845,6 +891,7 @@
             const [loading, setLoading] = useState(true);
             const [products, setProducts] = useState([]);
             const [faqs, setFaqs] = useState([]);
+            const [categories, setCategories] = useState([]);
             const [page, setPage] = useState('home');
             const [alertInfo, setAlertInfo] = useState(null);
             const [language, setLanguage] = useState('ru');
@@ -888,7 +935,10 @@
                 const unsubFaqs = onSnapshot(collection(db, "faq"), (snapshot) => {
                     setFaqs(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
                 });
-                return () => { unsubProducts(); unsubFaqs(); };
+                const unsubCategories = onSnapshot(collection(db, "categories"), (snapshot) => {
+                    setCategories(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+                });
+                return () => { unsubProducts(); unsubFaqs(); unsubCategories(); };
             }, []);
 
             const handleLogin = async () => { try { await signInWithPopup(auth, provider); } catch (error) { console.error("Login Error:", error); setAlertInfo({ message: "Login failed: " + error.message }); } };
@@ -911,10 +961,10 @@
 
             const renderPage = () => {
                 switch (page) {
-                    case 'admin': return isAdmin ? <AdminPage {...{products, faqs, setAlertInfo, t, setActiveTicketId}} /> : <HomePage {...{products, onProductClick: setSelectedProduct, user, setAlertInfo, t, currency, convertPrice}} />;
+                    case 'admin': return isAdmin ? <AdminPage {...{products, faqs, categories, setAlertInfo, t, setActiveTicketId}} /> : <HomePage {...{products, onProductClick: setSelectedProduct, user, setAlertInfo, t, currency, convertPrice, categories}} />;
                     case 'support': return user ? <SupportPage {...{user, t, setActiveTicketId}}/> : <div className="text-center text-primary p-10">{t.loginForSupport}</div>;
                     case 'faq': return <FAQPage faqs={faqs} />;
-                    default: return <HomePage {...{products, onProductClick: setSelectedProduct, user, setAlertInfo, t, currency, convertPrice}} />;
+                    default: return <HomePage {...{products, onProductClick: setSelectedProduct, user, setAlertInfo, t, currency, convertPrice, categories}} />;
                 }
             };
 
@@ -966,7 +1016,8 @@
                 manageProducts: 'Управление товарами', backToPanel: 'Назад в панель', uploadAvatar: 'Загрузить аватар',
                 chatWithAdmin: 'Чат с администрацией', chatWith: 'Чат с', supportSubtitle: 'Если у вас есть вопросы, нажмите кнопку ниже, чтобы начать чат.',
                 darkTheme: 'Темная', lightTheme: 'Светлая', asonikTheme: 'Фирменная', setColorAvatar: 'Установить цвет',
-                manageFaq: 'Управление FAQ', question: 'Вопрос', answer: 'Ответ', addFaq: 'Добавить FAQ', updateFaq: 'Обновить FAQ'
+                manageFaq: 'Управление FAQ', question: 'Вопрос', answer: 'Ответ', addFaq: 'Добавить FAQ', updateFaq: 'Обновить FAQ',
+                frameColor: 'Цвет рамки', official: 'Официально', manageCategories: 'Управление категориями', newCategory: 'Название новой категории', add: 'Добавить', selectCategory: 'Выберите категорию'
             },
             en: {
                 // ... English translations
@@ -1000,7 +1051,8 @@
                 manageProducts: 'Manage Products', backToPanel: 'Back to Panel', uploadAvatar: 'Upload Avatar',
                 chatWithAdmin: 'Chat with Administration', chatWith: 'Chat with', supportSubtitle: 'If you have questions, press the button below to start a chat.',
                 darkTheme: 'Dark', lightTheme: 'Light', asonikTheme: 'Asonik', setColorAvatar: 'Set Color Avatar',
-                manageFaq: 'Manage FAQ', question: 'Question', answer: 'Answer', addFaq: 'Add FAQ', updateFaq: 'Update FAQ'
+                manageFaq: 'Manage FAQ', question: 'Question', answer: 'Answer', addFaq: 'Add FAQ', updateFaq: 'Update FAQ',
+                frameColor: 'Frame Color', official: 'Official', manageCategories: 'Manage Categories', newCategory: 'New category name', add: 'Add', selectCategory: 'Select category'
             },
             uz: {
                 // ... Uzbek translations
@@ -1034,7 +1086,8 @@
                 manageProducts: 'Mahsulotlarni boshqarish', backToPanel: 'Panelga qaytish', uploadAvatar: 'Avatar yuklash',
                 chatWithAdmin: 'Ma\'muriyat bilan suhbat', chatWith: 'Suhbat', supportSubtitle: 'Agar savollaringiz bo\'lsa, suhbatni boshlash uchun quyidagi tugmani bosing.',
                 darkTheme: 'Qorong\'u', lightTheme: 'Yorug\'', asonikTheme: 'Asonik', setColorAvatar: 'Rangli avatar',
-                manageFaq: 'FAQ Boshqaruvi', question: 'Savol', answer: 'Javob', addFaq: 'FAQ qo\'shish', updateFaq: 'FAQ yangilash'
+                manageFaq: 'FAQ Boshqaruvi', question: 'Savol', answer: 'Javob', addFaq: 'FAQ qo\'shish', updateFaq: 'FAQ yangilash',
+                frameColor: 'Ramka rangi', official: 'Rasmiy', manageCategories: 'Kategoriyalarni boshqarish', newCategory: 'Yangi kategoriya nomi', add: 'Qo\'shish', selectCategory: 'Kategoriyani tanlang'
             }
         };
 
