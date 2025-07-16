@@ -44,15 +44,16 @@
             --text-secondary: #4b5563;
             --border-color: #e5e7eb;
         }
+        /* --- NEW: Updated Asonik Theme --- */
         body.asonik {
-            --bg-primary: #4c1d95; /* purple-900 */
-            --bg-secondary: #5b21b6; /* purple-800 */
-            --bg-tertiary: #6d28d9; /* purple-700 */
-            --text-primary: #f5d0fe; /* purple-100 */
-            --text-secondary: #e9d5ff; /* purple-200 */
-            --accent-primary: #f5d0fe;
-            --accent-secondary: #ffffff;
-            --border-color: #6b21a8;
+            --bg-primary: #ffffff;       /* White background */
+            --bg-secondary: #f3f4f6;     /* Light gray for cards/modals */
+            --bg-tertiary: #e5e7eb;      /* Darker gray for inputs */
+            --text-primary: #4c1d95;     /* Dark purple for main text */
+            --text-secondary: #6d28d9;   /* Lighter purple for secondary text */
+            --accent-primary: #8b5cf6;   /* Bright purple for accents */
+            --accent-secondary: #a78bfa; /* Lighter bright purple for hover */
+            --border-color: #d1d5db;     /* Light gray for borders */
         }
 
         .bg-primary { background-color: var(--bg-primary); }
@@ -404,7 +405,7 @@
             );
         }
 
-        function PurchaseModal({ product, onClose, onConfirm, t, currency, convertPrice }) {
+        function PurchaseModal({ product, onClose, onConfirm, t, currency, convertPrice, setAlertInfo }) {
             const [promoCode, setPromoCode] = useState('');
             const [appliedPromo, setAppliedPromo] = useState(null);
             const [error, setError] = useState('');
@@ -422,8 +423,14 @@
                 const promoSnap = await getDoc(promoRef);
 
                 if (promoSnap.exists()) {
-                    setAppliedPromo(promoSnap.data());
-                    setAlertInfo({ message: t.promoApplied });
+                    const promoData = promoSnap.data();
+                    if (promoData.timesUsed >= promoData.usageLimit) {
+                        setError(t.promoLimitReached);
+                        setAppliedPromo(null);
+                    } else {
+                        setAppliedPromo(promoData);
+                        setAlertInfo({ message: t.promoApplied });
+                    }
                 } else {
                     setAppliedPromo(null);
                     setError(t.promoNotFound);
@@ -459,7 +466,6 @@
 
                         <div className="space-y-4">
                             <h3 className="text-xl text-primary">{t.choosePayment}</h3>
-                            {/* --- Promo Code Section --- */}
                             <div className="bg-tertiary p-4 rounded-lg">
                                 <label className="block text-secondary text-sm font-bold mb-2">{t.payWithPromo}</label>
                                 <div className="flex space-x-2">
@@ -469,7 +475,6 @@
                                 {error && <p className="text-red-500 text-sm mt-2">{error}</p>}
                                 {appliedPromo && <p className="text-green-500 text-sm mt-2">{t.promoApplied}: {appliedPromo.discount}%</p>}
                             </div>
-                            {/* --- End Promo Code Section --- */}
 
                             <button onClick={handleContactSeller} className="w-full bg-teal-500 hover:bg-teal-600 text-white font-bold py-3 px-4 rounded-lg transition-transform transform hover:scale-105">{t.contactSeller}</button>
                             <button disabled className="w-full bg-gray-600 text-gray-400 font-bold py-3 px-4 rounded-lg cursor-not-allowed">YooMoney ({t.unavailable})</button>
@@ -595,13 +600,12 @@
             const [faqQuestion, setFaqQuestion] = useState('');
             const [faqAnswer, setFaqAnswer] = useState('');
             const [editingFaq, setEditingFaq] = useState(null);
-            // --- NEW: State for Promo Codes ---
             const [promoCodes, setPromoCodes] = useState([]);
             const [promoCodeName, setPromoCodeName] = useState('');
             const [promoDiscount, setPromoDiscount] = useState(10);
+            const [promoUsageLimit, setPromoUsageLimit] = useState(100);
 
             useEffect(() => {
-                // Fetch tickets, orders, and promo codes
                 const ticketsQuery = query(collection(db, 'supportTickets'), orderBy('lastUpdated', 'desc'));
                 const unsubTickets = onSnapshot(ticketsQuery, snapshot => setTickets(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }))));
                 
@@ -705,17 +709,22 @@
                 }});
             };
 
-            // --- NEW: Promo Code Handlers ---
             const handlePromoSubmit = async (e) => {
                 e.preventDefault();
                 if (!promoCodeName.trim()) { setAlertInfo({ message: t.fillAllFields }); return; }
-                const promoData = { code: promoCodeName.toUpperCase(), discount: Number(promoDiscount), createdAt: serverTimestamp() };
+                const promoData = { 
+                    code: promoCodeName.toUpperCase(), 
+                    discount: Number(promoDiscount), 
+                    usageLimit: Number(promoUsageLimit),
+                    timesUsed: 0,
+                    createdAt: serverTimestamp() 
+                };
                 try {
-                    // Use the code name as the document ID for easy lookup
                     await setDoc(doc(db, 'promoCodes', promoData.code), promoData);
                     setAlertInfo({ message: t.promoAdded });
                     setPromoCodeName('');
                     setPromoDiscount(10);
+                    setPromoUsageLimit(100);
                 } catch (error) { setAlertInfo({ message: t.errorOccurred }); }
             };
 
@@ -742,7 +751,6 @@
                     {view === 'addProduct' && ( <div> {/* ... add product form ... */} </div> )}
                     {view === 'viewProducts' && ( <div> {/* ... view products list ... */} </div> )}
 
-                    {/* --- NEW: Promo Code Management View --- */}
                     {view === 'managePromo' && (
                         <div>
                             <button onClick={() => setView('dashboard')} className="mb-4 bg-tertiary p-2 rounded-lg">← {t.backToPanel}</button>
@@ -755,6 +763,10 @@
                                         <label htmlFor="discount" className="block text-secondary mb-2">{t.discountPercentage}: <span className="font-bold accent-text">{promoDiscount}%</span></label>
                                         <input type="range" id="discount" min="1" max="100" value={promoDiscount} onChange={e => setPromoDiscount(e.target.value)} className="w-full h-2 bg-gray-700 rounded-lg appearance-none cursor-pointer accent-bg"/>
                                     </div>
+                                    <div>
+                                        <label htmlFor="usageLimit" className="block text-secondary mb-2">{t.usageLimit}:</label>
+                                        <input type="number" id="usageLimit" min="1" max="1000" value={promoUsageLimit} onChange={e => setPromoUsageLimit(e.target.value)} className="w-full p-3 bg-primary rounded-lg border-color text-primary" />
+                                    </div>
                                     <button type="submit" className="accent-bg hover:accent-bg-secondary text-white font-bold py-2 px-4 rounded-lg">{t.addPromoCode}</button>
                                 </form>
                                 <h3 className="text-xl font-bold mb-4">{t.existingPromoCodes}</h3>
@@ -764,6 +776,7 @@
                                             <div>
                                                 <p className="font-bold text-primary">{promo.code}</p>
                                                 <p className="text-secondary">{t.discount}: {promo.discount}%</p>
+                                                <p className="text-secondary">{t.used}: {promo.timesUsed} / {promo.usageLimit}</p>
                                             </div>
                                             <button onClick={() => handleDeletePromo(promo.id)} className="bg-red-500 hover:bg-red-600 text-white p-2 rounded-full">
                                                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm4 0a1 1 0 012 0v6a1 1 0 11-2 0V8z" clipRule="evenodd" /></svg>
@@ -903,6 +916,12 @@
                         finalPrice: purchaseDetails.finalPrice,
                         promoCodeUsed: purchaseDetails.promoCodeUsed
                     });
+                    
+                    if (purchaseDetails.promoCodeUsed) {
+                        const promoRef = doc(db, 'promoCodes', purchaseDetails.promoCodeUsed);
+                        await updateDoc(promoRef, { timesUsed: increment(1) });
+                    }
+
                     const productRef = doc(db, 'products', product.id);
                     await updateDoc(productRef, { popularity: increment(1) });
                 } catch (error) { 
@@ -937,7 +956,7 @@
                     <div className="flex-grow">{renderPage()}</div>
                     
                     {selectedProduct && user && <ProductModal product={selectedProduct} onClose={() => setSelectedProduct(null)} onBuy={handleBuy} setAlertInfo={setAlertInfo} t={t} currency={currency} convertPrice={convertPrice} />}
-                    {purchasingProduct && user && <PurchaseModal product={purchasingProduct} onClose={() => setPurchasingProduct(null)} onConfirm={handleConfirmPurchase} t={t} currency={currency} convertPrice={convertPrice} />}
+                    {purchasingProduct && user && <PurchaseModal product={purchasingProduct} onClose={() => setPurchasingProduct(null)} onConfirm={handleConfirmPurchase} t={t} currency={currency} convertPrice={convertPrice} setAlertInfo={setAlertInfo} />}
                     
                     {activeTicketId && user && <ChatModal ticketId={activeTicketId} user={user} isAdmin={isAdmin} onClose={() => setActiveTicketId(null)} t={t} />}
                     {alertInfo && <AlertModal message={alertInfo.message} onConfirm={alertInfo.onConfirm ? handleAlertConfirm : null} onCancel={() => setAlertInfo(null)} t={t} />}
@@ -979,25 +998,27 @@
                 chatWithAdmin: 'Чат с администрацией', chatWith: 'Чат с', supportSubtitle: 'Если у вас есть вопросы, нажмите кнопку ниже, чтобы начать чат.',
                 darkTheme: 'Темная', lightTheme: 'Светлая', asonikTheme: 'Фирменная', setColorAvatar: 'Установить цвет',
                 manageFaq: 'Управление FAQ', question: 'Вопрос', answer: 'Ответ', addFaq: 'Добавить FAQ', updateFaq: 'Обновить FAQ', faqAdded: 'FAQ успешно добавлен', faqUpdated: 'FAQ успешно обновлен', confirmDeleteFaq: 'Вы уверены, что хотите удалить этот FAQ?', faqDeleted: 'FAQ удален.', faqTitle: 'Часто задаваемые вопросы',
-                // New Promo Code translations
                 managePromoCodes: 'Управление промокодами', promoCode: 'Промокод', discount: 'Скидка', addPromoCode: 'Добавить промокод',
                 promoCodeName: 'Название промокода', discountPercentage: 'Размер скидки', existingPromoCodes: 'Существующие промокоды',
                 promoAdded: 'Промокод добавлен!', promoDeleted: 'Промокод удален!', confirmDeletePromo: 'Вы уверены, что хотите удалить этот промокод?',
-                payWithPromo: 'Применить промокод', apply: 'Применить', promoNotFound: 'Промокод не найден или недействителен.', promoApplied: 'Промокод применен'
+                payWithPromo: 'Применить промокод', apply: 'Применить', promoNotFound: 'Промокод не найден или недействителен.', promoApplied: 'Промокод применен',
+                usageLimit: 'Лимит использований', used: 'Использовано', promoLimitReached: 'Лимит использования этого промокода исчерпан.'
             },
             en: {
                 // ... English translations ...
                 managePromoCodes: 'Manage Promo Codes', promoCode: 'Promo Code', discount: 'Discount', addPromoCode: 'Add Promo Code',
                 promoCodeName: 'Promo Code Name', discountPercentage: 'Discount Percentage', existingPromoCodes: 'Existing Promo Codes',
                 promoAdded: 'Promo code added!', promoDeleted: 'Promo code deleted!', confirmDeletePromo: 'Are you sure you want to delete this promo code?',
-                payWithPromo: 'Apply a promo code', apply: 'Apply', promoNotFound: 'Promo code not found or invalid.', promoApplied: 'Promo code applied'
+                payWithPromo: 'Apply a promo code', apply: 'Apply', promoNotFound: 'Promo code not found or invalid.', promoApplied: 'Promo code applied',
+                usageLimit: 'Usage Limit', used: 'Used', promoLimitReached: 'The usage limit for this promo code has been reached.'
             },
             uz: {
                 // ... Uzbek translations ...
                 managePromoCodes: 'Promo-kodlarni boshqarish', promoCode: 'Promo-kod', discount: 'Chegirma', addPromoCode: 'Promo-kod qo\'shish',
                 promoCodeName: 'Promo-kod nomi', discountPercentage: 'Chegirma foizi', existingPromoCodes: 'Mavjud promo-kodlar',
                 promoAdded: 'Promo-kod qo\'shildi!', promoDeleted: 'Promo-kod o\'chirildi!', confirmDeletePromo: 'Haqiqatan ham ushbu promo-kodni o\'chirmoqchimisiz?',
-                payWithPromo: 'Promo-kodni qo\'llash', apply: 'Qo\'llash', promoNotFound: 'Promo-kod topilmadi yoki yaroqsiz.', promoApplied: 'Promo-kod qo\'llanildi'
+                payWithPromo: 'Promo-kodni qo\'llash', apply: 'Qo\'llash', promoNotFound: 'Promo-kod topilmadi yoki yaroqsiz.', promoApplied: 'Promo-kod qo\'llanildi',
+                usageLimit: 'Foydalanish chegarasi', used: 'Foydalanilgan', promoLimitReached: 'Ushbu promo-koddan foydalanish chegarasi tugadi.'
             }
         };
 
@@ -1016,4 +1037,3 @@
     </script>
 </body>
 </html>
-
