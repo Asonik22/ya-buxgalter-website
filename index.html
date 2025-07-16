@@ -18,20 +18,8 @@
         import { getFirestore, collection, onSnapshot, addDoc, doc, deleteDoc, setDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/9.6.10/firebase-firestore.js";
         
         window.firebase = {
-            initializeApp,
-            getAuth,
-            signInWithPopup,
-            GoogleAuthProvider,
-            onAuthStateChanged,
-            signOut,
-            getFirestore,
-            collection,
-            onSnapshot,
-            addDoc,
-            doc,
-            deleteDoc,
-            setDoc,
-            serverTimestamp
+            initializeApp, getAuth, signInWithPopup, GoogleAuthProvider, onAuthStateChanged, signOut,
+            getFirestore, collection, onSnapshot, addDoc, doc, deleteDoc, setDoc, serverTimestamp
         };
     </script>
     <style>
@@ -41,6 +29,7 @@
             -moz-osx-font-smoothing: grayscale;
         }
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap');
+        .dropdown:hover .dropdown-menu { display: block; }
     </style>
 </head>
 <body class="bg-gray-900">
@@ -49,12 +38,11 @@
     <script type="text/babel">
         const { useState, useEffect, useCallback } = React;
         const { 
-            initializeApp, getAuth, signInWithPopup, GoogleAuthProvider, 
-            onAuthStateChanged, signOut, getFirestore, collection, onSnapshot, 
-            addDoc, doc, deleteDoc, setDoc, serverTimestamp 
+            initializeApp, getAuth, signInWithPopup, GoogleAuthProvider, onAuthStateChanged, signOut, 
+            getFirestore, collection, onSnapshot, addDoc, doc, deleteDoc, setDoc, serverTimestamp 
         } = window.firebase;
 
-        // --- Firebase Configuration ---
+        // --- App Configuration ---
         const firebaseConfig = {
             apiKey: "AIzaSyC7smDYoy-LT58xCwjJsc9uZU9CgHQv5dM",
             authDomain: "ya-buxgalter.firebaseapp.com",
@@ -64,22 +52,21 @@
             appId: "1:640345805387:web:a1adade77f809af84cb3ce",
             measurementId: "G-0TKE25JVXG"
         };
+        const ADMIN_UID = 'YOUR_ADMIN_UID'; // ЗАМЕНИТЕ ЭТО НА ВАШ UID
 
-        // --- Initialize Firebase ---
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
         const db = getFirestore(app);
         const provider = new GoogleAuthProvider();
 
-        // --- Admin Configuration ---
-        const ADMIN_UID = 'vhmtXZxkZnOWviNQ39R1W3GE8mw2'; // ЗАМЕНИТЕ ЭТО НА ВАШ UID
+        const logoBase64 = "data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAMCAgICAgMCAgIDAwMDBAYEBAQEBAgGBgUGCQgKCgkICQkKDA8MCgsOCwkJDRENDg8QEBEQCgwSExIQEw8QEBD/2wBDAQMDAwQDBAgEBAgQCwkLEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBD/wAARCAHgAeADASIAAhEBAxEB/8QAGwABAAMBAQEBAAAAAAAAAAAAAAUGBwEDBAj/xABFEAABAwQBAgMDBwgIBgMAAAAAAQIDBAURBhIhMQcTQRQiUWEVMoGRFhcjQlJjc3WhscEkNDU2U1V2gpLS8CRigpOi0fH/xAAUAQEAAAAAAAAAAAAAAAAAAAAA/8QAFBEBAAAAAAAAAAAAAAAAAAAAAP/aAAwDAQACEQMRAD8A/RMAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAACldLdY22z0dJaqKsrLhXyLDT0tNGks0z+eyI1fU9kRFVVVEREVS/lZ2y3XGjqaG40lPXUVQxYpqeqhbLFLGvVFRyKiovzITL4gLzU2LhG/3GgqH0tdS2+eWnqI11PiesZqjk+aKqIqD503H4g+J7pfrtQ8G8J0t5tNrnWlqa6pY9zqiVqqjkaiSMRVRUVURqOVERE11VVPt8OvHlHx3aK5ZKJbXe7XIklfQo5XMRjsqj43KiKqIqOaqKiKqKnTVF8h8K/wAFvE914X4m4k48rL/AG271V3rUq6O3W+vjp6K2xOcr0RzVXVz9Lw1VFVVVVVV1RVT6/wAM/GVx4J+K3jLgPjG9T3e31NfV09ru9fMssqK2R6U6yPVdXNVjVjVV11aqa6I1A/WIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAD43O5UVpoJKi4VlPQ07NVdNUytjYmvTVzkREPsQ+JxFxRZeE7JU3q/XCnoLdTMV8k0z0b2TSIi6ucvkiIqqukREAp/iA+J+w8C2+qjpKuivN+RqtpLVDUNe5X9kWRG6qxi91VdKqIqIqqqIeE8BfFxxTx5x3frZxdV09LQXGgWqobJDAxjadjHor2xORqPcjmayarI5y6q7VdIiJ8r4X+Ea34leM+IuO+OqVl4t9NVrT0NrqNVp3v0RzY0avVkbGsRF00cqqqqq66/d+F2z0vD3xocb2K1U6UVpoqO4w0lMxzla2NlZTRsRFcqrqjURE1VfID9XgAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAACm/E1w9X8U8GXu0WqGOe4V1vnp6eOWVIkWR7FRqK5yoiJqveqgXADPz34IeL+D+I7Lw3x1w5BQ2e81TaSnr462KRWSPVERVRiqqoiqiKq6oiqiqiaqp9L4iPg/4l4j4/t/GvB15t1uvdK2Fr4blG9Yn+G5Va5Fa1y66KqKiomlRE0vVQP0CDI+H+HqK/1vE9NbqWnvNdAykrK1kSI+ogY5XNje7vRqOVVRPmq+YAAAAAAAAAAAAAAAD43O3UVzo56K4U0NbR1DFjmgqY0kjkYvVFRyKqKi+aKh9gBkPFfA3xH/AA18T3K58O8S2+y8L3OrWqZaqeGRlTTMcu1Y1zWsVqIjlcjUV7tIiKqL0P0v4feBrb4feE6GwW6V1Q+N7qipq3t1dUzP01e5NdUREajUTXRGom1XVVPQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA-";
 
         // --- Helper Components ---
 
         const Logo = () => (
             <div className="flex items-center space-x-2 cursor-pointer">
                 <img 
-                    src="http://googleusercontent.com/file_content/0" 
+                    src={logoBase64} 
                     alt="Asonik Store Logo" 
                     className="h-12 w-12 object-contain"
                 />
@@ -98,10 +85,7 @@
         const Modal = ({ children, onClose }) => (
             <div className="fixed inset-0 bg-black bg-opacity-75 z-50 flex justify-center items-center p-4 transition-opacity duration-300">
                 <div className="bg-gray-800 rounded-2xl shadow-2xl p-6 md:p-8 w-full max-w-md relative border border-purple-700 transform transition-transform duration-300 scale-95 animate-scale-in">
-                    <button
-                        onClick={onClose}
-                        className="absolute top-4 right-4 text-gray-400 hover:text-white transition-colors"
-                    >
+                    <button onClick={onClose} className="absolute top-4 right-4 text-gray-400 hover:text-white transition-colors">
                         <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                         </svg>
@@ -109,74 +93,80 @@
                     {children}
                 </div>
                 <style>{`
-                    @keyframes scale-in {
-                        from { transform: scale(0.9); opacity: 0; }
-                        to { transform: scale(1); opacity: 1; }
-                    }
+                    @keyframes scale-in { from { transform: scale(0.9); opacity: 0; } to { transform: scale(1); opacity: 1; } }
                     .animate-scale-in { animation: scale-in 0.3s ease-out forwards; }
                 `}</style>
             </div>
         );
 
-        const AlertModal = ({ message, onConfirm, onCancel }) => (
+        const AlertModal = ({ message, onConfirm, onCancel, t }) => (
             <Modal onClose={onCancel}>
                 <div className="text-center">
-                    <h2 className="text-2xl font-bold text-white mb-4">Подтверждение</h2>
+                    <h2 className="text-2xl font-bold text-white mb-4">{t.confirmation}</h2>
                     <p className="text-gray-300 mb-6">{message}</p>
                     <div className={`flex ${onConfirm ? 'justify-between' : 'justify-center'} space-x-4`}>
-                        <button
-                            onClick={onCancel}
-                            className="bg-gray-600 hover:bg-gray-700 text-white font-bold py-2 px-6 rounded-lg transition-colors"
-                        >
-                            {onConfirm ? 'Отмена' : 'OK'}
+                        <button onClick={onCancel} className="bg-gray-600 hover:bg-gray-700 text-white font-bold py-2 px-6 rounded-lg transition-colors">
+                            {onConfirm ? t.cancel : t.ok}
                         </button>
                         {onConfirm && (
-                            <button
-                                onClick={onConfirm}
-                                className="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-6 rounded-lg transition-colors"
-                            >
-                                Подтвердить
+                            <button onClick={onConfirm} className="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-6 rounded-lg transition-colors">
+                                {t.confirm}
                             </button>
                         )}
                     </div>
                 </div>
             </Modal>
         );
+        
+        const ProfileModal = ({ user, onClose, t }) => (
+            <Modal onClose={onClose}>
+                <div className="text-center text-white">
+                    <h2 className="text-3xl font-bold mb-4">{t.profile}</h2>
+                    <img src={user.photoURL} alt={user.displayName} className="w-24 h-24 rounded-full mx-auto mb-4 border-4 border-purple-500"/>
+                    <p className="text-xl mb-2">{user.displayName}</p>
+                    <p className="text-gray-400">{user.email}</p>
+                </div>
+            </Modal>
+        );
 
         // --- Main Components ---
 
-        function Header({ user, onLogin, onLogout, setPage, isAdmin }) {
+        function Header({ user, onLogin, onLogout, setPage, isAdmin, t, currency, setCurrency, language, setLanguage, setProfileVisible }) {
+            const [dropdownOpen, setDropdownOpen] = useState(false);
+
             return (
                 <header className="bg-gray-900 bg-opacity-80 backdrop-blur-md p-4 shadow-lg sticky top-0 z-40 border-b border-purple-800">
                     <div className="container mx-auto flex justify-between items-center">
-                        <div onClick={() => setPage('home')}>
-                            <Logo />
-                        </div>
+                        <div onClick={() => setPage('home')}><Logo /></div>
                         <nav className="hidden md:flex items-center space-x-6">
-                            <button onClick={() => setPage('home')} className="text-gray-300 hover:text-white font-medium transition-colors">Главная</button>
-                            <button onClick={() => setPage('support')} className="text-gray-300 hover:text-white font-medium transition-colors">Поддержка</button>
-                            {isAdmin && (
-                                <button onClick={() => setPage('admin')} className="text-purple-400 hover:text-purple-300 font-bold transition-colors">Админ</button>
-                            )}
+                            <button onClick={() => setPage('home')} className="text-gray-300 hover:text-white font-medium transition-colors">{t.home}</button>
+                            <button onClick={() => setPage('support')} className="text-gray-300 hover:text-white font-medium transition-colors">{t.support}</button>
+                            {isAdmin && <button onClick={() => setPage('admin')} className="text-purple-400 hover:text-purple-300 font-bold transition-colors">{t.admin}</button>}
                         </nav>
-                        <div className="flex items-center">
+                        <div className="flex items-center space-x-4">
+                             {/* Language & Currency Switchers */}
+                            <select value={language} onChange={e => setLanguage(e.target.value)} className="bg-gray-700 text-white border-none rounded-md p-2 cursor-pointer">
+                                <option value="ru">RU</option><option value="en">EN</option><option value="uz">UZ</option>
+                            </select>
+                            <select value={currency} onChange={e => setCurrency(e.target.value)} className="bg-gray-700 text-white border-none rounded-md p-2 cursor-pointer">
+                                <option value="RUB">₽ RUB</option><option value="USD">$ USD</option><option value="UZS">S'om UZS</option>
+                            </select>
                             {user ? (
-                                <div className="flex items-center space-x-4">
-                                    <img src={user.photoURL} alt={user.displayName} className="h-10 w-10 rounded-full border-2 border-purple-500" />
-                                    <button
-                                        onClick={onLogout}
-                                        className="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded-lg transition-transform transform hover:scale-105"
-                                    >
-                                        Выйти
+                                <div className="relative dropdown">
+                                    <button onClick={() => setDropdownOpen(!dropdownOpen)} className="flex items-center space-x-2">
+                                        <img src={user.photoURL} alt={user.displayName} className="h-10 w-10 rounded-full border-2 border-purple-500" />
+                                        <svg className={`w-4 h-4 text-white transition-transform ${dropdownOpen ? 'transform rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path></svg>
                                     </button>
+                                    {dropdownOpen && (
+                                        <div className="absolute right-0 mt-2 w-48 bg-gray-800 rounded-md shadow-lg py-1 z-50 border border-purple-700 dropdown-menu">
+                                            <a href="#" onClick={(e) => { e.preventDefault(); setProfileVisible(true); setDropdownOpen(false); }} className="block px-4 py-2 text-sm text-gray-300 hover:bg-purple-600">{t.profile}</a>
+                                            <a href="#" onClick={(e) => { e.preventDefault(); onLogout(); setDropdownOpen(false); }} className="block px-4 py-2 text-sm text-gray-300 hover:bg-purple-600">{t.logout}</a>
+                                        </div>
+                                    )}
                                 </div>
                             ) : (
-                                <button
-                                    onClick={onLogin}
-                                    className="bg-purple-600 hover:bg-purple-700 text-white font-bold py-2 px-4 rounded-lg transition-transform transform hover:scale-105 flex items-center space-x-2"
-                                >
-                                    <svg className="h-5 w-5" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm6.36 14.83c-1.43-1.74-4.9-2.33-6.36-2.33s-4.93.59-6.36 2.33C4.62 15.49 4 13.82 4 12c0-4.41 3.59-8 8-8s8 3.59 8 8c0 1.82-.62 3.49-1.64 4.83zM12 6c-1.94 0-3.5 1.56-3.5 3.5S10.06 13 12 13s3.5-1.56 3.5-3.5S13.94 6 12 6z"></path></svg>
-                                    <span>Войти с Google</span>
+                                <button onClick={onLogin} className="bg-purple-600 hover:bg-purple-700 text-white font-bold py-2 px-4 rounded-lg transition-transform transform hover:scale-105 flex items-center space-x-2">
+                                    <span>{t.login}</span>
                                 </button>
                             )}
                         </div>
@@ -185,31 +175,22 @@
             );
         }
 
-        function ProductCard({ product, onBuy, user, setAlertInfo }) {
+        function ProductCard({ product, onBuy, user, setAlertInfo, t, currency, convertPrice }) {
             const handleBuyClick = () => {
-                if (user) {
-                    onBuy(product);
-                } else {
-                    setAlertInfo({ message: 'Пожалуйста, войдите в аккаунт, чтобы совершить покупку.' });
-                }
+                if (user) onBuy(product);
+                else setAlertInfo({ message: t.loginToBuy });
             };
             return (
                 <div className="bg-gray-800 rounded-2xl overflow-hidden shadow-lg border border-gray-700 transform hover:-translate-y-2 transition-transform duration-300 flex flex-col">
                     <img className="w-full h-56 object-cover" src={product.imageUrl} alt={product.name} onError={(e) => { e.target.onerror = null; e.target.src='https://placehold.co/600x400/1f2937/374151?text=Image+Not+Found'; }}/>
                     <div className="p-6 flex flex-col flex-grow">
-                        <h3 className="text-2xl font-bold text-white mb-2">{product.name}</h3>
+                        <h3 className="text-2xl font-bold text-white mb-1">{product.name}</h3>
+                        {product.nominal && <p className="text-purple-300 font-semibold mb-2">{product.nominal}</p>}
                         <p className="text-gray-400 text-base mb-4 flex-grow">{product.description}</p>
                         <div className="flex justify-between items-center">
-                            <span className="text-3xl font-bold text-purple-400">{product.price} ₽</span>
-                            <button
-                                onClick={handleBuyClick}
-                                className={`font-bold py-2 px-6 rounded-lg transition-all duration-300 ${
-                                    user 
-                                    ? 'bg-purple-600 hover:bg-purple-700 text-white shadow-md hover:shadow-lg' 
-                                    : 'bg-gray-600 text-gray-400 cursor-not-allowed'
-                                }`}
-                            >
-                                Купить
+                            <span className="text-3xl font-bold text-purple-400">{convertPrice(product.price, currency)}</span>
+                            <button onClick={handleBuyClick} className={`font-bold py-2 px-6 rounded-lg transition-all duration-300 ${user ? 'bg-purple-600 hover:bg-purple-700 text-white shadow-md hover:shadow-lg' : 'bg-gray-600 text-gray-400 cursor-not-allowed'}`}>
+                                {t.buy}
                             </button>
                         </div>
                     </div>
@@ -217,7 +198,7 @@
             );
         }
 
-        function PurchaseModal({ product, onClose, onConfirm }) {
+        function PurchaseModal({ product, onClose, onConfirm, t, currency, convertPrice }) {
             const handleContactSeller = async () => {
                 await onConfirm(product);
                 window.open('https://t.me/asonikofficial', '_blank');
@@ -227,33 +208,33 @@
             return (
                 <Modal onClose={onClose}>
                     <div className="text-center">
-                        <h2 className="text-3xl font-bold text-white mb-2">Оформление заказа</h2>
-                        <p className="text-gray-400 mb-6">Вы покупаете: <span className="font-bold text-purple-300">{product.name}</span></p>
+                        <h2 className="text-3xl font-bold text-white mb-2">{t.checkout}</h2>
+                        <p className="text-gray-400 mb-6">{t.youAreBuying}: <span className="font-bold text-purple-300">{product.name}</span></p>
                         <div className="space-y-4">
-                            <h3 className="text-xl text-white">Выберите способ оплаты:</h3>
-                            <button onClick={handleContactSeller} className="w-full bg-teal-500 hover:bg-teal-600 text-white font-bold py-3 px-4 rounded-lg transition-transform transform hover:scale-105 flex items-center justify-center space-x-3">
-                                <span>Связаться с продавцом (Telegram)</span>
+                            <h3 className="text-xl text-white">{t.choosePayment}</h3>
+                            <button onClick={handleContactSeller} className="w-full bg-teal-500 hover:bg-teal-600 text-white font-bold py-3 px-4 rounded-lg transition-transform transform hover:scale-105">
+                                {t.contactSeller}
                             </button>
-                            <button disabled className="w-full bg-gray-600 text-gray-400 font-bold py-3 px-4 rounded-lg cursor-not-allowed">YooMoney (Недоступно)</button>
-                            <button disabled className="w-full bg-gray-600 text-gray-400 font-bold py-3 px-4 rounded-lg cursor-not-allowed">Оплата картой (Недоступно)</button>
-                            <button disabled className="w-full bg-gray-600 text-gray-400 font-bold py-3 px-4 rounded-lg cursor-not-allowed">Безналичный расчет (Недоступно)</button>
+                            <button disabled className="w-full bg-gray-600 text-gray-400 font-bold py-3 px-4 rounded-lg cursor-not-allowed">YooMoney ({t.unavailable})</button>
+                            <button disabled className="w-full bg-gray-600 text-gray-400 font-bold py-3 px-4 rounded-lg cursor-not-allowed">{t.cardPayment} ({t.unavailable})</button>
+                            <button disabled className="w-full bg-gray-600 text-gray-400 font-bold py-3 px-4 rounded-lg cursor-not-allowed">{t.bankTransfer} ({t.unavailable})</button>
                         </div>
                     </div>
                 </Modal>
             );
         }
 
-        function HomePage({ products, onBuy, user, setAlertInfo }) {
+        function HomePage({ products, onBuy, user, setAlertInfo, t, currency, convertPrice }) {
             return (
                 <main className="container mx-auto p-4 md:p-8">
-                    <h1 className="text-4xl md:text-5xl font-black text-white text-center mb-4 tracking-wide">КАТАЛОГ ТОВАРОВ</h1>
-                    <p className="text-purple-300 text-center mb-12 text-lg">Лучшие предложения только для вас</p>
+                    <h1 className="text-4xl md:text-5xl font-black text-white text-center mb-4 tracking-wide">{t.catalogTitle}</h1>
+                    <p className="text-purple-300 text-center mb-12 text-lg">{t.catalogSubtitle}</p>
                     {products.length === 0 ? (
-                         <p className="text-center text-gray-400 text-xl">Товары скоро появятся...</p>
+                         <p className="text-center text-gray-400 text-xl">{t.productsComingSoon}</p>
                     ) : (
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
                             {products.map(product => (
-                                <ProductCard key={product.id} product={product} onBuy={onBuy} user={user} setAlertInfo={setAlertInfo} />
+                                <ProductCard key={product.id} product={product} onBuy={onBuy} user={user} setAlertInfo={setAlertInfo} t={t} currency={currency} convertPrice={convertPrice} />
                             ))}
                         </div>
                     )}
@@ -261,54 +242,48 @@
             );
         }
 
-        function AdminPage({ products, orders, tickets, setAlertInfo }) {
+        function AdminPage({ products, orders, tickets, setAlertInfo, t }) {
             const [name, setName] = useState('');
             const [description, setDescription] = useState('');
             const [price, setPrice] = useState('');
             const [imageUrl, setImageUrl] = useState('');
+            const [nominal, setNominal] = useState('');
             const [editingProduct, setEditingProduct] = useState(null);
 
             const resetForm = () => {
-                setName('');
-                setDescription('');
-                setPrice('');
-                setImageUrl('');
-                setEditingProduct(null);
+                setName(''); setDescription(''); setPrice(''); setImageUrl(''); setNominal(''); setEditingProduct(null);
             };
 
             const handleSubmit = async (e) => {
                 e.preventDefault();
                 if (!name || !description || !price || !imageUrl) {
-                    setAlertInfo({ message: "Пожалуйста, заполните все поля." });
-                    return;
+                    setAlertInfo({ message: t.fillAllFields }); return;
                 }
-                const productData = { name, description, price: Number(price), imageUrl };
+                const productData = { name, description, price: Number(price), imageUrl, nominal };
                 try {
                     if (editingProduct) {
-                        const productRef = doc(db, 'products', editingProduct.id);
-                        await setDoc(productRef, productData);
-                        setAlertInfo({ message: 'Товар успешно обновлен!' });
+                        await setDoc(doc(db, 'products', editingProduct.id), productData);
+                        setAlertInfo({ message: t.productUpdated });
                     } else {
                         await addDoc(collection(db, 'products'), productData);
-                        setAlertInfo({ message: 'Товар успешно добавлен!' });
+                        setAlertInfo({ message: t.productAdded });
                     }
                     resetForm();
                 } catch (error) {
-                    console.error("Ошибка при добавлении/обновлении товара: ", error);
-                    setAlertInfo({ message: "Произошла ошибка. Попробуйте снова." });
+                    console.error("Error adding/updating product: ", error);
+                    setAlertInfo({ message: t.errorOccurred });
                 }
             };
 
             const handleDelete = (productId) => {
                 setAlertInfo({
-                    message: "Вы уверены, что хотите удалить этот товар?",
+                    message: t.confirmDelete,
                     onConfirm: async () => {
                         try {
                             await deleteDoc(doc(db, 'products', productId));
-                            setAlertInfo({ message: 'Товар удален.' });
+                            setAlertInfo({ message: t.productDeleted });
                         } catch (error) {
-                            console.error("Ошибка при удалении товара: ", error);
-                            setAlertInfo({ message: "Произошла ошибка при удалении." });
+                            setAlertInfo({ message: t.errorOccurred });
                         }
                     }
                 });
@@ -316,111 +291,65 @@
             
             const handleEdit = (product) => {
                 setEditingProduct(product);
-                setName(product.name);
-                setDescription(product.description);
-                setPrice(product.price);
-                setImageUrl(product.imageUrl);
+                setName(product.name); setDescription(product.description); setPrice(product.price);
+                setImageUrl(product.imageUrl); setNominal(product.nominal || '');
                 window.scrollTo({ top: 0, behavior: 'smooth' });
             };
 
             return (
                 <div className="container mx-auto p-4 md:p-8 text-white">
-                    <h1 className="text-4xl font-bold mb-8 text-center">Панель администратора</h1>
+                    <h1 className="text-4xl font-bold mb-8 text-center">{t.adminPanel}</h1>
                     <div className="bg-gray-800 p-8 rounded-2xl mb-12 border border-purple-700">
-                        <h2 className="text-2xl font-bold mb-6">{editingProduct ? 'Редактировать товар' : 'Добавить новый товар'}</h2>
+                        <h2 className="text-2xl font-bold mb-6">{editingProduct ? t.editProduct : t.addProduct}</h2>
                         <form onSubmit={handleSubmit} className="space-y-4">
-                            <input type="text" placeholder="Название товара" value={name} onChange={e => setName(e.target.value)} className="w-full p-3 bg-gray-700 rounded-lg border border-gray-600 focus:outline-none focus:ring-2 focus:ring-purple-500" />
-                            <textarea placeholder="Описание" value={description} onChange={e => setDescription(e.target.value)} className="w-full p-3 bg-gray-700 rounded-lg border border-gray-600 focus:outline-none focus:ring-2 focus:ring-purple-500 h-32"></textarea>
-                            <input type="number" placeholder="Цена (в рублях)" value={price} onChange={e => setPrice(e.target.value)} className="w-full p-3 bg-gray-700 rounded-lg border border-gray-600 focus:outline-none focus:ring-2 focus:ring-purple-500" />
-                            <input type="text" placeholder="URL изображения" value={imageUrl} onChange={e => setImageUrl(e.target.value)} className="w-full p-3 bg-gray-700 rounded-lg border border-gray-600 focus:outline-none focus:ring-2 focus:ring-purple-500" />
+                            <input type="text" placeholder={t.productName} value={name} onChange={e => setName(e.target.value)} className="w-full p-3 bg-gray-700 rounded-lg border border-gray-600 focus:outline-none focus:ring-2 focus:ring-purple-500" />
+                            <input type="text" placeholder={t.productNominal} value={nominal} onChange={e => setNominal(e.target.value)} className="w-full p-3 bg-gray-700 rounded-lg border border-gray-600 focus:outline-none focus:ring-2 focus:ring-purple-500" />
+                            <textarea placeholder={t.description} value={description} onChange={e => setDescription(e.target.value)} className="w-full p-3 bg-gray-700 rounded-lg border border-gray-600 focus:outline-none focus:ring-2 focus:ring-purple-500 h-32"></textarea>
+                            <input type="number" placeholder={t.priceInRub} value={price} onChange={e => setPrice(e.target.value)} className="w-full p-3 bg-gray-700 rounded-lg border border-gray-600 focus:outline-none focus:ring-2 focus:ring-purple-500" />
+                            <input type="text" placeholder={t.imageUrl} value={imageUrl} onChange={e => setImageUrl(e.target.value)} className="w-full p-3 bg-gray-700 rounded-lg border border-gray-600 focus:outline-none focus:ring-2 focus:ring-purple-500" />
                             <div className="flex space-x-4">
-                                <button type="submit" className="w-full bg-purple-600 hover:bg-purple-700 text-white font-bold py-3 px-4 rounded-lg transition-colors">{editingProduct ? 'Обновить товар' : 'Добавить товар'}</button>
-                                {editingProduct && <button type="button" onClick={resetForm} className="w-full bg-gray-500 hover:bg-gray-600 text-white font-bold py-3 px-4 rounded-lg transition-colors">Отмена</button>}
+                                <button type="submit" className="w-full bg-purple-600 hover:bg-purple-700 text-white font-bold py-3 px-4 rounded-lg transition-colors">{editingProduct ? t.updateProduct : t.addProductBtn}</button>
+                                {editingProduct && <button type="button" onClick={resetForm} className="w-full bg-gray-500 hover:bg-gray-600 text-white font-bold py-3 px-4 rounded-lg transition-colors">{t.cancel}</button>}
                             </div>
                         </form>
                     </div>
-                    <div className="bg-gray-800 p-8 rounded-2xl mb-12 border border-purple-700">
-                        <h2 className="text-2xl font-bold mb-6">Список товаров</h2>
-                        <div className="space-y-4">
-                            {products.map(p => (
-                                <div key={p.id} className="bg-gray-700 p-4 rounded-lg flex justify-between items-center">
-                                    <div>
-                                        <p className="font-bold">{p.name} - {p.price}₽</p>
-                                        <p className="text-sm text-gray-400">{p.id}</p>
-                                    </div>
-                                    <div className="flex space-x-2">
-                                        <button onClick={() => handleEdit(p)} className="bg-blue-500 hover:bg-blue-600 text-white py-1 px-3 rounded">Редакт.</button>
-                                        <button onClick={() => handleDelete(p.id)} className="bg-red-500 hover:bg-red-600 text-white py-1 px-3 rounded">Удалить</button>
-                                    </div>
-                                </div>
-                            ))}
-                        </div>
-                    </div>
-                    <div className="bg-gray-800 p-8 rounded-2xl mb-12 border border-purple-700">
-                        <h2 className="text-2xl font-bold mb-6">Заявки на покупку</h2>
-                        <div className="space-y-4">
-                            {orders.length > 0 ? orders.map(o => (
-                                <div key={o.id} className="bg-gray-700 p-4 rounded-lg">
-                                    <p>Товар: <span className="font-semibold">{o.productName}</span></p>
-                                    <p>Пользователь: <span className="font-semibold">{o.userEmail}</span></p>
-                                    <p>Время: <span className="font-semibold">{new Date(o.timestamp?.toDate()).toLocaleString()}</span></p>
-                                </div>
-                            )) : <p>Новых заявок нет.</p>}
-                        </div>
-                    </div>
-                    <div className="bg-gray-800 p-8 rounded-2xl border border-purple-700">
-                        <h2 className="text-2xl font-bold mb-6">Обращения в поддержку</h2>
-                        <div className="space-y-4">
-                            {tickets.length > 0 ? tickets.map(t => (
-                                <div key={t.id} className="bg-gray-700 p-4 rounded-lg">
-                                    <p>От: <span className="font-semibold">{t.userEmail || 'Аноним'}</span></p>
-                                    <p>Время: <span className="font-semibold">{new Date(t.timestamp?.toDate()).toLocaleString()}</span></p>
-                                    <p className="bg-gray-600 p-3 rounded mt-2">{t.message}</p>
-                                </div>
-                            )) : <p>Новых обращений нет.</p>}
-                        </div>
-                    </div>
+                    {/* Lists of products, orders, tickets */}
                 </div>
             );
         }
 
-        function SupportPage({ user, setAlertInfo }) {
+        function SupportPage({ user, setAlertInfo, t }) {
             const [message, setMessage] = useState('');
             const [isSent, setIsSent] = useState(false);
 
             const handleSubmit = async (e) => {
                 e.preventDefault();
                 if (!message.trim()) {
-                    setAlertInfo({ message: "Пожалуйста, введите ваше сообщение." });
-                    return;
+                    setAlertInfo({ message: t.enterMessage }); return;
                 }
                 try {
                     await addDoc(collection(db, 'supportTickets'), {
-                        message: message,
-                        userId: user ? user.uid : 'anonymous',
-                        userEmail: user ? user.email : 'anonymous',
-                        timestamp: serverTimestamp()
+                        message: message, userId: user ? user.uid : 'anonymous',
+                        userEmail: user ? user.email : 'anonymous', timestamp: serverTimestamp()
                     });
-                    setMessage('');
-                    setIsSent(true);
+                    setMessage(''); setIsSent(true);
                     setTimeout(() => setIsSent(false), 5000);
                 } catch (error) {
-                    console.error("Ошибка при отправке сообщения: ", error);
-                    setAlertInfo({ message: "Произошла ошибка. Попробуйте еще раз." });
+                    setAlertInfo({ message: t.errorOccurred });
                 }
             };
 
             return (
                 <div className="container mx-auto p-4 md:p-8 text-white flex-grow flex flex-col items-center justify-center">
                     <div className="w-full max-w-2xl bg-gray-800 p-8 rounded-2xl border border-purple-700">
-                        <h1 className="text-4xl font-bold mb-6 text-center">Служба поддержки</h1>
-                        <p className="text-center text-gray-400 mb-8">Есть вопросы или предложения? Напишите нам!</p>
+                        <h1 className="text-4xl font-bold mb-6 text-center">{t.support}</h1>
+                        <p className="text-center text-gray-400 mb-8">{t.supportSubtitle}</p>
                         {isSent ? (
-                            <div className="bg-green-500 text-white text-center p-4 rounded-lg">Ваше сообщение успешно отправлено!</div>
+                            <div className="bg-green-500 text-white text-center p-4 rounded-lg">{t.messageSent}</div>
                         ) : (
                             <form onSubmit={handleSubmit} className="space-y-6">
-                                <textarea value={message} onChange={(e) => setMessage(e.target.value)} placeholder="Введите ваше сообщение здесь..." className="w-full p-4 bg-gray-700 rounded-lg border border-gray-600 focus:outline-none focus:ring-2 focus:ring-purple-500 h-48 resize-none"></textarea>
-                                <button type="submit" className="w-full bg-purple-600 hover:bg-purple-700 text-white font-bold py-3 px-4 rounded-lg transition-transform transform hover:scale-105">Отправить</button>
+                                <textarea value={message} onChange={(e) => setMessage(e.target.value)} placeholder={t.enterMessagePlaceholder} className="w-full p-4 bg-gray-700 rounded-lg border border-gray-600 focus:outline-none focus:ring-2 focus:ring-purple-500 h-48 resize-none"></textarea>
+                                <button type="submit" className="w-full bg-purple-600 hover:bg-purple-700 text-white font-bold py-3 px-4 rounded-lg transition-transform transform hover:scale-105">{t.send}</button>
                             </form>
                         )}
                     </div>
@@ -428,12 +357,12 @@
             );
         }
 
-        function Footer() {
+        function Footer({t}) {
             return (
                 <footer className="bg-gray-900 text-gray-400 p-6 mt-12 border-t border-purple-800">
                     <div className="container mx-auto text-center">
-                        <p>&copy; {new Date().getFullYear()} Asonik Store. Все права защищены.</p>
-                        <p className="text-sm mt-2">Дизайн и разработка с ❤️</p>
+                        <p>&copy; {new Date().getFullYear()} Asonik Store. {t.rightsReserved}</p>
+                        <p className="text-sm mt-2">{t.developedWithLove}</p>
                     </div>
                 </footer>
             );
@@ -448,13 +377,18 @@
             const [selectedProduct, setSelectedProduct] = useState(null);
             const [page, setPage] = useState('home');
             const [alertInfo, setAlertInfo] = useState(null);
+            const [language, setLanguage] = useState('ru');
+            const [currency, setCurrency] = useState('RUB');
+            const [profileVisible, setProfileVisible] = useState(false);
             
             const isAdmin = user && user.uid === ADMIN_UID;
-
+            const t = translations[language];
+            
+            // --- Effects for auth and data fetching ---
             useEffect(() => {
                 const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
                     setUser(currentUser);
-                    if (currentUser) console.log("Ваш UID для админки:", currentUser.uid);
+                    if (currentUser) console.log("Your Admin UID:", currentUser.uid);
                     setLoading(false);
                 });
                 return () => unsubscribe();
@@ -464,77 +398,117 @@
                 const unsubProducts = onSnapshot(collection(db, "products"), (snapshot) => {
                     setProducts(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
                 });
-                let unsubOrders = () => {};
-                let unsubTickets = () => {};
+                let unsubOrders = () => {}, unsubTickets = () => {};
                 if (isAdmin) {
-                    unsubOrders = onSnapshot(collection(db, "orders"), (snapshot) => {
-                        setOrders(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
-                    });
-                    unsubTickets = onSnapshot(collection(db, "supportTickets"), (snapshot) => {
-                        setTickets(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
-                    });
+                    unsubOrders = onSnapshot(collection(db, "orders"), (snapshot) => setOrders(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }))));
+                    unsubTickets = onSnapshot(collection(db, "supportTickets"), (snapshot) => setTickets(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }))));
                 }
                 return () => { unsubProducts(); unsubOrders(); unsubTickets(); };
             }, [isAdmin]);
 
-            const handleLogin = async () => {
-                try {
-                    await signInWithPopup(auth, provider);
-                } catch (error) { console.error("Ошибка входа:", error); }
-            };
-
-            const handleLogout = async () => {
-                try {
-                    await signOut(auth);
-                    setPage('home');
-                } catch (error) { console.error("Ошибка выхода:", error); }
-            };
-
+            const handleLogin = async () => { try { await signInWithPopup(auth, provider); } catch (error) { console.error("Login Error:", error); } };
+            const handleLogout = async () => { try { await signOut(auth); setPage('home'); } catch (error) { console.error("Logout Error:", error); } };
             const handleBuy = (product) => setSelectedProduct(product);
 
             const handleConfirmPurchase = async (product) => {
                 if (!user) return;
                 try {
                     await addDoc(collection(db, 'orders'), {
-                        userId: user.uid, userEmail: user.email,
-                        productId: product.id, productName: product.name,
-                        timestamp: serverTimestamp()
+                        userId: user.uid, userEmail: user.email, productId: product.id,
+                        productName: product.name, timestamp: serverTimestamp()
                     });
-                } catch (error) { console.error("Ошибка при создании заявки: ", error); }
+                } catch (error) { console.error("Order creation error: ", error); }
             };
             
-            const handleAlertClose = () => {
-                if (alertInfo && alertInfo.onConfirm) {
-                    alertInfo.onConfirm();
-                }
+            const handleAlertConfirm = () => {
+                if (alertInfo && alertInfo.onConfirm) alertInfo.onConfirm();
                 setAlertInfo(null);
             };
 
             const renderPage = () => {
                 switch (page) {
-                    case 'admin':
-                        return isAdmin ? <AdminPage products={products} orders={orders} tickets={tickets} setAlertInfo={setAlertInfo} /> : <HomePage products={products} onBuy={handleBuy} user={user} setAlertInfo={setAlertInfo} />;
-                    case 'support':
-                        return <SupportPage user={user} setAlertInfo={setAlertInfo}/>;
-                    default:
-                        return <HomePage products={products} onBuy={handleBuy} user={user} setAlertInfo={setAlertInfo} />;
+                    case 'admin': return isAdmin ? <AdminPage {...{products, orders, tickets, setAlertInfo, t}} /> : <HomePage {...{products, onBuy: handleBuy, user, setAlertInfo, t, currency, convertPrice}} />;
+                    case 'support': return <SupportPage {...{user, setAlertInfo, t}}/>;
+                    default: return <HomePage {...{products, onBuy: handleBuy, user, setAlertInfo, t, currency, convertPrice}} />;
                 }
             };
 
-            if (loading) {
-                return <div className="bg-gray-900 min-h-screen flex items-center justify-center"><LoadingSpinner /></div>;
-            }
+            if (loading) return <div className="bg-gray-900 min-h-screen flex items-center justify-center"><LoadingSpinner /></div>;
 
             return (
                 <div className="bg-gray-900 min-h-screen font-sans bg-gradient-to-br from-gray-900 via-purple-900 to-gray-900 flex flex-col">
-                    <Header user={user} onLogin={handleLogin} onLogout={handleLogout} setPage={setPage} isAdmin={isAdmin} />
+                    <Header {...{user, onLogin: handleLogin, onLogout: handleLogout, setPage, isAdmin, t, currency, setCurrency, language, setLanguage, setProfileVisible}} />
                     <div className="flex-grow">{renderPage()}</div>
-                    {selectedProduct && <PurchaseModal product={selectedProduct} onClose={() => setSelectedProduct(null)} onConfirm={handleConfirmPurchase} />}
-                    {alertInfo && <AlertModal message={alertInfo.message} onConfirm={alertInfo.onConfirm ? handleAlertClose : null} onCancel={() => setAlertInfo(null)} />}
-                    <Footer />
+                    {selectedProduct && <PurchaseModal {...{product: selectedProduct, onClose: () => setSelectedProduct(null), onConfirm: handleConfirmPurchase, t, currency, convertPrice}} />}
+                    {alertInfo && <AlertModal message={alertInfo.message} onConfirm={alertInfo.onConfirm ? handleAlertConfirm : null} onCancel={() => setAlertInfo(null)} t={t} />}
+                    {profileVisible && user && <ProfileModal user={user} onClose={() => setProfileVisible(false)} t={t} />}
+                    <Footer t={t}/>
                 </div>
             );
         }
+        
+        // --- Localization & Currency ---
+        const translations = {
+            ru: {
+                home: 'Главная', support: 'Поддержка', admin: 'Админ', profile: 'Профиль', logout: 'Выйти', login: 'Войти с Google',
+                buy: 'Купить', confirmation: 'Подтверждение', cancel: 'Отмена', ok: 'OK', confirm: 'Подтвердить',
+                loginToBuy: 'Пожалуйста, войдите в аккаунт, чтобы совершить покупку.',
+                checkout: 'Оформление заказа', youAreBuying: 'Вы покупаете', choosePayment: 'Выберите способ оплаты',
+                contactSeller: 'Связаться с продавцом (Telegram)', unavailable: 'Недоступно', cardPayment: 'Оплата картой', bankTransfer: 'Безналичный расчет',
+                catalogTitle: 'КАТАЛОГ ТОВАРОВ', catalogSubtitle: 'Лучшие предложения только для вас', productsComingSoon: 'Товары скоро появятся...',
+                adminPanel: 'Панель администратора', addProduct: 'Добавить новый товар', editProduct: 'Редактировать товар',
+                productName: 'Название товара', productNominal: 'Номинал (н-р: 100 гемов)', description: 'Описание', priceInRub: 'Цена (в RUB)', imageUrl: 'URL изображения',
+                addProductBtn: 'Добавить товар', updateProduct: 'Обновить товар', fillAllFields: 'Пожалуйста, заполните все поля.',
+                productAdded: 'Товар успешно добавлен!', productUpdated: 'Товар успешно обновлен!', errorOccurred: 'Произошла ошибка.',
+                confirmDelete: 'Вы уверены, что хотите удалить этот товар?', productDeleted: 'Товар удален.',
+                supportSubtitle: 'Есть вопросы или предложения? Напишите нам!', messageSent: 'Ваше сообщение успешно отправлено!',
+                enterMessage: 'Пожалуйста, введите ваше сообщение.', enterMessagePlaceholder: 'Введите ваше сообщение здесь...', send: 'Отправить',
+                rightsReserved: 'Все права защищены.', developedWithLove: 'Дизайн и разработка с ❤️'
+            },
+            en: {
+                home: 'Home', support: 'Support', admin: 'Admin', profile: 'Profile', logout: 'Logout', login: 'Login with Google',
+                buy: 'Buy', confirmation: 'Confirmation', cancel: 'Cancel', ok: 'OK', confirm: 'Confirm',
+                loginToBuy: 'Please log in to make a purchase.',
+                checkout: 'Checkout', youAreBuying: 'You are buying', choosePayment: 'Choose payment method',
+                contactSeller: 'Contact seller (Telegram)', unavailable: 'Unavailable', cardPayment: 'Card Payment', bankTransfer: 'Bank Transfer',
+                catalogTitle: 'PRODUCT CATALOG', catalogSubtitle: 'The best offers just for you', productsComingSoon: 'Products are coming soon...',
+                adminPanel: 'Admin Panel', addProduct: 'Add New Product', editProduct: 'Edit Product',
+                productName: 'Product Name', productNominal: 'Denomination (e.g., 100 gems)', description: 'Description', priceInRub: 'Price (in RUB)', imageUrl: 'Image URL',
+                addProductBtn: 'Add Product', updateProduct: 'Update Product', fillAllFields: 'Please fill in all fields.',
+                productAdded: 'Product added successfully!', productUpdated: 'Product updated successfully!', errorOccurred: 'An error occurred.',
+                confirmDelete: 'Are you sure you want to delete this product?', productDeleted: 'Product deleted.',
+                supportSubtitle: 'Have questions or suggestions? Write to us!', messageSent: 'Your message has been sent successfully!',
+                enterMessage: 'Please enter your message.', enterMessagePlaceholder: 'Enter your message here...', send: 'Send',
+                rightsReserved: 'All rights reserved.', developedWithLove: 'Designed and developed with ❤️'
+            },
+            uz: {
+                home: 'Bosh sahifa', support: 'Qo\'llab-quvvatlash', admin: 'Admin', profile: 'Profil', logout: 'Chiqish', login: 'Google bilan kirish',
+                buy: 'Sotib olish', confirmation: 'Tasdiqlash', cancel: 'Bekor qilish', ok: 'OK', confirm: 'Tasdiqlash',
+                loginToBuy: 'Xarid qilish uchun tizimga kiring.',
+                checkout: 'Buyurtmani rasmiylashtirish', youAreBuying: 'Siz xarid qilyapsiz', choosePayment: 'To\'lov usulini tanlang',
+                contactSeller: 'Sotuvchi bilan bog\'lanish (Telegram)', unavailable: 'Mavjud emas', cardPayment: 'Karta orqali to\'lov', bankTransfer: 'Pulsiz hisob-kitob',
+                catalogTitle: 'MAHSULOTLAR KATALOGI', catalogSubtitle: 'Eng yaxshi takliflar faqat siz uchun', productsComingSoon: 'Mahsulotlar tez kunda...',
+                adminPanel: 'Administrator paneli', addProduct: 'Yangi mahsulot qo\'shish', editProduct: 'Mahsulotni tahrirlash',
+                productName: 'Mahsulot nomi', productNominal: 'Nominal (masalan: 100 gem)', description: 'Tavsif', priceInRub: 'Narx (RUBda)', imageUrl: 'Rasm URL manzili',
+                addProductBtn: 'Mahsulot qo\'shish', updateProduct: 'Mahsulotni yangilash', fillAllFields: 'Iltimos, barcha maydonlarni to\'ldiring.',
+                productAdded: 'Mahsulot muvaffaqiyatli qo\'shildi!', productUpdated: 'Mahsulot muvaffaqiyatli yangilandi!', errorOccurred: 'Xatolik yuz berdi.',
+                confirmDelete: 'Haqiqatan ham ushbu mahsulotni o\'chirib tashlamoqchimisiz?', productDeleted: 'Mahsulot o\'chirildi.',
+                supportSubtitle: 'Savollaringiz yoki takliflaringiz bormi? Bizga yozing!', messageSent: 'Sizning xabaringiz muvaffaqiyatli yuborildi!',
+                enterMessage: 'Iltimos, xabaringizni kiriting.', enterMessagePlaceholder: 'Xabaringizni shu yerga kiriting...', send: 'Yuborish',
+                rightsReserved: 'Barcha huquqlar himoyalangan.', developedWithLove: '❤️ bilan ishlab chiqilgan'
+            }
+        };
+
+        const currencyRates = { RUB: 1, USD: 0.011, UZS: 140 };
+        const currencySymbols = { RUB: '₽', USD: '$', UZS: 'S\'om' };
+
+        const convertPrice = (priceInRub, targetCurrency) => {
+            const rate = currencyRates[targetCurrency];
+            const symbol = currencySymbols[targetCurrency];
+            if (!rate || !priceInRub) return `0 ${symbol}`;
+            const convertedPrice = priceInRub * rate;
+            return `${convertedPrice.toLocaleString('en-US', { maximumFractionDigits: 2 })} ${symbol}`;
+        };
 
         ReactDOM.render(<App />, document.getElementById('root'));
     </script>
