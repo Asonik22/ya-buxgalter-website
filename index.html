@@ -35,7 +35,6 @@
             --accent-primary: #8b5cf6;
             --accent-secondary: #a78bfa;
             --border-color: #374151;
-            --active-nav-bg: #4c1d95;
         }
         body.light {
             --bg-primary: #f9fafb;
@@ -44,18 +43,16 @@
             --text-primary: #111827;
             --text-secondary: #4b5563;
             --border-color: #e5e7eb;
-            --active-nav-bg: #e9d5ff;
         }
         body.asonik {
-            --bg-primary: #4c1d95; /* purple-900 */
-            --bg-secondary: #5b21b6; /* purple-800 */
-            --bg-tertiary: #6d28d9; /* purple-700 */
-            --text-primary: #f5d0fe; /* purple-100 */
-            --text-secondary: #e9d5ff; /* purple-200 */
-            --accent-primary: #c084fc; /* purple-400 */
+            --bg-primary: #4c1d95;
+            --bg-secondary: #5b21b6;
+            --bg-tertiary: #6d28d9;
+            --text-primary: #f5d0fe;
+            --text-secondary: #e9d5ff;
+            --accent-primary: #c084fc;
             --accent-secondary: #ffffff;
             --border-color: #6b21a8;
-            --active-nav-bg: #3b0764;
         }
 
         .bg-primary { background-color: var(--bg-primary); }
@@ -69,7 +66,6 @@
         .accent-border { border-color: var(--accent-primary); }
         .hover\:accent-bg:hover { background-color: var(--accent-primary); }
         .hover\:accent-bg-secondary:hover { background-color: var(--accent-secondary); }
-        .active-nav-bg { background-color: var(--active-nav-bg); }
         
         .chat-bubble { max-width: 75%; word-wrap: break-word; }
         .chat-bubble-user { background-color: #4f46e5; }
@@ -115,7 +111,6 @@
         const ProfileModal = ({ user, onClose, t, setAlertInfo }) => {
             const [isUploading, setIsUploading] = useState(false);
             const [color, setColor] = useState('#8b5cf6');
-            const [borderColor, setBorderColor] = useState('#a78bfa');
             const fileInputRef = useRef(null);
 
             const handleImageUpload = async (file) => {
@@ -167,7 +162,7 @@
                 <Modal onClose={onClose}>
                     <div className="text-center text-primary">
                         <h2 className="text-3xl font-bold mb-4">{t.profile}</h2>
-                        <img src={user.photoURL} alt={user.displayName} className="w-24 h-24 rounded-full mx-auto mb-4 border-4 object-cover" style={{ borderColor: borderColor }}/>
+                        <img src={user.photoURL} alt={user.displayName} className="w-24 h-24 rounded-full mx-auto mb-4 border-4 accent-border object-cover"/>
                         <p className="text-xl mb-2">{user.displayName}</p>
                         <p className="text-secondary mb-6">{user.email}</p>
                         <div className="space-y-3">
@@ -175,10 +170,6 @@
                             <div className="flex items-center space-x-2">
                                 <button onClick={handleColorAvatar} className="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded-lg transition-colors">{t.setColorAvatar}</button>
                                 <input type="color" value={color} onChange={e => setColor(e.target.value)} className="p-1 h-10 w-14 block bg-tertiary border-color cursor-pointer rounded-lg"/>
-                            </div>
-                             <div className="flex items-center space-x-2">
-                                <span className="text-secondary">{t.frameColor}:</span>
-                                <input type="color" value={borderColor} onChange={e => setBorderColor(e.target.value)} className="p-1 h-10 w-full block bg-tertiary border-color cursor-pointer rounded-lg"/>
                             </div>
                             <button onClick={handleRevertAvatar} className="w-full bg-gray-600 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded-lg transition-colors">{t.revertAvatar}</button>
                         </div>
