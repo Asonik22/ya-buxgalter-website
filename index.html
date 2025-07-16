@@ -44,19 +44,25 @@
             --text-secondary: #4b5563;
             --border-color: #e5e7eb;
         }
-        /* --- NEW: Updated Asonik Theme --- */
+        /* --- NEW: Revamped Asonik Theme with Gradient --- */
         body.asonik {
-            --bg-primary: #ffffff;       /* White background */
-            --bg-secondary: #f3f4f6;     /* Light gray for cards/modals */
-            --bg-tertiary: #e5e7eb;      /* Darker gray for inputs */
-            --text-primary: #4c1d95;     /* Dark purple for main text */
-            --text-secondary: #6d28d9;   /* Lighter purple for secondary text */
-            --accent-primary: #8b5cf6;   /* Bright purple for accents */
-            --accent-secondary: #a78bfa; /* Lighter bright purple for hover */
-            --border-color: #d1d5db;     /* Light gray for borders */
+            --bg-primary: linear-gradient(135deg, #6d28d9, #4c1d95);
+            --bg-secondary: rgba(255, 255, 255, 0.1); /* Glassmorphism effect */
+            --bg-tertiary: rgba(255, 255, 255, 0.2);
+            --text-primary: #f5d0fe;
+            --text-secondary: #e9d5ff;
+            --accent-primary: #f5d0fe;
+            --accent-secondary: #ffffff;
+            --border-color: rgba(255, 255, 255, 0.2);
         }
+        .asonik .accent-text { color: var(--accent-primary); }
+        .asonik .text-primary { color: #ffffff; }
+        .asonik .text-secondary { color: #e9d5ff; }
+        .asonik .bg-secondary { backdrop-filter: blur(10px); }
+        .asonik .border-color { border-color: var(--border-color); }
 
-        .bg-primary { background-color: var(--bg-primary); }
+
+        .bg-primary { background: var(--bg-primary); }
         .bg-secondary { background-color: var(--bg-secondary); }
         .bg-tertiary { background-color: var(--bg-tertiary); }
         .text-primary { color: var(--text-primary); }
@@ -280,7 +286,7 @@
             </div>
         );
         
-        function HomePage({ products, onProductClick, user, setAlertInfo, t, currency, convertPrice, loading }) {
+        function HomePage({ products, onProductClick, t, currency, convertPrice, loading }) {
             const [searchTerm, setSearchTerm] = useState('');
             const [filterCategory, setFilterCategory] = useState('all');
             const [sortBy, setSortBy] = useState('new');
@@ -336,7 +342,7 @@
                     ) : (
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
                             {filteredAndSortedProducts.map(product => (
-                                <ProductCard key={product.id} {...{product, onProductClick, user, setAlertInfo, t, currency, convertPrice}} />
+                                <ProductCard key={product.id} {...{product, onProductClick, t, currency, convertPrice}} />
                             ))}
                         </div>
                     )}
@@ -344,17 +350,18 @@
             );
         }
 
-        function ProductCard({ product, onProductClick, user, setAlertInfo, t, currency, convertPrice }) {
-            const handleCardClick = () => {
-                if(user) { onProductClick(product); } 
-                else { setAlertInfo({ message: t.loginToView }); }
-            };
-            
+        function ProductCard({ product, onProductClick, t, currency, convertPrice }) {
             return (
-                <div onClick={handleCardClick} className="bg-secondary rounded-2xl overflow-hidden shadow-lg border-color transform hover:-translate-y-2 transition-transform duration-300 flex flex-col cursor-pointer">
-                    {product.pinned && <div className="absolute top-0 right-0 accent-bg text-white text-xs font-bold px-3 py-1 rounded-bl-lg">{t.pinned}</div>}
+                <div onClick={() => onProductClick(product)} className="bg-secondary rounded-2xl overflow-hidden shadow-lg border-color transform hover:-translate-y-2 transition-transform duration-300 flex flex-col cursor-pointer relative">
+                    {product.pinned && <div className="absolute top-0 right-0 accent-bg text-white text-xs font-bold px-3 py-1 rounded-bl-lg z-10">{t.pinned}</div>}
                     <img className="w-full h-56 object-cover" src={product.imageUrl} alt={product.name} onError={(e) => { e.target.onerror = null; e.target.src=`https://placehold.co/600x400/1f2937/374151?text=${encodeURIComponent(t.imageNotFound)}`; }}/>
                     <div className="p-6 flex flex-col flex-grow">
+                        {product.isVerified && (
+                            <div className="flex items-center text-green-400 text-sm mb-2">
+                                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-1" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" /></svg>
+                                {t.verifiedByStore}
+                            </div>
+                        )}
                         <h3 className="text-2xl font-bold text-primary mb-1">{product.name}</h3>
                         {product.nominal && <p className="accent-text font-semibold mb-2">{product.nominal}</p>}
                         <div className="flex-grow"></div>
@@ -366,7 +373,7 @@
             );
         }
 
-        function ProductModal({ product, onClose, onBuy, setAlertInfo, t, currency, convertPrice }) {
+        function ProductModal({ product, user, onClose, onBuy, setAlertInfo, t, currency, convertPrice }) {
              const handleShare = () => {
                 const productUrl = `${window.location.origin}${window.location.pathname}?product=${product.id}`;
                 navigator.clipboard.writeText(productUrl).then(() => {
@@ -382,11 +389,25 @@
                 });
             };
 
+            const handleBuyClick = () => {
+                if (user) {
+                    onBuy(product);
+                } else {
+                    setAlertInfo({ message: t.loginToBuy });
+                }
+            };
+
             return (
                 <Modal onClose={onClose} size="max-w-4xl">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                         <img src={product.imageUrl} alt={product.name} className="w-full h-auto object-cover rounded-lg"/>
                         <div className="flex flex-col">
+                            {product.isVerified && (
+                                <div className="flex items-center text-green-400 text-sm mb-2">
+                                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-1" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" /></svg>
+                                    {t.verifiedByStore}
+                                </div>
+                            )}
                             <h2 className="text-4xl font-bold text-primary mb-2">{product.name}</h2>
                             {product.nominal && <p className="text-xl accent-text font-semibold mb-4">{product.nominal}</p>}
                             <p className="text-secondary mb-6 flex-grow">{product.description}</p>
@@ -396,7 +417,7 @@
                                     <button onClick={handleShare} className="bg-tertiary hover:bg-gray-700 p-4 rounded-lg transition-colors">
                                         <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-primary" viewBox="0 0 20 20" fill="currentColor"><path d="M15 8a3 3 0 10-2.977-2.63l-4.94 2.47a3 3 0 100 4.319l4.94 2.47a3 3 0 10.895-1.789l-4.94-2.47a3.027 3.027 0 000-.74l4.94-2.47C13.456 7.68 14.19 8 15 8z" /></svg>
                                     </button>
-                                    <button onClick={() => onBuy(product)} className="accent-bg hover:accent-bg-secondary text-white font-bold py-4 px-8 rounded-lg text-lg">{t.buy}</button>
+                                    <button onClick={handleBuyClick} className="accent-bg hover:accent-bg-secondary text-white font-bold py-4 px-8 rounded-lg text-lg">{t.buy}</button>
                                 </div>
                             </div>
                         </div>
@@ -591,6 +612,7 @@
             const [price, setPrice] = useState('');
             const [imageUrl, setImageUrl] = useState('');
             const [isPinned, setIsPinned] = useState(false);
+            const [isVerified, setIsVerified] = useState(false); // New state for verified badge
             const [category, setCategory] = useState('');
             const [nominal, setNominal] = useState('');
             const [editingProduct, setEditingProduct] = useState(null);
@@ -630,7 +652,7 @@
             
             const resetForm = () => {
                 setName(''); setDescription(''); setPrice(''); setNominal('');
-                setImageUrl(''); setEditingProduct(null); setIsPinned(false); setCategory('');
+                setImageUrl(''); setEditingProduct(null); setIsPinned(false); setIsVerified(false); setCategory('');
             };
 
              const handleImageUpload = async (file) => {
@@ -654,7 +676,11 @@
                 e.preventDefault();
                 if (!name || !description || !price || !imageUrl) { setAlertInfo({ message: t.fillAllFields }); return; }
                 setIsLoading(true);
-                const productData = { name, description, price: Number(price), imageUrl, nominal, pinned: isPinned, category, createdAt: serverTimestamp(), popularity: editingProduct?.popularity || 0 };
+                const productData = { 
+                    name, description, price: Number(price), imageUrl, nominal, 
+                    pinned: isPinned, isVerified: isVerified, // Save verified status
+                    category, createdAt: serverTimestamp(), popularity: editingProduct?.popularity || 0 
+                };
                 try {
                     if (editingProduct) {
                         await setDoc(doc(db, 'products', editingProduct.id), productData, { merge: true });
@@ -679,8 +705,8 @@
             const handleEdit = (product) => {
                 setEditingProduct(product);
                 setName(product.name); setDescription(product.description); setPrice(product.price);
-                setNominal(product.nominal || ''); setIsPinned(product.pinned || false); setCategory(product.category || 'games');
-                setImageUrl(product.imageUrl);
+                setNominal(product.nominal || ''); setIsPinned(product.pinned || false); setIsVerified(product.isVerified || false);
+                setCategory(product.category || 'games'); setImageUrl(product.imageUrl);
                 setView('addProduct');
             };
             
@@ -748,9 +774,71 @@
                         </div>
                     )}
                     
-                    {view === 'addProduct' && ( <div> {/* ... add product form ... */} </div> )}
-                    {view === 'viewProducts' && ( <div> {/* ... view products list ... */} </div> )}
-
+                    {view === 'addProduct' && ( 
+                        <div>
+                            <button onClick={() => setView('dashboard')} className="mb-4 bg-tertiary p-2 rounded-lg">← {t.backToPanel}</button>
+                            <div className="bg-secondary p-8 rounded-2xl border-color">
+                                <h2 className="text-2xl font-bold mb-6 text-primary">{editingProduct ? t.editProduct : t.addProduct}</h2>
+                                <form onSubmit={handleSubmit} className="space-y-4">
+                                    <input type="text" placeholder={t.productName} value={name} onChange={e => setName(e.target.value)} className="w-full p-3 bg-tertiary rounded-lg border-color focus:outline-none focus:ring-2 accent-border text-primary" />
+                                    <input type="text" placeholder={t.productNominal} value={nominal} onChange={e => setNominal(e.target.value)} className="w-full p-3 bg-tertiary rounded-lg border-color focus:outline-none focus:ring-2 accent-border text-primary" />
+                                    <textarea placeholder={t.description} value={description} onChange={e => setDescription(e.target.value)} className="w-full p-3 bg-tertiary rounded-lg border-color focus:outline-none focus:ring-2 accent-border text-primary h-32"></textarea>
+                                    <input type="number" placeholder={t.priceInRub} value={price} onChange={e => setPrice(e.target.value)} className="w-full p-3 bg-tertiary rounded-lg border-color focus:outline-none focus:ring-2 accent-border text-primary" />
+                                    
+                                    <div className="space-y-2">
+                                        <label className="block text-secondary">{t.productImage}</label>
+                                        <div className="flex items-center space-x-2">
+                                            <input type="text" placeholder={t.imageUrl} value={imageUrl} onChange={e => setImageUrl(e.target.value)} className="w-full p-3 bg-tertiary rounded-lg border-color focus:outline-none focus:ring-2 accent-border text-primary" />
+                                            <button type="button" onClick={() => fileInputRef.current.click()} className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-4 rounded-lg">{t.uploadFile}</button>
+                                        </div>
+                                        <input type="file" ref={fileInputRef} onChange={(e) => handleImageUpload(e.target.files[0])} accept="image/*" className="hidden"/>
+                                    </div>
+                                    
+                                    <div className="flex justify-between items-center">
+                                        <div className="flex items-center space-x-3">
+                                            <label htmlFor="category" className="text-secondary">{t.category}:</label>
+                                            <input type="text" id="category" value={category} onChange={e => setCategory(e.target.value)} className="p-2 bg-tertiary rounded-lg border-color text-primary" placeholder="e.g., Shooters"/>
+                                        </div>
+                                        <div className="flex items-center space-x-3">
+                                            <input type="checkbox" id="isPinned" checked={isPinned} onChange={e => setIsPinned(e.target.checked)} className="h-5 w-5 rounded accent-bg focus:ring-purple-500"/>
+                                            <label htmlFor="isPinned" className="text-secondary">{t.pinProduct}</label>
+                                        </div>
+                                        {/* New Checkbox for Verified */}
+                                        <div className="flex items-center space-x-3">
+                                            <input type="checkbox" id="isVerified" checked={isVerified} onChange={e => setIsVerified(e.target.checked)} className="h-5 w-5 rounded accent-bg focus:ring-purple-500"/>
+                                            <label htmlFor="isVerified" className="text-secondary">{t.verifiedByStore}</label>
+                                        </div>
+                                    </div>
+                                    <div className="flex space-x-4">
+                                        <button type="submit" disabled={isLoading} className="w-full accent-bg hover:accent-bg-secondary text-white font-bold py-3 px-4 rounded-lg transition-colors disabled:bg-gray-500">{isLoading ? t.loading : (editingProduct ? t.updateProduct : t.addProductBtn)}</button>
+                                        {editingProduct && <button type="button" onClick={resetForm} className="w-full bg-gray-500 hover:bg-gray-600 text-white font-bold py-3 px-4 rounded-lg transition-colors">{t.cancel}</button>}
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+                    )}
+                    {view === 'viewProducts' && ( 
+                        <div>
+                            <button onClick={() => setView('dashboard')} className="mb-4 bg-tertiary p-2 rounded-lg">← {t.backToPanel}</button>
+                            <div className="bg-secondary p-8 rounded-2xl border-color">
+                                <h2 className="text-2xl font-bold mb-6 text-primary">{t.productList}</h2>
+                                <div className="space-y-4">
+                                    {products.map(p => (
+                                        <div key={p.id} className="bg-tertiary p-4 rounded-lg flex justify-between items-center">
+                                            <div className="flex items-center space-x-4">
+                                                <img src={p.imageUrl} className="w-16 h-16 object-cover rounded-md" />
+                                                <p className="font-bold text-primary">{p.name} - {p.price}₽</p>
+                                            </div>
+                                            <div className="flex space-x-2">
+                                                <button onClick={() => handleEdit(p)} className="bg-blue-500 hover:bg-blue-600 text-white py-1 px-3 rounded">{t.edit}</button>
+                                                <button onClick={() => handleDeleteProduct(p.id)} className="bg-red-500 hover:bg-red-600 text-white py-1 px-3 rounded">{t.delete}</button>
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        </div>
+                    )}
                     {view === 'managePromo' && (
                         <div>
                             <button onClick={() => setView('dashboard')} className="mb-4 bg-tertiary p-2 rounded-lg">← {t.backToPanel}</button>
@@ -854,7 +942,7 @@
             const [page, setPage] = useState('home');
             const [alertInfo, setAlertInfo] = useState(null);
             const [language, setLanguage] = useState('ru');
-            const [currency, setCurrency] = useState('RUB');
+            const [currency, setCurrency] = useState('UZS'); // Default currency is now UZS
             const [profileVisible, setProfileVisible] = useState(false);
             const [activeTicketId, setActiveTicketId] = useState(null);
             const [selectedProduct, setSelectedProduct] = useState(null);
@@ -866,14 +954,14 @@
             useEffect(() => {
                  const params = new URLSearchParams(window.location.search);
                 const productId = params.get('product');
-                if (productId && products.length > 0 && user) {
+                if (productId && products.length > 0) {
                     const productToShow = products.find(p => p.id === productId);
                     if (productToShow) {
                         setSelectedProduct(productToShow);
                         window.history.replaceState({}, document.title, window.location.pathname);
                     }
                 }
-            }, [products, user]);
+            }, [products]);
             
             const isAdmin = user && user.uid === ADMIN_UID;
             const t = translations[language];
@@ -902,8 +990,12 @@
             const handleLogout = async () => { try { await signOut(auth); setPage('home'); } catch (error) { console.error("Logout Error:", error); } };
             
             const handleBuy = (product) => {
-                setSelectedProduct(null);
-                setPurchasingProduct(product);
+                if (user) {
+                    setSelectedProduct(null);
+                    setPurchasingProduct(product);
+                } else {
+                    setAlertInfo({ message: t.loginToBuy });
+                }
             };
 
             const handleConfirmPurchase = async (product, purchaseDetails) => {
@@ -941,10 +1033,10 @@
 
             const renderPage = () => {
                 switch (page) {
-                    case 'admin': return isAdmin ? <AdminPage {...{products, faqs, setAlertInfo, t, setActiveTicketId, handleDeleteProduct}} /> : <HomePage {...{products, onProductClick: setSelectedProduct, user, setAlertInfo, t, currency, convertPrice, loading}} />;
+                    case 'admin': return isAdmin ? <AdminPage {...{products, faqs, setAlertInfo, t, setActiveTicketId, handleDeleteProduct}} /> : <HomePage {...{products, onProductClick: setSelectedProduct, t, currency, convertPrice, loading}} />;
                     case 'support': return user ? <SupportPage {...{user, t, setActiveTicketId}}/> : <div className="text-center text-primary p-10">{t.loginForSupport}</div>;
                     case 'faq': return <FAQPage faqs={faqs} t={t} />;
-                    default: return <HomePage {...{products, onProductClick: setSelectedProduct, user, setAlertInfo, t, currency, convertPrice, loading}} />;
+                    default: return <HomePage {...{products, onProductClick: setSelectedProduct, t, currency, convertPrice, loading}} />;
                 }
             };
             
@@ -955,7 +1047,7 @@
                     <Header {...{user, onLogin: handleLogin, onLogout: handleLogout, setPage, isAdmin, t, currency, setCurrency, language, setLanguage, setProfileVisible, theme, setTheme}} />
                     <div className="flex-grow">{renderPage()}</div>
                     
-                    {selectedProduct && user && <ProductModal product={selectedProduct} onClose={() => setSelectedProduct(null)} onBuy={handleBuy} setAlertInfo={setAlertInfo} t={t} currency={currency} convertPrice={convertPrice} />}
+                    {selectedProduct && <ProductModal product={selectedProduct} user={user} onClose={() => setSelectedProduct(null)} onBuy={handleBuy} setAlertInfo={setAlertInfo} t={t} currency={currency} convertPrice={convertPrice} />}
                     {purchasingProduct && user && <PurchaseModal product={purchasingProduct} onClose={() => setPurchasingProduct(null)} onConfirm={handleConfirmPurchase} t={t} currency={currency} convertPrice={convertPrice} setAlertInfo={setAlertInfo} />}
                     
                     {activeTicketId && user && <ChatModal ticketId={activeTicketId} user={user} isAdmin={isAdmin} onClose={() => setActiveTicketId(null)} t={t} />}
@@ -972,6 +1064,7 @@
                 home: 'Главная', support: 'Поддержка', faq: 'FAQ', adminPanelTitle: 'Админ-панель', profile: 'Профиль', logout: 'Выйти', login: 'Войти',
                 buy: 'Купить', confirmation: 'Подтверждение', cancel: 'Отмена', ok: 'OK', confirm: 'Подтвердить',
                 loginToView: 'Пожалуйста, войдите, чтобы просмотреть детали товара.',
+                loginToBuy: 'Пожалуйста, войдите, чтобы совершить покупку.',
                 imageNotFound: 'Изображение не найдено',
                 catalogTitle: 'КАТАЛОГ ТОВАРОВ', catalogSubtitle: 'Лучшие предложения только для вас',
                 addProduct: 'Добавить товар', editProduct: 'Редактировать товар', edit: 'Ред.', delete: 'Удал.',
@@ -1002,23 +1095,28 @@
                 promoCodeName: 'Название промокода', discountPercentage: 'Размер скидки', existingPromoCodes: 'Существующие промокоды',
                 promoAdded: 'Промокод добавлен!', promoDeleted: 'Промокод удален!', confirmDeletePromo: 'Вы уверены, что хотите удалить этот промокод?',
                 payWithPromo: 'Применить промокод', apply: 'Применить', promoNotFound: 'Промокод не найден или недействителен.', promoApplied: 'Промокод применен',
-                usageLimit: 'Лимит использований', used: 'Использовано', promoLimitReached: 'Лимит использования этого промокода исчерпан.'
+                usageLimit: 'Лимит использований', used: 'Использовано', promoLimitReached: 'Лимит использования этого промокода исчерпан.',
+                verifiedByStore: 'Подтверждено магазином'
             },
             en: {
                 // ... English translations ...
+                loginToBuy: 'Please log in to make a purchase.',
                 managePromoCodes: 'Manage Promo Codes', promoCode: 'Promo Code', discount: 'Discount', addPromoCode: 'Add Promo Code',
                 promoCodeName: 'Promo Code Name', discountPercentage: 'Discount Percentage', existingPromoCodes: 'Existing Promo Codes',
                 promoAdded: 'Promo code added!', promoDeleted: 'Promo code deleted!', confirmDeletePromo: 'Are you sure you want to delete this promo code?',
                 payWithPromo: 'Apply a promo code', apply: 'Apply', promoNotFound: 'Promo code not found or invalid.', promoApplied: 'Promo code applied',
-                usageLimit: 'Usage Limit', used: 'Used', promoLimitReached: 'The usage limit for this promo code has been reached.'
+                usageLimit: 'Usage Limit', used: 'Used', promoLimitReached: 'The usage limit for this promo code has been reached.',
+                verifiedByStore: 'Verified by Store'
             },
             uz: {
                 // ... Uzbek translations ...
+                loginToBuy: 'Xarid qilish uchun tizimga kiring.',
                 managePromoCodes: 'Promo-kodlarni boshqarish', promoCode: 'Promo-kod', discount: 'Chegirma', addPromoCode: 'Promo-kod qo\'shish',
                 promoCodeName: 'Promo-kod nomi', discountPercentage: 'Chegirma foizi', existingPromoCodes: 'Mavjud promo-kodlar',
                 promoAdded: 'Promo-kod qo\'shildi!', promoDeleted: 'Promo-kod o\'chirildi!', confirmDeletePromo: 'Haqiqatan ham ushbu promo-kodni o\'chirmoqchimisiz?',
                 payWithPromo: 'Promo-kodni qo\'llash', apply: 'Qo\'llash', promoNotFound: 'Promo-kod topilmadi yoki yaroqsiz.', promoApplied: 'Promo-kod qo\'llanildi',
-                usageLimit: 'Foydalanish chegarasi', used: 'Foydalanilgan', promoLimitReached: 'Ushbu promo-koddan foydalanish chegarasi tugadi.'
+                usageLimit: 'Foydalanish chegarasi', used: 'Foydalanilgan', promoLimitReached: 'Ushbu promo-koddan foydalanish chegarasi tugadi.',
+                verifiedByStore: 'Do\'kon tomonidan tasdiqlangan'
             }
         };
 
