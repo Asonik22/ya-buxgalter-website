@@ -45,12 +45,12 @@
             --border-color: #e5e7eb;
         }
         body.asonik {
-            --bg-primary: #4c1d95;
-            --bg-secondary: #5b21b6;
-            --bg-tertiary: #6d28d9;
-            --text-primary: #f5d0fe;
-            --text-secondary: #e9d5ff;
-            --accent-primary: #c084fc;
+            --bg-primary: #4c1d95; /* purple-900 */
+            --bg-secondary: #5b21b6; /* purple-800 */
+            --bg-tertiary: #6d28d9; /* purple-700 */
+            --text-primary: #f5d0fe; /* purple-100 */
+            --text-secondary: #e9d5ff; /* purple-200 */
+            --accent-primary: #c084fc; /* purple-400 */
             --accent-secondary: #ffffff;
             --border-color: #6b21a8;
         }
@@ -111,6 +111,7 @@
         const ProfileModal = ({ user, onClose, t, setAlertInfo }) => {
             const [isUploading, setIsUploading] = useState(false);
             const [color, setColor] = useState('#8b5cf6');
+            const [borderColor, setBorderColor] = useState('#a78bfa');
             const fileInputRef = useRef(null);
 
             const handleImageUpload = async (file) => {
@@ -162,7 +163,7 @@
                 <Modal onClose={onClose}>
                     <div className="text-center text-primary">
                         <h2 className="text-3xl font-bold mb-4">{t.profile}</h2>
-                        <img src={user.photoURL} alt={user.displayName} className="w-24 h-24 rounded-full mx-auto mb-4 border-4 accent-border object-cover"/>
+                        <img src={user.photoURL} alt={user.displayName} className="w-24 h-24 rounded-full mx-auto mb-4 border-4 object-cover" style={{ borderColor: borderColor }}/>
                         <p className="text-xl mb-2">{user.displayName}</p>
                         <p className="text-secondary mb-6">{user.email}</p>
                         <div className="space-y-3">
@@ -170,6 +171,10 @@
                             <div className="flex items-center space-x-2">
                                 <button onClick={handleColorAvatar} className="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded-lg transition-colors">{t.setColorAvatar}</button>
                                 <input type="color" value={color} onChange={e => setColor(e.target.value)} className="p-1 h-10 w-14 block bg-tertiary border-color cursor-pointer rounded-lg"/>
+                            </div>
+                             <div className="flex items-center space-x-2">
+                                <span className="text-secondary">{t.frameColor}:</span>
+                                <input type="color" value={borderColor} onChange={e => setBorderColor(e.target.value)} className="p-1 h-10 w-full block bg-tertiary border-color cursor-pointer rounded-lg"/>
                             </div>
                             <button onClick={handleRevertAvatar} className="w-full bg-gray-600 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded-lg transition-colors">{t.revertAvatar}</button>
                         </div>
@@ -241,7 +246,7 @@
             const NavButton = ({ targetPage, children }) => (
                 <button 
                     onClick={() => setPage(targetPage)} 
-                    className={`px-3 py-2 rounded-md text-secondary hover:text-primary font-medium transition-colors ${page === targetPage ? 'active-nav-bg' : ''}`}
+                    className={`px-3 py-2 rounded-md text-secondary hover:text-primary font-medium transition-colors`}
                 >
                     {children}
                 </button>
