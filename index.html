@@ -4,14 +4,10 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Asonik Store</title>
-    <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- React -->
     <script src="https://unpkg.com/react@17/umd/react.development.js"></script>
     <script src="https://unpkg.com/react-dom@17/umd/react-dom.development.js"></script>
-    <!-- Babel to transpile JSX -->
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
-    <!-- Firebase -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/9.6.10/firebase-app.js";
         import { getAuth, signInWithPopup, GoogleAuthProvider, onAuthStateChanged, signOut, updateProfile } from "https://www.gstatic.com/firebasejs/9.6.10/firebase-auth.js";
@@ -215,7 +211,7 @@
                         <div className="absolute right-0 mt-2 w-full bg-tertiary rounded-md shadow-lg py-1 z-50 border-color">
                             {options.map(opt => (
                                 <a href="#" key={opt.value} onClick={(e) => { e.preventDefault(); handleSelect(opt.value); }}
-                                   className={`block px-4 py-2 text-sm text-secondary hover:text-primary hover:accent-bg ${value === opt.value ? 'accent-bg text-white' : ''}`}>
+                                    className={`block px-4 py-2 text-sm text-secondary hover:text-primary hover:accent-bg ${value === opt.value ? 'accent-bg text-white' : ''}`}>
                                     {opt.label}
                                 </a>
                             ))}
@@ -490,9 +486,9 @@
                 const purchaseDetails = {
                     finalPrice,
                     promoCodeUsed: appliedPromo ? appliedPromo.code : null,
-                    paymentMethod: 'Telegram'
+                    paymentMethod: 'Telegram' // ИЗМЕНЕНИЕ: Четко указываем метод
                 };
-                await onConfirm(product, purchaseDetails);
+                await onConfirm(product, purchaseDetails); // ИЗМЕНЕНИЕ: Передаем детали покупки
                 window.open('https://t.me/asonikofficial', '_blank');
                 onClose();
             };
@@ -775,9 +771,12 @@
             );
         }
 
+        // НОВОЕ: Полностью переписанный компонент MyAcquisitionsPage с фильтрами и сортировкой
         function MyAcquisitionsPage({ user, t, currency, convertPrice }) {
             const [myAcquisitions, setMyAcquisitions] = useState([]);
             const [loading, setLoading] = useState(true);
+            const [dateFilter, setDateFilter] = useState('all'); // 'all', 'today', '3days'
+            const [sortOrder, setSortOrder] = useState('date_desc'); // 'date_desc', 'price_asc'
 
             useEffect(() => {
                 if (!user) return;
@@ -793,12 +792,39 @@
 
                 return () => unsubscribe();
             }, [user]);
+            
+            const filteredAndSortedAcquisitions = useMemo(() => {
+                let filtered = [...myAcquisitions];
+                
+                // Фильтрация по дате
+                if (dateFilter !== 'all') {
+                    const now = new Date();
+                    const filterDate = new Date();
+                    if (dateFilter === 'today') {
+                        filterDate.setHours(0, 0, 0, 0);
+                    } else if (dateFilter === '3days') {
+                        filterDate.setDate(now.getDate() - 3);
+                        filterDate.setHours(0, 0, 0, 0);
+                    }
+                    filtered = filtered.filter(item => item.timestamp && item.timestamp.toDate() >= filterDate);
+                }
+
+                // Сортировка
+                if (sortOrder === 'price_asc') {
+                    filtered.sort((a, b) => (a.finalPrice || 0) - (b.finalPrice || 0));
+                } else { // 'date_desc' - это сортировка по умолчанию из Firestore, но мы ее сохраняем для переключения
+                    filtered.sort((a, b) => (b.timestamp?.toMillis() || 0) - (a.timestamp?.toMillis() || 0));
+                }
+                
+                return filtered;
+            }, [myAcquisitions, dateFilter, sortOrder]);
 
             const getStatusClass = (status) => {
                 switch (status) {
                     case 'approved': return 'bg-green-500';
                     case 'rejected': return 'bg-red-500';
-                    default: return 'bg-yellow-500';
+                    case 'contacted': return 'bg-blue-500'; // НОВЫЙ СТАТУС
+                    default: return 'bg-yellow-500'; // pending
                 }
             };
             
@@ -806,17 +832,40 @@
                 switch (status) {
                     case 'approved': return t.statusApproved;
                     case 'rejected': return t.statusRejected;
-                    default: return t.statusPending;
+                    case 'contacted': return t.statusContacted; // НОВЫЙ СТАТУС
+                    default: return t.statusPending; // pending
                 }
             };
+            
+            const FilterButton = ({ value, state, setState, children }) => (
+                <button onClick={() => setState(value)} className={`px-4 py-2 rounded-lg text-sm transition-colors ${state === value ? 'accent-bg text-white' : 'bg-tertiary text-primary hover:bg-gray-600'}`}>
+                    {children}
+                </button>
+            );
 
             return (
                 <div className="container mx-auto p-4 md:p-8">
                     <h1 className="text-4xl font-bold text-center mb-8 text-primary">{t.myAcquisitions}</h1>
+                    
+                    {/* НОВОЕ: Блок с фильтрами */}
+                    <div className="max-w-3xl mx-auto bg-secondary p-4 rounded-lg mb-6 flex justify-between items-center">
+                        <div className="flex items-center gap-2">
+                           <span className="text-secondary font-semibold">{t.filterByDate}:</span>
+                           <FilterButton value="all" state={dateFilter} setState={setDateFilter}>{t.all}</FilterButton>
+                           <FilterButton value="today" state={dateFilter} setState={setDateFilter}>{t.today}</FilterButton>
+                           <FilterButton value="3days" state={dateFilter} setState={setDateFilter}>{t.last3days}</FilterButton>
+                        </div>
+                         <div className="flex items-center gap-2">
+                           <span className="text-secondary font-semibold">{t.sortBy}:</span>
+                           <FilterButton value="date_desc" state={sortOrder} setState={setSortOrder}>{t.newSort}</FilterButton>
+                           <FilterButton value="price_asc" state={sortOrder} setState={setSortOrder}>{t.priceAsc}</FilterButton>
+                        </div>
+                    </div>
+                    
                     {loading ? <LoadingSpinner /> : (
-                        myAcquisitions.length === 0 ? <p className="text-center text-secondary">{t.noPurchasesYet}</p> : (
+                        filteredAndSortedAcquisitions.length === 0 ? <p className="text-center text-secondary">{t.noPurchasesYet}</p> : (
                             <div className="space-y-4 max-w-3xl mx-auto">
-                                {myAcquisitions.map(receipt => (
+                                {filteredAndSortedAcquisitions.map(receipt => (
                                     <div key={receipt.id} className="bg-secondary p-4 rounded-lg">
                                         <div className="flex justify-between items-start">
                                             <div>
@@ -833,7 +882,8 @@
                                                 <p className="text-sm text-secondary"><b>{t.adminComment}:</b> {receipt.adminComment}</p>
                                             </div>
                                         )}
-                                        {receipt.status === 'approved' && (
+                                        {/* ИЗМЕНЕНИЕ: Теперь кнопка появляется и для нового статуса */}
+                                        {(receipt.status === 'approved' || receipt.status === 'contacted') && (
                                             <a href="https://t.me/asonikofficial" target="_blank" rel="noopener noreferrer" className="mt-4 inline-block bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg">
                                                 {t.contactSellerToReceive}
                                             </a>
@@ -1211,7 +1261,7 @@
                             </div>
                         </div>
                     )}
-                    {view === 'manageFAQ' && ( <div> {/* ... manage FAQ form ... */} </div> )}
+                    {view === 'manageFAQ' && ( <div>{/* ... manage FAQ form ... */} </div> )}
                 </div>
             );
         }
@@ -1327,7 +1377,7 @@
                         contactTelegram,
                         contactEmail,
                         receiptImageUrl,
-                        status: 'pending'
+                        status: 'pending' // Статус ожидания
                     };
                     await addDoc(collection(db, 'receipts'), receiptPayload);
 
@@ -1342,6 +1392,14 @@
                         }
                     });
                     
+                    if (purchaseDetails.promoCodeUsed) {
+                        const promoRef = doc(db, 'promoCodes', purchaseDetails.promoCodeUsed);
+                        await updateDoc(promoRef, { timesUsed: increment(1) });
+                    }
+
+                    const productRef = doc(db, 'products', product.id);
+                    await updateDoc(productRef, { popularity: increment(1) });
+                    
                     setAlertInfo({ message: t.receiptSent });
 
                 } catch (error) {
@@ -1351,17 +1409,22 @@
                 }
             };
 
-
+            // ИЗМЕНЕНИЕ: Эта функция теперь тоже сохраняет данные в `receipts`
             const handleConfirmPurchase = async (product, purchaseDetails) => {
                 if (!user) return;
                 try {
-                    await addDoc(collection(db, 'orders'), {
-                        userId: user.uid, userEmail: user.email, productId: product.id,
-                        productName: product.name, timestamp: serverTimestamp(),
+                    // Создаем запись в коллекции `receipts`
+                    await addDoc(collection(db, 'receipts'), {
+                        userId: user.uid,
+                        userEmail: user.email,
+                        productId: product.id,
+                        productName: product.name,
+                        timestamp: serverTimestamp(),
                         originalPrice: product.price,
                         finalPrice: purchaseDetails.finalPrice,
                         promoCodeUsed: purchaseDetails.promoCodeUsed,
-                        paymentMethod: purchaseDetails.paymentMethod
+                        paymentMethod: purchaseDetails.paymentMethod,
+                        status: 'contacted' // НОВЫЙ СТАТУС, показывающий, что нужно связаться
                     });
                     
                     if (purchaseDetails.promoCodeUsed) {
@@ -1371,6 +1434,9 @@
 
                     const productRef = doc(db, 'products', product.id);
                     await updateDoc(productRef, { popularity: increment(1) });
+                    
+                    setAlertInfo({ message: t.contactSellerToReceive }); // Сообщаем пользователю, что делать дальше
+
                 } catch (error) { 
                     console.error("Order creation error: ", error);
                     setAlertInfo({ message: t.errorOccurred });
@@ -1475,10 +1541,13 @@
                 statusPending: 'Ожидает проверки',
                 statusApproved: 'Принята',
                 statusRejected: 'Отклонена',
+                statusContacted: 'Ожидает связи', // НОВЫЙ СТАТУС
                 contactSellerToReceive: 'Связаться с продавцом',
                 chats: 'Чаты',
                 yourId: 'Ваш ID для связи',
-                userChats: 'Чаты пользователей'
+                userChats: 'Чаты пользователей',
+                filterByDate: 'Фильтр', // НОВОЕ
+                priceAsc: 'По цене' // НОВОЕ
             },
             en: {
                 // ... English translations ...
