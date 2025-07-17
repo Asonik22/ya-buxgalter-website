@@ -883,9 +883,12 @@
                 const promoQuery = query(collection(db, 'promoCodes'), orderBy('createdAt', 'desc'));
                 const unsubPromos = onSnapshot(promoQuery, snapshot => setPromoCodes(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }))));
                 
-                const receiptsQuery = query(collection(db, 'receipts'), where('status', '==', 'pending'), orderBy('timestamp', 'desc'));
+                // --- FIXED: Fetch all and filter client-side for reliability ---
+                const receiptsQuery = query(collection(db, 'receipts'), orderBy('timestamp', 'desc'));
                 const unsubReceipts = onSnapshot(receiptsQuery, snapshot => {
-                    setReceipts(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+                    const allReceipts = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                    const pendingReceipts = allReceipts.filter(receipt => receipt.status === 'pending');
+                    setReceipts(pendingReceipts);
                 }, error => console.error("Error fetching receipts: ", error));
 
                 return () => { unsubTickets(); unsubOrders(); unsubPromos(); unsubReceipts(); };
