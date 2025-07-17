@@ -248,7 +248,7 @@
                         <div onClick={() => setPage('home')}><Logo /></div>
                         <nav className="hidden md:flex items-center space-x-6">
                             <button onClick={() => setPage('home')} className="text-secondary hover:text-primary font-medium transition-colors">{t.home}</button>
-                            {user && <button onClick={() => setPage('purchases')} className="text-secondary hover:text-primary font-medium transition-colors">{t.myPurchases}</button>}
+                            {user && <button onClick={() => setPage('purchases')} className="text-secondary hover:text-primary font-medium transition-colors">{t.myAcquisitions}</button>}
                             {user && <button onClick={() => setPage('chats')} className="text-secondary hover:text-primary font-medium transition-colors">{t.chats}</button>}
                             <button onClick={() => setPage('faq')} className="text-secondary hover:text-primary font-medium transition-colors">{t.faq}</button>
                             {isAdmin && <button onClick={() => setPage('admin')} className="text-red-500 hover:text-red-400 font-bold transition-colors">{t.adminPanelTitle}</button>}
@@ -638,12 +638,13 @@
             return (
                 <div className="container mx-auto p-4 md:p-8">
                     <h1 className="text-4xl font-bold text-center mb-8 text-primary">{t.chats}</h1>
-                    <div className="max-w-md mx-auto bg-secondary p-6 rounded-lg text-center">
+                    <div className="max-w-md mx-auto bg-secondary p-6 rounded-lg text-center shadow-xl">
                         <p className="text-secondary mb-2">{t.yourId}</p>
-                        <p className="text-lg font-mono bg-tertiary p-2 rounded-md text-primary break-all">{user.uid}</p>
+                        <p className="text-lg font-mono bg-tertiary p-2 rounded-md text-primary break-all cursor-pointer" onClick={() => navigator.clipboard.writeText(user.uid)}>{user.uid}</p>
                         <p className="text-sm text-secondary mt-4 mb-6">{t.supportSubtitle}</p>
-                        <button onClick={handleCreateTicket} className="accent-bg hover:accent-bg-secondary text-white font-bold py-3 px-6 rounded-lg text-lg">
-                            {t.chatWithAdmin}
+                        <button onClick={handleCreateTicket} className="accent-bg hover:accent-bg-secondary text-white font-bold py-3 px-6 rounded-lg text-lg w-full flex items-center justify-center space-x-2">
+                            <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" /></svg>
+                            <span>{t.chatWithAdmin}</span>
                         </button>
                     </div>
                 </div>
@@ -670,7 +671,7 @@
             );
         }
 
-        function MyPurchasesPage({ user, t, currency, convertPrice }) {
+        function MyAcquisitionsPage({ user, t, currency, convertPrice }) {
             const [myReceipts, setMyReceipts] = useState([]);
             const [loading, setLoading] = useState(true);
 
@@ -707,7 +708,7 @@
 
             return (
                 <div className="container mx-auto p-4 md:p-8">
-                    <h1 className="text-4xl font-bold text-center mb-8 text-primary">{t.myPurchases}</h1>
+                    <h1 className="text-4xl font-bold text-center mb-8 text-primary">{t.myAcquisitions}</h1>
                     {loading ? <LoadingSpinner /> : (
                         myReceipts.length === 0 ? <p className="text-center text-secondary">{t.noPurchasesYet}</p> : (
                             <div className="space-y-4 max-w-3xl mx-auto">
@@ -1284,7 +1285,7 @@
             const renderPage = () => {
                 switch (page) {
                     case 'admin': return isAdmin ? <AdminPage {...{products, faqs, setAlertInfo, t, setActiveTicketId, handleDeleteProduct}} /> : <HomePage {...{products, onProductClick: setSelectedProduct, t, currency, convertPrice, loading}} />;
-                    case 'purchases': return user ? <MyPurchasesPage {...{user, t, currency, convertPrice}} /> : <div className="text-center text-primary p-10">{t.loginToView}</div>;
+                    case 'purchases': return user ? <MyAcquisitionsPage {...{user, t, currency, convertPrice}} /> : <div className="text-center text-primary p-10">{t.loginToView}</div>;
                     case 'chats': return user ? <ChatsPage {...{user, t, setActiveTicketId}}/> : <div className="text-center text-primary p-10">{t.loginForSupport}</div>;
                     case 'faq': return <FAQPage faqs={faqs} t={t} />;
                     default: return <HomePage {...{products, onProductClick: setSelectedProduct, t, currency, convertPrice, loading}} />;
@@ -1357,14 +1358,14 @@
                 uploadReceipt: 'Загрузите скриншот чека',
                 sendForVerification: 'Отправить на проверку',
                 sending: 'Отправка...',
-                receiptSent: "Ваша заявка и чек отправлены на проверку! Вы можете следить за статусом в разделе 'Мои покупки'.",
+                receiptSent: "Ваша заявка и чек отправлены на проверку! Вы можете следить за статусом в разделе 'Мои приобретения'.",
                 checkReceipts: 'Проверка чеков',
                 noPendingReceipts: 'Нет чеков, ожидающих проверки.',
                 approve: 'Подтвердить',
                 reject: 'Отклонить',
                 amount: 'Сумма',
                 adminComment: 'Комментарий администратора',
-                myPurchases: 'Мои покупки',
+                myAcquisitions: 'Мои приобретения',
                 noPurchasesYet: 'У вас еще нет покупок.',
                 statusPending: 'Ожидает проверки',
                 statusApproved: 'Принята',
@@ -1390,14 +1391,14 @@
                 uploadReceipt: 'Upload your receipt screenshot',
                 sendForVerification: 'Send for Verification',
                 sending: 'Sending...',
-                receiptSent: 'Your request and receipt have been sent for verification! You can track the status in the "My Purchases" section.',
+                receiptSent: 'Your request and receipt have been sent for verification! You can track the status in the "My Acquisitions" section.',
                 checkReceipts: 'Check Receipts',
                 noPendingReceipts: 'No pending receipts to check.',
                 approve: 'Approve',
                 reject: 'Reject',
                 amount: 'Amount',
                 adminComment: 'Admin Comment',
-                myPurchases: 'My Purchases',
+                myAcquisitions: 'My Acquisitions',
                 noPurchasesYet: 'You have no purchases yet.',
                 statusPending: 'Pending',
                 statusApproved: 'Approved',
@@ -1430,7 +1431,7 @@
                 reject: 'Rad etish',
                 amount: 'Summa',
                 adminComment: 'Administrator izohi',
-                myPurchases: 'Mening xaridlarim',
+                myAcquisitions: 'Mening Xaridlarim',
                 noPurchasesYet: 'Sizda hali xaridlar yo\'q.',
                 statusPending: 'Kutilmoqda',
                 statusApproved: 'Qabul qilindi',
