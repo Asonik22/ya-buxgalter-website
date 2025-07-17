@@ -76,10 +76,6 @@
         .accent-border { border-color: var(--accent-primary); }
         .hover\:accent-bg:hover { background-color: var(--accent-primary); }
         .hover\:accent-bg-secondary:hover { background-color: var(--accent-secondary); }
-        
-        .chat-bubble { max-width: 75%; word-wrap: break-word; }
-        .chat-bubble-user { background-color: #4f46e5; }
-        .chat-bubble-admin { background-color: #374151; }
     </style>
 </head>
 <body class="bg-primary text-primary">
@@ -237,14 +233,45 @@
 
         const PinModal = ({ onSubmit, onClose, error, t }) => {
             const [pin, setPin] = useState('');
+            const [attempts, setAttempts] = useState(0);
+            const [isLocked, setIsLocked] = useState(false);
+            const [countdown, setCountdown] = useState(0);
+
+            useEffect(() => {
+                let timer;
+                if (isLocked) {
+                    setCountdown(15);
+                    timer = setInterval(() => {
+                        setCountdown(prev => {
+                            if (prev <= 1) {
+                                clearInterval(timer);
+                                setIsLocked(false);
+                                setAttempts(0);
+                                return 0;
+                            }
+                            return prev - 1;
+                        });
+                    }, 1000);
+                }
+                return () => clearInterval(timer);
+            }, [isLocked]);
 
             const handleSubmit = (e) => {
                 e.preventDefault();
-                onSubmit(pin);
+                if (isLocked) return;
+
+                const success = onSubmit(pin);
+                if (!success) {
+                    const newAttempts = attempts + 1;
+                    setAttempts(newAttempts);
+                    if (newAttempts >= 5) {
+                        setIsLocked(true);
+                    }
+                }
             };
 
             return (
-                <Modal onClose={onClose} size="max-w-sm">
+                <Modal onClose={onClose}>
                     <form onSubmit={handleSubmit} className="text-center">
                         <h2 className="text-2xl font-bold text-primary mb-4">{t.adminAccess}</h2>
                         <p className="text-secondary mb-6">{t.enterPin}</p>
@@ -252,13 +279,15 @@
                             type="password"
                             value={pin}
                             onChange={(e) => setPin(e.target.value)}
-                            className="w-full p-3 bg-tertiary rounded-lg border-color text-primary text-center text-2xl tracking-[.5em]"
+                            className="w-full p-3 bg-tertiary rounded-lg border-color text-primary text-center text-2xl tracking-[.5em] disabled:opacity-50"
                             maxLength="6"
                             autoFocus
+                            disabled={isLocked}
                         />
-                        {error && <p className="text-red-500 text-sm mt-2">{error}</p>}
-                        <button type="submit" className="w-full mt-6 accent-bg hover:accent-bg-secondary text-white font-bold py-3 px-4 rounded-lg transition-colors">
-                            {t.enter}
+                        {error && !isLocked && <p className="text-red-500 text-sm mt-2">{error}</p>}
+                        {isLocked && <p className="text-yellow-500 text-sm mt-2">Слишком много попыток. Попробуйте через {countdown} секунд.</p>}
+                        <button type="submit" className="w-full mt-6 accent-bg hover:accent-bg-secondary text-white font-bold py-3 px-4 rounded-lg transition-colors disabled:bg-gray-500" disabled={isLocked}>
+                            {isLocked ? `Заблокировано (${countdown})` : t.enter}
                         </button>
                     </form>
                 </Modal>
@@ -886,8 +915,10 @@
                     setPage('admin');
                     setIsPinModalVisible(false);
                     setPinError('');
+                    return true;
                 } else {
                     setPinError('Неверный ПИН-код');
+                    return false;
                 }
             };
 
@@ -994,7 +1025,7 @@
 
             const renderContent = () => {
                 switch (page) {
-                    case 'admin': return <div className="text-center text-primary p-10">Админ-панель в разработке.</div>;
+                    case 'admin': return isAdmin ? <div className="text-center text-primary p-10">Админ-панель в разработке.</div> : <HomePage {...{products, onProductClick: setSelectedProduct, t, currency, convertPrice, loading: products.length === 0}} />;
                     case 'purchases': return user ? <MyPurchasesPage {...{user, t, currency, convertPrice, setAlertInfo}} /> : <div className="text-center text-primary p-10">{t.loginToView}</div>;
                     case 'faq': return <FAQPage faqs={faqs} t={t} />;
                     default: return <HomePage {...{products, onProductClick: setSelectedProduct, t, currency, convertPrice, loading: products.length === 0}} />;
