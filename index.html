@@ -621,19 +621,20 @@
             );
         }
 
-        function ChatsPage({ user, t }) {
-            const [activeChat, setActiveChat] = useState(null); // Can be user ID for admin, or 'admin' for user
-            const [tickets, setTickets] = useState([]); // For admin to see all chats
+        function ChatsPage({ user, t, setActiveTicketId }) {
+            const [activeChat, setActiveChat] = useState(null);
+            const [tickets, setTickets] = useState([]);
+            const isAdmin = user.uid === ADMIN_UID;
 
             useEffect(() => {
-                if (user.uid === ADMIN_UID) {
+                if (isAdmin) {
                     const q = query(collection(db, 'supportTickets'), orderBy('lastUpdated', 'desc'));
                     const unsubscribe = onSnapshot(q, (snapshot) => {
                         setTickets(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
                     });
                     return unsubscribe;
                 }
-            }, [user]);
+            }, [isAdmin]);
 
             const startAdminChat = async () => {
                 const ticketRef = doc(db, 'supportTickets', user.uid);
@@ -650,23 +651,19 @@
                         createdAt: serverTimestamp()
                     });
                 }
-                setActiveChat({ id: user.uid, name: t.chatWithAdmin, avatar: 'https://placehold.co/128x128/1f2937/FFFFFF?text=A' });
+                setActiveTicketId(user.uid);
             };
             
-            if (activeChat) {
-                return <ChatInterface user={user} chatWith={activeChat} onBack={() => setActiveChat(null)} t={t} />;
-            }
-
             return (
                 <div className="container mx-auto p-4 md:p-8">
                     <h1 className="text-4xl font-bold text-center mb-8 text-primary">{t.chats}</h1>
                     <div className="max-w-3xl mx-auto bg-secondary p-6 rounded-lg shadow-xl">
-                        {user.uid === ADMIN_UID ? (
+                        {isAdmin ? (
                             <div>
                                 <h2 className="text-2xl font-bold text-primary mb-4">{t.userChats}</h2>
                                 <div className="space-y-2">
-                                    {tickets.map(ticket => (
-                                        <div key={ticket.id} onClick={() => setActiveChat({ id: ticket.id, name: ticket.userName, avatar: ticket.userAvatar })} className="flex items-center p-3 bg-tertiary rounded-lg cursor-pointer hover:bg-gray-700">
+                                    {tickets.length === 0 ? <p className="text-secondary">{t.noTickets}</p> : tickets.map(ticket => (
+                                        <div key={ticket.id} onClick={() => setActiveTicketId(ticket.id)} className="flex items-center p-3 bg-tertiary rounded-lg cursor-pointer hover:bg-gray-700">
                                             <img src={ticket.userAvatar} className="w-10 h-10 rounded-full mr-4"/>
                                             <div className="flex-grow">
                                                 <p className="font-bold text-primary">{ticket.userName}</p>
@@ -692,13 +689,12 @@
             );
         }
 
-        function ChatInterface({ user, chatWith, onBack, t }) {
+        function ChatInterface({ user, chatPartner, onBack, t }) {
             const [messages, setMessages] = useState([]);
             const [newMessage, setNewMessage] = useState('');
             const chatEndRef = useRef(null);
             const isAdmin = user.uid === ADMIN_UID;
-            const chatPartnerId = isAdmin ? chatWith.id : ADMIN_UID;
-            const ticketId = isAdmin ? chatWith.id : user.uid;
+            const ticketId = isAdmin ? chatPartner.id : user.uid;
 
             useEffect(() => {
                 const messagesQuery = query(collection(db, 'supportTickets', ticketId, 'messages'), orderBy('timestamp'));
@@ -735,8 +731,8 @@
                     <div className="max-w-3xl mx-auto bg-secondary rounded-lg shadow-xl flex flex-col h-[80vh]">
                         <div className="flex items-center p-4 border-b border-color">
                             <button onClick={onBack} className="mr-4 text-primary">←</button>
-                            <img src={chatWith.avatar} className="w-10 h-10 rounded-full mr-3"/>
-                            <h2 className="text-xl font-bold text-primary">{chatWith.name}</h2>
+                            <img src={chatPartner.avatar} className="w-10 h-10 rounded-full mr-3"/>
+                            <h2 className="text-xl font-bold text-primary">{chatPartner.name}</h2>
                         </div>
                         <div className="flex-grow p-4 overflow-y-auto">
                             {messages.map((msg, index) => (
@@ -781,22 +777,38 @@
         }
 
         function MyAcquisitionsPage({ user, t, currency, convertPrice }) {
-            const [myReceipts, setMyReceipts] = useState([]);
+            const [myAcquisitions, setMyAcquisitions] = useState([]);
             const [loading, setLoading] = useState(true);
 
             useEffect(() => {
                 if (!user) return;
                 setLoading(true);
-                const q = query(collection(db, "receipts"), where("userId", "==", user.uid), orderBy("timestamp", "desc"));
-                const unsubscribe = onSnapshot(q, (snapshot) => {
-                    setMyReceipts(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+
+                const fetchAcquisitions = async () => {
+                    // Fetch from both collections and combine
+                    const receiptsQuery = query(collection(db, "receipts"), where("userId", "==", user.uid));
+                    const ordersQuery = query(collection(db, "orders"), where("userId", "==", user.uid));
+
+                    const [receiptsSnapshot, ordersSnapshot] = await Promise.all([
+                        getDocs(receiptsQuery),
+                        getDocs(ordersQuery)
+                    ]);
+
+                    const receiptsData = receiptsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data(), type: 'receipt' }));
+                    const ordersData = ordersSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data(), type: 'order' }));
+                    
+                    const combinedData = [...receiptsData, ...ordersData];
+                    combinedData.sort((a, b) => (b.timestamp?.toMillis() || 0) - (a.timestamp?.toMillis() || 0));
+                    
+                    setMyAcquisitions(combinedData);
                     setLoading(false);
-                }, (error) => {
-                    console.error("Error fetching user receipts:", error);
+                };
+
+                fetchAcquisitions().catch(error => {
+                    console.error("Error fetching acquisitions:", error);
                     setLoading(false);
                 });
 
-                return () => unsubscribe();
             }, [user]);
 
             const getStatusClass = (status) => {
@@ -819,26 +831,28 @@
                 <div className="container mx-auto p-4 md:p-8">
                     <h1 className="text-4xl font-bold text-center mb-8 text-primary">{t.myAcquisitions}</h1>
                     {loading ? <LoadingSpinner /> : (
-                        myReceipts.length === 0 ? <p className="text-center text-secondary">{t.noPurchasesYet}</p> : (
+                        myAcquisitions.length === 0 ? <p className="text-center text-secondary">{t.noPurchasesYet}</p> : (
                             <div className="space-y-4 max-w-3xl mx-auto">
-                                {myReceipts.map(receipt => (
-                                    <div key={receipt.id} className="bg-secondary p-4 rounded-lg">
+                                {myAcquisitions.map(item => (
+                                    <div key={item.id} className="bg-secondary p-4 rounded-lg">
                                         <div className="flex justify-between items-start">
                                             <div>
-                                                <p className="font-bold text-primary">{receipt.productName}</p>
-                                                <p className="text-sm text-secondary">{new Date(receipt.timestamp?.toDate()).toLocaleString()}</p>
-                                                <p className="text-sm text-secondary">{t.amount}: {convertPrice(receipt.finalPrice, currency)}</p>
+                                                <p className="font-bold text-primary">{item.productName}</p>
+                                                <p className="text-sm text-secondary">{new Date(item.timestamp?.toDate()).toLocaleString()}</p>
+                                                <p className="text-sm text-secondary">{t.amount}: {convertPrice(item.finalPrice, currency)}</p>
                                             </div>
-                                            <span className={`px-2 py-1 text-xs font-bold text-white rounded-full ${getStatusClass(receipt.status)}`}>
-                                                {getStatusText(receipt.status)}
-                                            </span>
+                                            {item.type === 'receipt' && (
+                                                <span className={`px-2 py-1 text-xs font-bold text-white rounded-full ${getStatusClass(item.status)}`}>
+                                                    {getStatusText(item.status)}
+                                                </span>
+                                            )}
                                         </div>
-                                        {receipt.adminComment && (
+                                        {item.type === 'receipt' && item.adminComment && (
                                             <div className="mt-2 p-2 bg-tertiary rounded-md">
-                                                <p className="text-sm text-secondary"><b>{t.adminComment}:</b> {receipt.adminComment}</p>
+                                                <p className="text-sm text-secondary"><b>{t.adminComment}:</b> {item.adminComment}</p>
                                             </div>
                                         )}
-                                        {receipt.status === 'approved' && (
+                                        { (item.type === 'receipt' && item.status === 'approved') || item.type === 'order' && (
                                             <a href="https://t.me/asonikofficial" target="_blank" rel="noopener noreferrer" className="mt-4 inline-block bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg">
                                                 {t.contactSellerToReceive}
                                             </a>
@@ -1412,7 +1426,7 @@
                     {purchasingProduct && user && <PurchaseModal product={purchasingProduct} onClose={() => setPurchasingProduct(null)} onConfirm={handleConfirmPurchase} onYooMoney={handleYooMoneyPayment} t={t} currency={currency} convertPrice={convertPrice} setAlertInfo={setAlertInfo} />}
                     {yooMoneyData && user && <YooMoneyModal data={yooMoneyData} onClose={() => setYooMoneyData(null)} onSubmitReceipt={handleReceiptSubmit} t={t} currency={currency} convertPrice={convertPrice} setAlertInfo={setAlertInfo} />}
                     
-                    {activeTicketId && <ChatInterface user={user} chatWith={{id: activeTicketId, name: t.chatWithAdmin}} onBack={() => setActiveTicketId(null)} t={t} />}
+                    {activeTicketId && <ChatInterface user={user} chatPartner={{id: activeTicketId, name: t.chatWithAdmin, avatar: 'https://placehold.co/128x128/1f2937/FFFFFF?text=A'}} onBack={() => setActiveTicketId(null)} t={t} />}
                     {alertInfo && <AlertModal message={alertInfo.message} onConfirm={alertInfo.onConfirm ? handleAlertConfirm : null} onCancel={() => setAlertInfo(null)} t={t} />}
                     {profileVisible && user && <ProfileModal user={user} onClose={() => setProfileVisible(false)} t={t} setAlertInfo={setAlertInfo} />}
                     <Footer t={t}/>
