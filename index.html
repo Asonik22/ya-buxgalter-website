@@ -227,11 +227,12 @@
             );
         };
 
-        const PinModal = ({ onSubmit, onClose, error, t }) => {
+        const PinModal = ({ onSubmit, onClose, error, t, setRememberMe }) => {
             const [pin, setPin] = useState('');
             const [attempts, setAttempts] = useState(0);
             const [isLocked, setIsLocked] = useState(false);
             const [countdown, setCountdown] = useState(0);
+            const [rememberMeChecked, setRememberMeChecked] = useState(false); // New state for checkbox
 
             useEffect(() => {
                 let timer;
@@ -256,7 +257,7 @@
                 e.preventDefault();
                 if (isLocked) return;
 
-                const success = onSubmit(pin);
+                const success = onSubmit(pin, rememberMeChecked); // Pass rememberMeChecked
                 if (!success) {
                     const newAttempts = attempts + 1;
                     setAttempts(newAttempts);
@@ -282,7 +283,20 @@
                         />
                         {error && !isLocked && <p className="text-red-500 text-sm mt-2">{error}</p>}
                         {isLocked && <p className="text-yellow-500 text-sm mt-2">Слишком много попыток. Попробуйте через {countdown} секунд.</p>}
-                        <button type="submit" className="w-full mt-6 accent-bg hover:accent-bg-secondary text-white font-bold py-3 px-4 rounded-lg transition-colors disabled:bg-gray-500">
+                        
+                        {/* Remember Me checkbox */}
+                        <div className="flex items-center justify-center mt-4">
+                            <input
+                                type="checkbox"
+                                id="rememberMe"
+                                checked={rememberMeChecked}
+                                onChange={(e) => setRememberMeChecked(e.target.checked)}
+                                className="form-checkbox h-4 w-4 text-purple-600 rounded"
+                            />
+                            <label htmlFor="rememberMe" className="ml-2 text-sm text-secondary">{t.rememberMe || 'Запомнить меня (10 минут)'}</label>
+                        </div>
+
+                        <button type="submit" className="w-full mt-6 accent-bg hover:accent-bg-secondary text-white font-bold py-3 px-4 rounded-lg transition-colors disabled:bg-gray-500" disabled={isLocked}>
                             {isLocked ? `Заблокировано (${countdown})` : t.enter}
                         </button>
                     </form>
@@ -1338,14 +1352,42 @@
                 });
             };
 
+            const handleClearAllFaqs = async () => {
+                setAlertInfo({
+                    message: t.confirmClearAllFaqs || 'Вы уверены, что хотите удалить ВСЕ FAQ? Это действие необратимо!',
+                    onConfirm: async () => {
+                        setIsSaving(true); // Use saving state for mass delete
+                        try {
+                            const querySnapshot = await getDocs(collection(db, "faq"));
+                            const deletePromises = [];
+                            querySnapshot.forEach((docToDelete) => {
+                                deletePromises.push(deleteDoc(doc(db, "faq", docToDelete.id)));
+                            });
+                            await Promise.all(deletePromises);
+                            setAlertInfo({ message: t.allFaqsCleared || 'Все FAQ успешно удалены.' });
+                        } catch (error) {
+                            console.error("Error clearing all FAQs:", error);
+                            setAlertInfo({ message: `${t.errorOccurred}: ${error.message}` });
+                        } finally {
+                            setIsSaving(false);
+                        }
+                    }
+                });
+            };
+
             return (
                 <div className="p-4 md:p-8 bg-secondary rounded-xl shadow-lg border-color min-h-[500px]">
                     <div className="flex justify-between items-center mb-6">
                         <h2 className="text-3xl font-bold text-primary">{t.manageFaq}</h2>
-                        <button onClick={() => { resetForm(); setIsModalOpen(true); }} className="accent-bg hover:accent-bg-secondary text-white font-bold py-2 px-4 rounded-lg transition-colors flex items-center space-x-2">
-                            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clipRule="evenodd" /></svg>
-                            <span>{t.addFaq || 'Добавить FAQ'}</span>
-                        </button>
+                        <div className="flex space-x-2">
+                            <button onClick={() => { resetForm(); setIsModalOpen(true); }} className="accent-bg hover:accent-bg-secondary text-white font-bold py-2 px-4 rounded-lg transition-colors flex items-center space-x-2">
+                                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clipRule="evenodd" /></svg>
+                                <span>{t.addFaq || 'Добавить FAQ'}</span>
+                            </button>
+                            <button onClick={handleClearAllFaqs} disabled={isSaving} className="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded-lg transition-colors disabled:bg-gray-500">
+                                {t.clearAllFaqs || 'Очистить все FAQ'}
+                            </button>
+                        </div>
                     </div>
 
                     {loading ? <LoadingSpinner /> : (
@@ -1509,7 +1551,7 @@
             }, [user]);
 
             useEffect(() => {
-                messagesEndRef.current?.scrollInView({ behavior: "smooth" }); // Changed to scrollInView for compatibility
+                messagesEndRef.current?.scrollIntoView({ behavior: "smooth" }); // Changed to scrollInView for compatibility
             }, [messages]);
 
             const sendMessage = async (e) => {
@@ -1647,7 +1689,7 @@
             }, [selectedUserChat]);
 
             useEffect(() => {
-                messagesEndRef.current?.scrollInView({ behavior: "smooth" }); // Changed to scrollInView for compatibility
+                messagesEndRef.current?.scrollIntoView({ behavior: "smooth" }); // Changed to scrollInView for compatibility
             }, [messages]);
 
             const sendMessage = async (e) => {
@@ -1789,10 +1831,29 @@
             const [profileVisible, setProfileVisible] = useState(false);
             const [isPinModalVisible, setIsPinModalVisible] = useState(false);
             const [pinError, setPinError] = useState('');
+            const [isAdminSessionActive, setIsAdminSessionActive] = useState(false); // New state for admin session
             const [selectedProduct, setSelectedProduct] = useState(null);
             const [purchasingProduct, setPurchasingProduct] = useState(null);
             const [yooMoneyData, setYooMoneyData] = useState(null);
             const [theme, setTheme] = useState('asonik');
+
+            // Check admin session on component mount
+            useEffect(() => {
+                const storedSession = localStorage.getItem('adminSession');
+                if (storedSession) {
+                    try {
+                        const { expiryTime } = JSON.parse(storedSession);
+                        if (Date.now() < expiryTime) {
+                            setIsAdminSessionActive(true);
+                        } else {
+                            localStorage.removeItem('adminSession'); // Clear expired session
+                        }
+                    } catch (e) {
+                        console.error("Error parsing admin session from localStorage:", e);
+                        localStorage.removeItem('adminSession');
+                    }
+                }
+            }, []);
 
             useEffect(() => { document.body.className = theme; }, [theme]);
             useEffect(() => {
@@ -1823,14 +1884,32 @@
             }, []);
 
             const handleLogin = async () => { try { await signInWithPopup(auth, provider); } catch (error) { setAlertInfo({ message: "Login failed: " + error.message }); } };
-            const handleLogout = async () => { try { await signOut(auth); setPage('home'); } catch (error) { console.error("Logout Error:", error); } };
+            const handleLogout = async () => { 
+                try { 
+                    await signOut(auth); 
+                    localStorage.removeItem('adminSession'); // Clear session on logout
+                    setIsAdminSessionActive(false);
+                    setPage('home'); 
+                } catch (error) { 
+                    console.error("Logout Error:", error); 
+                } 
+            };
             
             const handleAdminClick = () => {
-                setIsPinModalVisible(true);
+                if (isAdmin && isAdminSessionActive) {
+                    setPage('admin'); // Bypass PIN if session is active
+                } else {
+                    setIsPinModalVisible(true);
+                }
             };
 
-            const handlePinSubmit = (pin) => {
+            const handlePinSubmit = (pin, rememberMe) => {
                 if (pin === ADMIN_PIN) {
+                    if (rememberMe) {
+                        const expiryTime = Date.now() + 10 * 60 * 1000; // 10 minutes
+                        localStorage.setItem('adminSession', JSON.stringify({ expiryTime }));
+                        setIsAdminSessionActive(true);
+                    }
                     setPage('admin');
                     setIsPinModalVisible(false);
                     setPinError('');
@@ -1979,7 +2058,7 @@
                 home: 'Главная', support: 'Поддержка', faq: 'FAQ', adminPanelTitle: 'Админ-панель', profile: 'Профиль', logout: 'Выйти', login: 'Войти',
                 buy: 'Купить', confirmation: 'Подтверждение', cancel: 'Отмена', ok: 'OK', confirm: 'Подтвердить',
                 loginToView: 'Пожалуйста, войдите, чтобы просмотреть.',
-                loginToBuy: 'Пожалуйста, войдите, чтобы совершить покупку.',
+                loginToBuy: 'Пожалуйста, войните, чтобы совершить покупку.',
                 imageNotFound: 'Изображение не найдено',
                 catalogTitle: 'КАТАЛОГ ТОВАРОВ', catalogSubtitle: 'Лучшие предложения только для вас',
                 addProduct: 'Добавить товар', editProduct: 'Редактировать товар', edit: 'Ред.', delete: 'Удал.',
@@ -2074,6 +2153,9 @@
                 you: 'Вы',
                 noChats: 'Нет активных чатов.',
                 selectUserToChat: 'Выберите пользователя для просмотра чата.',
+                clearAllFaqs: 'Очистить все FAQ', // New translation
+                allFaqsCleared: 'Все FAQ успешно удалены.', // New translation
+                rememberMe: 'Запомнить меня (10 минут)', // New translation
             },
             en: {
                 home: 'Home', support: 'Support', faq: 'FAQ', adminPanelTitle: 'Admin Panel', profile: 'Profile', logout: 'Logout', login: 'Login',
@@ -2150,6 +2232,9 @@
                 yourPurchaseCode: 'Your unique purchase code',
                 idCopied: 'ID copied to clipboard!',
                 clickToCopy: 'Click to copy',
+                clearAllFaqs: 'Clear All FAQs',
+                allFaqsCleared: 'All FAQs successfully cleared.',
+                rememberMe: 'Remember Me (10 minutes)',
             },
             uz: {
                 home: 'Bosh sahifa', support: 'Qo\'llab-quvvatlash', faq: 'FAQ', adminPanelTitle: 'Admin Paneli', profile: 'Profil', logout: 'Chiqish', login: 'Kirish',
@@ -2164,7 +2249,6 @@
                 productAdded: 'Mahsulot muvaffaqiyatli qo\'shildi!', productUpdated: 'Mahsulot muvaffaqiyatli yangilandi!', errorOccurred: 'Xatolik yuz berdi.',
                 confirmDelete: 'Haqiqatan ҳам bu mahsulotni oʻchirib tashlamoqchimisiz?', productDeleted: 'Mahsulot oʻchirildi.',
                 supportTickets: 'Qo\'llab-quvvatlash biletlari', user: 'Foydalanuvchi',
-                noTickets: 'Sizda hali biletlar yo\'q.',
                 loginForSupport: 'Yordam uchun tizimga kiring.',
                 avatarUpdated: 'Avatar muvaffaqiyatli yangilandi!', uploadingAvatar: 'Avatar yuklanmoqda', revertAvatar: 'Asl avatarga qaytarish', avatarReverted: 'Avatar qaytarildi.',
                 enterMessagePlaceholder: 'Xabaringizni kiriting...',
@@ -2195,37 +2279,40 @@
                 contactEmail: 'Ваша контактная почта',
                 uploadReceipt: 'Загрузите скриншот чека',
                 sendForVerification: 'Отправить на проверку',
-                sending: 'Отправка...',
-                receiptSent: "Ваша заявка отправлена на проверку! Обязательно сохраните код покупки.",
+                sending: 'Yuborilmoqda...',
+                receiptSent: "Sizning arizangiz tekshirishga yuborildi! Xarid kodini saqlab qo\'yishni unutmang.",
                 checkReceipts: 'Проверка покупок',
-                noPendingReceipts: 'Нет покупок, ожидающих проверки.',
-                approve: 'Одобрить',
-                reject: 'Отклонить',
-                amount: 'Сумма',
-                adminComment: 'Комментарий администратора',
-                myPurchases: 'Мои покупки',
-                noPurchasesYet: 'У вас еще нет покупок.',
-                statusPending: 'На проверке',
-                statusApproved: 'Одобрена',
-                statusRejected: 'Отклонена',
-                statusContacted: 'Ожидает связи',
-                statusCancelled: 'Отменен',
-                contactSellerToReceive: 'Связаться с продавцом',
-                cancelOrder: 'Отменить заказ',
-                confirmCancelPurchase: 'Вы уверены, что хотите отменить этот заказ?',
-                purchaseCancelled: 'Заказ отменен.',
+                noPendingReceipts: 'Tekshirishni kutayotgan xaridlar yo\'q.',
+                approve: 'Tasdiqlash',
+                reject: 'Rad etish',
+                amount: 'Summa',
+                adminComment: 'Administrator izohi',
+                myPurchases: 'Mening xaridlarim',
+                noPurchasesYet: 'Sizda hali xaridlar yo\'q.',
+                statusPending: 'Tekshirilmoqda',
+                statusApproved: 'Tasdiqlandi',
+                statusRejected: 'Rad etildi',
+                statusContacted: 'Aloqani kutmoqda',
+                statusCancelled: 'Bekor qilingan',
+                contactSellerToReceive: 'Buyurtma ro\'yxatga olindi! Sotuvchi bilan bog\'laning va xarid kodini taqdim eting.',
+                cancelOrder: 'Buyurtmani bekor qilish',
+                confirmCancelPurchase: 'Haqiqatan ҳам bu buyurtmani bekor qilmoqchimisiz?',
+                purchaseCancelled: 'Buyurtma bekor qilindi.',
                 chats: 'Чаты',
-                yourId: 'Ваш уникальный ID для связи',
-                userChats: 'Чаты с пользователями',
-                filterByDate: 'Фильтр',
-                priceAsc: 'По цене',
-                adminAccess: 'Доступ для администратора',
-                enterPin: 'Введите ПИН-код',
-                enter: 'Войти',
-                adminChatsInPanel: 'Ваши чаты находятся в админ-панели.',
-                yourPurchaseCode: 'Ваш уникальный код покупки',
-                idCopied: 'ID скопирован в буфер обмена!',
-                clickToCopy: 'Нажмите, чтобы скопировать',
+                yourId: 'Aloqa uchun sizning unikal ID\'ingiz',
+                userChats: 'Foydalanuvchilar bilan suhbatlar',
+                filterByDate: 'Filtr',
+                priceAsc: 'Narx bo\'yicha',
+                adminAccess: 'Admin Kirish',
+                enterPin: 'PIN-kodni kiriting',
+                enter: 'Kirish',
+                adminChatsInPanel: 'Sizning suhbatlaringiz admin panelida.',
+                yourPurchaseCode: 'Sizning unikal xarid kodingiz',
+                idCopied: 'ID nusxa olindi!',
+                clickToCopy: 'Nusxalash uchun bosing',
+                clearAllFaqs: 'Barcha FAQni tozalash',
+                allFaqsCleared: 'Barcha FAQ muvaffaqiyatli tozalandi.',
+                rememberMe: 'Meni eslab qolish (10 daqiqa)',
             },
         };
 
