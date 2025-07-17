@@ -12,12 +12,12 @@
         import { initializeApp } from "https://www.gstatic.com/firebasejs/9.6.10/firebase-app.js";
         import { getAuth, signInWithPopup, GoogleAuthProvider, onAuthStateChanged, signOut, updateProfile } from "https://www.gstatic.com/firebasejs/9.6.10/firebase-auth.js";
         import { getFirestore, collection, onSnapshot, addDoc, doc, deleteDoc, setDoc, serverTimestamp, query, where, orderBy, updateDoc, getDocs, increment, getDoc } from "https://www.gstatic.com/firebasejs/9.6.10/firebase-firestore.js";
-        import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/9.6.10/firebase-storage.js";
+        import { getStorage, ref, uploadBytes, getDownloadURL, deleteObject } from "https://www.gstatic.com/firebasejs/9.6.10/firebase-storage.js"; // Added deleteObject
         
         window.firebase = {
             initializeApp, getAuth, signInWithPopup, GoogleAuthProvider, onAuthStateChanged, signOut, updateProfile,
             getFirestore, collection, onSnapshot, addDoc, doc, deleteDoc, setDoc, serverTimestamp, query, where, orderBy, updateDoc, getDocs, increment, getDoc,
-            getStorage, ref, uploadBytes, getDownloadURL
+            getStorage, ref, uploadBytes, getDownloadURL, deleteObject // Added deleteObject
         };
     </script>
     <style>
@@ -82,7 +82,7 @@
         const { 
             initializeApp, getAuth, signInWithPopup, GoogleAuthProvider, onAuthStateChanged, signOut, updateProfile,
             getFirestore, collection, onSnapshot, addDoc, doc, deleteDoc, setDoc, serverTimestamp, query, where, orderBy, updateDoc, getDocs, increment, getDoc,
-            getStorage, ref, uploadBytes, getDownloadURL
+            getStorage, ref, uploadBytes, getDownloadURL, deleteObject // Added deleteObject
         } = window.firebase;
 
         // --- App Configuration ---
@@ -855,7 +855,929 @@
                 </footer>
             );
         };
-        
+
+        // --- Firebase Storage Utility Functions ---
+        const uploadFile = async (file, path) => {
+            const storageRef = ref(storage, path);
+            const snapshot = await uploadBytes(storageRef, file);
+            return await getDownloadURL(snapshot.ref);
+        };
+
+        const deleteFile = async (url) => {
+            try {
+                const fileRef = ref(storage, url);
+                await deleteObject(fileRef);
+                return true;
+            } catch (error) {
+                console.warn("Could not delete file from Firebase Storage:", error);
+                return false;
+            }
+        };
+
+        // --- Admin Components ---
+        function AdminProductManagement({ setAlertInfo, t, currency, convertPrice }) {
+            const [products, setProducts] = useState([]);
+            const [loading, setLoading] = useState(true);
+            const [isModalOpen, setIsModalOpen] = useState(false);
+            const [editingProduct, setEditingProduct] = useState(null);
+            const [isSaving, setIsSaving] = useState(false); // New state for saving status
+
+            const [name, setName] = useState('');
+            const [nominal, setNominal] = useState('');
+            const [description, setDescription] = useState('');
+            const [price, setPrice] = useState('');
+            const [category, setCategory] = useState('games');
+            const [imageFiles, setImageFiles] = useState([]); // For new files to upload
+            const [imageUrls, setImageUrls] = useState([]); // Existing image URLs from Firestore
+            const [isVerified, setIsVerified] = useState(false);
+            const [pinned, setPinned] = useState(false);
+            const fileInputRef = useRef(null);
+
+            const categories = [
+                { value: 'games', label: t.games },
+                { value: 'apps', label: t.apps },
+                { value: 'other', label: t.other || 'Другое' }
+            ];
+
+            useEffect(() => {
+                const q = query(collection(db, "products"), orderBy('createdAt', 'desc'));
+                const unsubscribe = onSnapshot(q, (snapshot) => {
+                    setProducts(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+                    setLoading(false);
+                }, (error) => {
+                    console.error("Error fetching products for admin:", error);
+                    setLoading(false);
+                    setAlertInfo({ message: `${t.errorOccurred}: ${error.message}` });
+                });
+                return () => unsubscribe();
+            }, []);
+
+            const resetForm = () => {
+                setEditingProduct(null);
+                setName('');
+                setNominal('');
+                setDescription('');
+                setPrice('');
+                setCategory('games');
+                setImageFiles([]);
+                setImageUrls([]);
+                setIsVerified(false);
+                setPinned(false);
+                if (fileInputRef.current) fileInputRef.current.value = "";
+            };
+
+            const handleAddEditProduct = async (e) => {
+                e.preventDefault();
+                if (!name || !price || !description) {
+                    setAlertInfo({ message: t.fillAllFields });
+                    return;
+                }
+
+                setIsSaving(true); // Set saving state
+                try {
+                    // Upload new images
+                    const uploadedUrls = [];
+                    for (const file of imageFiles) {
+                        const path = `product_images/${Date.now()}_${file.name}`;
+                        const url = await uploadFile(file, path);
+                        uploadedUrls.push(url);
+                    }
+                    const finalImageUrls = [...imageUrls, ...uploadedUrls];
+
+                    const productData = {
+                        name, nominal, description, price: parseFloat(price), category,
+                        imageUrls: finalImageUrls, // Update to use imageUrls array
+                        isVerified, pinned,
+                    };
+
+                    if (editingProduct) {
+                        await updateDoc(doc(db, "products", editingProduct.id), { ...productData, updatedAt: serverTimestamp() });
+                        setAlertInfo({ message: t.productUpdated });
+                    } else {
+                        await addDoc(collection(db, "products"), { ...productData, createdAt: serverTimestamp(), popularity: 0 });
+                        setAlertInfo({ message: t.productAdded });
+                    }
+                    setIsModalOpen(false);
+                    resetForm();
+                } catch (error) {
+                    console.error("Error saving product:", error);
+                    setAlertInfo({ message: `${t.errorOccurred}: ${error.message}` });
+                } finally {
+                    setIsSaving(false); // Reset saving state
+                }
+            };
+
+            const handleEditClick = (product) => {
+                setEditingProduct(product);
+                setName(product.name);
+                setNominal(product.nominal || '');
+                setDescription(product.description);
+                setPrice(product.price);
+                setCategory(product.category || 'games');
+                setImageUrls(product.imageUrls || (product.imageUrl ? [product.imageUrl] : [])); // Support old imageUrl field
+                setIsVerified(product.isVerified || false);
+                setPinned(product.pinned || false);
+                setIsModalOpen(true);
+            };
+
+            const handleDeleteClick = (productId, productImages) => {
+                setAlertInfo({
+                    message: t.confirmDelete,
+                    onConfirm: async () => {
+                        try {
+                            await deleteDoc(doc(db, "products", productId));
+                            // Attempt to delete images from storage
+                            if (productImages && productImages.length > 0) {
+                                for (const url of productImages) {
+                                    await deleteFile(url);
+                                }
+                            }
+                            setAlertInfo({ message: t.productDeleted });
+                        } catch (error) {
+                            console.error("Error deleting product:", error);
+                            setAlertInfo({ message: `${t.errorOccurred}: ${error.message}` });
+                        }
+                    }
+                });
+            };
+
+            const handleImageFileChange = (e) => {
+                setImageFiles([...imageFiles, ...Array.from(e.target.files)]);
+                if (fileInputRef.current) fileInputRef.current.value = ""; // Clear file input
+            };
+
+            const handleRemoveImage = (indexToRemove, isNewFile) => {
+                if (isNewFile) {
+                    setImageFiles(imageFiles.filter((_, index) => index !== indexToRemove));
+                } else {
+                    // For existing URLs, we don't delete from storage immediately
+                    // It will be handled when product is updated/deleted
+                    setImageUrls(imageUrls.filter((_, index) => index !== indexToRemove));
+                }
+            };
+
+            return (
+                <div className="p-4 md:p-8 bg-secondary rounded-xl shadow-lg border-color min-h-[500px]">
+                    <div className="flex justify-between items-center mb-6">
+                        <h2 className="text-3xl font-bold text-primary">{t.manageProducts}</h2>
+                        <button onClick={() => { resetForm(); setIsModalOpen(true); }} className="accent-bg hover:accent-bg-secondary text-white font-bold py-2 px-4 rounded-lg transition-colors flex items-center space-x-2">
+                            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clipRule="evenodd" /></svg>
+                            <span>{t.addProduct}</span>
+                        </button>
+                    </div>
+
+                    {loading ? <LoadingSpinner /> : (
+                        products.length === 0 ? <p className="text-center text-secondary text-xl mt-12">{t.productsNotFound}</p> : (
+                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                                {products.map(product => (
+                                    <div key={product.id} className="bg-tertiary rounded-lg p-4 shadow border-color flex flex-col">
+                                        <div className="relative mb-3">
+                                            <img src={(product.imageUrls && product.imageUrls.length > 0) ? product.imageUrls[0] : (product.imageUrl || '')} 
+                                                 alt={product.name} 
+                                                 className="w-full h-40 object-cover rounded-md" 
+                                                 onError={(e) => { e.target.onerror = null; e.target.src=`https://placehold.co/600x400/374151/1f2937?text=${encodeURIComponent(t.imageNotFound)}`; }}/>
+                                            {product.pinned && <span className="absolute top-2 right-2 bg-yellow-400 text-black text-xs font-bold px-2 py-1 rounded-full">{t.pinned}</span>}
+                                        </div>
+                                        <h3 className="text-xl font-bold text-primary mb-1">{product.name}</h3>
+                                        {product.nominal && <p className="text-secondary text-sm mb-2">{product.nominal}</p>}
+                                        <p className="accent-text text-lg font-bold mt-auto">{convertPrice(product.price, currency)}</p>
+                                        <div className="flex space-x-2 mt-4">
+                                            <button onClick={() => handleEditClick(product)} className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg transition-colors flex-grow">{t.edit}</button>
+                                            <button onClick={() => handleDeleteClick(product.id, product.imageUrls || (product.imageUrl ? [product.imageUrl] : []))} className="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded-lg transition-colors flex-grow">{t.delete}</button>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        )
+                    )}
+
+                    {isModalOpen && (
+                        <Modal onClose={() => { setIsModalOpen(false); resetForm(); }} size="max-w-2xl">
+                            <h2 className="text-2xl font-bold text-primary mb-6 text-center">{editingProduct ? t.editProduct : t.addProduct}</h2>
+                            <form onSubmit={handleAddEditProduct} className="space-y-4">
+                                <div>
+                                    <label className="block text-secondary text-sm font-bold mb-2">{t.productName}</label>
+                                    <input type="text" value={name} onChange={(e) => setName(e.target.value)} className="w-full p-3 bg-tertiary rounded-lg border-color text-primary" placeholder={t.productName}/>
+                                </div>
+                                <div>
+                                    <label className="block text-secondary text-sm font-bold mb-2">{t.productNominal}</label>
+                                    <input type="text" value={nominal} onChange={(e) => setNominal(e.target.value)} className="w-full p-3 bg-tertiary rounded-lg border-color text-primary" placeholder={t.productNominal}/>
+                                </div>
+                                <div>
+                                    <label className="block text-secondary text-sm font-bold mb-2">{t.description}</label>
+                                    <textarea value={description} onChange={(e) => setDescription(e.target.value)} className="w-full p-3 bg-tertiary rounded-lg border-color text-primary h-32 resize-none" placeholder={t.description}></textarea>
+                                </div>
+                                <div>
+                                    <label className="block text-secondary text-sm font-bold mb-2">{t.priceInRub}</label>
+                                    <input type="number" value={price} onChange={(e) => setPrice(e.target.value)} className="w-full p-3 bg-tertiary rounded-lg border-color text-primary" placeholder="100"/>
+                                </div>
+                                <div>
+                                    <label className="block text-secondary text-sm font-bold mb-2">{t.category}</label>
+                                    <CustomSelector value={category} onChange={e => setCategory(e.target.value)} options={categories} />
+                                </div>
+                                <div>
+                                    <label className="block text-secondary text-sm font-bold mb-2">{t.productImages}</label>
+                                    <div className="flex flex-wrap gap-2 mb-2">
+                                        {imageUrls.map((url, index) => (
+                                            <div key={`url-${index}`} className="relative w-24 h-24 rounded-lg overflow-hidden border border-color">
+                                                <img src={url} alt={`Product Image ${index}`} className="w-full h-full object-cover"/>
+                                                <button type="button" onClick={() => handleRemoveImage(index, false)} className="absolute top-0 right-0 bg-red-600 text-white rounded-bl-lg p-1 text-xs">X</button>
+                                            </div>
+                                        ))}
+                                        {imageFiles.map((file, index) => (
+                                            <div key={`file-${index}`} className="relative w-24 h-24 rounded-lg overflow-hidden border border-color">
+                                                <img src={URL.createObjectURL(file)} alt={`New Image ${index}`} className="w-full h-full object-cover"/>
+                                                <button type="button" onClick={() => handleRemoveImage(index, true)} className="absolute top-0 right-0 bg-red-600 text-white rounded-bl-lg p-1 text-xs">X</button>
+                                            </div>
+                                        ))}
+                                    </div>
+                                    <input type="file" ref={fileInputRef} onChange={handleImageFileChange} accept="image/*" multiple className="w-full text-sm text-secondary file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-purple-50 file:text-purple-700 hover:file:bg-purple-100"/>
+                                </div>
+                                <div className="flex items-center space-x-4">
+                                    <label className="flex items-center text-secondary">
+                                        <input type="checkbox" checked={isVerified} onChange={(e) => setIsVerified(e.target.checked)} className="form-checkbox h-5 w-5 text-purple-600 rounded"/>
+                                        <span className="ml-2">{t.verifiedByStore}</span>
+                                    </label>
+                                    <label className="flex items-center text-secondary">
+                                        <input type="checkbox" checked={pinned} onChange={(e) => setPinned(e.target.checked)} className="form-checkbox h-5 w-5 text-purple-600 rounded"/>
+                                        <span className="ml-2">{t.pinProduct}</span>
+                                    </label>
+                                </div>
+                                <button type="submit" disabled={isSaving} className="w-full accent-bg hover:accent-bg-secondary text-white font-bold py-3 px-4 rounded-lg transition-colors disabled:bg-gray-500">
+                                    {isSaving ? t.sending : (editingProduct ? t.updateProduct : t.addProductBtn)}
+                                </button>
+                            </form>
+                        </Modal>
+                    )}
+                </div>
+            );
+        }
+
+        function AdminPromoCodeManagement({ setAlertInfo, t }) {
+            const [promoCodes, setPromoCodes] = useState([]);
+            const [loading, setLoading] = useState(true);
+            const [isModalOpen, setIsModalOpen] = useState(false);
+            const [editingPromoCode, setEditingPromoCode] = useState(null);
+
+            const [code, setCode] = useState('');
+            const [discount, setDiscount] = useState('');
+            const [usageLimit, setUsageLimit] = useState('');
+            const [isSaving, setIsSaving] = useState(false); // New state for saving status
+
+            useEffect(() => {
+                const q = query(collection(db, "promoCodes"), orderBy('createdAt', 'desc'));
+                const unsubscribe = onSnapshot(q, (snapshot) => {
+                    setPromoCodes(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+                    setLoading(false);
+                }, (error) => {
+                    console.error("Error fetching promo codes for admin:", error);
+                    setLoading(false);
+                    setAlertInfo({ message: `${t.errorOccurred}: ${error.message}` });
+                });
+                return () => unsubscribe();
+            }, []);
+
+            const resetForm = () => {
+                setEditingPromoCode(null);
+                setCode('');
+                setDiscount('');
+                setUsageLimit('');
+            };
+
+            const handleAddEditPromoCode = async (e) => {
+                e.preventDefault();
+                if (!code || !discount || !usageLimit) {
+                    setAlertInfo({ message: t.fillAllFields });
+                    return;
+                }
+
+                setIsSaving(true); // Set saving state
+                try {
+                    const promoCodeData = {
+                        code: code.toUpperCase(),
+                        discount: parseFloat(discount),
+                        usageLimit: parseInt(usageLimit),
+                    };
+
+                    if (editingPromoCode) {
+                        await updateDoc(doc(db, "promoCodes", editingPromoCode.id), { ...promoCodeData, updatedAt: serverTimestamp() });
+                        setAlertInfo({ message: t.promoUpdated || 'Промокод обновлен!' });
+                    } else {
+                        // Check if promo code already exists
+                        const existingDoc = await getDoc(doc(db, "promoCodes", promoCodeData.code));
+                        if (existingDoc.exists()) {
+                            setAlertInfo({ message: 'Промокод с таким названием уже существует.' });
+                            return;
+                        }
+                        await setDoc(doc(db, "promoCodes", promoCodeData.code), { ...promoCodeData, createdAt: serverTimestamp(), timesUsed: 0 }); // Use setDoc with custom ID
+                        setAlertInfo({ message: t.promoAdded });
+                    }
+                    setIsModalOpen(false);
+                    resetForm();
+                } catch (error) {
+                    console.error("Error saving promo code:", error);
+                    setAlertInfo({ message: `${t.errorOccurred}: ${error.message}` });
+                } finally {
+                    setIsSaving(false); // Reset saving state
+                }
+            };
+
+            const handleEditClick = (promo) => {
+                setEditingPromoCode(promo);
+                setCode(promo.code);
+                setDiscount(promo.discount);
+                setUsageLimit(promo.usageLimit);
+                setIsModalOpen(true);
+            };
+
+            const handleDeleteClick = (promoId) => {
+                setAlertInfo({
+                    message: t.confirmDeletePromo,
+                    onConfirm: async () => {
+                        try {
+                            await deleteDoc(doc(db, "promoCodes", promoId));
+                            setAlertInfo({ message: t.promoDeleted });
+                        } catch (error) {
+                            console.error("Error deleting promo code:", error);
+                            setAlertInfo({ message: `${t.errorOccurred}: ${error.message}` });
+                        }
+                    }
+                });
+            };
+
+            return (
+                <div className="p-4 md:p-8 bg-secondary rounded-xl shadow-lg border-color min-h-[500px]">
+                    <div className="flex justify-between items-center mb-6">
+                        <h2 className="text-3xl font-bold text-primary">{t.managePromoCodes}</h2>
+                        <button onClick={() => { resetForm(); setIsModalOpen(true); }} className="accent-bg hover:accent-bg-secondary text-white font-bold py-2 px-4 rounded-lg transition-colors flex items-center space-x-2">
+                            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clipRule="evenodd" /></svg>
+                            <span>{t.addPromoCode}</span>
+                        </button>
+                    </div>
+
+                    {loading ? <LoadingSpinner /> : (
+                        promoCodes.length === 0 ? <p className="text-center text-secondary text-xl mt-12">{t.noPromoCodes || 'Промокоды не найдены.'}</p> : (
+                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                                {promoCodes.map(promo => (
+                                    <div key={promo.id} className="bg-tertiary rounded-lg p-4 shadow border-color flex flex-col">
+                                        <h3 className="text-xl font-bold text-primary mb-1">{promo.code}</h3>
+                                        <p className="text-secondary text-sm mb-1">{t.discount}: {promo.discount}%</p>
+                                        <p className="text-secondary text-sm mb-2">{t.usageLimit}: {promo.timesUsed} / {promo.usageLimit}</p>
+                                        <div className="flex space-x-2 mt-auto">
+                                            <button onClick={() => handleEditClick(promo)} className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg transition-colors flex-grow">{t.edit}</button>
+                                            <button onClick={() => handleDeleteClick(promo.id)} className="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded-lg transition-colors flex-grow">{t.delete}</button>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        )
+                    )}
+
+                    {isModalOpen && (
+                        <Modal onClose={() => { setIsModalOpen(false); resetForm(); }} size="max-w-md">
+                            <h2 className="text-2xl font-bold text-primary mb-6 text-center">{editingPromoCode ? (t.editPromoCode || 'Редактировать промокод') : t.addPromoCode}</h2>
+                            <form onSubmit={handleAddEditPromoCode} className="space-y-4">
+                                <div>
+                                    <label className="block text-secondary text-sm font-bold mb-2">{t.promoCodeName}</label>
+                                    <input type="text" value={code} onChange={(e) => setCode(e.target.value.toUpperCase())} className="w-full p-3 bg-tertiary rounded-lg border-color text-primary" placeholder="PROMOCODE" disabled={!!editingPromoCode}/>
+                                </div>
+                                <div>
+                                    <label className="block text-secondary text-sm font-bold mb-2">{t.discountPercentage}</label>
+                                    <input type="number" value={discount} onChange={(e) => setDiscount(e.target.value)} className="w-full p-3 bg-tertiary rounded-lg border-color text-primary" placeholder="10" min="1" max="100"/>
+                                </div>
+                                <div>
+                                    <label className="block text-secondary text-sm font-bold mb-2">{t.usageLimit}</label>
+                                    <input type="number" value={usageLimit} onChange={(e) => setUsageLimit(e.target.value)} className="w-full p-3 bg-tertiary rounded-lg border-color text-primary" placeholder="100" min="1"/>
+                                </div>
+                                <button type="submit" disabled={isSaving} className="w-full accent-bg hover:accent-bg-secondary text-white font-bold py-3 px-4 rounded-lg transition-colors disabled:bg-gray-500">
+                                    {isSaving ? t.sending : (editingPromoCode ? (t.updatePromo || 'Обновить промокод') : t.addPromoCode)}
+                                </button>
+                            </form>
+                        </Modal>
+                    )}
+                </div>
+            );
+        }
+
+        // New Admin FAQ Management Component
+        function AdminFaqManagement({ setAlertInfo, t }) {
+            const [faqs, setFaqs] = useState([]);
+            const [loading, setLoading] = useState(true);
+            const [isModalOpen, setIsModalOpen] = useState(false);
+            const [editingFaq, setEditingFaq] = useState(null);
+
+            const [question, setQuestion] = useState('');
+            const [answer, setAnswer] = useState('');
+            const [isSaving, setIsSaving] = useState(false);
+
+            useEffect(() => {
+                const q = query(collection(db, "faq"), orderBy('createdAt', 'asc'));
+                const unsubscribe = onSnapshot(q, (snapshot) => {
+                    setFaqs(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+                    setLoading(false);
+                }, (error) => {
+                    console.error("Error fetching FAQs for admin:", error);
+                    setLoading(false);
+                    setAlertInfo({ message: `${t.errorOccurred}: ${error.message}` });
+                });
+                return () => unsubscribe();
+            }, []);
+
+            const resetForm = () => {
+                setEditingFaq(null);
+                setQuestion('');
+                setAnswer('');
+            };
+
+            const handleAddEditFaq = async (e) => {
+                e.preventDefault();
+                if (!question || !answer) {
+                    setAlertInfo({ message: t.fillAllFields });
+                    return;
+                }
+
+                setIsSaving(true);
+                try {
+                    const faqData = { question, answer };
+                    if (editingFaq) {
+                        await updateDoc(doc(db, "faq", editingFaq.id), { ...faqData, updatedAt: serverTimestamp() });
+                        setAlertInfo({ message: t.faqUpdated || 'FAQ обновлен!' });
+                    } else {
+                        await addDoc(collection(db, "faq"), { ...faqData, createdAt: serverTimestamp() });
+                        setAlertInfo({ message: t.faqAdded || 'FAQ добавлен!' });
+                    }
+                    setIsModalOpen(false);
+                    resetForm();
+                } catch (error) {
+                    console.error("Error saving FAQ:", error);
+                    setAlertInfo({ message: `${t.errorOccurred}: ${error.message}` });
+                } finally {
+                    setIsSaving(false);
+                }
+            };
+
+            const handleEditClick = (faq) => {
+                setEditingFaq(faq);
+                setQuestion(faq.question);
+                setAnswer(faq.answer);
+                setIsModalOpen(true);
+            };
+
+            const handleDeleteClick = (faqId) => {
+                setAlertInfo({
+                    message: t.confirmDeleteFaq || 'Вы уверены, что хотите удалить этот FAQ?',
+                    onConfirm: async () => {
+                        try {
+                            await deleteDoc(doc(db, "faq", faqId));
+                            setAlertInfo({ message: t.faqDeleted || 'FAQ удален.' });
+                        } catch (error) {
+                            console.error("Error deleting FAQ:", error);
+                            setAlertInfo({ message: `${t.errorOccurred}: ${error.message}` });
+                        }
+                    }
+                });
+            };
+
+            return (
+                <div className="p-4 md:p-8 bg-secondary rounded-xl shadow-lg border-color min-h-[500px]">
+                    <div className="flex justify-between items-center mb-6">
+                        <h2 className="text-3xl font-bold text-primary">{t.manageFaq}</h2>
+                        <button onClick={() => { resetForm(); setIsModalOpen(true); }} className="accent-bg hover:accent-bg-secondary text-white font-bold py-2 px-4 rounded-lg transition-colors flex items-center space-x-2">
+                            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clipRule="evenodd" /></svg>
+                            <span>{t.addFaq || 'Добавить FAQ'}</span>
+                        </button>
+                    </div>
+
+                    {loading ? <LoadingSpinner /> : (
+                        faqs.length === 0 ? <p className="text-center text-secondary text-xl mt-12">{t.noFaqs || 'FAQ не найдены.'}</p> : (
+                            <div className="space-y-4">
+                                {faqs.map(faq => (
+                                    <div key={faq.id} className="bg-tertiary rounded-lg p-4 shadow border-color">
+                                        <h3 className="text-xl font-bold text-primary mb-2">{faq.question}</h3>
+                                        <p className="text-secondary text-sm mb-4">{faq.answer}</p>
+                                        <div className="flex space-x-2">
+                                            <button onClick={() => handleEditClick(faq)} className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg transition-colors">{t.edit}</button>
+                                            <button onClick={() => handleDeleteClick(faq.id)} className="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded-lg transition-colors">{t.delete}</button>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        )
+                    )}
+
+                    {isModalOpen && (
+                        <Modal onClose={() => { setIsModalOpen(false); resetForm(); }} size="max-w-2xl">
+                            <h2 className="text-2xl font-bold text-primary mb-6 text-center">{editingFaq ? (t.editFaq || 'Редактировать FAQ') : (t.addFaq || 'Добавить FAQ')}</h2>
+                            <form onSubmit={handleAddEditFaq} className="space-y-4">
+                                <div>
+                                    <label className="block text-secondary text-sm font-bold mb-2">{t.question || 'Вопрос'}</label>
+                                    <input type="text" value={question} onChange={(e) => setQuestion(e.target.value)} className="w-full p-3 bg-tertiary rounded-lg border-color text-primary" placeholder={t.question || 'Введите вопрос'}/>
+                                </div>
+                                <div>
+                                    <label className="block text-secondary text-sm font-bold mb-2">{t.answer || 'Ответ'}</label>
+                                    <textarea value={answer} onChange={(e) => setAnswer(e.target.value)} className="w-full p-3 bg-tertiary rounded-lg border-color text-primary h-32 resize-none" placeholder={t.answer || 'Введите ответ'}></textarea>
+                                </div>
+                                <button type="submit" disabled={isSaving} className="w-full accent-bg hover:accent-bg-secondary text-white font-bold py-3 px-4 rounded-lg transition-colors disabled:bg-gray-500">
+                                    {isSaving ? t.sending : (editingFaq ? (t.updateFaq || 'Обновить FAQ') : (t.addFaq || 'Добавить FAQ'))}
+                                </button>
+                            </form>
+                        </Modal>
+                    )}
+                </div>
+            );
+        }
+
+
+        // New Admin Receipt Check Component
+        function AdminReceiptCheck({ setAlertInfo, t, currency, convertPrice }) {
+            const [pendingPurchases, setPendingPurchases] = useState([]);
+            const [loading, setLoading] = useState(true);
+            const [selectedReceipt, setSelectedReceipt] = useState(null); // For viewing full receipt image
+            const [adminComment, setAdminComment] = useState('');
+            const [isUpdatingStatus, setIsUpdatingStatus] = useState(false);
+
+            useEffect(() => {
+                const q = query(collection(db, "purchases"), where("status", "==", "pending"), orderBy('timestamp', 'desc'));
+                const unsubscribe = onSnapshot(q, (snapshot) => {
+                    setPendingPurchases(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+                    setLoading(false);
+                }, (error) => {
+                    console.error("Error fetching pending purchases:", error);
+                    setLoading(false);
+                    setAlertInfo({ message: `${t.errorOccurred}: ${error.message}` });
+                });
+                return () => unsubscribe();
+            }, []);
+
+            const handleStatusUpdate = async (purchaseId, status) => {
+                setIsUpdatingStatus(true);
+                try {
+                    await updateDoc(doc(db, "purchases", purchaseId), { 
+                        status: status, 
+                        adminComment: adminComment || null, // Add admin comment
+                        updatedAt: serverTimestamp() 
+                    });
+                    setAlertInfo({ message: status === 'approved' ? t.purchaseApproved || 'Покупка одобрена!' : t.purchaseRejected || 'Покупка отклонена.' });
+                    setSelectedReceipt(null); // Close modal
+                    setAdminComment(''); // Clear comment
+                } catch (error) {
+                    console.error("Error updating purchase status:", error);
+                    setAlertInfo({ message: `${t.errorOccurred}: ${error.message}` });
+                } finally {
+                    setIsUpdatingStatus(false);
+                }
+            };
+
+            return (
+                <div className="p-4 md:p-8 bg-secondary rounded-xl shadow-lg border-color min-h-[500px]">
+                    <h2 className="text-3xl font-bold text-primary mb-6">{t.checkReceipts}</h2>
+
+                    {loading ? <LoadingSpinner /> : (
+                        pendingPurchases.length === 0 ? <p className="text-center text-secondary text-xl mt-12">{t.noPendingReceipts}</p> : (
+                            <div className="space-y-4">
+                                {pendingPurchases.map(purchase => (
+                                    <div key={purchase.id} className="bg-tertiary rounded-lg p-4 shadow border-color">
+                                        <p className="font-bold text-primary text-lg">{t.product}: {purchase.productName}</p>
+                                        <p className="text-secondary text-sm">{t.user}: {purchase.userEmail}</p>
+                                        <p className="text-secondary text-sm">{t.amount}: {convertPrice(purchase.finalPrice, currency)}</p>
+                                        <p className="text-secondary text-sm mb-2">{t.date}: {purchase.timestamp?.toDate ? new Date(purchase.timestamp.toDate()).toLocaleString() : '...'}</p>
+                                        <p className="font-mono text-sm accent-text bg-gray-600 inline-block px-2 py-1 rounded my-1">Код: {purchase.purchaseCode}</p>
+
+                                        {purchase.receiptImageUrl && (
+                                            <button onClick={() => setSelectedReceipt(purchase)} className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg mt-2 transition-colors">
+                                                {t.viewReceipt || 'Посмотреть чек'}
+                                            </button>
+                                        )}
+                                    </div>
+                                ))}
+                            </div>
+                        )
+                    )}
+
+                    {selectedReceipt && (
+                        <Modal onClose={() => { setSelectedReceipt(null); setAdminComment(''); }} size="max-w-3xl">
+                            <h2 className="text-2xl font-bold text-primary mb-4 text-center">{t.receiptDetails || 'Детали чека'}</h2>
+                            <p className="text-secondary mb-2">{t.product}: <span className="font-semibold">{selectedReceipt.productName}</span></p>
+                            <p className="text-secondary mb-2">{t.user}: <span className="font-semibold">{selectedReceipt.userEmail}</span></p>
+                            <p className="text-secondary mb-4">{t.amount}: <span className="font-semibold accent-text">{convertPrice(selectedReceipt.finalPrice, currency)}</span></p>
+                            
+                            <img src={selectedReceipt.receiptImageUrl} alt="Receipt" className="w-full h-auto object-contain max-h-96 rounded-lg mb-4"/>
+
+                            <div className="mb-4">
+                                <label className="block text-secondary text-sm font-bold mb-2">{t.adminComment}</label>
+                                <textarea value={adminComment} onChange={(e) => setAdminComment(e.target.value)} className="w-full p-3 bg-tertiary rounded-lg border-color text-primary h-24 resize-none" placeholder={t.adminCommentPlaceholder || 'Оставьте комментарий (необязательно)'}></textarea>
+                            </div>
+
+                            <div className="flex justify-between space-x-4">
+                                <button onClick={() => handleStatusUpdate(selectedReceipt.id, 'rejected')} disabled={isUpdatingStatus} className="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded-lg transition-colors disabled:bg-gray-500 flex-grow">
+                                    {isUpdatingStatus && selectedReceipt.status === 'rejected' ? t.sending : t.reject}
+                                </button>
+                                <button onClick={() => handleStatusUpdate(selectedReceipt.id, 'approved')} disabled={isUpdatingStatus} className="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded-lg transition-colors disabled:bg-gray-500 flex-grow">
+                                    {isUpdatingStatus && selectedReceipt.status === 'approved' ? t.sending : t.approve}
+                                </button>
+                            </div>
+                        </Modal>
+                    )}
+                </div>
+            );
+        }
+
+        // New Chat Components
+        function UserChatInterface({ user, setAlertInfo, t }) {
+            const [messages, setMessages] = useState([]);
+            const [newMessage, setNewMessage] = useState('');
+            const [loading, setLoading] = useState(true);
+            const messagesEndRef = useRef(null);
+            const [isChatModalOpen, setIsChatModalOpen] = useState(false); // State to control modal visibility
+
+            useEffect(() => {
+                if (!user) { setLoading(false); return; }
+                // Query messages for the current user
+                const q = query(
+                    collection(db, `chats/${user.uid}/messages`),
+                    orderBy('timestamp', 'asc')
+                );
+                const unsubscribe = onSnapshot(q, (snapshot) => {
+                    setMessages(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+                    setLoading(false);
+                }, (error) => {
+                    console.error("Error fetching chat messages:", error);
+                    setLoading(false);
+                    setAlertInfo({ message: `${t.errorOccurred}: ${error.message}` });
+                });
+                return () => unsubscribe();
+            }, [user]);
+
+            useEffect(() => {
+                messagesEndRef.current?.scrollInView({ behavior: "smooth" }); // Changed to scrollInView for compatibility
+            }, [messages]);
+
+            const sendMessage = async (e) => {
+                e.preventDefault();
+                if (newMessage.trim() === '') return;
+                if (!user) { setAlertInfo({ message: t.loginForSupport }); return; }
+
+                try {
+                    // Add message to user's chat subcollection
+                    await addDoc(collection(db, `chats/${user.uid}/messages`), {
+                        senderId: user.uid,
+                        senderName: user.displayName || user.email,
+                        message: newMessage,
+                        timestamp: serverTimestamp(),
+                        isRead: false,
+                        isAdmin: false
+                    });
+                    // Also update the main chat document for admin to see latest message and user info
+                    await setDoc(doc(db, "chats", user.uid), {
+                        lastMessage: newMessage,
+                        lastMessageTimestamp: serverTimestamp(),
+                        userId: user.uid,
+                        userName: user.displayName || user.email,
+                        userEmail: user.email,
+                        hasUnreadAdmin: false, // User has sent, so admin has unread
+                        hasUnreadUser: true, // User has sent, so user side has read (just sent)
+                    }, { merge: true }); // Use merge to not overwrite existing fields
+
+                    setNewMessage('');
+                } catch (error) {
+                    console.error("Error sending message:", error);
+                    setAlertInfo({ message: `${t.errorOccurred}: ${error.message}` });
+                }
+            };
+
+            return (
+                <div className="container mx-auto p-4 md:p-8">
+                    <button onClick={() => setIsChatModalOpen(true)} className="accent-bg hover:accent-bg-secondary text-white font-bold py-2 px-4 rounded-lg transition-colors flex items-center space-x-2">
+                        <span>{t.chatWithAdmin}</span>
+                    </button>
+                    {isChatModalOpen && (
+                        <Modal onClose={() => setIsChatModalOpen(false)} size="max-w-4xl">
+                            <h2 className="text-2xl font-bold text-primary mb-4 text-center">{t.chatWithAdmin}</h2>
+                            <div className="flex-grow overflow-y-auto pr-2 mb-4 space-y-4 h-96">
+                                {loading ? <LoadingSpinner /> : (
+                                    messages.length === 0 ? (
+                                        <p className="text-center text-secondary text-xl mt-12">{t.noChatMessages}</p>
+                                    ) : (
+                                        messages.map((msg) => (
+                                            <div key={msg.id} className={`flex ${msg.isAdmin ? 'justify-start' : 'justify-end'}`}>
+                                                <div className={`${msg.isAdmin ? 'bg-tertiary rounded-br-none' : 'accent-bg text-white rounded-bl-none'} max-w-[75%] p-3 rounded-lg shadow`}>
+                                                    <p className="font-bold text-sm mb-1">{msg.isAdmin ? 'Admin' : (msg.senderName || t.you)}</p>
+                                                    <p>{msg.message}</p>
+                                                    <p className="text-xs mt-1 text-right opacity-70">
+                                                        {msg.timestamp?.toDate ? new Date(msg.timestamp.toDate()).toLocaleTimeString() : ''}
+                                                    </p>
+                                                </div>
+                                            </div>
+                                        ))
+                                    )
+                                )}
+                                <div ref={messagesEndRef} />
+                            </div>
+                            <form onSubmit={sendMessage} className="flex">
+                                <input
+                                    type="text"
+                                    value={newMessage}
+                                    onChange={(e) => setNewMessage(e.target.value)}
+                                    placeholder={t.enterMessagePlaceholder}
+                                    className="flex-grow p-3 bg-tertiary rounded-l-lg border-color text-primary focus:outline-none focus:ring-2 accent-border"
+                                    disabled={!user}
+                                />
+                                <button type="submit" className="accent-bg hover:accent-bg-secondary text-white font-bold py-3 px-6 rounded-r-lg transition-colors disabled:bg-gray-500" disabled={!user}>
+                                    {t.send || 'Отправить'}
+                                </button>
+                            </form>
+                            {!user && <p className="text-red-500 text-center text-sm mt-2">{t.loginForSupport}</p>}
+                        </Modal>
+                    )}
+                </div>
+            );
+        }
+
+        function AdminChatInterface({ setAlertInfo, t }) {
+            const [userChats, setUserChats] = useState([]); // List of users with active chats
+            const [selectedUserChat, setSelectedUserChat] = useState(null); // The chat being viewed
+            const [messages, setMessages] = useState([]);
+            const [newMessage, setNewMessage] = useState('');
+            const [loadingChats, setLoadingChats] = useState(true);
+            const [loadingMessages, setLoadingMessages] = useState(false);
+            const messagesEndRef = useRef(null);
+
+            useEffect(() => {
+                // Fetch list of all chats (users who initiated contact)
+                const q = query(collection(db, "chats"), orderBy('lastMessageTimestamp', 'desc'));
+                const unsubscribe = onSnapshot(q, (snapshot) => {
+                    setUserChats(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+                    setLoadingChats(false);
+                }, (error) => {
+                    console.error("Error fetching user chats:", error);
+                    setLoadingChats(false);
+                    setAlertInfo({ message: `${t.errorOccurred}: ${error.message}` });
+                });
+                return () => unsubscribe();
+            }, []);
+
+            useEffect(() => {
+                if (!selectedUserChat) {
+                    setMessages([]);
+                    return;
+                }
+                setLoadingMessages(true);
+                const q = query(
+                    collection(db, `chats/${selectedUserChat.userId}/messages`),
+                    orderBy('timestamp', 'asc')
+                );
+                const unsubscribe = onSnapshot(q, (snapshot) => {
+                    setMessages(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+                    setLoadingMessages(false);
+                    // Mark admin messages as read for this user
+                    const unreadAdminMessages = snapshot.docs.filter(doc => !doc.data().isRead && doc.data().isAdmin);
+                    unreadAdminMessages.forEach(async (msgDoc) => {
+                        await updateDoc(doc(db, `chats/${selectedUserChat.userId}/messages`, msgDoc.id), { isRead: true });
+                    });
+                    // Mark the main chat document as read for admin
+                    if (selectedUserChat.hasUnreadAdmin) {
+                         updateDoc(doc(db, "chats", selectedUserChat.userId), { hasUnreadAdmin: false });
+                    }
+                }, (error) => {
+                    console.error("Error fetching chat messages for admin:", error);
+                    setLoadingMessages(false);
+                    setAlertInfo({ message: `${t.errorOccurred}: ${error.message}` });
+                });
+                return () => unsubscribe();
+            }, [selectedUserChat]);
+
+            useEffect(() => {
+                messagesEndRef.current?.scrollInView({ behavior: "smooth" }); // Changed to scrollInView for compatibility
+            }, [messages]);
+
+            const sendMessage = async (e) => {
+                e.preventDefault();
+                if (newMessage.trim() === '' || !selectedUserChat) return;
+
+                try {
+                    await addDoc(collection(db, `chats/${selectedUserChat.userId}/messages`), {
+                        senderId: 'admin', // Admin UID
+                        senderName: 'Admin',
+                        message: newMessage,
+                        timestamp: serverTimestamp(),
+                        isRead: false, // User needs to read this
+                        isAdmin: true
+                    });
+                    await updateDoc(doc(db, "chats", selectedUserChat.userId), {
+                        lastMessage: newMessage,
+                        lastMessageTimestamp: serverTimestamp(),
+                        hasUnreadUser: true, // User has unread message from admin
+                    });
+                    setNewMessage('');
+                } catch (error) {
+                    console.error("Error sending admin message:", error);
+                    setAlertInfo({ message: `${t.errorOccurred}: ${error.message}` });
+                }
+            };
+
+            return (
+                <div className="p-4 md:p-8 bg-secondary rounded-xl shadow-lg border-color min-h-[500px] flex">
+                    <div className="w-1/3 border-r border-color pr-4 overflow-y-auto">
+                        <h3 className="text-2xl font-bold text-primary mb-4">{t.userChats}</h3>
+                        {loadingChats ? <LoadingSpinner /> : (
+                            userChats.length === 0 ? <p className="text-secondary text-sm">{t.noChats || 'Нет активных чатов.'}</p> : (
+                                userChats.map(chat => (
+                                    <button
+                                        key={chat.id}
+                                        onClick={() => setSelectedUserChat(chat)}
+                                        className={`w-full text-left p-3 rounded-lg mb-2 transition-colors ${selectedUserChat?.id === chat.id ? 'accent-bg text-white' : 'bg-tertiary text-primary hover:bg-gray-700'} flex justify-between items-center`}
+                                    >
+                                        <div>
+                                            <p className="font-semibold">{chat.userName || chat.userEmail}</p>
+                                            <p className="text-xs text-secondary opacity-80 truncate">{chat.lastMessage}</p>
+                                        </div>
+                                        {chat.hasUnreadAdmin && (
+                                            <span className="bg-red-500 text-white text-xs font-bold px-2 py-1 rounded-full">New</span>
+                                        )}
+                                    </button>
+                                ))
+                            )
+                        )}
+                    </div>
+
+                    <div className="w-2/3 pl-4 flex flex-col">
+                        {selectedUserChat ? (
+                            <>
+                                <h3 className="text-2xl font-bold text-primary mb-4">{t.chatWith}: {selectedUserChat.userName || selectedUserChat.userEmail}</h3>
+                                <div className="flex-grow overflow-y-auto pr-2 mb-4 space-y-4">
+                                    {loadingMessages ? <LoadingSpinner /> : (
+                                        messages.map((msg) => (
+                                            <div key={msg.id} className={`flex ${msg.isAdmin ? 'justify-end' : 'justify-start'}`}>
+                                                <div className={`${msg.isAdmin ? 'accent-bg text-white rounded-bl-none' : 'bg-tertiary rounded-br-none'} max-w-[75%] p-3 rounded-lg shadow`}>
+                                                    <p className="font-bold text-sm mb-1">{msg.isAdmin ? 'Admin' : (msg.senderName || t.user)}</p>
+                                                    <p>{msg.message}</p>
+                                                    <p className="text-xs mt-1 text-right opacity-70">
+                                                        {msg.timestamp?.toDate ? new Date(msg.timestamp.toDate()).toLocaleTimeString() : ''}
+                                                    </p>
+                                                </div>
+                                            </div>
+                                        ))
+                                    )}
+                                    <div ref={messagesEndRef} />
+                                </div>
+                                <form onSubmit={sendMessage} className="flex mt-auto">
+                                    <input
+                                        type="text"
+                                        value={newMessage}
+                                        onChange={(e) => setNewMessage(e.target.value)}
+                                        placeholder={t.enterMessagePlaceholder}
+                                        className="flex-grow p-3 bg-tertiary rounded-l-lg border-color text-primary focus:outline-none focus:ring-2 accent-border"
+                                    />
+                                    <button type="submit" className="accent-bg hover:accent-bg-secondary text-white font-bold py-3 px-6 rounded-r-lg transition-colors">
+                                        {t.send || 'Отправить'}
+                                    </button>
+                                </form>
+                            </>
+                        ) : (
+                            <p className="text-center text-secondary text-xl mt-12">{t.selectUserToChat || 'Выберите пользователя для просмотра чата.'}</p>
+                        )}
+                    </div>
+                </div>
+            );
+        }
+
+
+        function AdminPanel({ setPage, setAlertInfo, t, currency, convertPrice }) {
+            const [activeTab, setActiveTab] = useState('products'); // 'products', 'promoCodes', 'receipts', 'chats', 'faq'
+
+            const TabButton = ({ tabName, label }) => (
+                <button
+                    onClick={() => setActiveTab(tabName)}
+                    className={`px-6 py-3 text-lg font-semibold rounded-t-lg transition-colors ${activeTab === tabName ? 'bg-secondary text-primary accent-border border-b-2' : 'text-secondary hover:text-primary'}`}
+                >
+                    {label}
+                </button>
+            );
+
+            return (
+                <main className="container mx-auto p-4 md:p-8">
+                    <h1 className="text-4xl md:text-5xl font-black text-primary text-center mb-8 tracking-wide">{t.adminPanelTitle}</h1>
+                    <div className="bg-secondary rounded-xl shadow-lg border-color p-6">
+                        <div className="flex justify-center border-b border-color mb-6 overflow-x-auto pb-2">
+                            <TabButton tabName="products" label={t.manageProducts} />
+                            <TabButton tabName="promoCodes" label={t.managePromoCodes} />
+                            <TabButton tabName="receipts" label={t.checkReceipts} />
+                            <TabButton tabName="faq" label={t.manageFaq} /> {/* New FAQ Tab */}
+                            <TabButton tabName="chats" label={t.chats} /> {/* New Chats Tab */}
+                        </div>
+
+                        <div>
+                            {activeTab === 'products' && <AdminProductManagement {...{setAlertInfo, t, currency, convertPrice}} />}
+                            {activeTab === 'promoCodes' && <AdminPromoCodeManagement {...{setAlertInfo, t}} />}
+                            {activeTab === 'receipts' && <AdminReceiptCheck {...{setAlertInfo, t, currency, convertPrice}} />}
+                            {activeTab === 'faq' && <AdminFaqManagement {...{setAlertInfo, t}} />} {/* Render FAQ Management */}
+                            {activeTab === 'chats' && <AdminChatInterface {...{setAlertInfo, t}} />} {/* Render Admin Chat */}
+                        </div>
+                    </div>
+                </main>
+            );
+        }
+
         function App() {
             const [user, setUser] = useState(undefined);
             const [products, setProducts] = useState([]);
@@ -1022,9 +1944,10 @@
 
             const renderContent = () => {
                 switch (page) {
-                    case 'admin': return isAdmin ? <div className="text-center text-primary p-10">Админ-панель в разработке.</div> : <HomePage {...{products, onProductClick: setSelectedProduct, t, currency, convertPrice, loading: products.length === 0}} />;
+                    case 'admin': return isAdmin ? <AdminPanel {...{setPage, setAlertInfo, t, currency, convertPrice}} /> : <HomePage {...{products, onProductClick: setSelectedProduct, t, currency, convertPrice, loading: products.length === 0}} />;
                     case 'purchases': return user ? <MyPurchasesPage {...{user, t, currency, convertPrice, setAlertInfo}} /> : <div className="text-center text-primary p-10">{t.loginToView}</div>;
                     case 'faq': return <FAQPage faqs={faqs} t={t} />;
+                    case 'chat': return <UserChatInterface user={user} setAlertInfo={setAlertInfo} t={t} />; // New user chat page
                     default: return <HomePage {...{products, onProductClick: setSelectedProduct, t, currency, convertPrice, loading: products.length === 0}} />;
                 }
             };
@@ -1127,6 +2050,30 @@
                 yourPurchaseCode: 'Ваш уникальный код покупки',
                 idCopied: 'ID скопирован в буфер обмена!',
                 clickToCopy: 'Нажмите, чтобы скопировать',
+                other: 'Другое', // Added for categories
+                noPromoCodes: 'Промокоды не найдены.',
+                editPromoCode: 'Редактировать промокод',
+                updatePromo: 'Обновить промокод',
+                addFaq: 'Добавить FAQ', // New translations for FAQ
+                editFaq: 'Редактировать FAQ',
+                updateFaq: 'Обновить FAQ',
+                noFaqs: 'FAQ не найдены.',
+                confirmDeleteFaq: 'Вы уверены, что хотите удалить этот FAQ?',
+                faqAdded: 'FAQ добавлен!',
+                faqUpdated: 'FAQ обновлен!',
+                faqDeleted: 'FAQ удален.',
+                question: 'Вопрос',
+                answer: 'Ответ',
+                viewReceipt: 'Посмотреть чек',
+                receiptDetails: 'Детали чека',
+                adminCommentPlaceholder: 'Оставьте комментарий (необязательно)',
+                purchaseApproved: 'Покупка одобрена!',
+                purchaseRejected: 'Покупка отклонена.',
+                noChatMessages: 'Сообщений пока нет. Начните чат!',
+                send: 'Отправить',
+                you: 'Вы',
+                noChats: 'Нет активных чатов.',
+                selectUserToChat: 'Выберите пользователя для просмотра чата.',
             },
             en: {
                 home: 'Home', support: 'Support', faq: 'FAQ', adminPanelTitle: 'Admin Panel', profile: 'Profile', logout: 'Logout', login: 'Login',
@@ -1215,7 +2162,7 @@
                 productName: 'Mahsulot nomi', productNominal: 'Nominal (masalan: 100 gem)', description: 'Tavsif', priceInRub: 'Narx (RUBda)', imageUrl: 'Rasm URL', productImages: 'Mahsulot rasmlari URL', addImage: 'Rasm qo\'shish',
                 addProductBtn: 'Mahsulot qo\'shish', updateProduct: 'Mahsulotni yangilash', fillAllFields: 'Iltimos, barcha maydonlarni to\'ldiring.', productList: 'Mahsulotlar ro\'yxati',
                 productAdded: 'Mahsulot muvaffaqiyatli qo\'shildi!', productUpdated: 'Mahsulot muvaffaqiyatli yangilandi!', errorOccurred: 'Xatolik yuz berdi.',
-                confirmDelete: 'Haqiqatan ham bu mahsulotni oʻchirib tashlamoqchimisiz?', productDeleted: 'Mahsulot oʻchirildi.',
+                confirmDelete: 'Haqiqatan ҳам bu mahsulotni oʻchirib tashlamoqchimisiz?', productDeleted: 'Mahsulot oʻchirildi.',
                 supportTickets: 'Qo\'llab-quvvatlash biletlari', user: 'Foydalanuvchi',
                 noTickets: 'Sizda hali biletlar yo\'q.',
                 loginForSupport: 'Yordam uchun tizimga kiring.',
