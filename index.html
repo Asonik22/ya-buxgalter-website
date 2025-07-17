@@ -296,7 +296,7 @@
                             <label htmlFor="rememberMe" className="ml-2 text-sm text-secondary">{t.rememberMe || 'Запомнить меня (10 минут)'}</label>
                         </div>
 
-                        <button type="submit" className="w-full mt-6 accent-bg hover:accent-bg-secondary text-white font-bold py-3 px-4 rounded-lg transition-colors disabled:bg-gray-500" disabled={isLocked}>
+                        <button type="submit" className="w-full mt-6 accent-bg hover:accent-bg-secondary text-white font-bold py-3 px-4 rounded-lg transition-colors disabled:bg-gray-500">
                             {isLocked ? `Заблокировано (${countdown})` : t.enter}
                         </button>
                     </form>
@@ -949,9 +949,12 @@
 
                 setIsSaving(true); // Set saving state
                 try {
-                    // Upload new images
+                    // Upload new images using ImgBB or Firebase Storage (Firebase Storage is preferred for multiple images)
                     const uploadedUrls = [];
                     for (const file of imageFiles) {
+                        // Using Firebase Storage as it was previously set up for multiple files.
+                        // If you prefer ImgBB for product images, this section needs to be changed
+                        // to call the ImgBB API multiple times for each file.
                         const path = `product_images/${Date.now()}_${file.name}`;
                         const url = await uploadFile(file, path);
                         uploadedUrls.push(url);
@@ -1551,7 +1554,7 @@
             }, [user]);
 
             useEffect(() => {
-                messagesEndRef.current?.scrollIntoView({ behavior: "smooth" }); // Changed to scrollInView for compatibility
+                messagesEndRef.current?.scrollIntoView({ behavior: "smooth" }); // Corrected method name
             }, [messages]);
 
             const sendMessage = async (e) => {
@@ -1689,7 +1692,7 @@
             }, [selectedUserChat]);
 
             useEffect(() => {
-                messagesEndRef.current?.scrollIntoView({ behavior: "smooth" }); // Changed to scrollInView for compatibility
+                messagesEndRef.current?.scrollIntoView({ behavior: "smooth" }); // Corrected method name
             }, [messages]);
 
             const sendMessage = async (e) => {
