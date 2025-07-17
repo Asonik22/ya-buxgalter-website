@@ -76,10 +76,6 @@
         .accent-border { border-color: var(--accent-primary); }
         .hover\:accent-bg:hover { background-color: var(--accent-primary); }
         .hover\:accent-bg-secondary:hover { background-color: var(--accent-secondary); }
-        
-        .chat-bubble { max-width: 75%; word-wrap: break-word; }
-        .chat-bubble-user { background-color: #4f46e5; }
-        .chat-bubble-admin { background-color: #374151; }
     </style>
 </head>
 <body class="bg-primary text-primary">
@@ -258,7 +254,6 @@
                         <nav className="hidden md:flex items-center space-x-6">
                             <button onClick={() => setPage('home')} className="text-secondary hover:text-primary font-medium transition-colors">{t.home}</button>
                             {user && <button onClick={() => setPage('purchases')} className="text-secondary hover:text-primary font-medium transition-colors">{t.myPurchases}</button>}
-                            {user && <button onClick={() => setPage('chats')} className="text-secondary hover:text-primary font-medium transition-colors">{t.chats}</button>}
                             <button onClick={() => setPage('faq')} className="text-secondary hover:text-primary font-medium transition-colors">{t.faq}</button>
                             {isAdmin && <button onClick={() => setPage('admin')} className="text-red-500 hover:text-red-400 font-bold transition-colors">{t.adminPanelTitle}</button>}
                         </nav>
