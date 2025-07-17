@@ -101,6 +101,7 @@
         };
         
         const ADMIN_UID = 'vhmtXZxkZnOWviNQ39R1W3GE8mw2';
+        const ADMIN_PIN = '300414';
         const IMGBB_API_KEY = '96bf3f29606f1989bb5a450ad3770cce';
 
         const app = initializeApp(firebaseConfig);
@@ -231,7 +232,7 @@
         };
 
         // --- Main Components ---
-        function Header({ user, onLogin, onLogout, setPage, isAdmin, t, currency, setCurrency, language, setLanguage, setProfileVisible, theme, setTheme }) {
+        function Header({ user, onLogin, onLogout, setPage, isAdmin, t, currency, setCurrency, language, setLanguage, setProfileVisible, theme, setTheme, onAdminClick }) {
             const [userDropdownOpen, setUserDropdownOpen] = useState(false);
             const userDropdownRef = useRef(null);
 
@@ -270,6 +271,7 @@
                                     {userDropdownOpen && (
                                         <div className={`absolute right-0 mt-2 w-48 bg-secondary rounded-md shadow-lg py-1 z-50 border-color`}>
                                             <a href="#" onClick={(e) => { e.preventDefault(); setProfileVisible(true); setUserDropdownOpen(false); }} className="block px-4 py-2 text-sm text-secondary hover:text-primary hover:accent-bg">{t.profile}</a>
+                                            {isAdmin && <a href="#" onClick={(e) => { e.preventDefault(); onAdminClick(); setUserDropdownOpen(false); }} className="block px-4 py-2 text-sm text-red-500 hover:text-red-400 hover:accent-bg">{t.adminPanelTitle}</a>}
                                             <a href="#" onClick={(e) => { e.preventDefault(); onLogout(); setUserDropdownOpen(false); }} className="block px-4 py-2 text-sm text-secondary hover:text-primary hover:accent-bg">{t.logout}</a>
                                         </div>
                                     )}
@@ -943,8 +945,6 @@
 
             const renderContent = () => {
                 switch (page) {
-                    case 'admin': return <div className="text-center text-primary p-10">Админ-панель в разработке.</div>;
-                    case 'chats': return <div className="text-center text-primary p-10">Чаты в разработке.</div>;
                     case 'purchases': return user ? <MyPurchasesPage {...{user, t, currency, convertPrice, setAlertInfo}} /> : <div className="text-center text-primary p-10">{t.loginToView}</div>;
                     case 'faq': return <FAQPage faqs={faqs} t={t} />;
                     default: return <HomePage {...{products, onProductClick: setSelectedProduct, t, currency, convertPrice, loading: products.length === 0}} />;
