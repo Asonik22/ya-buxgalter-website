@@ -846,17 +846,112 @@
                 }
             };
             
-            const resetForm = () => { /* ... */ };
-            const handleImageUrlChange = (index, value) => { /* ... */ };
-            const addImageUrlField = () => { /* ... */ };
-            const removeImageUrlField = (index) => { /* ... */ };
-            const handleSubmit = async (e) => { /* ... */ };
-            const handleEdit = (product) => { /* ... */ };
-            const handleFaqSubmit = async (e) => { /* ... */ };
-            const handleEditFaq = (faq) => { /* ... */ };
-            const handleDeleteFaq = async (id) => { /* ... */ };
-            const handlePromoSubmit = async (e) => { /* ... */ };
-            const handleDeletePromo = async (id) => { /* ... */ };
+            const resetForm = () => {
+                setName(''); setDescription(''); setPrice(''); setNominal('');
+                setImageUrls(['']); setEditingProduct(null); setIsPinned(false); setIsVerified(false); setCategory('');
+            };
+
+            const handleImageUrlChange = (index, value) => {
+                const newUrls = [...imageUrls];
+                newUrls[index] = value;
+                setImageUrls(newUrls);
+            };
+
+            const addImageUrlField = () => {
+                if (imageUrls.length < 5) {
+                    setImageUrls([...imageUrls, '']);
+                }
+            };
+
+            const removeImageUrlField = (index) => {
+                if (imageUrls.length > 1) {
+                    const newUrls = imageUrls.filter((_, i) => i !== index);
+                    setImageUrls(newUrls);
+                }
+            };
+
+            const handleSubmit = async (e) => {
+                e.preventDefault();
+                const finalImageUrls = imageUrls.filter(url => url.trim() !== '');
+                if (!name || !description || !price || finalImageUrls.length === 0) { setAlertInfo({ message: t.fillAllFields }); return; }
+                setIsLoading(true);
+                const productData = { 
+                    name, description, price: Number(price), imageUrls: finalImageUrls, nominal, 
+                    pinned: isPinned, isVerified: isVerified,
+                    category, createdAt: serverTimestamp(), popularity: editingProduct?.popularity || 0 
+                };
+                try {
+                    if (editingProduct) {
+                        await setDoc(doc(db, 'products', editingProduct.id), productData, { merge: true });
+                        setAlertInfo({ message: t.productUpdated });
+                    } else {
+                        await addDoc(collection(db, 'products'), productData);
+                        setAlertInfo({ message: t.productAdded });
+                    }
+                    resetForm();
+                    setView('viewProducts');
+                } catch (error) { setAlertInfo({ message: t.errorOccurred }); }
+                finally { setIsLoading(false); }
+            };
+
+            const handleEdit = (product) => {
+                setEditingProduct(product);
+                setName(product.name); setDescription(product.description); setPrice(product.price);
+                setNominal(product.nominal || ''); setIsPinned(product.pinned || false); setIsVerified(product.isVerified || false);
+                setCategory(product.category || 'games'); setImageUrls(product.imageUrls || ['']);
+                setView('addProduct');
+            };
+            
+            const handleFaqSubmit = async (e) => {
+                e.preventDefault();
+                if (!faqQuestion || !faqAnswer) { setAlertInfo({ message: t.fillAllFields }); return; }
+                const faqData = { question: faqQuestion, answer: faqAnswer };
+                try {
+                    if (editingFaq) {
+                        await setDoc(doc(db, 'faq', editingFaq.id), faqData);
+                        setAlertInfo({ message: t.faqUpdated });
+                    } else {
+                        await addDoc(collection(db, 'faq'), faqData);
+                        setAlertInfo({ message: t.faqAdded });
+                    }
+                    setFaqQuestion(''); setFaqAnswer(''); setEditingFaq(null);
+                } catch (error) { setAlertInfo({ message: t.errorOccurred }); }
+            };
+
+            const handleEditFaq = (faq) => { setEditingFaq(faq); setFaqQuestion(faq.question); setFaqAnswer(faq.answer); };
+
+            const handleDeleteFaq = async (id) => {
+                 setAlertInfo({ message: t.confirmDeleteFaq, onConfirm: async () => {
+                    try { await deleteDoc(doc(db, 'faq', id)); setAlertInfo({ message: t.faqDeleted }); }
+                    catch (error) { setAlertInfo({ message: t.errorOccurred }); }
+                }});
+            };
+
+            const handlePromoSubmit = async (e) => {
+                e.preventDefault();
+                if (!promoCodeName.trim()) { setAlertInfo({ message: t.fillAllFields }); return; }
+                const promoData = { 
+                    code: promoCodeName.toUpperCase(), 
+                    discount: Number(promoDiscount), 
+                    usageLimit: Number(promoUsageLimit),
+                    timesUsed: 0,
+                    createdAt: serverTimestamp() 
+                };
+                try {
+                    await setDoc(doc(db, 'promoCodes', promoData.code), promoData);
+                    setAlertInfo({ message: t.promoAdded });
+                    setPromoCodeName('');
+                    setPromoDiscount(10);
+                    setPromoUsageLimit(100);
+                } catch (error) { setAlertInfo({ message: t.errorOccurred }); }
+            };
+
+            const handleDeletePromo = async (id) => {
+                setAlertInfo({ message: t.confirmDeletePromo, onConfirm: async () => {
+                    try { await deleteDoc(doc(db, 'promoCodes', id)); setAlertInfo({ message: t.promoDeleted }); }
+                    catch (error) { setAlertInfo({ message: t.errorOccurred }); }
+                }});
+            };
 
             return (
                 <div className="container mx-auto p-4 md:p-8 text-primary">
@@ -1078,6 +1173,20 @@
                     console.error("Purchase creation error: ", error);
                     setAlertInfo({ message: t.errorOccurred });
                 }
+            };
+
+            const handleDeleteProduct = (productId) => {
+                setAlertInfo({
+                    message: t.confirmDelete,
+                    onConfirm: async () => {
+                        try {
+                            await deleteDoc(doc(db, "products", productId));
+                            setAlertInfo({ message: t.productDeleted });
+                        } catch (error) {
+                            setAlertInfo({ message: t.errorOccurred });
+                        }
+                    }
+                });
             };
             
             const handleAlertConfirm = () => { if (alertInfo && alertInfo.onConfirm) alertInfo.onConfirm(); setAlertInfo(null); };
