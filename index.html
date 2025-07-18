@@ -431,7 +431,7 @@
             return (
                 <header className="bg-secondary p-4 shadow-lg sticky top-0 z-40 border-b border-color">
                     <div className="container mx-auto flex justify-between items-center">
-                        <div onClick={() => setPage('home')}><Logo /></div>
+                        <div onClick={() => handleMenuItemClick('home')}><Logo /></div> {/* Changed to handleMenuItemClick for consistency */}
                         <nav className="hidden md:flex items-center space-x-6">
                             <button onClick={() => handleMenuItemClick('home')} className="text-secondary hover:text-primary font-medium transition-colors">{t.home}</button>
                             {user && <button onClick={() => handleMenuItemClick('purchases')} className="text-secondary hover:text-primary font-medium transition-colors">{t.myPurchases}</button>}
@@ -2281,14 +2281,14 @@
                         participants: [user.uid, targetUser.id],
                         type: 'private',
                         name: `${user.displayName || user.email} & ${targetUser.displayName || targetUser.email}`,
-                        createdAt: new Date(), // Use new Date() here
+                        createdAt: new Date(), 
                         lastMessage: t.chatRequestSentInitialMessage || 'Запрос на чат отправлен.',
-                        lastMessageTimestamp: new Date(), // Use new Date() here
+                        lastMessageTimestamp: new Date(), 
                         requests: [{
                             requesterId: user.uid,
                             invitedId: targetUser.id,
                             status: 'pending',
-                            timestamp: new Date() // Use new Date() here
+                            timestamp: new Date() 
                         }],
                         hasUnread: {
                             [targetUser.id]: true // Mark as unread for the target user (for the request)
@@ -2299,7 +2299,7 @@
                         senderId: user.uid,
                         senderName: user.displayName || user.email,
                         message: t.chatRequestMessage || `Я хочу начать с Вами чат. Пожалуйста, примите мой запрос.`,
-                        timestamp: new Date(), // Use new Date() here
+                        timestamp: new Date(), 
                         isRead: false,
                         isAdmin: false
                     });
@@ -2332,7 +2332,7 @@
                         await updateDoc(chatRef, { 
                             requests: updatedRequests,
                             lastMessage: t.chatAcceptedMessage || 'Чат был принят.',
-                            lastMessageTimestamp: serverTimestamp(), // Here serverTimestamp() is fine as it's top-level
+                            lastMessageTimestamp: serverTimestamp(), 
                             hasUnread: updatedUnread,
                         });
 
@@ -2340,7 +2340,7 @@
                             senderId: user.uid,
                             senderName: user.displayName || user.email,
                             message: t.chatAcceptedMessage || 'Чат был принят.',
-                            timestamp: new Date(), // Use new Date() here
+                            timestamp: new Date(), 
                             isRead: false,
                             isAdmin: false
                         });
@@ -2371,7 +2371,7 @@
                         await updateDoc(chatRef, { 
                             requests: updatedRequests,
                             lastMessage: t.chatRejectedMessage || 'Запрос на чат отклонен.',
-                            lastMessageTimestamp: serverTimestamp(), // Here serverTimestamp() is fine
+                            lastMessageTimestamp: serverTimestamp(), 
                             hasUnread: updatedUnread,
                         });
 
@@ -2379,7 +2379,7 @@
                             senderId: user.uid,
                             senderName: user.displayName || user.email,
                             message: t.chatRejectedMessage || 'Запрос на чат отклонен.',
-                            timestamp: new Date(), // Use new Date() here
+                            timestamp: new Date(), 
                             isRead: false,
                             isAdmin: false
                         });
@@ -2400,11 +2400,11 @@
                         
                         {user && (
                             <div className="bg-tertiary p-3 rounded-lg mb-4 flex justify-between items-center flex-wrap">
-                                <p className="text-secondary text-sm">
+                                <p className="text-secondary text-sm flex-grow"> {/* Flex-grow for text */}
                                     {t.yourId || 'Ваш уникальный ID для связи'}: 
                                     <span className="font-mono text-primary font-bold break-all ml-2">{user.uid}</span> {/* Made ID bold */}
                                 </p>
-                                <div className="flex items-center space-x-2 mt-2 md:mt-0">
+                                <div className="flex items-center space-x-2 mt-2 md:mt-0 ml-auto"> {/* Aligned right */}
                                     <button onClick={copyUserIdToClipboard} className="bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold py-1 px-3 rounded-lg">
                                         {t.clickToCopy || 'Нажмите, чтобы скопировать'}
                                     </button>
@@ -2484,10 +2484,11 @@
                             </Modal>
                         )}
 
-
-                        {/* Incoming Chat Requests */}
-                        <div className="space-y-4 mb-6 p-4 bg-tertiary rounded-lg border-color">
-                            <h3 className="text-xl font-bold text-primary">{t.incomingChatRequests || 'Входящие запросы на чат'}</h3>
+                        {/* Combined Requests Section */}
+                        <div className="space-y-4 p-4 bg-tertiary rounded-lg border-color">
+                            <h3 className="text-xl font-bold text-primary mb-4">{t.chatRequests || 'Запросы на чат'}</h3> {/* New combined title */}
+                            
+                            <h4 className="text-lg font-semibold text-primary">{t.incomingChatRequests || 'Входящие запросы'}</h4>
                             {loadingRequests ? <LoadingSpinner /> : (
                                 incomingRequests.length === 0 ? (
                                     <p className="text-secondary text-sm">{t.noIncomingRequests || 'Нет входящих запросов.'}</p>
@@ -2506,11 +2507,8 @@
                                     ))
                                 )
                             )}
-                        </div>
 
-                        {/* Outgoing Chat Requests */}
-                        <div className="space-y-4 p-4 bg-tertiary rounded-lg border-color">
-                            <h3 className="text-xl font-bold text-primary">{t.outgoingChatRequests || 'Исходящие запросы на чат'}</h3>
+                            <h4 className="text-lg font-semibold text-primary mt-6">{t.outgoingChatRequests || 'Исходящие запросы'}</h4>
                             {loadingRequests ? <LoadingSpinner /> : (
                                 outgoingRequests.length === 0 ? (
                                     <p className="text-secondary text-sm">{t.noOutgoingRequests || 'Нет исходящих запросов.'}</p>
@@ -2767,6 +2765,19 @@
             const [purchasingProduct, setPurchasingProduct] = useState(null);
             const [yooMoneyData, setYooMoneyData] = useState(null);
             const [theme, setTheme] = useState('asonik');
+
+            // Persist page state across refreshes
+            useEffect(() => {
+                const savedPage = localStorage.getItem('currentPage');
+                if (savedPage) {
+                    setPage(savedPage);
+                }
+            }, []); // Run once on mount
+
+            useEffect(() => {
+                localStorage.setItem('currentPage', page);
+            }, [page]); // Save page whenever it changes
+
 
             // Check admin session on component mount
             useEffect(() => {
@@ -3248,6 +3259,7 @@
                 groupChat: 'Групповой чат', // New translation
                 chatRequestSentInitialMessage: 'Запрос на чат отправлен.', // New translation (more specific)
                 hasIncomingRequest: 'У вас уже есть входящий запрос от этого пользователя. Пожалуйста, примите его.', // New translation
+                chatRequests: 'Запросы на чат', // New combined title for requests
             },
             en: {
                 home: 'Home', support: 'Support', faq: 'FAQ', adminPanelTitle: 'Admin Panel', profile: 'Profile', logout: 'Logout', login: 'Login',
