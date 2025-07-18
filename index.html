@@ -193,7 +193,7 @@
                         // If it doesn't immediately reflect, a slight delay or manual state update in App might be needed
                         // For now, relying on onAuthStateChanged to eventually update App's user state.
                     });
-                } catch (error) {
+                }  catch (error) {
                     console.error("Error updating profile:", error);
                     setAlertInfo({ message: `${t.errorOccurred}: ${error.message}` });
                 } finally {
@@ -1972,7 +1972,7 @@
                         // Mark hasUnreadUser as false for the user when they read admin messages
                         updateDoc(doc(db, "chats", currentUser.uid), { hasUnreadUser: false });
                     } else {
-                        // For user-to-user chats, update hasUnreadUser for the current user
+                        // For user-to-user chats, update hasUnread for the current user
                         updateDoc(doc(db, "userChats", chatId), { [`hasUnread.${currentUser.uid}`]: false });
                     }
 
@@ -1997,7 +1997,8 @@
                         senderId: currentUser.uid,
                         senderName: currentUser.displayName || currentUser.email,
                         message: newMessage,
-                        timestamp: serverTimestamp(),
+                        // Fix: Use new Date() instead of serverTimestamp() inside array or nested objects
+                        timestamp: new Date(), 
                         isRead: false,
                         isAdmin: isCurrentUserAdmin // Only admin messages have this flag set true
                     });
@@ -2113,18 +2114,17 @@
                             let displayPeerName = '';
                             let isRequest = false;
 
-                            if (chatData.requests && chatData.requests.some(req => req.status === 'pending' && req.invitedId === user.uid)) {
-                                // This is an incoming request for the current user
+                            // Find the request relevant to the current user
+                            const relevantRequest = chatData.requests?.find(req => 
+                                (req.status === 'pending' && req.invitedId === user.uid) || // Incoming
+                                (req.status === 'pending' && req.requesterId === user.uid)  // Outgoing
+                            );
+
+                            if (relevantRequest) {
                                 isRequest = true;
-                                const requesterId = chatData.requests.find(req => req.status === 'pending' && req.invitedId === user.uid).requesterId;
-                                const requesterDoc = await getDoc(doc(db, 'users', requesterId));
-                                displayPeerName = requesterDoc.exists() ? (requesterDoc.data().displayName || requesterDoc.data().email) : t.unknownUser;
-                            } else if (chatData.requests && chatData.requests.some(req => req.status === 'pending' && req.requesterId === user.uid)) {
-                                // This is an outgoing request sent by the current user
-                                isRequest = true;
-                                const invitedId = chatData.requests.find(req => req.status === 'pending' && req.requesterId === user.uid).invitedId;
-                                const invitedDoc = await getDoc(doc(db, 'users', invitedId));
-                                displayPeerName = invitedDoc.exists() ? (invitedDoc.data().displayName || invitedDoc.data().email) : t.unknownUser;
+                                const peerId = relevantRequest.requesterId === user.uid ? relevantRequest.invitedId : relevantRequest.requesterId;
+                                const peerDoc = await getDoc(doc(db, 'users', peerId));
+                                displayPeerName = peerDoc.exists() ? (peerDoc.data().displayName || peerDoc.data().email) : t.unknownUser;
                             } else {
                                 // Regular active chat
                                 const otherParticipantId = chatData.participants.find(pId => pId !== user.uid);
@@ -2169,8 +2169,8 @@
 
                         // Sort all combined chats by last message timestamp
                         combinedChats.sort((a, b) => {
-                            const tsA = a.lastMessageTimestamp?.toMillis() || 0;
-                            const tsB = b.lastMessageTimestamp?.toMillis() || 0;
+                            const tsA = a.lastMessageTimestamp?.toMillis() || a.createdAt?.toMillis() || 0; // Use createdAt if lastMessageTimestamp not available
+                            const tsB = b.lastMessageTimestamp?.toMillis() || b.createdAt?.toMillis() || 0; // Use createdAt if lastMessageTimestamp not available
                             return tsB - tsA;
                         });
 
@@ -2239,28 +2239,36 @@
                 // Check if a chat (or pending request) already exists between these two users
                 const existingChatQuery = query(
                     collection(db, 'userChats'),
-                    where('participants', 'array-contains', user.uid)
-                    // We need a more complex query or client-side filter to ensure both participants are in the chat.
-                    // For now, simpler check based on targetUser's ID.
+                    where('participants', 'array-contains', user.uid),
+                    where('participants', 'array-contains', targetUser.id) // Check for both participants
                 );
                 const existingChatSnap = await getDocs(existingChatQuery);
                 const existingChat = existingChatSnap.docs.find(doc => {
                     const data = doc.data();
-                    return data.participants.includes(targetUser.id);
+                    // Ensure it's exactly between these two, not a group with more people
+                    return data.participants.length === 2 && 
+                           data.participants.includes(user.uid) && 
+                           data.participants.includes(targetUser.id);
                 });
 
                 if (existingChat) {
                     const chatData = existingChat.data();
+                    // Check if there's a pending request from current user to target
                     if (chatData.requests && chatData.requests.some(req => req.status === 'pending' && req.invitedId === targetUser.id && req.requesterId === user.uid)) {
                         setAlertInfo({ message: t.requestAlreadySent || 'Запрос на чат уже был отправлен этому пользователю.' });
                         return;
                     }
-                    if (chatData.participants.includes(targetUser.id) && !chatData.requests) { // This means it's an active chat
+                    // Check if there's an active chat (no pending requests)
+                    if (!chatData.requests || chatData.requests.every(req => req.status !== 'pending')) { 
                         setAlertInfo({ message: t.chatAlreadyExists || 'Чат с этим пользователем уже существует.' });
                         return;
                     }
+                    // If there's an incoming pending request from target to current user, the user should accept it, not send new.
+                    if (chatData.requests && chatData.requests.some(req => req.status === 'pending' && req.invitedId === user.uid && req.requesterId === targetUser.id)) {
+                        setAlertInfo({ message: t.hasIncomingRequest || 'У вас уже есть входящий запрос от этого пользователя. Пожалуйста, примите его.' });
+                        return;
+                    }
                 }
-
 
                 try {
                     const newChatDocRef = doc(collection(db, 'userChats')); 
@@ -2269,14 +2277,14 @@
                         participants: [user.uid, targetUser.id],
                         type: 'private',
                         name: `${user.displayName || user.email} & ${targetUser.displayName || targetUser.email}`,
-                        createdAt: serverTimestamp(),
+                        createdAt: new Date(), // Use new Date() here
                         lastMessage: t.chatRequestSentInitialMessage || 'Запрос на чат отправлен.',
-                        lastMessageTimestamp: serverTimestamp(),
+                        lastMessageTimestamp: new Date(), // Use new Date() here
                         requests: [{
                             requesterId: user.uid,
                             invitedId: targetUser.id,
                             status: 'pending',
-                            timestamp: serverTimestamp()
+                            timestamp: new Date() // Use new Date() here
                         }],
                         hasUnread: {
                             [targetUser.id]: true // Mark as unread for the target user (for the request)
@@ -2287,7 +2295,7 @@
                         senderId: user.uid,
                         senderName: user.displayName || user.email,
                         message: t.chatRequestMessage || `Я хочу начать с Вами чат. Пожалуйста, примите мой запрос.`,
-                        timestamp: serverTimestamp(),
+                        timestamp: new Date(), // Use new Date() here
                         isRead: false,
                         isAdmin: false
                     });
@@ -2319,7 +2327,7 @@
                         await updateDoc(chatRef, { 
                             requests: updatedRequests,
                             lastMessage: t.chatAcceptedMessage || 'Чат был принят.',
-                            lastMessageTimestamp: serverTimestamp(),
+                            lastMessageTimestamp: serverTimestamp(), // Here serverTimestamp() is fine as it's top-level
                             hasUnread: updatedUnread,
                         });
 
@@ -2327,7 +2335,7 @@
                             senderId: user.uid,
                             senderName: user.displayName || user.email,
                             message: t.chatAcceptedMessage || 'Чат был принят.',
-                            timestamp: serverTimestamp(),
+                            timestamp: new Date(), // Use new Date() here
                             isRead: false,
                             isAdmin: false
                         });
@@ -2358,7 +2366,7 @@
                         await updateDoc(chatRef, { 
                             requests: updatedRequests,
                             lastMessage: t.chatRejectedMessage || 'Запрос на чат отклонен.',
-                            lastMessageTimestamp: serverTimestamp(),
+                            lastMessageTimestamp: serverTimestamp(), // Here serverTimestamp() is fine
                             hasUnread: updatedUnread,
                         });
 
@@ -2366,7 +2374,7 @@
                             senderId: user.uid,
                             senderName: user.displayName || user.email,
                             message: t.chatRejectedMessage || 'Запрос на чат отклонен.',
-                            timestamp: serverTimestamp(),
+                            timestamp: new Date(), // Use new Date() here
                             isRead: false,
                             isAdmin: false
                         });
@@ -3223,6 +3231,7 @@
                 unknownUser: 'Неизвестный пользователь', // New translation
                 groupChat: 'Групповой чат', // New translation
                 chatRequestSentInitialMessage: 'Запрос на чат отправлен.', // New translation (more specific)
+                hasIncomingRequest: 'У вас уже есть входящий запрос от этого пользователя. Пожалуйста, примите его.', // New translation
             },
             en: {
                 home: 'Home', support: 'Support', faq: 'FAQ', adminPanelTitle: 'Admin Panel', profile: 'Profile', logout: 'Logout', login: 'Login',
