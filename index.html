@@ -1278,16 +1278,19 @@
                     message: t.confirmCloneProduct || `Вы уверены, что хотите клонировать товар "${productToClone.name}"?`,
                     onConfirm: async () => {
                         try {
+                            // Убедимся, что productToClone.variants является массивом, даже если он undefined
+                            const clonedVariants = Array.isArray(productToClone.variants) 
+                                ? productToClone.variants.map(v => ({ ...v, stockQuantity: v.stockQuantity || 0 })) 
+                                : []; // Если variants нет, создаем пустой массив
+            
                             const clonedProductData = {
                                 ...productToClone,
                                 name: `${productToClone.name} (${t.copyText || 'Копия'})`,
-                                createdAt: serverTimestamp(), // New timestamp
-                                updatedAt: serverTimestamp(), // New timestamp
-                                popularity: 0, // Reset popularity for clone
-                                isOnSale: true, // Cloned items are on sale by default
-                                // Ensure variants are deep-copied and stock quantities are not references
-                                variants: productToClone.variants ? productToClone.variants.map(v => ({ ...v, stockQuantity: v.stockQuantity || 0 })) : [],
-                                // Do not copy ID, Firestore will generate a new one
+                                createdAt: serverTimestamp(), 
+                                updatedAt: serverTimestamp(), 
+                                popularity: 0, 
+                                isOnSale: true, 
+                                variants: clonedVariants, // Используем исправленные варианты
                             };
                             delete clonedProductData.id; 
 
