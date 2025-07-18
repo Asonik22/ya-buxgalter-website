@@ -138,7 +138,7 @@
         const storage = getStorage(app);
         const provider = new GoogleAuthProvider();
         
-        const logoBase64 = "data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAYEBQYFBAYGBQYHBwYIChAKCgkJChQODwwQFxQYGBcUFhYaHSUfGhsjHBYWICwgIyYnKSopGR8tMC0oMCUoKSj/2wBDAQcHBwoIChMKChMoGhYaKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCj/wAARCAAgACADASIAAhEBAxEB/8QAGQAAAgMBAAAAAAAAAAAAAAAAAAYDBAUH/8QAIxAAAQQCAgICAwAAAAAAAAAAAQIDBAUGEQASITFBURMUYf/EABQBAQAAAAAAAAAAAAAAAAAAAAD/xAAUEQEAAAAAAAAAAAAAAAAAAAAA/9oADAMBAAIRAxinAD2ERkACK5uX1WzYtprKqKxckO2E5sNqS0lxLbqFpWlQBSoAgjYI9j39cZkABEV7OpaO6xYlXl0V6bYSHENNR2klS1qUoJSkAekkkgD+8YkABGczL6bT1kuyupLMNhhJWtbywkgD6Gz1J+g98ZkAB//2Q==";
+        const logoBase64 = "data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAYEBQYFBAYGBQYHBwYIChAKCgkJChQODwwQFxQYGBcUFhYaHSUfGhsjHBYWICwgIyYnKSopGR8tMC0oMCUoKSj/2wBDAQcHBwoIChMKChMoGhYaKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCj/wAARCAAgACADASIAAhEBAx toutinAD2ERkACK5uX1WzYtprKqKxckO2E5sNqS0lxLbqFpWlQBSoAgjYI9j39cZkABEV7OpaO6xYlXl0V6bYSHENNR2klS1qUoJSkAekkkgD+8YkABGczL6bT1kuyupLMNhhJWtbywkgD6Gz1J+g98ZkAB//2Q==";
         // QR Code data removed completely as requested.
 
         // --- Helper Components & Functions ---
@@ -2281,9 +2281,9 @@
                         participants: [user.uid, targetUser.id],
                         type: 'private',
                         name: `${user.displayName || user.email} & ${targetUser.displayName || targetUser.email}`,
-                        createdAt: serverTimestamp(), 
+                        createdAt: new Date(), 
                         lastMessage: t.chatRequestSentInitialMessage || 'Запрос на чат отправлен.',
-                        lastMessageTimestamp: serverTimestamp(), 
+                        lastMessageTimestamp: new Date(), 
                         requests: [{
                             requesterId: user.uid,
                             invitedId: targetUser.id,
@@ -2415,7 +2415,50 @@
                             </div>
                         )}
 
-                        <div className="mb-6 space-y-4">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                            <div className="space-y-4">
+                                <h4 className="text-lg font-semibold text-primary">{t.incomingChatRequests || 'Входящие запросы'}</h4>
+                                {loadingRequests ? <LoadingSpinner /> : (
+                                    incomingRequests.length === 0 ? (
+                                        <p className="text-secondary text-sm">{t.noIncomingRequests || 'Нет входящих запросов.'}</p>
+                                    ) : (
+                                        incomingRequests.map(request => (
+                                            <div key={request.id} className="p-3 bg-tertiary rounded-lg flex flex-col md:flex-row justify-between items-center mb-2 border border-color">
+                                                <div>
+                                                    <p className="font-semibold text-primary">{t.requestFrom}: {request.displayPeerName}</p>
+                                                    <p className="text-sm text-secondary">{t.message}: {request.lastMessage}</p>
+                                                </div>
+                                                <div className="flex space-x-2 mt-2 md:mt-0">
+                                                    <button onClick={() => handleAcceptRequest(request.id, request.requests.findIndex(req => req.invitedId === user.uid && req.status === 'pending'))} className="bg-green-600 hover:bg-green-700 text-white font-bold py-1 px-3 rounded-lg text-sm">{t.accept || 'Принять'}</button>
+                                                    <button onClick={() => handleRejectRequest(request.id, request.requests.findIndex(req => req.invitedId === user.uid && req.status === 'pending'))} className="bg-red-600 hover:bg-red-700 text-white font-bold py-1 px-3 rounded-lg text-sm">{t.reject || 'Отклонить'}</button>
+                                                </div>
+                                            </div>
+                                        ))
+                                    )
+                                )}
+                            </div>
+
+                            <div className="space-y-4">
+                                <h4 className="text-lg font-semibold text-primary">{t.outgoingChatRequests || 'Исходящие запросы'}</h4>
+                                {loadingRequests ? <LoadingSpinner /> : (
+                                    outgoingRequests.length === 0 ? (
+                                        <p className="text-secondary text-sm">{t.noOutgoingRequests || 'Нет исходящих запросов.'}</p>
+                                    ) : (
+                                        outgoingRequests.map(request => (
+                                            <div key={request.id} className="p-3 bg-tertiary rounded-lg flex flex-col md:flex-row justify-between items-center mb-2 border border-color">
+                                                <div>
+                                                    <p className="font-semibold text-primary">{t.requestTo}: {request.displayPeerName}</p>
+                                                    <p className="text-sm text-secondary">{t.status}: {t.pending || 'Ожидает'}</p>
+                                                </div>
+                                                {/* No actions needed for outgoing requests here, just display status */}
+                                            </div>
+                                        ))
+                                    )
+                                )}
+                            </div>
+                        </div>
+
+                        <div className="mb-6 space-y-4 border-t border-color pt-6">
                             <h3 className="text-xl font-bold text-primary">{t.activeChats || 'Активные чаты'}</h3>
                             {loadingChats ? <LoadingSpinner /> : (
                                 (allChats.length > 0) ? (
@@ -2460,8 +2503,8 @@
                             )}
                         </div>
 
-                        {/* Moved "Find User To Chat" into a modal triggered by the plus button */}
-                        {isFindUserModalOpen && (
+                    </div>
+                    {isFindUserModalOpen && (
                             <Modal onClose={() => { setIsFindUserModalOpen(false); setFoundUser(null); setSearchError(''); setSearchUserId(''); }} size="max-w-md">
                                 <h3 className="text-2xl font-bold text-primary mb-4 text-center">{t.findUserToChat || 'Найти пользователя для чата'}</h3>
                                 <div className="flex space-x-2 mb-4">
@@ -2483,50 +2526,6 @@
                                 )}
                             </Modal>
                         )}
-
-                        {/* Combined Requests Section */}
-                        <div className="space-y-4 p-4 bg-tertiary rounded-lg border-color">
-                            <h3 className="text-xl font-bold text-primary mb-4">{t.chatRequests || 'Запросы на чат'}</h3> {/* New combined title */}
-                            
-                            <h4 className="text-lg font-semibold text-primary">{t.incomingChatRequests || 'Входящие запросы'}</h4>
-                            {loadingRequests ? <LoadingSpinner /> : (
-                                incomingRequests.length === 0 ? (
-                                    <p className="text-secondary text-sm">{t.noIncomingRequests || 'Нет входящих запросов.'}</p>
-                                ) : (
-                                    incomingRequests.map(request => (
-                                        <div key={request.id} className="p-3 bg-secondary rounded-lg flex flex-col md:flex-row justify-between items-center mb-2">
-                                            <div>
-                                                <p className="font-semibold text-primary">{t.requestFrom}: {request.displayPeerName}</p>
-                                                <p className="text-sm text-secondary">{t.message}: {request.lastMessage}</p>
-                                            </div>
-                                            <div className="flex space-x-2 mt-2 md:mt-0">
-                                                <button onClick={() => handleAcceptRequest(request.id, request.requests.findIndex(req => req.invitedId === user.uid && req.status === 'pending'))} className="bg-green-600 hover:bg-green-700 text-white font-bold py-1 px-3 rounded-lg text-sm">{t.accept || 'Принять'}</button>
-                                                <button onClick={() => handleRejectRequest(request.id, request.requests.findIndex(req => req.invitedId === user.uid && req.status === 'pending'))} className="bg-red-600 hover:bg-red-700 text-white font-bold py-1 px-3 rounded-lg text-sm">{t.reject || 'Отклонить'}</button>
-                                            </div>
-                                        </div>
-                                    ))
-                                )
-                            )}
-
-                            <h4 className="text-lg font-semibold text-primary mt-6">{t.outgoingChatRequests || 'Исходящие запросы'}</h4>
-                            {loadingRequests ? <LoadingSpinner /> : (
-                                outgoingRequests.length === 0 ? (
-                                    <p className="text-secondary text-sm">{t.noOutgoingRequests || 'Нет исходящих запросов.'}</p>
-                                ) : (
-                                    outgoingRequests.map(request => (
-                                        <div key={request.id} className="p-3 bg-secondary rounded-lg flex flex-col md:flex-row justify-between items-center mb-2">
-                                            <div>
-                                                <p className="font-semibold text-primary">{t.requestTo}: {request.displayPeerName}</p>
-                                                <p className="text-sm text-secondary">{t.status}: {t.pending || 'Ожидает'}</p>
-                                            </div>
-                                            {/* No actions needed for outgoing requests here, just display status */}
-                                        </div>
-                                    ))
-                                )
-                            )}
-                        </div>
-                        
-                    </div>
                     {isChatWindowOpen && user && currentChatInfo && (
                         <ChatWindow 
                             currentUser={user} 
@@ -3242,11 +3241,11 @@
                 chatRequestMessage: 'Я хочу начать с Вами чат. Пожалуйста, примите мой запрос.', // New translation for initial chat message
                 requestAlreadySent: 'Запрос на чат уже был отправлен этому пользователю.', // New translation
                 chatAlreadyExists: 'Чат с этим пользователем уже существует.', // New translation
-                incomingChatRequests: 'Входящие запросы на чат', // New translation
+                incomingChatRequests: 'Входящие запросы', // New translation
                 noIncomingRequests: 'Нет входящих запросов.', // New translation
                 requestFrom: 'Запрос от', // New translation
                 accept: 'Принять', // New translation
-                outgoingChatRequests: 'Исходящие запросы на чат', // New translation
+                outgoingChatRequests: 'Исходящие запросы', // New translation
                 noOutgoingRequests: 'Нет исходящих запросов.', // New translation
                 requestTo: 'Запрос к', // New translation
                 pending: 'Ожидает', // New translation
