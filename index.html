@@ -394,7 +394,7 @@
                                 onChange={(e) => setRememberMeChecked(e.target.checked)}
                                 className="form-checkbox h-4 w-4 text-purple-600 rounded"
                             />
-                            <label htmlFor="rememberMe" className="ml-2 text-sm text-secondary">{t.rememberMe || 'Запомнить меня (10 минут)'}</label>
+                            <label htmlFor="rememberMe" className="ml-2 text-sm text-secondary">{t.rememberMe || 'Запомнить меня (15 минут)'}</label> {/* Changed to 15 minutes */}
                         </div>
 
                         <button type="submit" className="w-full mt-6 accent-bg hover:accent-bg-secondary text-white font-bold py-3 px-4 rounded-lg transition-colors disabled:bg-gray-500" disabled={isLocked}>
@@ -1865,6 +1865,7 @@
                     });
                     setAlertInfo({ message: status === 'approved' ? t.purchaseApproved || 'Покупка одобрена!' : t.purchaseRejected || 'Покупка отклонена.' });
                     setSelectedReceipt(null); // Close modal
+                    setAlertInfo(null); // Clear previous alert
                     setAdminComment(''); // Clear comment
                 } catch (error) {
                     console.error("Error updating purchase status:", error);
@@ -1956,9 +1957,10 @@
                     const unreadMessages = snapshot.docs.filter(doc => {
                         const data = doc.data();
                         if (chatType === 'admin') {
-                            return data.isAdmin && !data.isRead; // For user, mark admin's message as read
+                            // If it's an admin chat, user marks admin's messages as read.
+                            return data.isAdmin && !data.isRead; 
                         } else {
-                            // For user-to-user chat, mark messages from other participant as read
+                            // For user-to-user chat, mark messages from other participant as read.
                             return data.senderId !== currentUser.uid && !data.isRead;
                         }
                     });
@@ -1967,12 +1969,12 @@
                         await updateDoc(doc(db, chatCollectionPath, msgDoc.id), { isRead: true });
                     });
 
-                    // Update main chat document to mark for the current user
+                    // Update main chat document to reflect read status for the current user
                     if (chatType === 'admin') {
                         // Mark hasUnreadUser as false for the user when they read admin messages
                         updateDoc(doc(db, "chats", currentUser.uid), { hasUnreadUser: false });
                     } else {
-                        // For user-to-user chats, update hasUnread for the current user
+                        // For user-to-user chats, update hasUnread[currentUser.uid] to false
                         updateDoc(doc(db, "userChats", chatId), { [`hasUnread.${currentUser.uid}`]: false });
                     }
 
@@ -1997,24 +1999,24 @@
                         senderId: currentUser.uid,
                         senderName: currentUser.displayName || currentUser.email,
                         message: newMessage,
-                        // Fix: Use new Date() instead of serverTimestamp() inside array or nested objects
+                        // Fix: Use new Date() for timestamp within messages subcollection
                         timestamp: new Date(), 
                         isRead: false,
-                        isAdmin: isCurrentUserAdmin // Only admin messages have this flag set true
+                        isAdmin: isCurrentUserAdmin 
                     });
 
                     // Update the last message and timestamp in the main chat document
                     if (chatType === 'admin') {
                         await updateDoc(doc(db, "chats", currentUser.uid), {
                             lastMessage: newMessage,
-                            lastMessageTimestamp: serverTimestamp(),
-                            hasUnreadAdmin: isCurrentUserAdmin ? false : true, // If admin sent, admin read. If user sent, admin needs to read.
-                            hasUnreadUser: isCurrentUserAdmin ? true : false, // If admin sent, user needs to read. If user sent, user read.
+                            lastMessageTimestamp: serverTimestamp(), // Here serverTimestamp() is fine
+                            hasUnreadAdmin: isCurrentUserAdmin ? false : true, 
+                            hasUnreadUser: isCurrentUserAdmin ? true : false, 
                         });
                     } else { // User-to-user chat
                         const updateData = {
                             lastMessage: newMessage,
-                            lastMessageTimestamp: serverTimestamp(),
+                            lastMessageTimestamp: serverTimestamp(), // Here serverTimestamp() is fine
                             [`hasUnread.${currentUser.uid}`]: false, // Current user sent, so they read it
                         };
                         // Mark other participants as unread
@@ -2033,7 +2035,7 @@
                 }
             };
 
-            const chatTitle = chatType === 'admin' ? t.chatWithAdmin : (participantInfo?.name || t.chatWithUser || 'Чат с пользователем');
+            const chatTitle = chatType === 'admin' ? t.chatWithAdmin : (participantInfo?.displayPeerName || t.chatWithUser || 'Чат с пользователем');
 
             return (
                 <Modal onClose={onClose} size="max-w-4xl">
@@ -2083,6 +2085,7 @@
             const [currentChatInfo, setCurrentChatInfo] = useState(null); // { chatId, chatType, participantInfo }
             const [loadingChats, setLoadingChats] = useState(true); // Renamed from loadingUserChats
             const [allChats, setAllChats] = useState([]); // Will hold both admin and user-to-user chats
+            const [isFindUserModalOpen, setIsFindUserModalOpen] = useState(false); // New state for find user modal
             const [searchUserId, setSearchUserId] = useState('');
             const [foundUser, setFoundUser] = useState(null);
             const [searchError, setSearchError] = useState('');
@@ -2138,6 +2141,7 @@
                             }
 
                             // Determine if current user has unread messages in this chat
+                            // hasUnread for user-to-user chats is an object { UID: boolean }
                             const hasUnread = chatData.hasUnread && chatData.hasUnread[user.uid];
 
                             return { 
@@ -2303,6 +2307,7 @@
                     setAlertInfo({ message: `${t.chatRequestSent || 'Запрос на чат отправлен пользователю:'} ${targetUser.displayName || targetUser.email}` });
                     setFoundUser(null);
                     setSearchUserId('');
+                    setIsFindUserModalOpen(false); // Close the modal after sending
                 } catch (error) {
                     console.error("Error sending chat request:", error);
                     setAlertInfo({ message: `${t.errorOccurred}: ${error.message}` });
@@ -2395,10 +2400,18 @@
                         
                         {user && (
                             <div className="bg-tertiary p-3 rounded-lg mb-4 flex justify-between items-center flex-wrap">
-                                <p className="text-secondary text-sm">{t.yourId || 'Ваш уникальный ID для связи'}: <span className="font-mono text-primary break-all">{user.uid}</span></p>
-                                <button onClick={copyUserIdToClipboard} className="bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold py-1 px-3 rounded-lg mt-2 md:mt-0">
-                                    {t.clickToCopy || 'Нажмите, чтобы скопировать'}
-                                </button>
+                                <p className="text-secondary text-sm">
+                                    {t.yourId || 'Ваш уникальный ID для связи'}: 
+                                    <span className="font-mono text-primary font-bold break-all ml-2">{user.uid}</span> {/* Made ID bold */}
+                                </p>
+                                <div className="flex items-center space-x-2 mt-2 md:mt-0">
+                                    <button onClick={copyUserIdToClipboard} className="bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold py-1 px-3 rounded-lg">
+                                        {t.clickToCopy || 'Нажмите, чтобы скопировать'}
+                                    </button>
+                                    <button onClick={() => setIsFindUserModalOpen(true)} className="bg-green-600 hover:bg-green-700 text-white font-bold p-2 rounded-full"> {/* Plus button */}
+                                        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clipRule="evenodd" /></svg>
+                                    </button>
+                                </div>
                             </div>
                         )}
 
@@ -2447,27 +2460,30 @@
                             )}
                         </div>
 
-                        {/* New section for finding other users and sending chat requests */}
-                        <div className="space-y-4 mb-6 p-4 bg-tertiary rounded-lg border-color">
-                            <h3 className="text-xl font-bold text-primary">{t.findUserToChat || 'Найти пользователя для чата'}</h3>
-                            <div className="flex space-x-2">
-                                <input type="text" value={searchUserId} onChange={e => setSearchUserId(e.target.value)} placeholder={t.enterUserIdToFind || 'Введите ID пользователя'} className="flex-grow p-3 bg-primary rounded-lg border-color text-primary"/>
-                                <button onClick={handleFindUserById} className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg">{t.findUser || 'Найти'}</button>
-                            </div>
-
-                            {searchError && <p className="text-red-500 text-sm mt-2">{searchError}</p>}
-                            {foundUser && (
-                                <div className="mt-4 p-3 bg-secondary rounded-lg flex justify-between items-center">
-                                    <div>
-                                        <p className="font-semibold text-primary">{foundUser.displayName || foundUser.email}</p>
-                                        <p className="text-sm text-secondary">{foundUser.id}</p>
-                                    </div>
-                                    <button onClick={() => handleSendChatRequest(foundUser)} className="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded-lg">
-                                        {t.sendChatRequest || 'Отправить запрос на чат'}
-                                    </button>
+                        {/* Moved "Find User To Chat" into a modal triggered by the plus button */}
+                        {isFindUserModalOpen && (
+                            <Modal onClose={() => { setIsFindUserModalOpen(false); setFoundUser(null); setSearchError(''); setSearchUserId(''); }} size="max-w-md">
+                                <h3 className="text-2xl font-bold text-primary mb-4 text-center">{t.findUserToChat || 'Найти пользователя для чата'}</h3>
+                                <div className="flex space-x-2 mb-4">
+                                    <input type="text" value={searchUserId} onChange={e => setSearchUserId(e.target.value)} placeholder={t.enterUserIdToFind || 'Введите ID пользователя'} className="flex-grow p-3 bg-primary rounded-lg border-color text-primary"/>
+                                    <button onClick={handleFindUserById} className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg">{t.findUser || 'Найти'}</button>
                                 </div>
-                            )}
-                        </div>
+
+                                {searchError && <p className="text-red-500 text-sm mt-2 text-center">{searchError}</p>}
+                                {foundUser && (
+                                    <div className="mt-4 p-3 bg-secondary rounded-lg flex flex-col md:flex-row justify-between items-center text-center md:text-left">
+                                        <div className="mb-2 md:mb-0">
+                                            <p className="font-semibold text-primary">{foundUser.displayName || foundUser.email}</p>
+                                            <p className="text-sm text-secondary break-all">{foundUser.id}</p>
+                                        </div>
+                                        <button onClick={() => handleSendChatRequest(foundUser)} className="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded-lg">
+                                            {t.sendChatRequest || 'Отправить запрос на чат'}
+                                        </button>
+                                    </div>
+                                )}
+                            </Modal>
+                        )}
+
 
                         {/* Incoming Chat Requests */}
                         <div className="space-y-4 mb-6 p-4 bg-tertiary rounded-lg border-color">
@@ -2848,7 +2864,7 @@
             const handlePinSubmit = (pin, rememberMe) => {
                 if (pin === ADMIN_PIN) {
                     if (rememberMe) {
-                        const expiryTime = Date.now() + 10 * 60 * 1000; // 10 minutes
+                        const expiryTime = Date.now() + 15 * 60 * 1000; // Changed to 15 minutes
                         localStorage.setItem('adminSession', JSON.stringify({ expiryTime }));
                         setIsAdminSessionActive(true);
                     }
@@ -3162,7 +3178,7 @@
                 selectUserToChat: 'Выберите пользователя для просмотра чата.',
                 clearAllFaqs: 'Очистить все FAQ', // New translation
                 allFaqsCleared: 'Все FAQ успешно удалены.', // New translation
-                rememberMe: 'Запомнить меня (10 минут)', // New translation
+                rememberMe: 'Запомнить меня (15 минут)', // New translation (updated to 15 minutes)
                 cloneProduct: 'Клонировать товар', // New translation for product cloning
                 productCloned: 'Товар успешно клонирован!', // New translation for product cloning
                 copyText: 'Копия', // Used for naming cloned products
@@ -3310,7 +3326,7 @@
                 clickToCopy: 'Click to copy',
                 clearAllFaqs: 'Clear All FAQs',
                 allFaqsCleared: 'All FAQs successfully cleared.',
-                rememberMe: 'Remember Me (10 minutes)',
+                rememberMe: 'Remember Me (15 minutes)',
                 cloneProduct: 'Clone Product',
                 productCloned: 'Product successfully cloned!',
                 copyText: 'Copy',
