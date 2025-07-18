@@ -176,7 +176,6 @@
                     // Force a re-authentication or state update in App to reflect changes immediately
                     // onAuthStateChanged should ideally handle this, but explicitly setting the user state in App
                     // is a common workaround if direct Firebase updates don't immediately trigger listener.
-                    // However, `updateProfile` *does* trigger onAuthStateChanged. The issue might be cache.
                     // Forcing a slight delay then re-setting user will help ensure update.
                     setTimeout(() => {
                         // This triggers the onAuthStateChanged listener in App component
@@ -424,7 +423,7 @@
             return (
                 <header className="bg-secondary p-4 shadow-lg sticky top-0 z-40 border-b border-color">
                     <div className="container mx-auto flex justify-between items-center">
-                        <div onClick={() => setPage('home')}><Logo /></div>
+                        <div onClick={() => handleMenuItemClick('home')}><Logo /></div>
                         <nav className="hidden md:flex items-center space-x-6">
                             <button onClick={() => handleMenuItemClick('home')} className="text-secondary hover:text-primary font-medium transition-colors">{t.home}</button>
                             {user && <button onClick={() => handleMenuItemClick('purchases')} className="text-secondary hover:text-primary font-medium transition-colors">{t.myPurchases}</button>}
@@ -883,8 +882,7 @@
                         <h2 className="text-2xl font-bold text-primary mb-4">{t.yooMoneyPayment}</h2>
                         <p className="text-secondary mb-4">{t.yooMoneyInstruction}</p>
                         
-                        {/* QR Code display removed as requested. You can re-add it here as an <img> tag pointing to a hosted image URL. */}
-                        {/* Example: <img src="URL_TO_YOUR_QR_CODE.png" alt="YooMoney QR Code" className="w-48 h-48 mx-auto my-4 border-4 border-white rounded-lg"/> */}
+                        <img src={qrCodeBase64} alt="YooMoney QR Code" className="w-48 h-48 mx-auto my-4 border-4 border-white rounded-lg"/>
                         
                         <div className="my-4">
                             <p className="text-secondary">{t.amountToPay}:</p>
@@ -927,19 +925,15 @@
                 <div className="container mx-auto p-4 md:p-8">
                     <h1 className="text-4xl font-bold text-center mb-8 text-primary">{t.faqTitle}</h1>
                     <div className="space-y-4 max-w-3xl mx-auto">
-                        {faqs.length === 0 ? (
-                            <p className="text-center text-secondary text-xl mt-12">{t.noFaqs || 'FAQ не найдены.'}</p>
-                        ) : (
-                            faqs.map((faq, index) => (
-                                <div key={faq.id} className="bg-secondary rounded-lg">
-                                    <button onClick={() => setOpenIndex(openIndex === index ? null : index)} className="w-full text-left p-4 flex justify-between items-center">
-                                        <span className="font-semibold text-primary">{faq.question}</span>
-                                        <svg className={`w-6 h-6 transform transition-transform text-primary ${openIndex === index ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path></svg>
-                                    </button>
-                                    {openIndex === index && ( <div className="p-4 border-t border-color text-secondary"> {faq.answer} </div> )}
-                                </div>
-                            ))
-                        )}
+                        {faqs.map((faq, index) => (
+                            <div key={faq.id} className="bg-secondary rounded-lg">
+                                <button onClick={() => setOpenIndex(openIndex === index ? null : index)} className="w-full text-left p-4 flex justify-between items-center">
+                                    <span className="font-semibold text-primary">{faq.question}</span>
+                                    <svg className={`w-6 h-6 transform transition-transform text-primary ${openIndex === index ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path></svg>
+                                </button>
+                                {openIndex === index && ( <div className="p-4 border-t border-color text-secondary"> {faq.answer} </div> )}
+                            </div>
+                        ))}
                     </div>
                 </div>
             );
