@@ -1956,10 +1956,19 @@
                     // Update main chat document to reflect read status for the current user
                     if (chatType === 'admin') {
                         // Mark hasUnreadUser as false for the user when they read admin messages
-                        updateDoc(doc(db, "chats", currentUser.uid), { hasUnreadUser: false });
+                        // Need to check if the chat document exists before updating
+                        getDoc(doc(db, "chats", currentUser.uid)).then(chatDocSnap => {
+                            if(chatDocSnap.exists()) {
+                                updateDoc(doc(db, "chats", currentUser.uid), { hasUnreadUser: false });
+                            }
+                        }).catch(error => console.error("Error checking admin chat doc existence:", error));
                     } else {
                         // For user-to-user chats, update hasUnread[currentUser.uid] to false
-                        updateDoc(doc(db, "userChats", chatId), { [`hasUnread.${currentUser.uid}`]: false });
+                        getDoc(doc(db, "userChats", chatId)).then(chatDocSnap => {
+                            if(chatDocSnap.exists()) {
+                                updateDoc(doc(db, "userChats", chatId), { [`hasUnread.${currentUser.uid}`]: false });
+                            }
+                        }).catch(error => console.error("Error checking user chat doc existence:", error));
                     }
 
                 }, (error) => {
@@ -1979,12 +1988,30 @@
                 if (newMessage.trim() === '' || !currentUser) return;
 
                 try {
+                    // Check if chat document exists, especially for admin chat to ensure it's created if first message
+                    if (chatType === 'admin') {
+                        const adminChatDocRef = doc(db, "chats", currentUser.uid);
+                        const adminChatDocSnap = await getDoc(adminChatDocRef);
+                        if (!adminChatDocSnap.exists()) {
+                            // Create the main admin chat document if it doesn't exist
+                            await setDoc(adminChatDocRef, {
+                                userId: currentUser.uid,
+                                userName: currentUser.displayName || currentUser.email,
+                                userEmail: currentUser.email,
+                                createdAt: serverTimestamp(),
+                                lastMessage: "", // Initial empty last message
+                                lastMessageTimestamp: serverTimestamp(),
+                                hasUnreadAdmin: false,
+                                hasUnreadUser: false,
+                            });
+                        }
+                    }
+
                     await addDoc(collection(db, chatCollectionPath), {
                         senderId: currentUser.uid,
                         senderName: currentUser.displayName || currentUser.email,
                         message: newMessage,
-                        // Fix: Use new Date() for timestamp within messages subcollection
-                        timestamp: new Date(), 
+                        timestamp: serverTimestamp(), // Use serverTimestamp for message creation
                         isRead: false,
                         isAdmin: isCurrentUserAdmin 
                     });
@@ -1993,22 +2020,24 @@
                     if (chatType === 'admin') {
                         await updateDoc(doc(db, "chats", currentUser.uid), {
                             lastMessage: newMessage,
-                            lastMessageTimestamp: serverTimestamp(), // Here serverTimestamp() is fine
+                            lastMessageTimestamp: serverTimestamp(),
                             hasUnreadAdmin: isCurrentUserAdmin ? false : true, 
                             hasUnreadUser: isCurrentUserAdmin ? true : false, 
                         });
                     } else { // User-to-user chat
                         const updateData = {
                             lastMessage: newMessage,
-                            lastMessageTimestamp: serverTimestamp(), // Here serverTimestamp() is fine
+                            lastMessageTimestamp: serverTimestamp(),
                             [`hasUnread.${currentUser.uid}`]: false, // Current user sent, so they read it
                         };
                         // Mark other participants as unread
-                        participantInfo.participants.forEach(pId => {
-                            if (pId !== currentUser.uid) {
-                                updateData[`hasUnread.${pId}`] = true;
-                            }
-                        });
+                        if (participantInfo && participantInfo.participants && Array.isArray(participantInfo.participants)) {
+                            participantInfo.participants.forEach(pId => {
+                                if (pId !== currentUser.uid) {
+                                    updateData[`hasUnread.${pId}`] = true;
+                                }
+                            });
+                        }
                         await updateDoc(doc(db, "userChats", chatId), updateData);
                     }
 
@@ -2095,7 +2124,12 @@
                         setFriends([]);
                         setIncomingRequests([]);
                         setOutgoingRequests([]);
-                        setActiveChats([]);
+                        // Initialize these fields if user doc does not exist
+                        await setDoc(doc(db, "users", user.uid), { 
+                            friends: [], 
+                            friendRequests: [] 
+                        }, { merge: true });
+
                         setLoadingFriends(false);
                         setLoadingChats(false);
                         return;
@@ -2119,19 +2153,22 @@
                     const outgoing = [];
 
                     const requestPromises = requests.map(async (req) => {
-                        const peerId = req.from === user.uid ? req.to : req.from;
+                        // Ensure timestamp is a Date object if it's a Firestore Timestamp
+                        const requestWithDate = { ...req, timestamp: req.timestamp?.toDate ? req.timestamp.toDate() : new Date(req.timestamp.seconds * 1000 + req.timestamp.nanoseconds / 1000000) };
+
+                        const peerId = requestWithDate.from === user.uid ? requestWithDate.to : requestWithDate.from;
                         const peerSnap = await getDoc(doc(db, "users", peerId));
                         const peerData = peerSnap.exists() ? (peerSnap.data().displayName || peerSnap.data().email) : t.unknownUser;
                         
-                        if (req.to === user.uid) { // Incoming request
-                            incoming.push({ ...req, peerName: peerData, peerId: peerId });
+                        if (requestWithDate.to === user.uid) { // Incoming request
+                            incoming.push({ ...requestWithDate, peerName: peerData, peerId: peerId });
                         } else { // Outgoing request
-                            outgoing.push({ ...req, peerName: peerData, peerId: peerId });
+                            outgoing.push({ ...requestWithDate, peerName: peerData, peerId: peerId });
                         }
                     });
                     await Promise.all(requestPromises);
-                    setIncomingRequests(incoming);
-                    setOutgoingRequests(outgoing);
+                    setIncomingRequests(incoming.sort((a,b) => b.timestamp.getTime() - a.timestamp.getTime()));
+                    setOutgoingRequests(outgoing.sort((a,b) => b.timestamp.getTime() - a.timestamp.getTime()));
 
                     // Fetch active chats (where the current user is a participant and not a pending request)
                     const userChatsQuery = query(collection(db, "userChats"), where("participants", "array-contains", user.uid));
@@ -2181,6 +2218,9 @@
                         });
 
                         setActiveChats(combinedChats);
+                        setLoadingChats(false);
+                    }, (error) => {
+                        console.error("Error fetching user-to-user chats:", error);
                         setLoadingChats(false);
                     });
                     
@@ -2251,7 +2291,6 @@
                 if (!user || !targetUser) return;
 
                 try {
-                    // Add request to requester's outgoing and target's incoming
                     const userDocRef = doc(db, 'users', user.uid);
                     const targetUserDocRef = doc(db, 'users', targetUser.id);
 
@@ -2259,7 +2298,7 @@
                         from: user.uid,
                         to: targetUser.id,
                         status: 'pending',
-                        timestamp: serverTimestamp() 
+                        timestamp: new Date() // Use new Date() for timestamp within array
                     };
 
                     await updateDoc(userDocRef, {
@@ -2290,12 +2329,14 @@
                     await updateDoc(requesterUserDocRef, { friends: arrayUnion(user.uid) });
 
                     // Remove request from both users' friendRequests
-                    await updateDoc(userDocRef, { friendRequests: arrayRemove(request) });
-                    // Create a mutable copy of the request to remove the timestamp if it's a Firestore Timestamp object
-                    const requestToRemoveFromRequester = { ...request };
-                    delete requestToRemoveFromRequester.timestamp; // Firestore arrayRemove requires exact match
-
-                    await updateDoc(requesterUserDocRef, { friendRequests: arrayRemove(requestToRemoveFromRequester) });
+                    // Create a plain object for arrayRemove to ensure exact match without Firestore Timestamp class
+                    const plainRequest = { ...request, timestamp: request.timestamp.toDate() }; // Convert Date object back to Timestamp if it was one, or just plain Date
+                    // The trick for arrayRemove with objects including Timestamp is to convert Firestore Timestamps back to JS Dates, then ensure consistency.
+                    // However, if we store Date objects with new Date(), arrayRemove should work fine with them directly.
+                    // Let's ensure request is a plain JS object, especially its timestamp, for arrayRemove.
+                    
+                    await updateDoc(userDocRef, { friendRequests: arrayRemove(plainRequest) });
+                    await updateDoc(requesterUserDocRef, { friendRequests: arrayRemove(plainRequest) });
 
 
                     // Optionally create a chat document for them automatically
@@ -2321,7 +2362,7 @@
                             senderId: user.uid,
                             senderName: user.displayName || user.email,
                             message: t.chatAcceptedMessage || 'Чат был принят.',
-                            timestamp: serverTimestamp(),
+                            timestamp: new Date(),
                             isRead: false
                         });
                     } else {
@@ -2329,14 +2370,14 @@
                         await updateDoc(doc(db, 'userChats', chatDocId), {
                             lastMessage: t.chatAcceptedMessage || 'Чат был принят.',
                             lastMessageTimestamp: serverTimestamp(),
-                            hasUnread: { [user.uid]: false, [request.from]: true },
-                            requests: arrayRemove(request), // Remove the request if it was in the chat doc too
+                            [`hasUnread.${user.uid}`]: false,
+                            [`hasUnread.${request.from}`]: true,
                         });
                         await addDoc(collection(db, `userChats/${chatDocId}/messages`), {
                             senderId: user.uid,
                             senderName: user.displayName || user.email,
                             message: t.chatAcceptedMessage || 'Чат был принят.',
-                            timestamp: serverTimestamp(),
+                            timestamp: new Date(),
                             isRead: false
                         });
                     }
@@ -2356,10 +2397,9 @@
                     const requesterUserDocRef = doc(db, 'users', request.from);
                     
                     // Remove request from both users' friendRequests
-                    await updateDoc(userDocRef, { friendRequests: arrayRemove(request) });
-                    const requestToRemoveFromRequester = { ...request };
-                    delete requestToRemoveFromRequester.timestamp;
-                    await updateDoc(requesterUserDocRef, { friendRequests: arrayRemove(requestToRemoveFromRequester) });
+                    const plainRequest = { ...request, timestamp: request.timestamp.toDate() };
+                    await updateDoc(userDocRef, { friendRequests: arrayRemove(plainRequest) });
+                    await updateDoc(requesterUserDocRef, { friendRequests: arrayRemove(plainRequest) });
 
 
                     // Optionally delete associated chat document if it was just for the request
@@ -2382,14 +2422,14 @@
                             await updateDoc(doc(db, 'userChats', chatDoc.id), {
                                 lastMessage: t.chatRejectedMessage || 'Запрос дружбы отклонен.',
                                 lastMessageTimestamp: serverTimestamp(),
-                                requests: arrayRemove(request), // Remove the request if it was in the chat doc too
-                                hasUnread: { [user.uid]: false, [request.from]: true }, // User rejected, sender has unread
+                                [`hasUnread.${user.uid}`]: false,
+                                [`hasUnread.${request.from}`]: true,
                             });
                              await addDoc(collection(db, `userChats/${chatDoc.id}/messages`), {
                                 senderId: user.uid,
                                 senderName: user.displayName || user.email,
                                 message: t.chatRejectedMessage || 'Запрос на чат отклонен.',
-                                timestamp: serverTimestamp(),
+                                timestamp: new Date(),
                                 isRead: false
                             });
                         }
@@ -2412,10 +2452,10 @@
                             const targetUserDocRef = doc(db, 'users', request.to);
                             
                             // Remove request from both users' friendRequests
-                            await updateDoc(userDocRef, { friendRequests: arrayRemove(request) });
-                            const requestToRemoveFromTarget = { ...request };
-                            delete requestToRemoveFromTarget.timestamp;
-                            await updateDoc(targetUserDocRef, { friendRequests: arrayRemove(requestToRemoveFromTarget) });
+                            const plainRequest = { ...request, timestamp: request.timestamp.toDate() };
+                            await updateDoc(userDocRef, { friendRequests: arrayRemove(plainRequest) });
+                            await updateDoc(targetUserDocRef, { friendRequests: arrayRemove(plainRequest) });
+
 
                             // Optionally delete associated chat document if it was just for the request
                             const chatQuery = query(collection(db, 'userChats'), 
@@ -2434,14 +2474,14 @@
                                     await updateDoc(doc(db, 'userChats', chatDoc.id), {
                                         lastMessage: t.outgoingRequestCancelledMessage || 'Исходящий запрос отменен.',
                                         lastMessageTimestamp: serverTimestamp(),
-                                        requests: arrayRemove(request), // Remove the request if it was in the chat doc too
-                                        hasUnread: { [user.uid]: false, [request.to]: true }, // User cancelled, target has unread
+                                        [`hasUnread.${user.uid}`]: false,
+                                        [`hasUnread.${request.to}`]: true,
                                     });
                                     await addDoc(collection(db, `userChats/${chatDoc.id}/messages`), {
                                         senderId: user.uid,
                                         senderName: user.displayName || user.email,
                                         message: t.outgoingRequestCancelledMessage || 'Исходящий запрос отменен.',
-                                        timestamp: serverTimestamp(),
+                                        timestamp: new Date(),
                                         isRead: false
                                     });
                                 }
@@ -2485,7 +2525,7 @@
                                         <p className="text-secondary text-sm">{t.noIncomingRequests || 'Нет входящих запросов.'}</p>
                                     ) : (
                                         incomingRequests.map(request => (
-                                            <div key={request.timestamp.toDate().getTime()} className="p-3 bg-tertiary rounded-lg flex flex-col md:flex-row justify-between items-center mb-2 border border-color">
+                                            <div key={request.timestamp.getTime()} className="p-3 bg-tertiary rounded-lg flex flex-col md:flex-row justify-between items-center mb-2 border border-color">
                                                 <div>
                                                     <p className="font-semibold text-primary">{t.requestFrom}: {request.peerName}</p>
                                                     <p className="text-sm text-secondary break-all">{generateShortId(request.from)}</p>
@@ -2507,7 +2547,7 @@
                                         <p className="text-secondary text-sm">{t.noOutgoingRequests || 'Нет исходящих запросов.'}</p>
                                     ) : (
                                         outgoingRequests.map(request => (
-                                            <div key={request.timestamp.toDate().getTime()} className="p-3 bg-tertiary rounded-lg flex flex-col md:flex-row justify-between items-center mb-2 border border-color">
+                                            <div key={request.timestamp.getTime()} className="p-3 bg-tertiary rounded-lg flex flex-col md:flex-row justify-between items-center mb-2 border border-color">
                                                 <div>
                                                     <p className="font-semibold text-primary">{t.requestTo}: {request.peerName}</p>
                                                     <p className="text-sm text-secondary break-all">{generateShortId(request.to)}</p>
@@ -2532,9 +2572,10 @@
                                             key={chat.id}
                                             onClick={() => {
                                                 setCurrentChatInfo({ 
-                                                    chatId: chat.id, 
-                                                    chatType: chat.type, 
-                                                    participantInfo: chat 
+                                                    id: chat.id, 
+                                                    type: chat.type, 
+                                                    participants: chat.participants, // Ensure participants are passed
+                                                    displayPeerName: chat.displayPeerName,
                                                 });
                                                 setIsChatWindowOpen(true);
                                             }}
@@ -2557,9 +2598,9 @@
                             {user && activeChats.every(chat => chat.type !== 'admin') && (
                                 <button onClick={() => {
                                     setCurrentChatInfo({ 
-                                        chatId: user.uid, // Admin chat uses user's UID as doc ID
-                                        chatType: 'admin', 
-                                        participantInfo: { displayPeerName: t.projectAdmin } // Dummy info for admin chat
+                                        id: user.uid, // Admin chat uses user's UID as doc ID
+                                        type: 'admin', 
+                                        displayPeerName: t.projectAdmin,
                                     });
                                     setIsChatWindowOpen(true);
                                 }} className="w-full accent-bg hover:accent-bg-secondary text-white font-bold py-2 px-4 rounded-lg transition-colors mt-4">
