@@ -128,7 +128,7 @@
             measurementId: "G-0TKE25JVXG"
         };
         
-        const ADMIN_UID = 'vhmtXZxkZnOWviNQ39R1W3GE88mw2'; // Re-check actual admin UID if different
+        const ADMIN_UID = 'vhmtXZxkZnOWviNQ39R1W3GE8mw2'; // Re-check actual admin UID if different
         const ADMIN_PIN = '300414';
         const IMGBB_API_KEY = '96bf3f29606f1989bb5a450ad3770cce';
 
@@ -184,6 +184,8 @@
                     // If nickname needs to be stored, it would be a custom claim or a separate user document in Firestore
                     // For example: await updateDoc(doc(db, "users", user.uid), { nickname: nickname });
                     setAlertInfo({ message: t.profileUpdated || 'Профиль обновлен!' });
+                    // Force a re-render of user data by re-fetching or similar if onAuthStateChanged isn't enough
+                    // setTimeout(() => { window.location.reload(); }, 1000); // Only as last resort, not a clean React solution
                 } catch (error) {
                     setAlertInfo({ message: `${t.errorOccurred}: ${error.message}` });
                 } finally {
@@ -776,14 +778,17 @@
                 const purchaseDetails = {
                     finalPrice,
                     promoCodeUsed: appliedPromo ? appliedPromo.code : null,
-                    paymentMethod: 'Telegram', // This will be replaced by 'Chat'
+                    paymentMethod: 'Chat', // Changed to Chat
                     nominal: product.selectedVariant ? product.selectedVariant.nominal : product.nominal, // Pass selected nominal
                 };
                 
-                // Instead of opening Telegram, now it interacts with the chat system
-                // Assuming `onConfirm` now handles sending the initial message
-                // and `onBuy` passes correct product structure
-                await onConfirm(product, purchaseDetails); // This will handle sending the initial message and creating purchase record.
+                // Pre-fill chat message based on product details
+                const initialChatMessage = `${t.autoChatMessagePrefix || 'Я хочу купить товар:'} ${product.name} (${purchaseDetails.nominal}) ${t.forPrice || 'за'} ${convertPrice(purchaseDetails.finalPrice, currency)}.`;
+                
+                // Now, call onConfirm from App, which will handle purchase record creation and stock decrement
+                await onConfirm(product, purchaseDetails, initialChatMessage); 
+                setAlertInfo({ message: t.thankYouForRequest || 'Спасибо за запрос! Он будет обработан в течение 24 часов.' });
+                
                 onClose();
             };
 
@@ -1034,14 +1039,14 @@
                            <FilterButton value="price_asc" state={sortOrder} setState={setSortOrder}>{t.priceAsc}</FilterButton>
                         </div>
                     </div>
-                    {/* Chat button on MyPurchasesPage */}
-                    {user && (
+                    {/* Chat button on MyPurchasesPage - removed as per chat redesign */}
+                    {/* {user && (
                         <div className="max-w-3xl mx-auto text-center mb-6">
                             <button onClick={() => setIsChatModalOpen(true)} className="accent-bg hover:accent-bg-secondary text-white font-bold py-2 px-4 rounded-lg transition-colors flex items-center space-x-2 justify-center mx-auto">
                                 <span>{t.chatWithAdmin}</span>
                             </button>
                         </div>
-                    )}
+                    )} */}
 
                     {loading ? <LoadingSpinner /> : (
                         filteredAndSortedPurchases.length === 0 ? <p className="text-center text-secondary">{t.noPurchasesYet}</p> : (
@@ -1082,7 +1087,8 @@
                             </div>
                         )
                     )}
-                    {isChatModalOpen && user && <UserChatInterface user={user} onClose={() => setIsChatModalOpen(false)} setAlertInfo={setAlertInfo} t={t} />}
+                    {/* UserChatInterface is now rendered inside ChatsPage */}
+                    {/* {isChatModalOpen && user && <UserChatInterface user={user} onClose={() => setIsChatModalOpen(false)} setAlertInfo={setAlertInfo} t={t} />} */}
                 </div>
             );
         }
@@ -1878,7 +1884,7 @@
                             <div className="space-y-4">
                                 {pendingPurchases.map(purchase => (
                                     <div key={purchase.id} className="bg-tertiary rounded-lg p-4 shadow border-color">
-                                        <p className="font-bold text-primary text-lg">{t.product}: {purchase.productName}</p>
+                                        <p className="font-bold text-primary text-lg">{purchase.productName}</p>
                                         <p className="text-secondary text-sm">{t.user}: {purchase.userEmail}</p>
                                         <p className="text-secondary text-sm">{t.amount}: {convertPrice(purchase.finalPrice, currency)}</p>
                                         <p className="text-secondary text-sm mb-2">{t.date}: {purchase.timestamp?.toDate ? new Date(purchase.timestamp.toDate()).toLocaleString() : '...'}</p>
@@ -1923,64 +1929,30 @@
             );
         }
 
-        // New Chat Components
-        function UserChatInterface({ user, setAlertInfo, t, onClose, initialMessage = '' }) { // Added initialMessage prop
-            const [messages, setMessages] = useState([]);
-            const [newMessage, setNewMessage] = useState(initialMessage); // Initialize with initial message
-            const [loading, setLoading] = useState(true);
-            const messagesEndRef = useRef(null);
+        // --- New Chats Page Component ---
+        function ChatsPage({ user, setAlertInfo, t }) {
+            const [isChatModalOpen, setIsChatModalOpen] = useState(false);
+            const [loadingUserChats, setLoadingUserChats] = useState(true);
+            const [userChatsList, setUserChatsList] = useState([]); // List of main chat documents for admin to track
+            const [findUserId, setFindUserId] = useState('');
 
             useEffect(() => {
-                if (!user) { setLoading(false); return; }
-                const q = query(
-                    collection(db, `chats/${user.uid}/messages`),
-                    orderBy('timestamp', 'asc')
-                );
+                if (!user || user.uid === ADMIN_UID) { // Admins use AdminChatInterface
+                    setLoadingUserChats(false);
+                    return; 
+                }
+                // Only load for regular users if they have an active chat with admin
+                const q = query(collection(db, "chats"), where("userId", "==", user.uid));
                 const unsubscribe = onSnapshot(q, (snapshot) => {
-                    setMessages(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
-                    setLoading(false);
+                    // This should ideally only find one document for the current user's chat with admin
+                    setUserChatsList(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+                    setLoadingUserChats(false);
                 }, (error) => {
-                    console.error("Error fetching chat messages:", error);
-                    setLoading(false);
-                    setAlertInfo({ message: `${t.errorOccurred}: ${error.message}` });
+                    console.error("Error fetching user's chat document:", error);
+                    setLoadingUserChats(false);
                 });
                 return () => unsubscribe();
             }, [user]);
-
-            useEffect(() => {
-                messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-            }, [messages]);
-
-            const sendMessage = async (e) => {
-                e.preventDefault();
-                if (newMessage.trim() === '') return;
-                if (!user) { setAlertInfo({ message: t.loginForSupport }); return; }
-
-                try {
-                    await addDoc(collection(db, `chats/${user.uid}/messages`), {
-                        senderId: user.uid,
-                        senderName: user.displayName || user.email,
-                        message: newMessage,
-                        timestamp: serverTimestamp(),
-                        isRead: false,
-                        isAdmin: false
-                    });
-                    await setDoc(doc(db, "chats", user.uid), {
-                        lastMessage: newMessage,
-                        lastMessageTimestamp: serverTimestamp(),
-                        userId: user.uid,
-                        userName: user.displayName || user.email,
-                        userEmail: user.email,
-                        hasUnreadAdmin: true, // Admin needs to read this
-                        hasUnreadUser: false, // User just sent, so they've read it
-                    }, { merge: true });
-
-                    setNewMessage('');
-                } catch (error) {
-                    console.error("Error sending message:", error);
-                    setAlertInfo({ message: `${t.errorOccurred}: ${error.message}` });
-                }
-            };
 
             const copyUserIdToClipboard = () => {
                 if (user && user.uid) {
@@ -1992,52 +1964,80 @@
                 }
             };
 
+            const handleFindUserById = async () => {
+                if (!findUserId.trim()) {
+                    setAlertInfo({ message: t.enterUserIdToFind || 'Введите ID пользователя для поиска.' });
+                    return;
+                }
+                // This is for future functionality where a user might want to search another user's chat.
+                // For now, it will simply alert that the function is not yet implemented for users.
+                setAlertInfo({ message: t.featureNotImplemented || 'Эта функция пока не реализована для пользователей.' });
+            };
 
             return (
-                <Modal onClose={onClose} size="max-w-4xl">
-                    <h2 className="text-2xl font-bold text-primary mb-4 text-center">{t.chatWithAdmin}</h2>
-                     <div className="flex justify-between items-center bg-tertiary p-3 rounded-lg mb-4">
-                        <p className="text-secondary text-sm">{t.yourId || 'Ваш уникальный ID для связи'}: <span className="font-mono text-primary">{user.uid}</span></p>
-                        <button onClick={copyUserIdToClipboard} className="bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold py-1 px-3 rounded-lg">
-                            {t.clickToCopy || 'Нажмите, чтобы скопировать'}
-                        </button>
-                    </div>
-
-                    <div className="flex-grow overflow-y-auto pr-2 mb-4 space-y-4 h-96">
-                        {loading ? <LoadingSpinner /> : (
-                            messages.length === 0 ? (
-                                <p className="text-center text-secondary text-xl mt-12">{t.noChatMessages}</p>
-                            ) : (
-                                messages.map((msg) => (
-                                    <div key={msg.id} className={`flex ${msg.isAdmin ? 'justify-start' : 'justify-end'}`}>
-                                        <div className={`${msg.isAdmin ? 'bg-tertiary rounded-br-none' : 'accent-bg text-white rounded-bl-none'} max-w-[75%] p-3 rounded-lg shadow`}>
-                                            <p className="font-bold text-sm mb-1">{msg.isAdmin ? 'Admin' : (msg.senderName || t.you)}</p>
-                                            <p>{msg.message}</p>
-                                            <p className="text-xs mt-1 text-right opacity-70">
-                                                {msg.timestamp?.toDate ? new Date(msg.timestamp.toDate()).toLocaleTimeString() : ''}
-                                            </p>
-                                        </div>
-                                    </div>
-                                ))
-                            )
+                <div className="container mx-auto p-4 md:p-8">
+                    <h1 className="text-4xl font-bold text-center mb-8 text-primary">{t.chats || 'Чаты'}</h1>
+                    <div className="max-w-2xl mx-auto bg-secondary rounded-xl shadow-lg border-color p-6">
+                        
+                        {user && (
+                            <div className="bg-tertiary p-3 rounded-lg mb-4 flex justify-between items-center flex-wrap">
+                                <p className="text-secondary text-sm">{t.yourId || 'Ваш уникальный ID для связи'}: <span className="font-mono text-primary break-all">{user.uid}</span></p>
+                                <button onClick={copyUserIdToClipboard} className="bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold py-1 px-3 rounded-lg mt-2 md:mt-0">
+                                    {t.clickToCopy || 'Нажмите, чтобы скопировать'}
+                                </button>
+                            </div>
                         )}
-                        <div ref={messagesEndRef} />
+
+                        <div className="mb-6 space-y-4">
+                            <h3 className="text-xl font-bold text-primary">{t.activeChats || 'Активные чаты'}</h3>
+                            {loadingUserChats ? <LoadingSpinner /> : (
+                                (userChatsList.length > 0) ? (
+                                    userChatsList.map(chat => (
+                                        <button 
+                                            key={chat.id}
+                                            onClick={() => setIsChatModalOpen(true)}
+                                            className="w-full text-left p-3 bg-tertiary rounded-lg hover:bg-gray-700 transition-colors flex justify-between items-center"
+                                        >
+                                            <div>
+                                                <p className="font-semibold text-primary">{t.projectAdmin || 'Администрация проекта'}</p>
+                                                <p className="text-sm text-secondary truncate">{t.lastMessage || 'Последнее сообщение'}: {chat.lastMessage}</p>
+                                            </div>
+                                            {chat.hasUnreadUser && ( // User has unread from admin, indicates a new message for the user
+                                                <span className="bg-red-500 text-white text-xs font-bold px-2 py-1 rounded-full">{t.new || 'Новое'}</span>
+                                            )}
+                                        </button>
+                                    ))
+                                ) : (
+                                    <p className="text-secondary">{t.noActiveChats || 'Нет активных чатов. Начните новый чат с администрацией.'}</p>
+                                )
+                            )}
+                            {/* Option to start a new chat if no active chats, or always */}
+                             {!userChatsList.length && user && (
+                                <button onClick={() => setIsChatModalOpen(true)} className="w-full accent-bg hover:accent-bg-secondary text-white font-bold py-2 px-4 rounded-lg transition-colors mt-4">
+                                    {t.startNewChat || 'Начать новый чат с администрацией'}
+                                </button>
+                            )}
+                        </div>
+
+                        <div className="space-y-4 mb-6">
+                            <h3 className="text-xl font-bold text-primary">{t.findUser || 'Найти пользователя'}</h3>
+                            <div className="flex space-x-2">
+                                <input type="text" value={findUserId} onChange={e => setFindUserId(e.target.value)} placeholder={t.enterUserIdToFind || 'Введите ID пользователя'} className="flex-grow p-3 bg-tertiary rounded-lg border-color text-primary"/>
+                                <button onClick={handleFindUserById} className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg">{t.find || 'Найти'}</button>
+                            </div>
+                        </div>
+
+                        <div className="space-y-4">
+                            <h3 className="text-xl font-bold text-primary">{t.myRequests || 'Мои запросы'}</h3>
+                            <p className="text-secondary text-sm">{t.requestsNotImplemented || 'Функционал запросов пока не реализован.'}</p>
+                            <button className="w-full bg-gray-600 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded-lg transition-colors disabled:opacity-50" disabled>
+                                {t.viewRequests || 'Посмотреть мои запросы'}
+                            </button>
+                        </div>
+                        
                     </div>
-                    <form onSubmit={sendMessage} className="flex">
-                        <input
-                            type="text"
-                            value={newMessage}
-                            onChange={(e) => setNewMessage(e.target.value)}
-                            placeholder={t.enterMessagePlaceholder}
-                            className="flex-grow p-3 bg-tertiary rounded-l-lg border-color text-primary focus:outline-none focus:ring-2 accent-border"
-                            disabled={!user}
-                        />
-                        <button type="submit" className="accent-bg hover:accent-bg-secondary text-white font-bold py-3 px-6 rounded-r-lg transition-colors disabled:bg-gray-500" disabled={!user}>
-                            {t.send || 'Отправить'}
-                        </button>
-                    </form>
-                    {!user && <p className="text-red-500 text-center text-sm mt-2">{t.loginForSupport}</p>}
-                </Modal>
+                    {isChatModalOpen && user && <UserChatInterface user={user} onClose={() => setIsChatModalOpen(false)} setAlertInfo={setAlertInfo} t={t} />}
+                </div>
             );
         }
 
@@ -2421,7 +2421,7 @@
                 }
             };
 
-            const handleConfirmPurchase = async (product, purchaseDetails) => {
+            const handleConfirmPurchase = async (product, purchaseDetails, initialChatMessage = '') => { // Added initialChatMessage
                 if (!user) return;
                 try {
                     const purchaseCode = generatePurchaseCode();
@@ -2464,6 +2464,28 @@
 
                     const productRef = doc(db, 'products', product.id);
                     await updateDoc(productRef, { popularity: increment(1) });
+
+                    // Send initial message to chat if provided (from "contact seller" button)
+                    if (initialChatMessage) {
+                         await addDoc(collection(db, `chats/${user.uid}/messages`), {
+                            senderId: user.uid,
+                            senderName: user.displayName || user.email,
+                            message: initialChatMessage,
+                            timestamp: serverTimestamp(),
+                            isRead: false,
+                            isAdmin: false
+                        });
+                        // Also update the main chat document for admin to see latest message and user info
+                        await setDoc(doc(db, "chats", user.uid), {
+                            lastMessage: initialChatMessage,
+                            lastMessageTimestamp: serverTimestamp(),
+                            userId: user.uid,
+                            userName: user.displayName || user.email,
+                            userEmail: user.email,
+                            hasUnreadAdmin: true, 
+                            hasUnreadUser: false, 
+                        }, { merge: true });
+                    }
                     
                     setAlertInfo({ message: `${t.contactSellerToReceive}\n\n${t.yourPurchaseCode}: ${purchaseCode}` });
 
@@ -2494,7 +2516,7 @@
                     case 'admin': return isAdmin ? <AdminPanel {...{setPage, setAlertInfo, t, currency, convertPrice}} /> : <HomePage {...{products, onProductClick: setSelectedProduct, t, currency, convertPrice, loading: products.length === 0}} />;
                     case 'purchases': return user ? <MyPurchasesPage {...{user, t, currency, convertPrice, setAlertInfo}} /> : <div className="text-center text-primary p-10">{t.loginToView}</div>;
                     case 'faq': return <FAQPage faqs={faqs} t={t} />;
-                    case 'chats': return user ? <UserChatInterface user={user} setAlertInfo={setAlertInfo} t={t} /> : <div className="text-center text-primary p-10">{t.loginToView}</div>; // Render directly if page is 'chats'
+                    case 'chats': return user ? <ChatsPage user={user} setAlertInfo={setAlertInfo} t={t} /> : <div className="text-center text-primary p-10">{t.loginToView}</div>; // New ChatsPage
                     default: return <HomePage {...{products, onProductClick: setSelectedProduct, t, currency, convertPrice, loading: products.length === 0}} />;
                 }
             };
@@ -2655,6 +2677,20 @@
                 nickname: 'Никнейм', // New translation for profile
                 updateProfile: 'Обновить профиль', // New translation for profile
                 defaultNominal: 'Базовый', // Added for default variant
+                projectAdmin: 'Администрация проекта', // New translation for chat list
+                activeChats: 'Активные чаты', // New translation for chat list
+                lastMessage: 'Последнее сообщение', // New translation for chat list
+                new: 'Новое', // New translation for chat list
+                noActiveChats: 'Нет активных чатов. Начните новый чат с администрацией.', // New translation for chat list
+                startNewChat: 'Начать новый чат с администрацией', // New translation for chat list
+                findUser: 'Найти пользователя', // New translation for chat search
+                findUserById: 'Найти по ID', // New translation for chat search prompt
+                enterUserIdToFind: 'Введите ID пользователя для поиска.', // New translation for chat search prompt
+                userNotFound: 'Пользователь с таким ID не найден.', // New translation for chat search
+                featureNotImplemented: 'Эта функция пока не реализована для пользователей.', // New translation for feature not implemented
+                myRequests: 'Мои запросы', // New translation
+                requestsNotImplemented: 'Функционал запросов пока не реализован.', // New translation
+                viewRequests: 'Посмотреть мои запросы', // New translation
             },
             en: {
                 home: 'Home', support: 'Support', faq: 'FAQ', adminPanelTitle: 'Admin Panel', profile: 'Profile', logout: 'Logout', login: 'Login',
@@ -2692,7 +2728,7 @@
                 promoAdded: 'Promo code added!', promoDeleted: 'Promo code deleted!', confirmDeletePromo: 'Are you sure you want to delete this promo code?',
                 payWithPromo: 'Apply Promo Code', apply: 'Apply', promoNotFound: 'Promo code not found or invalid.', promoApplied: 'Promo code applied',
                 usageLimit: 'Usage Limit', used: 'Used', promoLimitReached: 'This promo code has reached its usage limit.',
-                verifiedByStore: 'Verified by Store',
+                                verifiedByStore: 'Verified by Store',
                 yooMoneyPayment: 'Payment via YooMoney', yooMoneyInstruction: 'Scan the QR code or use the link below to pay.',
                 amountToPay: 'Amount to pay:', orPayWithLink: 'Or pay with link:',
                 afterPaymentTitle: 'Payment Confirmation',
