@@ -113,8 +113,7 @@
         const { useState, useEffect, useCallback, useRef, useMemo, Component } = React;
         const { 
             initializeApp, getAuth, signInWithPopup, GoogleAuthProvider, onAuthStateChanged, signOut, updateProfile,
-            getFirestore, collection, onSnapshot, addDoc, doc, deleteDoc, setDoc, serverTimestamp, query, where, orderBy, updateDoc, getDocs, increment, getDoc,
-            getStorage, ref, uploadBytes, getDownloadURL, deleteObject // Added deleteObject
+            getFirestore, collection, onSnapshot, addDoc, doc, deleteDoc, setDoc, serverTimestamp, query, where, orderBy, updateDoc, getDocs, increment, getDoc 
         } = window.firebase;
 
         // --- App Configuration ---
@@ -135,11 +134,9 @@
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
         const db = getFirestore(app);
-        const storage = getStorage(app);
         const provider = new GoogleAuthProvider();
         
         const logoBase64 = "data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAYEBQYFBAYGBQYHBwYIChAKCgkJChQODwwQFxQYGBcUFhYaHSUfGhsjHBYWICwgIyYnKSopGR8tMC0oMCUoKSj/2wBDAQcHBwoIChMKChMoGhYaKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCj/wAARCAAgACADASIAAhEBAx toutinAD2ERkACK5uX1WzYtprKqKxckO2E5sNqS0lxLbqFpWlQBSoAgjYI9j39cZkABEV7OpaO6xYlXl0V6bYSHENNR2klS1qUoJSkAekkkgD+8YkABGczL6bT1kuyupLMNhhJWtbywkgD6Gz1J+g98ZkAB//2Q==";
-        // QR Code data removed completely as requested.
 
         // --- Helper Components & Functions ---
         const generatePurchaseCode = () => {
@@ -1105,26 +1102,26 @@
 
         // --- Firebase Storage Utility Functions (retained for receipts where used) ---
         // Note: For product images, switched back to ImgBB in AdminProductManagement.
-        const uploadFile = async (file, path) => {
-            const storageRef = ref(storage, path);
-            const snapshot = await uploadBytes(storageRef, file);
-            return await getDownloadURL(snapshot.ref);
-        };
+        // const uploadFile = async (file, path) => {
+        //     const storageRef = ref(storage, path);
+        //     const snapshot = await uploadBytes(storageRef, file);
+        //     return await getDownloadURL(snapshot.ref);
+        // };
 
-        const deleteFile = async (url) => { 
-            // This function is no longer actively used for product images in the current ImgBB setup
-            // but is retained for consistency if Firebase Storage was used for other asset types later.
-            // ImgBB does not support client-side deletion.
-            console.warn("deleteFile from Firebase Storage is called, but might not be relevant for ImgBB hosted images.");
-            try {
-                const fileRef = ref(storage, url);
-                await deleteObject(fileRef);
-                return true;
-            } catch (error) {
-                console.warn("Could not delete file from Firebase Storage:", error);
-                return false;
-            }
-        };
+        // const deleteFile = async (url) => { 
+        //     // This function is no longer actively used for product images in the current ImgBB setup
+        //     // but is retained for consistency if Firebase Storage was used for other asset types later.
+        //     // ImgBB does not support client-side deletion.
+        //     console.warn("deleteFile from Firebase Storage is called, but might not be relevant for ImgBB hosted images.");
+        //     try {
+        //         const fileRef = ref(storage, url);
+        //         await deleteObject(fileRef);
+        //         return true;
+        //     } catch (error) {
+        //         console.warn("Could not delete file from Firebase Storage:", error);
+        //         return false;
+        //     }
+        // };
 
         // --- Admin Components ---
         function AdminProductManagement({ setAlertInfo, t, currency, convertPrice }) {
@@ -1833,7 +1830,6 @@
             );
         }
 
-
         // New Admin Receipt Check Component
         function AdminReceiptCheck({ setAlertInfo, t, currency, convertPrice }) {
             const [pendingPurchases, setPendingPurchases] = useState([]);
@@ -2392,6 +2388,39 @@
                 }
             };
 
+            const handleCancelOutgoingRequest = async (chatId, requestIndex) => {
+                if (!user) return;
+                setAlertInfo({
+                    message: t.confirmCancelOutgoingRequest || 'Вы уверены, что хотите отменить этот исходящий запрос?',
+                    onConfirm: async () => {
+                        try {
+                            const chatRef = doc(db, 'userChats', chatId);
+                            const chatSnap = await getDoc(chatRef);
+                            if (chatSnap.exists()) {
+                                const chatData = chatSnap.data();
+                                const updatedRequests = [...chatData.requests];
+                                if (updatedRequests[requestIndex]) {
+                                    updatedRequests[requestIndex].status = 'cancelled'; // Mark as cancelled
+                                }
+                                await updateDoc(chatRef, {
+                                    requests: updatedRequests,
+                                    lastMessage: t.outgoingRequestCancelledMessage || 'Исходящий запрос отменен.',
+                                    lastMessageTimestamp: serverTimestamp(),
+                                });
+
+                                // Optionally remove messages from this specific chat if it was only a request chat
+                                // For simplicity, we just mark the request as cancelled and update last message.
+                                
+                                setAlertInfo({ message: t.outgoingRequestCancelled || 'Исходящий запрос отменен.' });
+                            }
+                        } catch (error) {
+                            console.error("Error cancelling outgoing chat request:", error);
+                            setAlertInfo({ message: `${t.errorOccurred}: ${error.message}` });
+                        }
+                    }
+                });
+            };
+
 
             return (
                 <div className="container mx-auto p-4 md:p-8">
@@ -2408,8 +2437,8 @@
                                     <button onClick={copyUserIdToClipboard} className="bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold py-1 px-3 rounded-lg">
                                         {t.clickToCopy || 'Нажмите, чтобы скопировать'}
                                     </button>
-                                    <button onClick={() => setIsFindUserModalOpen(true)} className="bg-green-600 hover:bg-green-700 text-white font-bold p-2 rounded-full"> {/* Plus button */}
-                                        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clipRule="evenodd" /></svg>
+                                    <button onClick={() => setIsFindUserModalOpen(true)} className="bg-green-600 hover:bg-green-700 text-white font-bold p-2 rounded-full text-lg"> {/* Plus button */}
+                                        +
                                     </button>
                                 </div>
                             </div>
@@ -2450,7 +2479,9 @@
                                                     <p className="font-semibold text-primary">{t.requestTo}: {request.displayPeerName}</p>
                                                     <p className="text-sm text-secondary">{t.status}: {t.pending || 'Ожидает'}</p>
                                                 </div>
-                                                {/* No actions needed for outgoing requests here, just display status */}
+                                                <div className="flex space-x-2 mt-2 md:mt-0">
+                                                    <button onClick={() => handleCancelOutgoingRequest(request.id, request.requests.findIndex(req => req.requesterId === user.uid && req.status === 'pending'))} className="bg-red-600 hover:bg-red-700 text-white font-bold py-1 px-3 rounded-lg text-sm">{t.cancelRequest || 'Отменить запрос'}</button>
+                                                </div>
                                             </div>
                                         ))
                                     )
@@ -2520,7 +2551,7 @@
                                             <p className="text-sm text-secondary break-all">{foundUser.id}</p>
                                         </div>
                                         <button onClick={() => handleSendChatRequest(foundUser)} className="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded-lg">
-                                            {t.sendChatRequest || 'Отправить запрос на чат'}
+                                            {t.sendRequest || 'Отправить запрос'}
                                         </button>
                                     </div>
                                 )}
@@ -3228,7 +3259,7 @@
                 startNewChat: 'Начать новый чат с администрацией', // New translation for chat list
                 findUser: 'Найти пользователя', // New translation for chat search
                 findUserToChat: 'Найти пользователя для чата', // New translation for chat search section title
-                sendChatRequest: 'Отправить запрос на чат', // New translation for sending chat request
+                sendRequest: 'Отправить запрос', // Changed from sendChatRequest
                 enterUserIdToFind: 'Введите ID пользователя для поиска.', // New translation for chat search prompt
                 userNotFound: 'Пользователь с таким ID не найден.', // New translation for chat search
                 featureNotImplemented: 'Эта функция пока не реализована для пользователей.', // New translation for feature not implemented (old, will remove later)
@@ -3259,6 +3290,10 @@
                 chatRequestSentInitialMessage: 'Запрос на чат отправлен.', // New translation (more specific)
                 hasIncomingRequest: 'У вас уже есть входящий запрос от этого пользователя. Пожалуйста, примите его.', // New translation
                 chatRequests: 'Запросы на чат', // New combined title for requests
+                cancelRequest: 'Отменить запрос', // New translation for cancelling outgoing requests
+                confirmCancelOutgoingRequest: 'Вы уверены, что хотите отменить этот исходящий запрос?', // New translation for confirmation
+                outgoingRequestCancelled: 'Исходящий запрос отменен.', // New translation for success message
+                outgoingRequestCancelledMessage: 'Исходящий запрос отменен.', // New translation for last message in chat
             },
             en: {
                 home: 'Home', support: 'Support', faq: 'FAQ', adminPanelTitle: 'Admin Panel', profile: 'Profile', logout: 'Logout', login: 'Login',
