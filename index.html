@@ -438,10 +438,18 @@
 
         function ProductCard({ product, onProductClick, t, currency, convertPrice }) {
             const imageUrl = (product.imageUrls && product.imageUrls.length > 0) ? product.imageUrls[0] : (product.imageUrl || '');
+            const displayPrice = useMemo(() => {
+                if (product.variants && product.variants.length > 0) {
+                    const minPrice = Math.min(...product.variants.map(v => v.price));
+                    return convertPrice(minPrice, currency);
+                }
+                return convertPrice(product.price, currency); // Fallback for old structure
+            }, [product.variants, product.price, currency]);
 
             return (
                 <div onClick={() => onProductClick(product)} className="bg-secondary rounded-2xl overflow-hidden shadow-lg border-color transform hover:-translate-y-2 transition-transform duration-300 flex flex-col cursor-pointer relative">
                     {product.pinned && <div className="absolute top-0 right-0 bg-yellow-400 text-black text-xs font-bold px-3 py-1 rounded-bl-lg z-10">{t.pinned}</div>}
+                    {product.isOnSale === false && <span className="absolute top-2 left-2 bg-gray-500 text-white text-xs font-bold px-2 py-1 rounded-full">{t.removedFromSale || 'Снято с продажи'}</span>}
                     <img className="w-full h-56 object-cover" src={imageUrl} alt={product.name} onError={(e) => { e.target.onerror = null; e.target.src=`https://placehold.co/600x400/1f2937/374151?text=${encodeURIComponent(t.imageNotFound)}`; }}/>
                     <div className="p-6 flex flex-col flex-grow">
                         {product.isVerified && (
@@ -451,11 +459,17 @@
                             </div>
                         )}
                         <h3 className="text-2xl font-bold text-primary mb-1">{product.name}</h3>
-                        {product.nominal && <p className="accent-text font-semibold mb-2">{product.nominal}</p>}
+                        {product.nominal && <p className="text-secondary text-sm mb-2">{product.nominal}</p>} {/* Keep for old products */}
+                        {product.variants && product.variants.length > 0 && (
+                            <p className="text-secondary text-sm mb-2">
+                                {t.nominal || 'Номинал'}: {product.variants[0].nominal} {product.variants.length > 1 && `+ ${product.variants.length - 1} ${t.moreOptions || 'варианта'}`}
+                            </p>
+                        )}
+                        
                         <div className="flex-grow"></div>
                         <div className="flex justify-between items-center mt-4">
-                            <span className="text-3xl font-bold accent-text">{convertPrice(product.price, currency)}</span>
-                            {product.stockQuantity !== undefined && product.stockQuantity <= 0 && (
+                            <span className="text-3xl font-bold accent-text">{displayPrice}</span>
+                            {product.stockQuantity !== undefined && product.stockQuantity <= 0 && ( // General stock for card
                                 <span className="bg-red-500 text-white text-xs font-bold px-2 py-1 rounded-full">{t.outOfStock || 'Нет в наличии'}</span>
                             )}
                         </div>
@@ -467,6 +481,16 @@
         function ProductModal({ product, user, onClose, onBuy, setAlertInfo, t, currency, convertPrice }) {
             const [currentImageIndex, setCurrentImageIndex] = useState(0);
             const imageUrls = (product.imageUrls && product.imageUrls.length > 0) ? product.imageUrls : [product.imageUrl || ''];
+            const [selectedVariantIndex, setSelectedVariantIndex] = useState(0);
+
+            useEffect(() => {
+                // Reset selected variant when product changes
+                setSelectedVariantIndex(0);
+            }, [product]);
+
+            const currentVariant = product.variants && product.variants.length > 0
+                ? product.variants[selectedVariantIndex]
+                : { nominal: product.nominal, price: product.price, stockQuantity: product.stockQuantity }; // Fallback for old structure
 
             const nextImage = () => {
                 setCurrentImageIndex((prevIndex) => (prevIndex + 1) % imageUrls.length);
@@ -493,12 +517,13 @@
 
             const handleBuyClick = () => {
                 if (user) {
-                    // Check if product is in stock before proceeding
-                    if (product.stockQuantity !== undefined && product.stockQuantity <= 0) {
+                    // Check stock for the selected variant
+                    if (currentVariant.stockQuantity !== undefined && currentVariant.stockQuantity <= 0) {
                         setAlertInfo({ message: t.outOfStockMessage || 'Этот товар временно отсутствует на складе.' });
                         return;
                     }
-                    onBuy(product);
+                    // Pass product data + selected variant info
+                    onBuy({ ...product, selectedVariant: currentVariant, selectedVariantIndex: selectedVariantIndex });
                 } else {
                     setAlertInfo({ message: t.loginToBuy });
                 }
@@ -524,22 +549,42 @@
                                 </div>
                             )}
                             <h2 className="text-4xl font-bold text-primary mb-2">{product.name}</h2>
-                            {product.nominal && <p className="text-xl accent-text font-semibold mb-4">{product.nominal}</p>}
+                            
+                            {/* Variants Selection */}
+                            {product.variants && product.variants.length > 0 && (
+                                <div className="my-4 space-y-2">
+                                    <p className="text-lg font-semibold text-primary">{t.chooseOption || 'Выберите вариант:'}</p>
+                                    <div className="flex flex-wrap gap-2">
+                                        {product.variants.map((variant, index) => (
+                                            <button
+                                                key={index}
+                                                onClick={() => setSelectedVariantIndex(index)}
+                                                className={`px-4 py-2 rounded-lg text-sm font-semibold transition-colors ${selectedVariantIndex === index ? 'accent-bg text-white' : 'bg-tertiary text-primary hover:bg-gray-600'}`}
+                                            >
+                                                {variant.nominal} - {convertPrice(variant.price, currency)}
+                                            </button>
+                                        ))}
+                                    </div>
+                                    {currentVariant.stockQuantity !== undefined && currentVariant.stockQuantity <= 0 && (
+                                        <p className="text-red-500 text-sm">{t.outOfStockMessage}</p>
+                                    )}
+                                </div>
+                            )}
+                            
+                            {/* Display current selected nominal/price from variant or old fields */}
+                            {(currentVariant.nominal || product.nominal) && <p className="text-xl accent-text font-semibold mb-4">{currentVariant.nominal || product.nominal}</p>}
                             <p className="text-secondary mb-6 flex-grow">{product.description}</p>
                             <div className="flex justify-between items-center">
-                                <span className="text-5xl font-bold accent-text">{convertPrice(product.price, currency)}</span>
+                                <span className="text-5xl font-bold accent-text">{convertPrice(currentVariant.price || product.price, currency)}</span>
                                 <div className="flex space-x-2">
                                     <button onClick={handleShare} className="bg-tertiary hover:bg-gray-700 p-4 rounded-lg transition-colors">
                                         <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-primary" viewBox="0 0 20 20" fill="currentColor"><path d="M15 8a3 3 0 10-2.977-2.63l-4.94 2.47a3 3 0 100 4.319l4.94 2.47a3 3 0 10.895-1.789l-4.94-2.47a3.027 3.027 0 000-.74l4.94-2.47C13.456 7.68 14.19 8 15 8z" /></svg>
                                     </button>
-                                    <button onClick={handleBuyClick} className="accent-bg hover:accent-bg-secondary text-white font-bold py-4 px-8 rounded-lg text-lg" disabled={product.stockQuantity !== undefined && product.stockQuantity <= 0}>
-                                        {product.stockQuantity !== undefined && product.stockQuantity <= 0 ? t.outOfStock : t.buy}
+                                    <button onClick={handleBuyClick} className="accent-bg hover:accent-bg-secondary text-white font-bold py-4 px-8 rounded-lg text-lg" disabled={currentVariant.stockQuantity !== undefined && currentVariant.stockQuantity <= 0}>
+                                        {currentVariant.stockQuantity !== undefined && currentVariant.stockQuantity <= 0 ? t.outOfStock : t.buy}
                                     </button>
                                 </div>
                             </div>
-                            {product.stockQuantity !== undefined && product.stockQuantity <= 0 && (
-                                <p className="text-red-500 text-sm mt-2">{t.outOfStockMessage}</p>
-                            )}
                         </div>
                     </div>
                 </Modal>
@@ -552,9 +597,10 @@
             const [error, setError] = useState('');
 
             const finalPrice = useMemo(() => {
-                if (!appliedPromo) return product.price;
-                return product.price * (1 - appliedPromo.discount / 100);
-            }, [product.price, appliedPromo]);
+                const basePrice = product.selectedVariant ? product.selectedVariant.price : product.price; // Use selected variant price
+                if (!appliedPromo) return basePrice;
+                return basePrice * (1 - appliedPromo.discount / 100);
+            }, [product.selectedVariant, product.price, appliedPromo]);
 
             const handleApplyPromo = async () => {
                 setError('');
@@ -582,7 +628,8 @@
                 const purchaseDetails = {
                     finalPrice,
                     promoCodeUsed: appliedPromo ? appliedPromo.code : null,
-                    paymentMethod: 'Telegram'
+                    paymentMethod: 'Telegram',
+                    nominal: product.selectedVariant ? product.selectedVariant.nominal : product.nominal, // Pass selected nominal
                 };
                 await onConfirm(product, purchaseDetails);
                 window.open('https://t.me/asonikofficial', '_blank');
@@ -593,7 +640,8 @@
                 const purchaseDetails = {
                     finalPrice,
                     promoCodeUsed: appliedPromo ? appliedPromo.code : null,
-                    paymentMethod: 'YooMoney'
+                    paymentMethod: 'YooMoney',
+                    nominal: product.selectedVariant ? product.selectedVariant.nominal : product.nominal, // Pass selected nominal
                 };
                 onYooMoney(product, purchaseDetails);
                 onClose();
@@ -603,16 +651,19 @@
                 <Modal onClose={onClose}>
                     <div className="text-center">
                         <h2 className="text-3xl font-bold text-primary mb-2">{t.checkout}</h2>
-                        <p className="text-secondary mb-4">{t.youAreBuying}: <span className="font-bold accent-text">{product.name}</span></p>
+                        <p className="text-secondary mb-4">
+                            {t.youAreBuying}: <span className="font-bold accent-text">{product.name}</span>
+                            {product.selectedVariant && ` (${product.selectedVariant.nominal})`} {/* Display selected nominal */}
+                        </p>
                         
                         <div className="my-4">
                             {appliedPromo ? (
                                 <div>
-                                    <span className="text-2xl text-secondary line-through">{convertPrice(product.price, currency)}</span>
+                                    <span className="text-2xl text-secondary line-through">{convertPrice(product.selectedVariant ? product.selectedVariant.price : product.price, currency)}</span>
                                     <span className="text-4xl font-bold accent-text ml-2">{convertPrice(finalPrice, currency)}</span>
                                 </div>
                             ) : (
-                                <span className="text-4xl font-bold accent-text">{convertPrice(product.price, currency)}</span>
+                                <span className="text-4xl font-bold accent-text">{convertPrice(product.selectedVariant ? product.selectedVariant.price : product.price, currency)}</span>
                             )}
                         </div>
 
@@ -739,6 +790,7 @@
             const [loading, setLoading] = useState(true);
             const [dateFilter, setDateFilter] = useState('all');
             const [sortOrder, setSortOrder] = useState('date_desc');
+            const [isChatModalOpen, setIsChatModalOpen] = useState(false); // State for chat modal
 
             useEffect(() => {
                 if (!user) { setLoading(false); return; }
@@ -831,6 +883,13 @@
                            <FilterButton value="price_asc" state={sortOrder} setState={setSortOrder}>{t.priceAsc}</FilterButton>
                         </div>
                     </div>
+                    {/* Chat button on MyPurchasesPage */}
+                    <div className="max-w-3xl mx-auto text-center mb-6">
+                        <button onClick={() => setIsChatModalOpen(true)} className="accent-bg hover:accent-bg-secondary text-white font-bold py-2 px-4 rounded-lg transition-colors flex items-center space-x-2 justify-center mx-auto">
+                            <span>{t.chatWithAdmin}</span>
+                        </button>
+                    </div>
+
                     {loading ? <LoadingSpinner /> : (
                         filteredAndSortedPurchases.length === 0 ? <p className="text-center text-secondary">{t.noPurchasesYet}</p> : (
                             <div className="space-y-4 max-w-3xl mx-auto">
@@ -869,6 +928,7 @@
                             </div>
                         )
                     )}
+                    {isChatModalOpen && user && <UserChatInterface user={user} onClose={() => setIsChatModalOpen(false)} setAlertInfo={setAlertInfo} t={t} />}
                 </div>
             );
         }
@@ -1000,6 +1060,8 @@
                             const url = await uploadImageToImgBB(file); // Use ImgBB upload
                             uploadedImgBBUrls.push(url);
                         } catch (uploadError) {
+                            // If one image fails, alert but try to continue with others or stop.
+                            // For now, it will stop and show the error.
                             throw new Error(`${t.errorUploadingImage || 'Ошибка загрузки изображения'}: ${uploadError.message}`);
                         }
                     }
@@ -1092,21 +1154,26 @@
 
             const handleToggleSaleStatus = async (product) => {
                 const newStatus = product.isOnSale === false; // If currently false, set to true, else false
-                let quantityToSet = product.stockQuantity;
+                let updatedVariants = product.variants ? [...product.variants] : [{ nominal: '', price: '', stockQuantity: 0 }]; // Ensure variants array exists
 
-                if (newStatus === true && (product.stockQuantity === undefined || product.stockQuantity <= 0)) {
-                    const enteredQuantity = prompt(t.enterStockQuantity || 'Введите количество товара в наличии:');
-                    quantityToSet = parseInt(enteredQuantity);
-                    if (isNaN(quantityToSet) || quantityToSet <= 0) {
-                        setAlertInfo({ message: t.invalidQuantity || 'Неверное количество. Товар не будет выставлен на продажу.' });
-                        return;
+                if (newStatus === true) {
+                    for (let i = 0; i < updatedVariants.length; i++) {
+                        if (updatedVariants[i].stockQuantity === undefined || updatedVariants[i].stockQuantity <= 0) {
+                            const enteredQuantity = prompt(`${t.enterStockQuantityForVariant || 'Введите количество товара в наличии для варианта'} "${updatedVariants[i].nominal}":`);
+                            const quantityToSet = parseInt(enteredQuantity);
+                            if (isNaN(quantityToSet) || quantityToSet < 0) {
+                                setAlertInfo({ message: t.invalidQuantity || 'Неверное количество. Товар не будет выставлен на продажу.' });
+                                return;
+                            }
+                            updatedVariants[i].stockQuantity = quantityToSet;
+                        }
                     }
                 }
                 
                 try {
                     await updateDoc(doc(db, "products", product.id), { 
                         isOnSale: newStatus,
-                        stockQuantity: quantityToSet // Update stock quantity
+                        variants: updatedVariants // Update variants with new stock quantities
                     });
                     setAlertInfo({ message: newStatus ? t.putOnSaleSuccess || 'Товар выставлен на продажу.' : t.removeFromSaleSuccess || 'Товар снят с продажи.' });
                 } catch (error) {
@@ -1130,7 +1197,11 @@
 
             const handleVariantChange = (index, field, value) => {
                 const newVariants = [...variants];
-                newVariants[index][field] = value;
+                if (field === 'price' || field === 'stockQuantity') {
+                     newVariants[index][field] = value === '' ? '' : Number(value); // Allow empty string for price/stock to clear input
+                } else {
+                    newVariants[index][field] = value;
+                }
                 setVariants(newVariants);
             };
 
@@ -1167,7 +1238,7 @@
                                             {product.isOnSale === false && <span className="absolute top-2 left-2 bg-gray-500 text-white text-xs font-bold px-2 py-1 rounded-full">{t.removedFromSale || 'Снято с продажи'}</span>}
                                         </div>
                                         <h3 className="text-xl font-bold text-primary mb-1">{product.name}</h3>
-                                        {product.nominal && <p className="text-secondary text-sm mb-2">{product.nominal}</p>}
+                                        {product.nominal && <p className="text-secondary text-sm mb-2">{product.nominal}</p>} {/* Keep for old products */}
                                         {product.variants && product.variants.length > 0 ? (
                                             <div className="text-secondary text-sm mb-2">
                                                 {t.priceFrom}: {convertPrice(Math.min(...product.variants.map(v => v.price)), currency)}
@@ -1176,11 +1247,14 @@
                                         ) : (
                                             product.price && <p className="accent-text text-lg font-bold mt-auto">{convertPrice(product.price, currency)}</p>
                                         )}
-                                        {product.stockQuantity !== undefined && (
+                                        {/* Display stock quantity from first variant or general if exists */}
+                                        {product.variants && product.variants.length > 0 && product.variants[0].stockQuantity !== undefined && (
                                             <p className="text-secondary text-sm">
-                                                {t.inStock || 'В наличии'}: {product.stockQuantity > 0 ? product.stockQuantity : t.outOfStock}
+                                                {t.inStock || 'В наличии'}: {product.variants[0].stockQuantity > 0 ? product.variants[0].stockQuantity : t.outOfStock}
+                                                {product.variants.length > 1 && ` (+${t.moreOptions || 'другие варианты'})`}
                                             </p>
                                         )}
+
 
                                         <div className="flex space-x-2 mt-4 flex-wrap">
                                             <button onClick={() => handleEditClick(product)} className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg transition-colors flex-grow mb-2">{t.edit}</button>
@@ -1678,12 +1752,12 @@
         }
 
         // New Chat Components
-        function UserChatInterface({ user, setAlertInfo, t }) {
+        function UserChatInterface({ user, setAlertInfo, t, onClose }) { // Added onClose prop
             const [messages, setMessages] = useState([]);
             const [newMessage, setNewMessage] = useState('');
             const [loading, setLoading] = useState(true);
             const messagesEndRef = useRef(null);
-            const [isChatModalOpen, setIsChatModalOpen] = useState(false); // State to control modal visibility
+            // const [isChatModalOpen, setIsChatModalOpen] = useState(false); // This state is now managed by parent (MyPurchasesPage)
 
             useEffect(() => {
                 if (!user) { setLoading(false); return; }
@@ -1741,50 +1815,43 @@
             };
 
             return (
-                <div className="container mx-auto p-4 md:p-8">
-                    <button onClick={() => setIsChatModalOpen(true)} className="accent-bg hover:accent-bg-secondary text-white font-bold py-2 px-4 rounded-lg transition-colors flex items-center space-x-2">
-                        <span>{t.chatWithAdmin}</span>
-                    </button>
-                    {isChatModalOpen && (
-                        <Modal onClose={() => setIsChatModalOpen(false)} size="max-w-4xl">
-                            <h2 className="text-2xl font-bold text-primary mb-4 text-center">{t.chatWithAdmin}</h2>
-                            <div className="flex-grow overflow-y-auto pr-2 mb-4 space-y-4 h-96">
-                                {loading ? <LoadingSpinner /> : (
-                                    messages.length === 0 ? (
-                                        <p className="text-center text-secondary text-xl mt-12">{t.noChatMessages}</p>
-                                    ) : (
-                                        messages.map((msg) => (
-                                            <div key={msg.id} className={`flex ${msg.isAdmin ? 'justify-start' : 'justify-end'}`}>
-                                                <div className={`${msg.isAdmin ? 'bg-tertiary rounded-br-none' : 'accent-bg text-white rounded-bl-none'} max-w-[75%] p-3 rounded-lg shadow`}>
-                                                    <p className="font-bold text-sm mb-1">{msg.isAdmin ? 'Admin' : (msg.senderName || t.you)}</p>
-                                                    <p>{msg.message}</p>
-                                                    <p className="text-xs mt-1 text-right opacity-70">
-                                                        {msg.timestamp?.toDate ? new Date(msg.timestamp.toDate()).toLocaleTimeString() : ''}
-                                                    </p>
-                                                </div>
-                                            </div>
-                                        ))
-                                    )
-                                )}
-                                <div ref={messagesEndRef} />
-                            </div>
-                            <form onSubmit={sendMessage} className="flex">
-                                <input
-                                    type="text"
-                                    value={newMessage}
-                                    onChange={(e) => setNewMessage(e.target.value)}
-                                    placeholder={t.enterMessagePlaceholder}
-                                    className="flex-grow p-3 bg-tertiary rounded-l-lg border-color text-primary focus:outline-none focus:ring-2 accent-border"
-                                    disabled={!user}
-                                />
-                                <button type="submit" className="accent-bg hover:accent-bg-secondary text-white font-bold py-3 px-6 rounded-r-lg transition-colors disabled:bg-gray-500" disabled={!user}>
-                                    {t.send || 'Отправить'}
-                                </button>
-                            </form>
-                            {!user && <p className="text-red-500 text-center text-sm mt-2">{t.loginForSupport}</p>}
-                        </Modal>
-                    )}
-                </div>
+                <Modal onClose={onClose} size="max-w-4xl"> {/* Use onClose from props */}
+                    <h2 className="text-2xl font-bold text-primary mb-4 text-center">{t.chatWithAdmin}</h2>
+                    <div className="flex-grow overflow-y-auto pr-2 mb-4 space-y-4 h-96">
+                        {loading ? <LoadingSpinner /> : (
+                            messages.length === 0 ? (
+                                <p className="text-center text-secondary text-xl mt-12">{t.noChatMessages}</p>
+                            ) : (
+                                messages.map((msg) => (
+                                    <div key={msg.id} className={`flex ${msg.isAdmin ? 'justify-start' : 'justify-end'}`}>
+                                        <div className={`${msg.isAdmin ? 'bg-tertiary rounded-br-none' : 'accent-bg text-white rounded-bl-none'} max-w-[75%] p-3 rounded-lg shadow`}>
+                                            <p className="font-bold text-sm mb-1">{msg.isAdmin ? 'Admin' : (msg.senderName || t.you)}</p>
+                                            <p>{msg.message}</p>
+                                            <p className="text-xs mt-1 text-right opacity-70">
+                                                {msg.timestamp?.toDate ? new Date(msg.timestamp.toDate()).toLocaleTimeString() : ''}
+                                            </p>
+                                        </div>
+                                    </div>
+                                ))
+                            )
+                        )}
+                        <div ref={messagesEndRef} />
+                    </div>
+                    <form onSubmit={sendMessage} className="flex">
+                        <input
+                            type="text"
+                            value={newMessage}
+                            onChange={(e) => setNewMessage(e.target.value)}
+                            placeholder={t.enterMessagePlaceholder}
+                            className="flex-grow p-3 bg-tertiary rounded-l-lg border-color text-primary focus:outline-none focus:ring-2 accent-border"
+                            disabled={!user}
+                        />
+                        <button type="submit" className="accent-bg hover:accent-bg-secondary text-white font-bold py-3 px-6 rounded-r-lg transition-colors disabled:bg-gray-500" disabled={!user}>
+                            {t.send || 'Отправить'}
+                        </button>
+                    </form>
+                    {!user && <p className="text-red-500 text-center text-sm mt-2">{t.loginForSupport}</p>}
+                </Modal>
             );
         }
 
@@ -2098,17 +2165,21 @@
                     if (!imgbbResult.success) throw new Error(imgbbResult.error.message || 'ImgBB upload failed');
                     
                     const purchaseCode = generatePurchaseCode();
+                    
+                    // Construct purchasePayload based on whether a variant was selected
                     const purchasePayload = {
                         userId: user.uid, userEmail: user.email,
                         productId: product.id, productName: product.name,
                         timestamp: serverTimestamp(),
-                        originalPrice: product.price, finalPrice: purchaseDetails.finalPrice,
+                        originalPrice: product.selectedVariant ? product.selectedVariant.price : product.price, // Use selected variant price
+                        finalPrice: purchaseDetails.finalPrice,
                         promoCodeUsed: purchaseDetails.promoCodeUsed,
                         paymentMethod: purchaseDetails.paymentMethod,
                         contactTelegram, contactEmail, 
                         receiptImageUrl: imgbbResult.data.url,
                         status: 'pending',
-                        purchaseCode: purchaseCode
+                        purchaseCode: purchaseCode,
+                        nominal: product.selectedVariant ? product.selectedVariant.nominal : product.nominal, // Pass selected nominal
                     };
                     await addDoc(collection(db, 'purchases'), purchasePayload);
 
@@ -2116,6 +2187,16 @@
                         const promoRef = doc(db, 'promoCodes', purchaseDetails.promoCodeUsed);
                         await updateDoc(promoRef, { timesUsed: increment(1) });
                     }
+                    
+                    // Decrement stock quantity for the selected variant
+                    if (product.variants && product.selectedVariantIndex !== undefined && product.variants[product.selectedVariantIndex]) {
+                        const updatedVariants = [...product.variants];
+                        updatedVariants[product.selectedVariantIndex].stockQuantity = increment(-1);
+                        await updateDoc(doc(db, 'products', product.id), { variants: updatedVariants });
+                    } else if (product.stockQuantity !== undefined) { // Fallback for old single-stock products
+                        await updateDoc(doc(db, 'products', product.id), { stockQuantity: increment(-1) });
+                    }
+
                     const productRef = doc(db, 'products', product.id);
                     await updateDoc(productRef, { popularity: increment(1) });
 
@@ -2132,21 +2213,36 @@
                 if (!user) return;
                 try {
                     const purchaseCode = generatePurchaseCode();
-                    await addDoc(collection(db, 'purchases'), {
+
+                    // Construct purchasePayload based on whether a variant was selected
+                    const purchasePayload = {
                         userId: user.uid, userEmail: user.email,
                         productId: product.id, productName: product.name,
                         timestamp: serverTimestamp(),
-                        originalPrice: product.price, finalPrice: purchaseDetails.finalPrice,
+                        originalPrice: product.selectedVariant ? product.selectedVariant.price : product.price, // Use selected variant price
+                        finalPrice: purchaseDetails.finalPrice,
                         promoCodeUsed: purchaseDetails.promoCodeUsed,
                         paymentMethod: purchaseDetails.paymentMethod,
                         status: 'contacted',
-                        purchaseCode: purchaseCode
-                    });
+                        purchaseCode: purchaseCode,
+                        nominal: product.selectedVariant ? product.selectedVariant.nominal : product.nominal, // Pass selected nominal
+                    };
+                    await addDoc(collection(db, 'purchases'), purchasePayload);
                     
                     if (purchaseDetails.promoCodeUsed) {
                         const promoRef = doc(db, 'promoCodes', purchaseDetails.promoCodeUsed);
                         await updateDoc(promoRef, { timesUsed: increment(1) });
                     }
+                    
+                    // Decrement stock quantity for the selected variant
+                    if (product.variants && product.selectedVariantIndex !== undefined && product.variants[product.selectedVariantIndex]) {
+                        const updatedVariants = [...product.variants];
+                        updatedVariants[product.selectedVariantIndex].stockQuantity = increment(-1);
+                        await updateDoc(doc(db, 'products', product.id), { variants: updatedVariants });
+                    } else if (product.stockQuantity !== undefined) { // Fallback for old single-stock products
+                        await updateDoc(doc(db, 'products', product.id), { stockQuantity: increment(-1) });
+                    }
+
                     const productRef = doc(db, 'products', product.id);
                     await updateDoc(productRef, { popularity: increment(1) });
                     
@@ -2179,7 +2275,7 @@
                     case 'admin': return isAdmin ? <AdminPanel {...{setPage, setAlertInfo, t, currency, convertPrice}} /> : <HomePage {...{products, onProductClick: setSelectedProduct, t, currency, convertPrice, loading: products.length === 0}} />;
                     case 'purchases': return user ? <MyPurchasesPage {...{user, t, currency, convertPrice, setAlertInfo}} /> : <div className="text-center text-primary p-10">{t.loginToView}</div>;
                     case 'faq': return <FAQPage faqs={faqs} t={t} />;
-                    case 'chat': return <UserChatInterface user={user} setAlertInfo={setAlertInfo} t={t} />; // New user chat page
+                    // case 'chat': return <UserChatInterface user={user} setAlertInfo={setAlertInfo} t={t} />; // Moved to MyPurchasesPage
                     default: return <HomePage {...{products, onProductClick: setSelectedProduct, t, currency, convertPrice, loading: products.length === 0}} />;
                 }
             };
@@ -2329,6 +2425,9 @@
                 remove: 'Удалить', // New translation
                 addVariant: 'Добавить вариант', // New translation
                 priceFrom: 'Цена от', // New translation
+                chooseOption: 'Выберите вариант:', // New translation
+                moreOptions: 'варианта', // New translation
+                enterStockQuantityForVariant: 'Введите количество товара в наличии для варианта', // New translation
             },
             en: {
                 home: 'Home', support: 'Support', faq: 'FAQ', adminPanelTitle: 'Admin Panel', profile: 'Profile', logout: 'Logout', login: 'Login',
