@@ -2281,9 +2281,9 @@
                         participants: [user.uid, targetUser.id],
                         type: 'private',
                         name: `${user.displayName || user.email} & ${targetUser.displayName || targetUser.email}`,
-                        createdAt: new Date(), 
+                        createdAt: serverTimestamp(), 
                         lastMessage: t.chatRequestSentInitialMessage || 'Запрос на чат отправлен.',
-                        lastMessageTimestamp: new Date(), 
+                        lastMessageTimestamp: serverTimestamp(), 
                         requests: [{
                             requesterId: user.uid,
                             invitedId: targetUser.id,
