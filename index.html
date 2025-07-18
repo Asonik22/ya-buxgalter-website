@@ -378,6 +378,7 @@
 
             const filteredAndSortedProducts = useMemo(() => {
                 return products
+                    .filter(p => p.isOnSale !== false) // Filter out products removed from sale
                     .filter(p => p.name.toLowerCase().includes(searchTerm.toLowerCase()))
                     .filter(p => filterCategory === 'all' || p.category === filterCategory)
                     .sort((a, b) => {
@@ -454,6 +455,9 @@
                         <div className="flex-grow"></div>
                         <div className="flex justify-between items-center mt-4">
                             <span className="text-3xl font-bold accent-text">{convertPrice(product.price, currency)}</span>
+                            {product.stockQuantity !== undefined && product.stockQuantity <= 0 && (
+                                <span className="bg-red-500 text-white text-xs font-bold px-2 py-1 rounded-full">{t.outOfStock || 'Нет в наличии'}</span>
+                            )}
                         </div>
                     </div>
                 </div>
@@ -489,6 +493,11 @@
 
             const handleBuyClick = () => {
                 if (user) {
+                    // Check if product is in stock before proceeding
+                    if (product.stockQuantity !== undefined && product.stockQuantity <= 0) {
+                        setAlertInfo({ message: t.outOfStockMessage || 'Этот товар временно отсутствует на складе.' });
+                        return;
+                    }
                     onBuy(product);
                 } else {
                     setAlertInfo({ message: t.loginToBuy });
@@ -523,9 +532,14 @@
                                     <button onClick={handleShare} className="bg-tertiary hover:bg-gray-700 p-4 rounded-lg transition-colors">
                                         <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-primary" viewBox="0 0 20 20" fill="currentColor"><path d="M15 8a3 3 0 10-2.977-2.63l-4.94 2.47a3 3 0 100 4.319l4.94 2.47a3 3 0 10.895-1.789l-4.94-2.47a3.027 3.027 0 000-.74l4.94-2.47C13.456 7.68 14.19 8 15 8z" /></svg>
                                     </button>
-                                    <button onClick={handleBuyClick} className="accent-bg hover:accent-bg-secondary text-white font-bold py-4 px-8 rounded-lg text-lg">{t.buy}</button>
+                                    <button onClick={handleBuyClick} className="accent-bg hover:accent-bg-secondary text-white font-bold py-4 px-8 rounded-lg text-lg" disabled={product.stockQuantity !== undefined && product.stockQuantity <= 0}>
+                                        {product.stockQuantity !== undefined && product.stockQuantity <= 0 ? t.outOfStock : t.buy}
+                                    </button>
                                 </div>
                             </div>
+                            {product.stockQuantity !== undefined && product.stockQuantity <= 0 && (
+                                <p className="text-red-500 text-sm mt-2">{t.outOfStockMessage}</p>
+                            )}
                         </div>
                     </div>
                 </Modal>
@@ -902,15 +916,16 @@
             const [isSaving, setIsSaving] = useState(false); // New state for saving status
 
             const [name, setName] = useState('');
-            const [nominal, setNominal] = useState('');
             const [description, setDescription] = useState('');
-            const [price, setPrice] = useState('');
             const [category, setCategory] = useState('games');
             const [imageFiles, setImageFiles] = useState([]); // For new files to upload
             const [imageUrls, setImageUrls] = useState([]); // Existing image URLs from Firestore
             const [isVerified, setIsVerified] = useState(false);
             const [pinned, setPinned] = useState(false);
+            const [isOnSale, setIsOnSale] = useState(true); // New state for sale status
+            const [variants, setVariants] = useState([{ nominal: '', price: '', stockQuantity: 1 }]); // New state for variants
             const fileInputRef = useRef(null);
+
 
             const categories = [
                 { value: 'games', label: t.games },
@@ -934,14 +949,14 @@
             const resetForm = () => {
                 setEditingProduct(null);
                 setName('');
-                setNominal('');
                 setDescription('');
-                setPrice('');
                 setCategory('games');
                 setImageFiles([]);
                 setImageUrls([]);
                 setIsVerified(false);
                 setPinned(false);
+                setIsOnSale(true);
+                setVariants([{ nominal: '', price: '', stockQuantity: 1 }]); // Reset variants
                 if (fileInputRef.current) fileInputRef.current.value = "";
             };
 
@@ -972,7 +987,7 @@
 
             const handleAddEditProduct = async (e) => {
                 e.preventDefault();
-                if (!name || !price || !description) {
+                if (!name || !description || variants.length === 0 || variants.some(v => !v.nominal || !v.price)) {
                     setAlertInfo({ message: t.fillAllFields });
                     return;
                 }
@@ -985,17 +1000,23 @@
                             const url = await uploadImageToImgBB(file); // Use ImgBB upload
                             uploadedImgBBUrls.push(url);
                         } catch (uploadError) {
-                            // If one image fails, alert but try to continue with others or stop.
-                            // For now, it will stop and show the error.
                             throw new Error(`${t.errorUploadingImage || 'Ошибка загрузки изображения'}: ${uploadError.message}`);
                         }
                     }
                     const finalImageUrls = [...imageUrls, ...uploadedImgBBUrls];
 
+                    // Map variants prices to numbers and ensure stock is number
+                    const processedVariants = variants.map(v => ({
+                        ...v,
+                        price: parseFloat(v.price),
+                        stockQuantity: parseInt(v.stockQuantity) || 0 // Ensure stock is a number, default 0
+                    }));
+
+
                     const productData = {
-                        name, nominal, description, price: parseFloat(price), category,
-                        imageUrls: finalImageUrls, // Update to use imageUrls array
-                        isVerified, pinned,
+                        name, description, category,
+                        imageUrls: finalImageUrls,
+                        isVerified, pinned, isOnSale, variants: processedVariants
                     };
 
                     if (editingProduct) {
@@ -1018,13 +1039,13 @@
             const handleEditClick = (product) => {
                 setEditingProduct(product);
                 setName(product.name);
-                setNominal(product.nominal || '');
                 setDescription(product.description);
-                setPrice(product.price);
                 setCategory(product.category || 'games');
-                setImageUrls(product.imageUrls || (product.imageUrl ? [product.imageUrl] : [])); // Support old imageUrl field
+                setImageUrls(product.imageUrls || (product.imageUrl ? [product.imageUrl] : []));
                 setIsVerified(product.isVerified || false);
                 setPinned(product.pinned || false);
+                setIsOnSale(product.isOnSale !== false); // Default to true if not set
+                setVariants(product.variants && product.variants.length > 0 ? product.variants.map(v => ({...v, price: String(v.price)})) : [{ nominal: '', price: '', stockQuantity: 1 }]); // Load variants or default
                 setIsModalOpen(true);
             };
 
@@ -1034,8 +1055,6 @@
                     onConfirm: async () => {
                         try {
                             await deleteDoc(doc(db, "products", productId));
-                            // For ImgBB, we generally don't delete images from their server from client-side.
-                            // The image URLs will just be removed from Firestore.
                             setAlertInfo({ message: t.productDeleted });
                         } catch (error) {
                             console.error("Error deleting product:", error);
@@ -1056,9 +1075,10 @@
                                 createdAt: serverTimestamp(), // New timestamp
                                 updatedAt: serverTimestamp(), // New timestamp
                                 popularity: 0, // Reset popularity for clone
+                                isOnSale: true, // Cloned items are on sale by default
                                 // Do not copy ID, Firestore will generate a new one
                             };
-                            delete clonedProductData.id; // Ensure ID is not copied
+                            delete clonedProductData.id; 
 
                             await addDoc(collection(db, "products"), clonedProductData);
                             setAlertInfo({ message: t.productCloned || 'Товар успешно клонирован!' });
@@ -1070,6 +1090,30 @@
                 });
             };
 
+            const handleToggleSaleStatus = async (product) => {
+                const newStatus = product.isOnSale === false; // If currently false, set to true, else false
+                let quantityToSet = product.stockQuantity;
+
+                if (newStatus === true && (product.stockQuantity === undefined || product.stockQuantity <= 0)) {
+                    const enteredQuantity = prompt(t.enterStockQuantity || 'Введите количество товара в наличии:');
+                    quantityToSet = parseInt(enteredQuantity);
+                    if (isNaN(quantityToSet) || quantityToSet <= 0) {
+                        setAlertInfo({ message: t.invalidQuantity || 'Неверное количество. Товар не будет выставлен на продажу.' });
+                        return;
+                    }
+                }
+                
+                try {
+                    await updateDoc(doc(db, "products", product.id), { 
+                        isOnSale: newStatus,
+                        stockQuantity: quantityToSet // Update stock quantity
+                    });
+                    setAlertInfo({ message: newStatus ? t.putOnSaleSuccess || 'Товар выставлен на продажу.' : t.removeFromSaleSuccess || 'Товар снят с продажи.' });
+                } catch (error) {
+                    console.error("Error toggling sale status:", error);
+                    setAlertInfo({ message: `${t.errorOccurred}: ${error.message}` });
+                }
+            };
 
             const handleImageFileChange = (e) => {
                 setImageFiles([...imageFiles, ...Array.from(e.target.files)]);
@@ -1083,6 +1127,21 @@
                     setImageUrls(imageUrls.filter((_, index) => index !== indexToRemove));
                 }
             };
+
+            const handleVariantChange = (index, field, value) => {
+                const newVariants = [...variants];
+                newVariants[index][field] = value;
+                setVariants(newVariants);
+            };
+
+            const handleAddVariant = () => {
+                setVariants([...variants, { nominal: '', price: '', stockQuantity: 1 }]);
+            };
+
+            const handleRemoveVariant = (indexToRemove) => {
+                setVariants(variants.filter((_, index) => index !== indexToRemove));
+            };
+
 
             return (
                 <div className="p-4 md:p-8 bg-secondary rounded-xl shadow-lg border-color min-h-[500px]">
@@ -1105,14 +1164,33 @@
                                                  className="w-full h-40 object-cover rounded-md" 
                                                  onError={(e) => { e.target.onerror = null; e.target.src=`https://placehold.co/600x400/374151/1f2937?text=${encodeURIComponent(t.imageNotFound)}`; }}/>
                                             {product.pinned && <span className="absolute top-2 right-2 bg-yellow-400 text-black text-xs font-bold px-2 py-1 rounded-full">{t.pinned}</span>}
+                                            {product.isOnSale === false && <span className="absolute top-2 left-2 bg-gray-500 text-white text-xs font-bold px-2 py-1 rounded-full">{t.removedFromSale || 'Снято с продажи'}</span>}
                                         </div>
                                         <h3 className="text-xl font-bold text-primary mb-1">{product.name}</h3>
                                         {product.nominal && <p className="text-secondary text-sm mb-2">{product.nominal}</p>}
-                                        <p className="accent-text text-lg font-bold mt-auto">{convertPrice(product.price, currency)}</p>
-                                        <div className="flex space-x-2 mt-4">
-                                            <button onClick={() => handleEditClick(product)} className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg transition-colors flex-grow">{t.edit}</button>
-                                            <button onClick={() => handleDeleteClick(product.id, product.imageUrls || (product.imageUrl ? [product.imageUrl] : []))} className="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded-lg transition-colors flex-grow">{t.delete}</button>
-                                            <button onClick={() => handleCloneClick(product)} className="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded-lg transition-colors flex-grow">{t.cloneProduct || 'Клон'}</button>
+                                        {product.variants && product.variants.length > 0 ? (
+                                            <div className="text-secondary text-sm mb-2">
+                                                {t.priceFrom}: {convertPrice(Math.min(...product.variants.map(v => v.price)), currency)}
+                                                {product.variants.length > 1 && ` - ${convertPrice(Math.max(...product.variants.map(v => v.price)), currency)}`}
+                                            </div>
+                                        ) : (
+                                            product.price && <p className="accent-text text-lg font-bold mt-auto">{convertPrice(product.price, currency)}</p>
+                                        )}
+                                        {product.stockQuantity !== undefined && (
+                                            <p className="text-secondary text-sm">
+                                                {t.inStock || 'В наличии'}: {product.stockQuantity > 0 ? product.stockQuantity : t.outOfStock}
+                                            </p>
+                                        )}
+
+                                        <div className="flex space-x-2 mt-4 flex-wrap">
+                                            <button onClick={() => handleEditClick(product)} className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg transition-colors flex-grow mb-2">{t.edit}</button>
+                                            <button onClick={() => handleDeleteClick(product.id, product.imageUrls || (product.imageUrl ? [product.imageUrl] : []))} className="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded-lg transition-colors flex-grow mb-2">{t.delete}</button>
+                                            <button onClick={() => handleCloneClick(product)} className="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded-lg transition-colors flex-grow mb-2">{t.cloneProduct || 'Клон'}</button>
+                                            <button 
+                                                onClick={() => handleToggleSaleStatus(product)} 
+                                                className={`font-bold py-2 px-4 rounded-lg transition-colors flex-grow ${product.isOnSale === false ? 'bg-purple-600 hover:bg-purple-700 text-white' : 'bg-yellow-600 hover:bg-yellow-700 text-black'}`}>
+                                                {product.isOnSale === false ? t.putOnSale || 'Вернуть в продажу' : t.removeFromSale || 'Снять с продажи'}
+                                            </button>
                                         </div>
                                     </div>
                                 ))}
@@ -1129,21 +1207,41 @@
                                     <input type="text" value={name} onChange={(e) => setName(e.target.value)} className="w-full p-3 bg-tertiary rounded-lg border-color text-primary" placeholder={t.productName}/>
                                 </div>
                                 <div>
-                                    <label className="block text-secondary text-sm font-bold mb-2">{t.productNominal}</label>
-                                    <input type="text" value={nominal} onChange={(e) => setNominal(e.target.value)} className="w-full p-3 bg-tertiary rounded-lg border-color text-primary" placeholder={t.productNominal}/>
-                                </div>
-                                <div>
                                     <label className="block text-secondary text-sm font-bold mb-2">{t.description}</label>
                                     <textarea value={description} onChange={(e) => setDescription(e.target.value)} className="w-full p-3 bg-tertiary rounded-lg border-color text-primary h-32 resize-none" placeholder={t.description}></textarea>
-                                </div>
-                                <div>
-                                    <label className="block text-secondary text-sm font-bold mb-2">{t.priceInRub}</label>
-                                    <input type="number" value={price} onChange={(e) => setPrice(e.target.value)} className="w-full p-3 bg-tertiary rounded-lg border-color text-primary" placeholder="100"/>
                                 </div>
                                 <div>
                                     <label className="block text-secondary text-sm font-bold mb-2">{t.category}</label>
                                     <CustomSelector value={category} onChange={e => setCategory(e.target.value)} options={categories} />
                                 </div>
+                                
+                                {/* Product Variants */}
+                                <div className="space-y-3 bg-tertiary p-4 rounded-lg border-color">
+                                    <h3 className="text-xl font-bold text-primary">{t.productVariants || 'Варианты товара'}</h3>
+                                    {variants.map((variant, index) => (
+                                        <div key={index} className="flex flex-col md:flex-row gap-2 items-end">
+                                            <div className="flex-grow">
+                                                <label className="block text-secondary text-sm mb-1">{t.nominal || 'Номинал'}</label>
+                                                <input type="text" value={variant.nominal} onChange={(e) => handleVariantChange(index, 'nominal', e.target.value)} className="w-full p-2 bg-primary rounded-lg border-color text-primary" placeholder={t.nominalExample || '500 гемов'}/>
+                                            </div>
+                                            <div className="flex-grow">
+                                                <label className="block text-secondary text-sm mb-1">{t.price || 'Цена'}</label>
+                                                <input type="number" value={variant.price} onChange={(e) => handleVariantChange(index, 'price', e.target.value)} className="w-full p-2 bg-primary rounded-lg border-color text-primary" placeholder="100"/>
+                                            </div>
+                                            <div className="flex-grow">
+                                                <label className="block text-secondary text-sm mb-1">{t.stockQuantity || 'Наличие'}</label>
+                                                <input type="number" value={variant.stockQuantity} onChange={(e) => handleVariantChange(index, 'stockQuantity', e.target.value)} className="w-full p-2 bg-primary rounded-lg border-color text-primary" placeholder="1"/>
+                                            </div>
+                                            <button type="button" onClick={() => handleRemoveVariant(index)} className="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded-lg h-10 flex-shrink-0">
+                                                {t.remove || 'Удалить'}
+                                            </button>
+                                        </div>
+                                    ))}
+                                    <button type="button" onClick={handleAddVariant} className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg mt-2">
+                                        {t.addVariant || 'Добавить вариант'}
+                                    </button>
+                                </div>
+
                                 <div>
                                     <label className="block text-secondary text-sm font-bold mb-2">{t.productImages}</label>
                                     <div className="flex flex-wrap gap-2 mb-2">
@@ -1977,7 +2075,8 @@
 
             const handleBuy = (product) => {
                 if (user) {
-                    onBuy(product);
+                    setSelectedProduct(null);
+                    setPurchasingProduct(product);
                 } else {
                     setAlertInfo({ message: t.loginToBuy });
                 }
@@ -2214,6 +2313,22 @@
                 productCloned: 'Товар успешно клонирован!', // New translation for product cloning
                 copyText: 'Копия', // Used for naming cloned products
                 errorUploadingImage: 'Ошибка загрузки изображения', // New translation for image upload error
+                removeFromSale: 'Снять с продажи', // New translation
+                putOnSale: 'Вернуть в продажу', // New translation
+                removedFromSale: 'Снято с продажи', // New translation
+                putOnSaleSuccess: 'Товар выставлен на продажу.', // New translation
+                removeFromSaleSuccess: 'Товар снят с продажи.', // New translation
+                enterStockQuantity: 'Введите количество товара в наличии:', // New translation
+                invalidQuantity: 'Неверное количество. Товар не будет выставлен на продажу.', // New translation
+                outOfStock: 'Нет в наличии', // New translation
+                outOfStockMessage: 'Этот товар временно отсутствует на складе.', // New translation
+                stockQuantity: 'Наличие', // New translation
+                productVariants: 'Варианты товара', // New translation
+                nominalExample: '500 гемов', // New translation
+                price: 'Цена', // New translation
+                remove: 'Удалить', // New translation
+                addVariant: 'Добавить вариант', // New translation
+                priceFrom: 'Цена от', // New translation
             },
             en: {
                 home: 'Home', support: 'Support', faq: 'FAQ', adminPanelTitle: 'Admin Panel', profile: 'Profile', logout: 'Logout', login: 'Login',
