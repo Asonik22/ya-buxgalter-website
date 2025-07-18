@@ -11,11 +11,11 @@
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/9.6.10/firebase-app.js";
         import { getAuth, signInWithPopup, GoogleAuthProvider, onAuthStateChanged, signOut, updateProfile } from "https://www.gstatic.com/firebasejs/9.6.10/firebase-auth.js";
-        import { getFirestore, collection, onSnapshot, addDoc, doc, deleteDoc, setDoc, serverTimestamp, query, where, orderBy, updateDoc, getDocs, increment, getDoc, arrayUnion, arrayRemove } from "https://www.gstatic.com/firebasejs/9.6.10/firebase-firestore.js";
+        import { getFirestore, collection, onSnapshot, addDoc, doc, deleteDoc, setDoc, serverTimestamp, query, where, orderBy, updateDoc, getDocs, increment, getDoc } from "https://www.gstatic.com/firebasejs/9.6.10/firebase-firestore.js";
         
         window.firebase = {
             initializeApp, getAuth, signInWithPopup, GoogleAuthProvider, onAuthStateChanged, signOut, updateProfile,
-            getFirestore, collection, onSnapshot, addDoc, doc, deleteDoc, setDoc, serverTimestamp, query, where, orderBy, updateDoc, getDocs, increment, getDoc, arrayUnion, arrayRemove
+            getFirestore, collection, onSnapshot, addDoc, doc, deleteDoc, setDoc, serverTimestamp, query, where, orderBy, updateDoc, getDocs, increment, getDoc
         };
     </script>
     <style>
@@ -111,7 +111,7 @@
         const { useState, useEffect, useCallback, useRef, useMemo, Component } = React;
         const { 
             initializeApp, getAuth, signInWithPopup, GoogleAuthProvider, onAuthStateChanged, signOut, updateProfile,
-            getFirestore, collection, onSnapshot, addDoc, doc, deleteDoc, setDoc, serverTimestamp, query, where, orderBy, updateDoc, getDocs, increment, getDoc, arrayUnion, arrayRemove
+            getFirestore, collection, onSnapshot, addDoc, doc, deleteDoc, setDoc, serverTimestamp, query, where, orderBy, updateDoc, getDocs, increment, getDoc 
         } = window.firebase;
 
         // --- App Configuration ---
@@ -2102,8 +2102,7 @@
             const [searchUserId, setSearchUserId] = useState('');
             const [foundUser, setFoundUser] = useState(null);
             const [searchError, setSearchError] = useState('');
-            const [loadingFriends, setLoadingFriends] = useState(true);
-            const [friends, setFriends] = useState([]);
+            const [loadingRequests, setLoadingRequests] = useState(true);
             const [incomingRequests, setIncomingRequests] = useState([]);
             const [outgoingRequests, setOutgoingRequests] = useState([]);
 
@@ -2111,9 +2110,8 @@
             useEffect(() => {
                 if (!user) { 
                     setLoadingChats(false);
-                    setLoadingFriends(false);
+                    setLoadingRequests(false);
                     setActiveChats([]);
-                    setFriends([]);
                     setIncomingRequests([]);
                     setOutgoingRequests([]);
                     return; 
@@ -2121,32 +2119,23 @@
                 
                 const unsubscribe = onSnapshot(doc(db, "users", user.uid), async (userDocSnap) => {
                     if (!userDocSnap.exists()) {
-                        setFriends([]);
-                        setIncomingRequests([]);
-                        setOutgoingRequests([]);
-                        // Initialize these fields if user doc does not exist
+                        // If user document doesn't exist, create it with initial empty arrays
                         await setDoc(doc(db, "users", user.uid), { 
                             friends: [], 
                             friendRequests: [] 
                         }, { merge: true });
 
-                        setLoadingFriends(false);
+                        setLoadingRequests(false);
                         setLoadingChats(false);
                         return;
                     }
 
                     const userData = userDocSnap.data();
-                    const friendsList = userData.friends || [];
-                    const requests = userData.friendRequests || [];
+                    const friendsList = userData.friends || []; // Ensure it's an array, default to empty
+                    const requests = userData.friendRequests || []; // Ensure it's an array, default to empty
 
-                    // Fetch details for friends
-                    const friendPromises = friendsList.map(async (friendId) => {
-                        const friendSnap = await getDoc(doc(db, "users", friendId));
-                        return friendSnap.exists() ? { id: friendSnap.id, ...friendSnap.data() } : null;
-                    });
-                    const resolvedFriends = (await Promise.all(friendPromises)).filter(f => f !== null);
-                    setFriends(resolvedFriends);
-                    setLoadingFriends(false);
+                    // Fetch details for friends - NOT needed directly in ChatsPage for friend list
+                    // Instead, focus on requests and chats
 
                     // Separate incoming and outgoing requests
                     const incoming = [];
@@ -2154,7 +2143,7 @@
 
                     const requestPromises = requests.map(async (req) => {
                         // Ensure timestamp is a Date object if it's a Firestore Timestamp
-                        const requestWithDate = { ...req, timestamp: req.timestamp?.toDate ? req.timestamp.toDate() : new Date(req.timestamp.seconds * 1000 + req.timestamp.nanoseconds / 1000000) };
+                        const requestWithDate = { ...req, timestamp: req.timestamp && typeof req.timestamp.toDate === 'function' ? req.timestamp.toDate() : new Date(req.timestamp.seconds * 1000 + req.timestamp.nanoseconds / 1000000) };
 
                         const peerId = requestWithDate.from === user.uid ? requestWithDate.to : requestWithDate.from;
                         const peerSnap = await getDoc(doc(db, "users", peerId));
@@ -2169,12 +2158,18 @@
                     await Promise.all(requestPromises);
                     setIncomingRequests(incoming.sort((a,b) => b.timestamp.getTime() - a.timestamp.getTime()));
                     setOutgoingRequests(outgoing.sort((a,b) => b.timestamp.getTime() - a.timestamp.getTime()));
+                    setLoadingRequests(false);
+
 
                     // Fetch active chats (where the current user is a participant and not a pending request)
                     const userChatsQuery = query(collection(db, "userChats"), where("participants", "array-contains", user.uid));
                     const unsubscribeUserChats = onSnapshot(userChatsQuery, async (userChatsSnapshot) => {
                         const activeUserChatsData = await Promise.all(userChatsSnapshot.docs
-                            .filter(docSnap => docSnap.data().requests?.every(req => req.status !== 'pending') || !docSnap.data().requests) // Only active chats
+                            .filter(docSnap => {
+                                const chatData = docSnap.data();
+                                // Filter out chats that are solely pending friend requests
+                                return !chatData.requests || chatData.requests.every(req => req.status !== 'pending');
+                            })
                             .map(async (docSnap) => {
                                 const chatData = docSnap.data();
                                 const otherParticipantId = chatData.participants.find(pId => pId !== user.uid);
@@ -2212,8 +2207,8 @@
                         combinedChats.push(...activeUserChats);
 
                         combinedChats.sort((a, b) => {
-                            const tsA = a.lastMessageTimestamp?.toMillis() || a.createdAt?.toMillis() || 0;
-                            const tsB = b.lastMessageTimestamp?.toMillis() || b.createdAt?.toMillis() || 0;
+                            const tsA = a.lastMessageTimestamp && typeof a.lastMessageTimestamp.toMillis === 'function' ? a.lastMessageTimestamp.toMillis() : a.createdAt && typeof a.createdAt.toMillis === 'function' ? a.createdAt.toMillis() : 0;
+                            const tsB = b.lastMessageTimestamp && typeof b.lastMessageTimestamp.toMillis === 'function' ? b.lastMessageTimestamp.toMillis() : b.createdAt && typeof b.createdAt.toMillis === 'function' ? b.createdAt.toMillis() : 0;
                             return tsB - tsA;
                         });
 
@@ -2227,7 +2222,7 @@
                     return () => unsubscribeUserChats(); // Cleanup for userChats listener
                 }, (error) => {
                     console.error("Error fetching user data/friend data:", error);
-                    setLoadingFriends(false);
+                    setLoadingRequests(false);
                     setLoadingChats(false);
                 });
 
@@ -2291,22 +2286,18 @@
                 if (!user || !targetUser) return;
 
                 try {
-                    const userDocRef = doc(db, 'users', user.uid);
-                    const targetUserDocRef = doc(db, 'users', targetUser.id);
-
-                    const newRequest = {
+                    // Create a new document in the friendRequests collection
+                    const newRequestDocRef = await addDoc(collection(db, 'friendRequests'), {
                         from: user.uid,
                         to: targetUser.id,
                         status: 'pending',
-                        timestamp: new Date() // Use new Date() for timestamp within array
-                    };
-
-                    await updateDoc(userDocRef, {
-                        friendRequests: arrayUnion(newRequest)
+                        timestamp: serverTimestamp() // Use serverTimestamp here
                     });
-                    await updateDoc(targetUserDocRef, {
-                        friendRequests: arrayUnion(newRequest)
-                    });
+                    
+                    // Optionally, you might still want to track these in user documents for simpler retrieval
+                    // If you want to use arrayUnion/arrayRemove in users doc, use new Date() for timestamp as discussed
+                    // But if it's only in friendRequests collection, serverTimestamp is fine.
+                    // For now, let's just stick to the new collection for simplicity and to avoid arrayUnion timestamp issues.
 
                     setAlertInfo({ message: `${t.friendRequestSent || 'Запрос дружбы отправлен пользователю:'} ${targetUser.displayName || targetUser.email}` });
                     setFoundUser(null);
@@ -2321,33 +2312,28 @@
             const handleAcceptFriendRequest = async (request) => {
                 if (!user) return;
                 try {
-                    const userDocRef = doc(db, 'users', user.uid);
-                    const requesterUserDocRef = doc(db, 'users', request.from);
+                    const friendRequestDocRef = doc(db, 'friendRequests', request.id); // Use request.id for the document ID
+
+                    // Update the status of the request document
+                    await updateDoc(friendRequestDocRef, { status: 'accepted' });
 
                     // Add to friends list for both users
-                    await updateDoc(userDocRef, { friends: arrayUnion(request.from) });
-                    await updateDoc(requesterUserDocRef, { friends: arrayUnion(user.uid) });
-
-                    // Remove request from both users' friendRequests
-                    // Create a plain object for arrayRemove to ensure exact match without Firestore Timestamp class
-                    const plainRequest = { ...request, timestamp: request.timestamp.toDate() }; // Convert Date object back to Timestamp if it was one, or just plain Date
-                    // The trick for arrayRemove with objects including Timestamp is to convert Firestore Timestamps back to JS Dates, then ensure consistency.
-                    // However, if we store Date objects with new Date(), arrayRemove should work fine with them directly.
-                    // Let's ensure request is a plain JS object, especially its timestamp, for arrayRemove.
+                    const userDocRef = doc(db, 'users', user.uid);
+                    const requesterUserDocRef = doc(db, 'users', request.from);
                     
-                    await updateDoc(userDocRef, { friendRequests: arrayRemove(plainRequest) });
-                    await updateDoc(requesterUserDocRef, { friendRequests: arrayRemove(plainRequest) });
-
+                    await updateDoc(userDocRef, { friends: [...(await getDoc(userDocRef)).data().friends || [], request.from] });
+                    await updateDoc(requesterUserDocRef, { friends: [...(await getDoc(requesterUserDocRef)).data().friends || [], user.uid] });
 
                     // Optionally create a chat document for them automatically
-                    const chatQuery = query(collection(db, 'userChats'), 
+                    // Check if chat already exists
+                    const existingChatQuery = query(collection(db, 'userChats'), 
                         where('participants', 'array-contains', user.uid),
                         where('participants', 'array-contains', request.from)
                     );
-                    const chatSnapshot = await getDocs(chatQuery);
+                    const existingChatSnap = await getDocs(existingChatQuery);
                     
                     let chatDocId;
-                    if (chatSnapshot.empty) {
+                    if (existingChatSnap.empty) {
                         const newChatRef = doc(collection(db, 'userChats'));
                         chatDocId = newChatRef.id;
                         await setDoc(newChatRef, {
@@ -2362,11 +2348,11 @@
                             senderId: user.uid,
                             senderName: user.displayName || user.email,
                             message: t.chatAcceptedMessage || 'Чат был принят.',
-                            timestamp: new Date(),
+                            timestamp: serverTimestamp(), // Use serverTimestamp for message creation
                             isRead: false
                         });
                     } else {
-                        chatDocId = chatSnapshot.docs[0].id;
+                        chatDocId = existingChatSnap.docs[0].id;
                         await updateDoc(doc(db, 'userChats', chatDocId), {
                             lastMessage: t.chatAcceptedMessage || 'Чат был принят.',
                             lastMessageTimestamp: serverTimestamp(),
@@ -2377,7 +2363,7 @@
                             senderId: user.uid,
                             senderName: user.displayName || user.email,
                             message: t.chatAcceptedMessage || 'Чат был принят.',
-                            timestamp: new Date(),
+                            timestamp: serverTimestamp(), // Use serverTimestamp for message creation
                             isRead: false
                         });
                     }
@@ -2393,46 +2379,32 @@
             const handleRejectFriendRequest = async (request) => {
                 if (!user) return;
                 try {
-                    const userDocRef = doc(db, 'users', user.uid);
-                    const requesterUserDocRef = doc(db, 'users', request.from);
-                    
-                    // Remove request from both users' friendRequests
-                    const plainRequest = { ...request, timestamp: request.timestamp.toDate() };
-                    await updateDoc(userDocRef, { friendRequests: arrayRemove(plainRequest) });
-                    await updateDoc(requesterUserDocRef, { friendRequests: arrayRemove(plainRequest) });
+                    const friendRequestDocRef = doc(db, 'friendRequests', request.id);
+                    await updateDoc(friendRequestDocRef, { status: 'rejected' });
+                    // Optionally delete the request document after rejection for cleanliness
+                    // await deleteDoc(friendRequestDocRef);
 
-
-                    // Optionally delete associated chat document if it was just for the request
+                    // Optionally update associated chat document if one exists for the request
                     const chatQuery = query(collection(db, 'userChats'), 
                         where('participants', 'array-contains', user.uid),
                         where('participants', 'array-contains', request.from)
                     );
                     const chatSnapshot = await getDocs(chatQuery);
                     if (!chatSnapshot.empty) {
-                        // Check if it's only a request chat (no real messages exchanged)
-                        const chatDoc = chatSnapshot.docs[0];
-                        const messagesCollection = collection(db, `userChats/${chatDoc.id}/messages`);
-                        const messagesSnapshot = await getDocs(messagesCollection);
-                        
-                        // If only the initial request message exists, delete the chat document
-                        if (messagesSnapshot.docs.length === 1 && messagesSnapshot.docs[0].data().message === (t.chatRequestMessage || `Я хочу начать с Вами чат. Пожалуйста, примите мой запрос.`)) {
-                            await deleteDoc(doc(db, 'userChats', chatDoc.id));
-                        } else {
-                            // If there are other messages, just update the request status within the chat doc
-                            await updateDoc(doc(db, 'userChats', chatDoc.id), {
-                                lastMessage: t.chatRejectedMessage || 'Запрос дружбы отклонен.',
-                                lastMessageTimestamp: serverTimestamp(),
-                                [`hasUnread.${user.uid}`]: false,
-                                [`hasUnread.${request.from}`]: true,
-                            });
-                             await addDoc(collection(db, `userChats/${chatDoc.id}/messages`), {
-                                senderId: user.uid,
-                                senderName: user.displayName || user.email,
-                                message: t.chatRejectedMessage || 'Запрос на чат отклонен.',
-                                timestamp: new Date(),
-                                isRead: false
-                            });
-                        }
+                        const chatDocRef = doc(db, 'userChats', chatSnapshot.docs[0].id);
+                        await updateDoc(chatDocRef, {
+                            lastMessage: t.chatRejectedMessage || 'Запрос дружбы отклонен.',
+                            lastMessageTimestamp: serverTimestamp(),
+                            [`hasUnread.${user.uid}`]: false,
+                            [`hasUnread.${request.from}`]: true,
+                        });
+                        await addDoc(collection(db, `userChats/${chatDocRef.id}/messages`), {
+                            senderId: user.uid,
+                            senderName: user.displayName || user.email,
+                            message: t.chatRejectedMessage || 'Запрос на чат отклонен.',
+                            timestamp: serverTimestamp(),
+                            isRead: false
+                        });
                     }
 
                     setAlertInfo({ message: t.friendRequestRejected || 'Запрос дружбы отклонен.' });
@@ -2448,44 +2420,34 @@
                     message: t.confirmCancelOutgoingRequest || 'Вы уверены, что хотите отменить этот исходящий запрос?',
                     onConfirm: async () => {
                         try {
-                            const userDocRef = doc(db, 'users', user.uid);
-                            const targetUserDocRef = doc(db, 'users', request.to);
-                            
-                            // Remove request from both users' friendRequests
-                            const plainRequest = { ...request, timestamp: request.timestamp.toDate() };
-                            await updateDoc(userDocRef, { friendRequests: arrayRemove(plainRequest) });
-                            await updateDoc(targetUserDocRef, { friendRequests: arrayRemove(plainRequest) });
+                            const friendRequestDocRef = doc(db, 'friendRequests', request.id);
+                            await updateDoc(friendRequestDocRef, { status: 'cancelled' });
+                            // Optionally delete the request document after cancellation
+                            // await deleteDoc(friendRequestDocRef);
 
-
-                            // Optionally delete associated chat document if it was just for the request
+                            // Optionally update associated chat document if one exists for the request
                             const chatQuery = query(collection(db, 'userChats'), 
                                 where('participants', 'array-contains', user.uid),
                                 where('participants', 'array-contains', request.to)
                             );
                             const chatSnapshot = await getDocs(chatQuery);
                             if (!chatSnapshot.empty) {
-                                const chatDoc = chatSnapshot.docs[0];
-                                const messagesCollection = collection(db, `userChats/${chatDoc.id}/messages`);
-                                const messagesSnapshot = await getDocs(messagesCollection);
-                                
-                                if (messagesSnapshot.docs.length === 1 && messagesSnapshot.docs[0].data().message === (t.chatRequestMessage || `Я хочу начать с Вами чат. Пожалуйста, примите мой запрос.`)) {
-                                    await deleteDoc(doc(db, 'userChats', chatDoc.id));
-                                } else {
-                                    await updateDoc(doc(db, 'userChats', chatDoc.id), {
-                                        lastMessage: t.outgoingRequestCancelledMessage || 'Исходящий запрос отменен.',
-                                        lastMessageTimestamp: serverTimestamp(),
-                                        [`hasUnread.${user.uid}`]: false,
-                                        [`hasUnread.${request.to}`]: true,
-                                    });
-                                    await addDoc(collection(db, `userChats/${chatDoc.id}/messages`), {
-                                        senderId: user.uid,
-                                        senderName: user.displayName || user.email,
-                                        message: t.outgoingRequestCancelledMessage || 'Исходящий запрос отменен.',
-                                        timestamp: new Date(),
-                                        isRead: false
-                                    });
-                                }
+                                const chatDocRef = doc(db, 'userChats', chatSnapshot.docs[0].id);
+                                await updateDoc(chatDocRef, {
+                                    lastMessage: t.outgoingRequestCancelledMessage || 'Исходящий запрос отменен.',
+                                    lastMessageTimestamp: serverTimestamp(),
+                                    [`hasUnread.${user.uid}`]: false,
+                                    [`hasUnread.${request.to}`]: true,
+                                });
+                                await addDoc(collection(db, `userChats/${chatDocRef.id}/messages`), {
+                                    senderId: user.uid,
+                                    senderName: user.displayName || user.email,
+                                    message: t.outgoingRequestCancelledMessage || 'Исходящий запрос отменен.',
+                                    timestamp: serverTimestamp(),
+                                    isRead: false
+                                });
                             }
+
                             setAlertInfo({ message: t.outgoingRequestCancelled || 'Исходящий запрос отменен.' });
                         } catch (error) {
                             console.error("Error cancelling outgoing chat request:", error);
@@ -2520,12 +2482,12 @@
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
                             <div className="space-y-4">
                                 <h4 className="text-lg font-semibold text-primary">{t.incomingFriendRequests || 'Входящие запросы'}</h4>
-                                {loadingFriends ? <LoadingSpinner /> : (
+                                {loadingRequests ? <LoadingSpinner /> : (
                                     incomingRequests.length === 0 ? (
                                         <p className="text-secondary text-sm">{t.noIncomingRequests || 'Нет входящих запросов.'}</p>
                                     ) : (
                                         incomingRequests.map(request => (
-                                            <div key={request.timestamp.getTime()} className="p-3 bg-tertiary rounded-lg flex flex-col md:flex-row justify-between items-center mb-2 border border-color">
+                                            <div key={request.id} className="p-3 bg-tertiary rounded-lg flex flex-col md:flex-row justify-between items-center mb-2 border border-color">
                                                 <div>
                                                     <p className="font-semibold text-primary">{t.requestFrom}: {request.peerName}</p>
                                                     <p className="text-sm text-secondary break-all">{generateShortId(request.from)}</p>
@@ -2542,12 +2504,12 @@
 
                             <div className="space-y-4 md:border-l md:pl-4 md:border-color"> {/* Vertical divider for md screens and above */}
                                 <h4 className="text-lg font-semibold text-primary">{t.outgoingFriendRequests || 'Исходящие запросы'}</h4>
-                                {loadingFriends ? <LoadingSpinner /> : (
+                                {loadingRequests ? <LoadingSpinner /> : (
                                     outgoingRequests.length === 0 ? (
                                         <p className="text-secondary text-sm">{t.noOutgoingRequests || 'Нет исходящих запросов.'}</p>
                                     ) : (
                                         outgoingRequests.map(request => (
-                                            <div key={request.timestamp.getTime()} className="p-3 bg-tertiary rounded-lg flex flex-col md:flex-row justify-between items-center mb-2 border border-color">
+                                            <div key={request.id} className="p-3 bg-tertiary rounded-lg flex flex-col md:flex-row justify-between items-center mb-2 border border-color">
                                                 <div>
                                                     <p className="font-semibold text-primary">{t.requestTo}: {request.peerName}</p>
                                                     <p className="text-sm text-secondary break-all">{generateShortId(request.to)}</p>
@@ -2611,10 +2573,10 @@
 
                     </div>
                     {isFindUserModalOpen && (
-                            <Modal onClose={() => { setIsFindUserModalOpen(false); setFoundUser(null); setSearchError(''); setSearchUserId(''); }} size="max-w-md">
+                            <Modal onClose={() => { setIsFindUserModalOpen(false); setFoundUser(null); setSearchUserId(''); setSearchError(''); }} size="max-w-md">
                                 <h3 className="text-2xl font-bold text-primary mb-4 text-center">{t.addFriend || 'Добавить друга'}</h3> {/* Changed title */}
-                                <div className="flex space-x-2 mb-4">
-                                    <input type="text" value={searchUserId} onChange={e => setSearchUserId(e.target.value)} placeholder={t.enterUserIdToFind || 'Введите ID пользователя'} className="flex-grow p-3 bg-primary rounded-lg border-color text-primary"/>
+                                <div className="flex flex-col gap-3 mb-4">
+                                    <input type="text" value={searchUserId} onChange={e => setSearchUserId(e.target.value)} placeholder={t.enterUserIdToFind || 'Введите ID пользователя'} className="p-3 bg-primary rounded-lg border-color text-primary"/>
                                     <button onClick={handleFindUserById} className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg">{t.findUser || 'Найти'}</button>
                                 </div>
 
@@ -2662,6 +2624,7 @@
                 const unsubscribe = onSnapshot(q, async (snapshot) => {
                     const chatsData = await Promise.all(snapshot.docs.map(async (docSnap) => {
                         const chat = { id: docSnap.id, ...docSnap.data() };
+                        // Fetch user data for display name
                         const userDoc = await getDoc(doc(db, 'users', chat.userId));
                         return { 
                             ...chat, 
@@ -2747,9 +2710,10 @@
                         const existingChatDoc = await getDoc(doc(db, 'chats', userIdToFind));
                         let chatToSelect;
                         if (existingChatDoc.exists()) {
-                            chatToSelect = { id: existingChatDoc.id, ...existingChatDoc.data(), userName: userData?.displayName || userData?.email || userIdToFind };
+                            chatToSelect = { id: existingChatDoc.id, ...existingChatDoc.data(), userId: userIdToFind, userName: userData?.displayName || userData?.email || userIdToFind };
                         } else {
                             // If no direct admin chat, create a dummy entry for selection
+                            // Note: This dummy entry will not have real chat history until a message is sent.
                             chatToSelect = { id: userIdToFind, userId: userIdToFind, userEmail: userData?.email || userIdToFind, userName: userData?.displayName || userIdToFind, lastMessage: t.noChatYet || 'Нет чата', lastMessageTimestamp: new Date(), hasUnreadAdmin: false };
                         }
                         setSelectedUserChat(chatToSelect);
