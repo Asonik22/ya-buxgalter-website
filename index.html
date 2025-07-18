@@ -11,13 +11,11 @@
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/9.6.10/firebase-app.js";
         import { getAuth, signInWithPopup, GoogleAuthProvider, onAuthStateChanged, signOut, updateProfile } from "https://www.gstatic.com/firebasejs/9.6.10/firebase-auth.js";
-        import { getFirestore, collection, onSnapshot, addDoc, doc, deleteDoc, setDoc, serverTimestamp, query, where, orderBy, updateDoc, getDocs, increment, getDoc } from "https://www.gstatic.com/firebasejs/9.6.10/firebase-firestore.js";
-        import { getStorage, ref, uploadBytes, getDownloadURL, deleteObject } from "https://www.gstatic.com/firebasejs/9.6.10/firebase-storage.js"; // Added deleteObject
+        import { getFirestore, collection, onSnapshot, addDoc, doc, deleteDoc, setDoc, serverTimestamp, query, where, orderBy, updateDoc, getDocs, increment, getDoc, arrayUnion, arrayRemove } from "https://www.gstatic.com/firebasejs/9.6.10/firebase-firestore.js";
         
         window.firebase = {
             initializeApp, getAuth, signInWithPopup, GoogleAuthProvider, onAuthStateChanged, signOut, updateProfile,
-            getFirestore, collection, onSnapshot, addDoc, doc, deleteDoc, setDoc, serverTimestamp, query, where, orderBy, updateDoc, getDocs, increment, getDoc,
-            getStorage, ref, uploadBytes, getDownloadURL, deleteObject // Added deleteObject
+            getFirestore, collection, onSnapshot, addDoc, doc, deleteDoc, setDoc, serverTimestamp, query, where, orderBy, updateDoc, getDocs, increment, getDoc, arrayUnion, arrayRemove
         };
     </script>
     <style>
@@ -113,7 +111,7 @@
         const { useState, useEffect, useCallback, useRef, useMemo, Component } = React;
         const { 
             initializeApp, getAuth, signInWithPopup, GoogleAuthProvider, onAuthStateChanged, signOut, updateProfile,
-            getFirestore, collection, onSnapshot, addDoc, doc, deleteDoc, setDoc, serverTimestamp, query, where, orderBy, updateDoc, getDocs, increment, getDoc 
+            getFirestore, collection, onSnapshot, addDoc, doc, deleteDoc, setDoc, serverTimestamp, query, where, orderBy, updateDoc, getDocs, increment, getDoc, arrayUnion, arrayRemove
         } = window.firebase;
 
         // --- App Configuration ---
@@ -147,6 +145,11 @@
             }
             return result.match(/.{1,3}/g).join('-');
         };
+
+        const generateShortId = (longId) => {
+            if (!longId || longId.length < 8) return longId; // Return as is if too short
+            return `${longId.substring(0, 4)}-${longId.substring(longId.length - 4)}`;
+        };
         
         const Logo = () => ( <div className="flex items-center space-x-2 cursor-pointer"> <img src={logoBase64} alt="Asonik Store Logo" className="h-12 w-12 object-contain"/> <span className="text-2xl md:text-3xl font-bold header-text tracking-wider"> Asonik <span className="accent-text">Store</span> </span> </div> );
         const LoadingSpinner = () => ( <div className="bg-primary min-h-screen flex items-center justify-center"><div className="animate-spin rounded-full h-32 w-32 border-t-4 border-b-4 accent-border"></div></div> );
@@ -155,7 +158,7 @@
         
         const ProfileModal = ({ user, onClose, t, setAlertInfo, onLogout }) => { // Added onLogout prop
             const [isUploading, setIsUploading] = useState(false);
-            const [color, setColor] = useState('#8b5cf6');
+            const [borderColor, setBorderColor] = useState('#8b5cf6'); // Renamed color to borderColor
             const fileInputRef = useRef(null);
             const [firstName, setFirstName] = useState('');
             const [lastName, setLastName] = useState('');
@@ -167,10 +170,18 @@
                     setFirstName(parts[0] || '');
                     setLastName(parts.slice(1).join(' ') || '');
                 }
-                // Initialize nickname from custom user data if available (assuming it's stored separately or in profile)
-                // For now, it's just an empty string, as no backend storage for nickname is specified.
-                // You would typically fetch user's custom data (including nickname) from Firestore here.
-                // Example: const userDoc = await getDoc(doc(db, "users", user.uid)); setNickname(userDoc.data()?.nickname || '');
+                // Fetch existing custom border color if stored
+                const fetchUserData = async () => {
+                    const userDoc = await getDoc(doc(db, "users", user.uid));
+                    if (userDoc.exists()) {
+                        const userData = userDoc.data();
+                        if (userData.borderColor) {
+                            setBorderColor(userData.borderColor);
+                        }
+                    }
+                };
+                if (user) fetchUserData();
+
             }, [user]); // Depend on user object, so changes trigger this
 
             const handleUpdateProfile = async (e) => {
@@ -180,16 +191,14 @@
                     const newDisplayName = `${firstName} ${lastName}`.trim();
                     await updateProfile(auth.currentUser, { displayName: newDisplayName });
                     
-                    // If nickname needs to be stored, it would be in a separate user document in Firestore
-                    // Example: await setDoc(doc(db, "users", user.uid), { nickname: nickname }, { merge: true });
+                    // Update user's custom data (including nickname and border color) in Firestore
+                    await setDoc(doc(db, "users", user.uid), { 
+                        nickname: nickname,
+                        borderColor: borderColor, // Save border color
+                    }, { merge: true });
 
                     setAlertInfo({ message: t.profileUpdated || 'Профиль обновлен!' });
-                    // Force re-fetch user data to ensure UI updates immediately
-                    onAuthStateChanged(auth, (currentUser) => {
-                        // This callback should already update `user` state in `App`
-                        // If it doesn't immediately reflect, a slight delay or manual state update in App might be needed
-                        // For now, relying on onAuthStateChanged to eventually update App's user state.
-                    });
+                    onAuthStateChanged(auth, (currentUser) => { /* force re-render with updated info */ });
                 }  catch (error) {
                     console.error("Error updating profile:", error);
                     setAlertInfo({ message: `${t.errorOccurred}: ${error.message}` });
@@ -212,28 +221,32 @@
                     const result = await response.json();
                     if (result.success) {
                         await updateProfile(auth.currentUser, { photoURL: result.data.url });
+                        // Save photoURL in user document for consistency if needed later
+                        await setDoc(doc(db, "users", user.uid), { photoURL: result.data.url }, { merge: true });
                         setAlertInfo({ message: t.avatarUpdated });
                     } else { throw new Error(result.error.message); }
                 } catch (error) { console.error("Error uploading avatar:", error); setAlertInfo({ message: `${t.errorOccurred}: ${error.message}` }); } 
                 finally { setIsUploading(false); onClose(); }
             };
             
-            const handleColorAvatar = async () => {
-                const colorHex = color.substring(1);
-                // For a thin border, you might apply a class or inline style with border-color
-                const photoURL = `https://placehold.co/128x128/${colorHex}/FFFFFF?text=${user.displayName ? user.displayName.charAt(0) : '?'}`;
-                try {
-                    await updateProfile(auth.currentUser, { photoURL });
-                    setAlertInfo({ message: t.avatarUpdated });
-                } catch(error) { console.error("Error setting color avatar:", error); setAlertInfo({ message: t.errorOccurred }); }
-                finally { onClose(); }
-            };
+            // This function is no longer needed as color picker only changes border, not avatar itself
+            // const handleColorAvatar = async () => {
+            //     const colorHex = color.substring(1);
+            //     const photoURL = `https://placehold.co/128x128/${colorHex}/FFFFFF?text=${user.displayName ? user.displayName.charAt(0) : '?'}`;
+            //     try {
+            //         await updateProfile(auth.currentUser, { photoURL });
+            //         setAlertInfo({ message: t.avatarUpdated });
+            //     } catch(error) { console.error("Error setting color avatar:", error); setAlertInfo({ message: t.errorOccurred }); }
+            //     finally { onClose(); }
+            // };
 
             const handleRevertAvatar = async () => {
                 const originalPhotoURL = auth.currentUser.providerData[0]?.photoURL;
                 if (originalPhotoURL) {
                     try {
                         await updateProfile(auth.currentUser, { photoURL: originalPhotoURL });
+                        // Update user document as well
+                        await setDoc(doc(db, "users", user.uid), { photoURL: originalPhotoURL }, { merge: true });
                         setAlertInfo({ message: t.avatarReverted });
                     } catch (error) { console.error("Error reverting avatar:", error); setAlertInfo({ message: t.errorOccurred }); } 
                     finally { onClose(); }
@@ -245,7 +258,7 @@
                     <div className="text-center text-primary">
                         <h2 className="text-3xl font-bold mb-4">{t.profile}</h2>
                         <div className="relative mx-auto mb-4 w-24 h-24">
-                             <img src={user.photoURL} alt={user.displayName} className={`w-full h-full rounded-full mx-auto border-4 object-cover`} style={{ borderColor: user.photoURL && user.photoURL.includes('placehold.co') ? color : 'var(--accent-primary)' }}/> {/* Dynamic border color */}
+                             <img src={user.photoURL} alt={user.displayName} className={`w-full h-full rounded-full mx-auto border-4 object-cover`} style={{ borderColor: borderColor }}/> {/* Dynamic border color */}
                              <button onClick={() => fileInputRef.current.click()} className="absolute bottom-0 right-0 bg-gray-700 p-2 rounded-full border border-color">
                                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path d="M13.586 3.586a2 2 0 112.828 2.828l-7.293 7.293A1 1 0 018.657 14H5a1 1 0 01-1-1v-3.657a1 1 0 01.293-.707l7.293-7.293zM10 2a1 1 0 00-1 1v2a1 1 0 102 0V3a1 1 0 00-1-1z" /></svg>
                              </button>
@@ -273,16 +286,14 @@
 
 
                         <div className="space-y-3">
-                            {/* <button onClick={() => fileInputRef.current.click()} className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg transition-colors">{t.uploadAvatar}</button> */}
                             <div className="flex items-center space-x-2">
-                                <button onClick={handleColorAvatar} className="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded-lg transition-colors">{t.setColorAvatar || 'Установить цвет рамки'}</button> {/* Changed label */}
-                                <input type="color" value={color} onChange={e => setColor(e.target.value)} className="p-1 h-10 w-14 block bg-tertiary border-color cursor-pointer rounded-lg"/>
+                                <button type="button" className="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded-lg transition-colors">{t.setColorBorder || 'Установить цвет рамки'}</button> {/* Changed label */}
+                                <input type="color" value={borderColor} onChange={e => setBorderColor(e.target.value)} className="p-1 h-10 w-14 block bg-tertiary border-color cursor-pointer rounded-lg"/>
                             </div>
                             <button onClick={handleRevertAvatar} className="w-full bg-gray-600 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded-lg transition-colors">{t.revertAvatar}</button>
                             <button onClick={onLogout} className="w-full bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded-lg transition-colors mt-4">{t.logout}</button>
                         </div>
                         <input type="file" ref={fileInputRef} onChange={(e) => handleImageUpload(e.target.files[0])} accept="image/*" className="hidden"/>
-                        {/* {isUploading && <p className="accent-text mt-4">{t.uploadingAvatar}...</p>} */}
                     </div>
                 </Modal>
             );
@@ -1099,29 +1110,6 @@
                 </footer>
             );
         };
-
-        // --- Firebase Storage Utility Functions (retained for receipts where used) ---
-        // Note: For product images, switched back to ImgBB in AdminProductManagement.
-        // const uploadFile = async (file, path) => {
-        //     const storageRef = ref(storage, path);
-        //     const snapshot = await uploadBytes(storageRef, file);
-        //     return await getDownloadURL(snapshot.ref);
-        // };
-
-        // const deleteFile = async (url) => { 
-        //     // This function is no longer actively used for product images in the current ImgBB setup
-        //     // but is retained for consistency if Firebase Storage was used for other asset types later.
-        //     // ImgBB does not support client-side deletion.
-        //     console.warn("deleteFile from Firebase Storage is called, but might not be relevant for ImgBB hosted images.");
-        //     try {
-        //         const fileRef = ref(storage, url);
-        //         await deleteObject(fileRef);
-        //         return true;
-        //     } catch (error) {
-        //         console.warn("Could not delete file from Firebase Storage:", error);
-        //         return false;
-        //     }
-        // };
 
         // --- Admin Components ---
         function AdminProductManagement({ setAlertInfo, t, currency, convertPrice }) {
@@ -2077,15 +2065,16 @@
 
         // --- New Chats Page Component ---
         function ChatsPage({ user, setAlertInfo, t }) {
-            const [isChatWindowOpen, setIsChatWindowOpen] = useState(false); // Renamed from isChatModalOpen
-            const [currentChatInfo, setCurrentChatInfo] = useState(null); // { chatId, chatType, participantInfo }
-            const [loadingChats, setLoadingChats] = useState(true); // Renamed from loadingUserChats
-            const [allChats, setAllChats] = useState([]); // Will hold both admin and user-to-user chats
-            const [isFindUserModalOpen, setIsFindUserModalOpen] = useState(false); // New state for find user modal
+            const [isChatWindowOpen, setIsChatWindowOpen] = useState(false); 
+            const [currentChatInfo, setCurrentChatInfo] = useState(null); 
+            const [loadingChats, setLoadingChats] = useState(true); 
+            const [activeChats, setActiveChats] = useState([]); 
+            const [isFindUserModalOpen, setIsFindUserModalOpen] = useState(false); 
             const [searchUserId, setSearchUserId] = useState('');
             const [foundUser, setFoundUser] = useState(null);
             const [searchError, setSearchError] = useState('');
-            const [loadingRequests, setLoadingRequests] = useState(true);
+            const [loadingFriends, setLoadingFriends] = useState(true);
+            const [friends, setFriends] = useState([]);
             const [incomingRequests, setIncomingRequests] = useState([]);
             const [outgoingRequests, setOutgoingRequests] = useState([]);
 
@@ -2093,105 +2082,116 @@
             useEffect(() => {
                 if (!user) { 
                     setLoadingChats(false);
-                    setLoadingRequests(false);
-                    setAllChats([]);
+                    setLoadingFriends(false);
+                    setActiveChats([]);
+                    setFriends([]);
                     setIncomingRequests([]);
                     setOutgoingRequests([]);
                     return; 
                 }
                 
-                // 1. Listen for the user's direct chat with admin
-                const adminChatQuery = query(collection(db, "chats"), where("userId", "==", user.uid));
-                const unsubscribeAdminChat = onSnapshot(adminChatQuery, async (snapshot) => {
-                    const adminChatDoc = snapshot.docs.length > 0 ? { id: snapshot.docs[0].id, ...snapshot.docs[0].data(), type: 'admin', displayPeerName: t.projectAdmin } : null;
-                    
-                    // 2. Listen for all user-to-user chats where the current user is a participant
+                const unsubscribe = onSnapshot(doc(db, "users", user.uid), async (userDocSnap) => {
+                    if (!userDocSnap.exists()) {
+                        setFriends([]);
+                        setIncomingRequests([]);
+                        setOutgoingRequests([]);
+                        setActiveChats([]);
+                        setLoadingFriends(false);
+                        setLoadingChats(false);
+                        return;
+                    }
+
+                    const userData = userDocSnap.data();
+                    const friendsList = userData.friends || [];
+                    const requests = userData.friendRequests || [];
+
+                    // Fetch details for friends
+                    const friendPromises = friendsList.map(async (friendId) => {
+                        const friendSnap = await getDoc(doc(db, "users", friendId));
+                        return friendSnap.exists() ? { id: friendSnap.id, ...friendSnap.data() } : null;
+                    });
+                    const resolvedFriends = (await Promise.all(friendPromises)).filter(f => f !== null);
+                    setFriends(resolvedFriends);
+                    setLoadingFriends(false);
+
+                    // Separate incoming and outgoing requests
+                    const incoming = [];
+                    const outgoing = [];
+
+                    const requestPromises = requests.map(async (req) => {
+                        const peerId = req.from === user.uid ? req.to : req.from;
+                        const peerSnap = await getDoc(doc(db, "users", peerId));
+                        const peerData = peerSnap.exists() ? (peerSnap.data().displayName || peerSnap.data().email) : t.unknownUser;
+                        
+                        if (req.to === user.uid) { // Incoming request
+                            incoming.push({ ...req, peerName: peerData, peerId: peerId });
+                        } else { // Outgoing request
+                            outgoing.push({ ...req, peerName: peerData, peerId: peerId });
+                        }
+                    });
+                    await Promise.all(requestPromises);
+                    setIncomingRequests(incoming);
+                    setOutgoingRequests(outgoing);
+
+                    // Fetch active chats (where the current user is a participant and not a pending request)
                     const userChatsQuery = query(collection(db, "userChats"), where("participants", "array-contains", user.uid));
                     const unsubscribeUserChats = onSnapshot(userChatsQuery, async (userChatsSnapshot) => {
-                        const userChatsData = await Promise.all(userChatsSnapshot.docs.map(async (docSnap) => {
-                            const chatData = docSnap.data();
-                            let displayPeerName = '';
-                            let isRequest = false;
-
-                            // Find the request relevant to the current user
-                            const relevantRequest = chatData.requests?.find(req => 
-                                (req.status === 'pending' && req.invitedId === user.uid) || // Incoming
-                                (req.status === 'pending' && req.requesterId === user.uid)  // Outgoing
-                            );
-
-                            if (relevantRequest) {
-                                isRequest = true;
-                                const peerId = relevantRequest.requesterId === user.uid ? relevantRequest.invitedId : relevantRequest.requesterId;
-                                const peerDoc = await getDoc(doc(db, 'users', peerId));
-                                displayPeerName = peerDoc.exists() ? (peerDoc.data().displayName || peerDoc.data().email) : t.unknownUser;
-                            } else {
-                                // Regular active chat
+                        const activeUserChatsData = await Promise.all(userChatsSnapshot.docs
+                            .filter(docSnap => docSnap.data().requests?.every(req => req.status !== 'pending') || !docSnap.data().requests) // Only active chats
+                            .map(async (docSnap) => {
+                                const chatData = docSnap.data();
                                 const otherParticipantId = chatData.participants.find(pId => pId !== user.uid);
+                                let displayPeerName = '';
                                 if (otherParticipantId) {
                                     const otherUserDoc = await getDoc(doc(db, 'users', otherParticipantId));
                                     displayPeerName = otherUserDoc.exists() ? (otherUserDoc.data().displayName || otherUserDoc.data().email) : t.unknownUser;
                                 } else {
-                                    // Should not happen for private chats, but good for groups
                                     displayPeerName = chatData.name || t.groupChat; 
                                 }
-                            }
+                                const hasUnread = chatData.hasUnread && chatData.hasUnread[user.uid];
+                                return { 
+                                    id: docSnap.id, 
+                                    ...chatData, 
+                                    type: 'userToUser', 
+                                    displayPeerName,
+                                    hasUnread,
+                                    sortTimestamp: chatData.lastMessageTimestamp || chatData.createdAt,
+                                };
+                            }));
+                        
+                        // Handle admin chat separately
+                        const adminChatQuery = query(collection(db, "chats"), where("userId", "==", user.uid));
+                        const adminChatSnapshot = await getDocs(adminChatQuery);
+                        const adminChatDoc = adminChatSnapshot.docs.length > 0 ? { 
+                            id: adminChatSnapshot.docs[0].id, 
+                            ...adminChatSnapshot.docs[0].data(), 
+                            type: 'admin', 
+                            displayPeerName: t.projectAdmin,
+                            hasUnread: adminChatSnapshot.docs[0].data().hasUnreadUser, // For user to see unread from admin
+                        } : null;
 
-                            // Determine if current user has unread messages in this chat
-                            // hasUnread for user-to-user chats is an object { UID: boolean }
-                            const hasUnread = chatData.hasUnread && chatData.hasUnread[user.uid];
-
-                            return { 
-                                id: docSnap.id, 
-                                ...chatData, 
-                                type: 'userToUser', 
-                                displayPeerName,
-                                isRequest,
-                                hasUnread,
-                                // Add a sortable timestamp if needed for requests too.
-                                sortTimestamp: chatData.lastMessageTimestamp || chatData.createdAt,
-                            };
-                        }));
-
-                        // Separate active chats from requests
-                        const activeUserChats = userChatsData.filter(chat => !chat.isRequest);
-                        const incoming = userChatsData.filter(chat => chat.isRequest && chat.requests.some(req => req.status === 'pending' && req.invitedId === user.uid));
-                        const outgoing = userChatsData.filter(chat => chat.isRequest && chat.requests.some(req => req.status === 'pending' && req.requesterId === user.uid));
-
-                        setIncomingRequests(incoming);
-                        setOutgoingRequests(outgoing);
-                        setLoadingRequests(false);
-
-
-                        // Combine all active chats
                         const combinedChats = [];
                         if (adminChatDoc) combinedChats.push(adminChatDoc);
                         combinedChats.push(...activeUserChats);
 
-                        // Sort all combined chats by last message timestamp
                         combinedChats.sort((a, b) => {
-                            const tsA = a.lastMessageTimestamp?.toMillis() || a.createdAt?.toMillis() || 0; // Use createdAt if lastMessageTimestamp not available
-                            const tsB = b.lastMessageTimestamp?.toMillis() || b.createdAt?.toMillis() || 0; // Use createdAt if lastMessageTimestamp not available
+                            const tsA = a.lastMessageTimestamp?.toMillis() || a.createdAt?.toMillis() || 0;
+                            const tsB = b.lastMessageTimestamp?.toMillis() || b.createdAt?.toMillis() || 0;
                             return tsB - tsA;
                         });
 
-                        setAllChats(combinedChats);
+                        setActiveChats(combinedChats);
                         setLoadingChats(false);
-
-                    }, (error) => {
-                        console.error("Error fetching user-to-user chats:", error);
-                        setLoadingChats(false);
-                        setLoadingRequests(false);
                     });
-                    return () => unsubscribeUserChats();
+                    
+                    return () => unsubscribeUserChats(); // Cleanup for userChats listener
                 }, (error) => {
-                    console.error("Error fetching user's admin chat document:", error);
+                    console.error("Error fetching user data/friend data:", error);
+                    setLoadingFriends(false);
                     setLoadingChats(false);
-                    setLoadingRequests(false);
                 });
 
-                return () => {
-                    unsubscribeAdminChat();
-                };
+                return () => unsubscribe(); // Cleanup for main user doc listener
             }, [user]);
 
             const copyUserIdToClipboard = () => {
@@ -2214,9 +2214,23 @@
                 }
 
                 if (searchUserId === user.uid) {
-                    setSearchError(t.cannotChatWithSelf || 'Вы не можете начать чат с самим собой.');
+                    setSearchError(t.cannotAddSelf || 'Вы не можете добавить себя в друзья.');
                     return;
                 }
+                
+                // Check if already friends
+                if (friends.some(f => f.id === searchUserId)) {
+                    setSearchError(t.alreadyFriends || 'Этот пользователь уже у вас в друзьях.');
+                    return;
+                }
+
+                // Check for pending requests (incoming or outgoing)
+                if (incomingRequests.some(req => req.from === searchUserId && req.to === user.uid && req.status === 'pending') ||
+                    outgoingRequests.some(req => req.from === user.uid && req.to === searchUserId && req.status === 'pending')) {
+                    setSearchError(t.pendingRequestExists || 'Запрос дружбы с этим пользователем уже отправлен или находится на рассмотрении.');
+                    return;
+                }
+
 
                 try {
                     const userDocRef = doc(db, 'users', searchUserId);
@@ -2233,186 +2247,206 @@
                 }
             };
 
-            const handleSendChatRequest = async (targetUser) => {
+            const handleSendFriendRequest = async (targetUser) => {
                 if (!user || !targetUser) return;
 
-                // Check if a chat (or pending request) already exists between these two users
-                const existingChatQuery = query(
-                    collection(db, 'userChats'),
-                    where('participants', 'array-contains', user.uid),
-                    where('participants', 'array-contains', targetUser.id) // Check for both participants
-                );
-                const existingChatSnap = await getDocs(existingChatQuery);
-                const existingChat = existingChatSnap.docs.find(doc => {
-                    const data = doc.data();
-                    // Ensure it's exactly between these two, not a group with more people
-                    return data.participants.length === 2 && 
-                           data.participants.includes(user.uid) && 
-                           data.participants.includes(targetUser.id);
-                });
-
-                if (existingChat) {
-                    const chatData = existingChat.data();
-                    // Check if there's a pending request from current user to target
-                    if (chatData.requests && chatData.requests.some(req => req.status === 'pending' && req.invitedId === targetUser.id && req.requesterId === user.uid)) {
-                        setAlertInfo({ message: t.requestAlreadySent || 'Запрос на чат уже был отправлен этому пользователю.' });
-                        return;
-                    }
-                    // Check if there's an active chat (no pending requests)
-                    if (!chatData.requests || chatData.requests.every(req => req.status !== 'pending')) { 
-                        setAlertInfo({ message: t.chatAlreadyExists || 'Чат с этим пользователем уже существует.' });
-                        return;
-                    }
-                    // If there's an incoming pending request from target to current user, the user should accept it, not send new.
-                    if (chatData.requests && chatData.requests.some(req => req.status === 'pending' && req.invitedId === user.uid && req.requesterId === targetUser.id)) {
-                        setAlertInfo({ message: t.hasIncomingRequest || 'У вас уже есть входящий запрос от этого пользователя. Пожалуйста, примите его.' });
-                        return;
-                    }
-                }
-
                 try {
-                    const newChatDocRef = doc(collection(db, 'userChats')); 
-                    
-                    await setDoc(newChatDocRef, {
-                        participants: [user.uid, targetUser.id],
-                        type: 'private',
-                        name: `${user.displayName || user.email} & ${targetUser.displayName || targetUser.email}`,
-                        createdAt: new Date(), 
-                        lastMessage: t.chatRequestSentInitialMessage || 'Запрос на чат отправлен.',
-                        lastMessageTimestamp: new Date(), 
-                        requests: [{
-                            requesterId: user.uid,
-                            invitedId: targetUser.id,
-                            status: 'pending',
-                            timestamp: new Date() 
-                        }],
-                        hasUnread: {
-                            [targetUser.id]: true // Mark as unread for the target user (for the request)
-                        }
+                    // Add request to requester's outgoing and target's incoming
+                    const userDocRef = doc(db, 'users', user.uid);
+                    const targetUserDocRef = doc(db, 'users', targetUser.id);
+
+                    const newRequest = {
+                        from: user.uid,
+                        to: targetUser.id,
+                        status: 'pending',
+                        timestamp: serverTimestamp() 
+                    };
+
+                    await updateDoc(userDocRef, {
+                        friendRequests: arrayUnion(newRequest)
+                    });
+                    await updateDoc(targetUserDocRef, {
+                        friendRequests: arrayUnion(newRequest)
                     });
 
-                    await addDoc(collection(db, `userChats/${newChatDocRef.id}/messages`), {
-                        senderId: user.uid,
-                        senderName: user.displayName || user.email,
-                        message: t.chatRequestMessage || `Я хочу начать с Вами чат. Пожалуйста, примите мой запрос.`,
-                        timestamp: new Date(), 
-                        isRead: false,
-                        isAdmin: false
-                    });
-
-                    setAlertInfo({ message: `${t.chatRequestSent || 'Запрос на чат отправлен пользователю:'} ${targetUser.displayName || targetUser.email}` });
+                    setAlertInfo({ message: `${t.friendRequestSent || 'Запрос дружбы отправлен пользователю:'} ${targetUser.displayName || targetUser.email}` });
                     setFoundUser(null);
                     setSearchUserId('');
-                    setIsFindUserModalOpen(false); // Close the modal after sending
+                    setIsFindUserModalOpen(false);
                 } catch (error) {
-                    console.error("Error sending chat request:", error);
+                    console.error("Error sending friend request:", error);
                     setAlertInfo({ message: `${t.errorOccurred}: ${error.message}` });
                 }
             };
 
-            const handleAcceptRequest = async (chatId, requestIndex) => {
+            const handleAcceptFriendRequest = async (request) => {
                 if (!user) return;
                 try {
-                    const chatRef = doc(db, 'userChats', chatId);
-                    const chatSnap = await getDoc(chatRef);
-                    if (chatSnap.exists()) {
-                        const chatData = chatSnap.data();
-                        const updatedRequests = [...chatData.requests];
-                        if (updatedRequests[requestIndex]) {
-                            updatedRequests[requestIndex].status = 'accepted';
-                        }
-                        
-                        // Clear unread request flag for this user
-                        const updatedUnread = { ...chatData.hasUnread, [user.uid]: false };
+                    const userDocRef = doc(db, 'users', user.uid);
+                    const requesterUserDocRef = doc(db, 'users', request.from);
 
-                        await updateDoc(chatRef, { 
-                            requests: updatedRequests,
+                    // Add to friends list for both users
+                    await updateDoc(userDocRef, { friends: arrayUnion(request.from) });
+                    await updateDoc(requesterUserDocRef, { friends: arrayUnion(user.uid) });
+
+                    // Remove request from both users' friendRequests
+                    await updateDoc(userDocRef, { friendRequests: arrayRemove(request) });
+                    // Create a mutable copy of the request to remove the timestamp if it's a Firestore Timestamp object
+                    const requestToRemoveFromRequester = { ...request };
+                    delete requestToRemoveFromRequester.timestamp; // Firestore arrayRemove requires exact match
+
+                    await updateDoc(requesterUserDocRef, { friendRequests: arrayRemove(requestToRemoveFromRequester) });
+
+
+                    // Optionally create a chat document for them automatically
+                    const chatQuery = query(collection(db, 'userChats'), 
+                        where('participants', 'array-contains', user.uid),
+                        where('participants', 'array-contains', request.from)
+                    );
+                    const chatSnapshot = await getDocs(chatQuery);
+                    
+                    let chatDocId;
+                    if (chatSnapshot.empty) {
+                        const newChatRef = doc(collection(db, 'userChats'));
+                        chatDocId = newChatRef.id;
+                        await setDoc(newChatRef, {
+                            participants: [user.uid, request.from],
+                            type: 'private',
+                            createdAt: serverTimestamp(),
                             lastMessage: t.chatAcceptedMessage || 'Чат был принят.',
-                            lastMessageTimestamp: serverTimestamp(), 
-                            hasUnread: updatedUnread,
+                            lastMessageTimestamp: serverTimestamp(),
+                            hasUnread: { [user.uid]: false, [request.from]: true } // User accepted, sender has unread
                         });
-
-                        await addDoc(collection(db, `userChats/${chatId}/messages`), {
+                        await addDoc(collection(db, `userChats/${chatDocId}/messages`), {
                             senderId: user.uid,
                             senderName: user.displayName || user.email,
                             message: t.chatAcceptedMessage || 'Чат был принят.',
-                            timestamp: new Date(), 
-                            isRead: false,
-                            isAdmin: false
+                            timestamp: serverTimestamp(),
+                            isRead: false
                         });
-
-                        setAlertInfo({ message: t.requestAccepted || 'Запрос принят! Чат теперь активен.' });
-                    }
-                } catch (error) {
-                    console.error("Error accepting chat request:", error);
-                    setAlertInfo({ message: `${t.errorOccurred}: ${error.message}` });
-                }
-            };
-
-            const handleRejectRequest = async (chatId, requestIndex) => {
-                if (!user) return;
-                try {
-                    const chatRef = doc(db, 'userChats', chatId);
-                    const chatSnap = await getDoc(chatRef);
-                    if (chatSnap.exists()) {
-                        const chatData = chatSnap.data();
-                        const updatedRequests = [...chatData.requests];
-                        if (updatedRequests[requestIndex]) {
-                            updatedRequests[requestIndex].status = 'rejected';
-                        }
-                        
-                        // Clear unread request flag for this user
-                        const updatedUnread = { ...chatData.hasUnread, [user.uid]: false };
-
-                        await updateDoc(chatRef, { 
-                            requests: updatedRequests,
-                            lastMessage: t.chatRejectedMessage || 'Запрос на чат отклонен.',
-                            lastMessageTimestamp: serverTimestamp(), 
-                            hasUnread: updatedUnread,
+                    } else {
+                        chatDocId = chatSnapshot.docs[0].id;
+                        await updateDoc(doc(db, 'userChats', chatDocId), {
+                            lastMessage: t.chatAcceptedMessage || 'Чат был принят.',
+                            lastMessageTimestamp: serverTimestamp(),
+                            hasUnread: { [user.uid]: false, [request.from]: true },
+                            requests: arrayRemove(request), // Remove the request if it was in the chat doc too
                         });
-
-                        await addDoc(collection(db, `userChats/${chatId}/messages`), {
+                        await addDoc(collection(db, `userChats/${chatDocId}/messages`), {
                             senderId: user.uid,
                             senderName: user.displayName || user.email,
-                            message: t.chatRejectedMessage || 'Запрос на чат отклонен.',
-                            timestamp: new Date(), 
-                            isRead: false,
-                            isAdmin: false
+                            message: t.chatAcceptedMessage || 'Чат был принят.',
+                            timestamp: serverTimestamp(),
+                            isRead: false
                         });
-
-                        setAlertInfo({ message: t.requestRejected || 'Запрос отклонен.' });
                     }
+
+
+                    setAlertInfo({ message: t.friendRequestAccepted || 'Запрос дружбы принят! Пользователь добавлен в друзья.' });
                 } catch (error) {
-                    console.error("Error rejecting chat request:", error);
+                    console.error("Error accepting friend request:", error);
                     setAlertInfo({ message: `${t.errorOccurred}: ${error.message}` });
                 }
             };
 
-            const handleCancelOutgoingRequest = async (chatId, requestIndex) => {
+            const handleRejectFriendRequest = async (request) => {
+                if (!user) return;
+                try {
+                    const userDocRef = doc(db, 'users', user.uid);
+                    const requesterUserDocRef = doc(db, 'users', request.from);
+                    
+                    // Remove request from both users' friendRequests
+                    await updateDoc(userDocRef, { friendRequests: arrayRemove(request) });
+                    const requestToRemoveFromRequester = { ...request };
+                    delete requestToRemoveFromRequester.timestamp;
+                    await updateDoc(requesterUserDocRef, { friendRequests: arrayRemove(requestToRemoveFromRequester) });
+
+
+                    // Optionally delete associated chat document if it was just for the request
+                    const chatQuery = query(collection(db, 'userChats'), 
+                        where('participants', 'array-contains', user.uid),
+                        where('participants', 'array-contains', request.from)
+                    );
+                    const chatSnapshot = await getDocs(chatQuery);
+                    if (!chatSnapshot.empty) {
+                        // Check if it's only a request chat (no real messages exchanged)
+                        const chatDoc = chatSnapshot.docs[0];
+                        const messagesCollection = collection(db, `userChats/${chatDoc.id}/messages`);
+                        const messagesSnapshot = await getDocs(messagesCollection);
+                        
+                        // If only the initial request message exists, delete the chat document
+                        if (messagesSnapshot.docs.length === 1 && messagesSnapshot.docs[0].data().message === (t.chatRequestMessage || `Я хочу начать с Вами чат. Пожалуйста, примите мой запрос.`)) {
+                            await deleteDoc(doc(db, 'userChats', chatDoc.id));
+                        } else {
+                            // If there are other messages, just update the request status within the chat doc
+                            await updateDoc(doc(db, 'userChats', chatDoc.id), {
+                                lastMessage: t.chatRejectedMessage || 'Запрос дружбы отклонен.',
+                                lastMessageTimestamp: serverTimestamp(),
+                                requests: arrayRemove(request), // Remove the request if it was in the chat doc too
+                                hasUnread: { [user.uid]: false, [request.from]: true }, // User rejected, sender has unread
+                            });
+                             await addDoc(collection(db, `userChats/${chatDoc.id}/messages`), {
+                                senderId: user.uid,
+                                senderName: user.displayName || user.email,
+                                message: t.chatRejectedMessage || 'Запрос на чат отклонен.',
+                                timestamp: serverTimestamp(),
+                                isRead: false
+                            });
+                        }
+                    }
+
+                    setAlertInfo({ message: t.friendRequestRejected || 'Запрос дружбы отклонен.' });
+                } catch (error) {
+                    console.error("Error rejecting friend request:", error);
+                    setAlertInfo({ message: `${t.errorOccurred}: ${error.message}` });
+                }
+            };
+
+            const handleCancelOutgoingRequest = async (request) => {
                 if (!user) return;
                 setAlertInfo({
                     message: t.confirmCancelOutgoingRequest || 'Вы уверены, что хотите отменить этот исходящий запрос?',
                     onConfirm: async () => {
                         try {
-                            const chatRef = doc(db, 'userChats', chatId);
-                            const chatSnap = await getDoc(chatRef);
-                            if (chatSnap.exists()) {
-                                const chatData = chatSnap.data();
-                                const updatedRequests = [...chatData.requests];
-                                if (updatedRequests[requestIndex]) {
-                                    updatedRequests[requestIndex].status = 'cancelled'; // Mark as cancelled
-                                }
-                                await updateDoc(chatRef, {
-                                    requests: updatedRequests,
-                                    lastMessage: t.outgoingRequestCancelledMessage || 'Исходящий запрос отменен.',
-                                    lastMessageTimestamp: serverTimestamp(),
-                                });
+                            const userDocRef = doc(db, 'users', user.uid);
+                            const targetUserDocRef = doc(db, 'users', request.to);
+                            
+                            // Remove request from both users' friendRequests
+                            await updateDoc(userDocRef, { friendRequests: arrayRemove(request) });
+                            const requestToRemoveFromTarget = { ...request };
+                            delete requestToRemoveFromTarget.timestamp;
+                            await updateDoc(targetUserDocRef, { friendRequests: arrayRemove(requestToRemoveFromTarget) });
 
-                                // Optionally remove messages from this specific chat if it was only a request chat
-                                // For simplicity, we just mark the request as cancelled and update last message.
+                            // Optionally delete associated chat document if it was just for the request
+                            const chatQuery = query(collection(db, 'userChats'), 
+                                where('participants', 'array-contains', user.uid),
+                                where('participants', 'array-contains', request.to)
+                            );
+                            const chatSnapshot = await getDocs(chatQuery);
+                            if (!chatSnapshot.empty) {
+                                const chatDoc = chatSnapshot.docs[0];
+                                const messagesCollection = collection(db, `userChats/${chatDoc.id}/messages`);
+                                const messagesSnapshot = await getDocs(messagesCollection);
                                 
-                                setAlertInfo({ message: t.outgoingRequestCancelled || 'Исходящий запрос отменен.' });
+                                if (messagesSnapshot.docs.length === 1 && messagesSnapshot.docs[0].data().message === (t.chatRequestMessage || `Я хочу начать с Вами чат. Пожалуйста, примите мой запрос.`)) {
+                                    await deleteDoc(doc(db, 'userChats', chatDoc.id));
+                                } else {
+                                    await updateDoc(doc(db, 'userChats', chatDoc.id), {
+                                        lastMessage: t.outgoingRequestCancelledMessage || 'Исходящий запрос отменен.',
+                                        lastMessageTimestamp: serverTimestamp(),
+                                        requests: arrayRemove(request), // Remove the request if it was in the chat doc too
+                                        hasUnread: { [user.uid]: false, [request.to]: true }, // User cancelled, target has unread
+                                    });
+                                    await addDoc(collection(db, `userChats/${chatDoc.id}/messages`), {
+                                        senderId: user.uid,
+                                        senderName: user.displayName || user.email,
+                                        message: t.outgoingRequestCancelledMessage || 'Исходящий запрос отменен.',
+                                        timestamp: serverTimestamp(),
+                                        isRead: false
+                                    });
+                                }
                             }
+                            setAlertInfo({ message: t.outgoingRequestCancelled || 'Исходящий запрос отменен.' });
                         } catch (error) {
                             console.error("Error cancelling outgoing chat request:", error);
                             setAlertInfo({ message: `${t.errorOccurred}: ${error.message}` });
@@ -2421,45 +2455,44 @@
                 });
             };
 
-
             return (
                 <div className="container mx-auto p-4 md:p-8">
                     <h1 className="text-4xl font-bold text-center mb-8 text-primary">{t.chats || 'Чаты'}</h1>
                     <div className="max-w-2xl mx-auto bg-secondary rounded-xl shadow-lg border-color p-6">
                         
                         {user && (
-                            <div className="bg-tertiary p-3 rounded-lg mb-4 flex justify-between items-center flex-wrap">
-                                <p className="text-secondary text-sm flex-grow"> {/* Flex-grow for text */}
-                                    {t.yourId || 'Ваш уникальный ID для связи'}: 
-                                    <span className="font-mono text-primary font-bold break-all ml-2">{user.uid}</span> {/* Made ID bold */}
-                                </p>
-                                <div className="flex items-center space-x-2 mt-2 md:mt-0 ml-auto"> {/* Aligned right */}
-                                    <button onClick={copyUserIdToClipboard} className="bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold py-1 px-3 rounded-lg">
+                            <div className="bg-tertiary p-3 rounded-lg mb-4 flex flex-col md:flex-row items-center justify-between">
+                                <div className="flex items-baseline flex-grow mb-2 md:mb-0"> 
+                                    <button onClick={copyUserIdToClipboard} className="bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold py-1 px-3 rounded-lg mr-2">
                                         {t.clickToCopy || 'Нажмите, чтобы скопировать'}
                                     </button>
-                                    <button onClick={() => setIsFindUserModalOpen(true)} className="bg-green-600 hover:bg-green-700 text-white font-bold p-2 rounded-full text-lg"> {/* Plus button */}
-                                        +
-                                    </button>
+                                    <p className="text-secondary text-sm">
+                                        {t.yourId || 'Ваш уникальный ID для связи'}: 
+                                        <span className="font-mono text-primary font-bold break-all ml-1">{generateShortId(user.uid)}</span> 
+                                    </p>
                                 </div>
+                                <button onClick={() => setIsFindUserModalOpen(true)} className="bg-green-600 hover:bg-green-700 text-white font-bold p-3 rounded-full text-lg flex-shrink-0 w-12 h-12 flex items-center justify-center">
+                                    +
+                                </button>
                             </div>
                         )}
 
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
                             <div className="space-y-4">
-                                <h4 className="text-lg font-semibold text-primary">{t.incomingChatRequests || 'Входящие запросы'}</h4>
-                                {loadingRequests ? <LoadingSpinner /> : (
+                                <h4 className="text-lg font-semibold text-primary">{t.incomingFriendRequests || 'Входящие запросы'}</h4>
+                                {loadingFriends ? <LoadingSpinner /> : (
                                     incomingRequests.length === 0 ? (
                                         <p className="text-secondary text-sm">{t.noIncomingRequests || 'Нет входящих запросов.'}</p>
                                     ) : (
                                         incomingRequests.map(request => (
-                                            <div key={request.id} className="p-3 bg-tertiary rounded-lg flex flex-col md:flex-row justify-between items-center mb-2 border border-color">
+                                            <div key={request.timestamp.toDate().getTime()} className="p-3 bg-tertiary rounded-lg flex flex-col md:flex-row justify-between items-center mb-2 border border-color">
                                                 <div>
-                                                    <p className="font-semibold text-primary">{t.requestFrom}: {request.displayPeerName}</p>
-                                                    <p className="text-sm text-secondary">{t.message}: {request.lastMessage}</p>
+                                                    <p className="font-semibold text-primary">{t.requestFrom}: {request.peerName}</p>
+                                                    <p className="text-sm text-secondary break-all">{generateShortId(request.from)}</p>
                                                 </div>
                                                 <div className="flex space-x-2 mt-2 md:mt-0">
-                                                    <button onClick={() => handleAcceptRequest(request.id, request.requests.findIndex(req => req.invitedId === user.uid && req.status === 'pending'))} className="bg-green-600 hover:bg-green-700 text-white font-bold py-1 px-3 rounded-lg text-sm">{t.accept || 'Принять'}</button>
-                                                    <button onClick={() => handleRejectRequest(request.id, request.requests.findIndex(req => req.invitedId === user.uid && req.status === 'pending'))} className="bg-red-600 hover:bg-red-700 text-white font-bold py-1 px-3 rounded-lg text-sm">{t.reject || 'Отклонить'}</button>
+                                                    <button onClick={() => handleAcceptFriendRequest(request)} className="bg-green-600 hover:bg-green-700 text-white font-bold py-1 px-3 rounded-lg text-sm">{t.accept || 'Принять'}</button>
+                                                    <button onClick={() => handleRejectFriendRequest(request)} className="bg-red-600 hover:bg-red-700 text-white font-bold py-1 px-3 rounded-lg text-sm">{t.reject || 'Отклонить'}</button>
                                                 </div>
                                             </div>
                                         ))
@@ -2467,20 +2500,21 @@
                                 )}
                             </div>
 
-                            <div className="space-y-4">
-                                <h4 className="text-lg font-semibold text-primary">{t.outgoingChatRequests || 'Исходящие запросы'}</h4>
-                                {loadingRequests ? <LoadingSpinner /> : (
+                            <div className="space-y-4 md:border-l md:pl-4 md:border-color"> {/* Vertical divider for md screens and above */}
+                                <h4 className="text-lg font-semibold text-primary">{t.outgoingFriendRequests || 'Исходящие запросы'}</h4>
+                                {loadingFriends ? <LoadingSpinner /> : (
                                     outgoingRequests.length === 0 ? (
                                         <p className="text-secondary text-sm">{t.noOutgoingRequests || 'Нет исходящих запросов.'}</p>
                                     ) : (
                                         outgoingRequests.map(request => (
-                                            <div key={request.id} className="p-3 bg-tertiary rounded-lg flex flex-col md:flex-row justify-between items-center mb-2 border border-color">
+                                            <div key={request.timestamp.toDate().getTime()} className="p-3 bg-tertiary rounded-lg flex flex-col md:flex-row justify-between items-center mb-2 border border-color">
                                                 <div>
-                                                    <p className="font-semibold text-primary">{t.requestTo}: {request.displayPeerName}</p>
+                                                    <p className="font-semibold text-primary">{t.requestTo}: {request.peerName}</p>
+                                                    <p className="text-sm text-secondary break-all">{generateShortId(request.to)}</p>
                                                     <p className="text-sm text-secondary">{t.status}: {t.pending || 'Ожидает'}</p>
                                                 </div>
                                                 <div className="flex space-x-2 mt-2 md:mt-0">
-                                                    <button onClick={() => handleCancelOutgoingRequest(request.id, request.requests.findIndex(req => req.requesterId === user.uid && req.status === 'pending'))} className="bg-red-600 hover:bg-red-700 text-white font-bold py-1 px-3 rounded-lg text-sm">{t.cancelRequest || 'Отменить запрос'}</button>
+                                                    <button onClick={() => handleCancelOutgoingRequest(request)} className="bg-red-600 hover:bg-red-700 text-white font-bold py-1 px-3 rounded-lg text-sm">{t.cancelRequest || 'Отменить запрос'}</button>
                                                 </div>
                                             </div>
                                         ))
@@ -2492,8 +2526,8 @@
                         <div className="mb-6 space-y-4 border-t border-color pt-6">
                             <h3 className="text-xl font-bold text-primary">{t.activeChats || 'Активные чаты'}</h3>
                             {loadingChats ? <LoadingSpinner /> : (
-                                (allChats.length > 0) ? (
-                                    allChats.map(chat => (
+                                (activeChats.length > 0) ? (
+                                    activeChats.map(chat => (
                                         <button 
                                             key={chat.id}
                                             onClick={() => {
@@ -2520,7 +2554,7 @@
                                 )
                             )}
                             {/* Option to start a new chat with admin if no active chats with admin are found */}
-                            {user && allChats.every(chat => chat.type !== 'admin') && (
+                            {user && activeChats.every(chat => chat.type !== 'admin') && (
                                 <button onClick={() => {
                                     setCurrentChatInfo({ 
                                         chatId: user.uid, // Admin chat uses user's UID as doc ID
@@ -2537,7 +2571,7 @@
                     </div>
                     {isFindUserModalOpen && (
                             <Modal onClose={() => { setIsFindUserModalOpen(false); setFoundUser(null); setSearchError(''); setSearchUserId(''); }} size="max-w-md">
-                                <h3 className="text-2xl font-bold text-primary mb-4 text-center">{t.findUserToChat || 'Найти пользователя для чата'}</h3>
+                                <h3 className="text-2xl font-bold text-primary mb-4 text-center">{t.addFriend || 'Добавить друга'}</h3> {/* Changed title */}
                                 <div className="flex space-x-2 mb-4">
                                     <input type="text" value={searchUserId} onChange={e => setSearchUserId(e.target.value)} placeholder={t.enterUserIdToFind || 'Введите ID пользователя'} className="flex-grow p-3 bg-primary rounded-lg border-color text-primary"/>
                                     <button onClick={handleFindUserById} className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg">{t.findUser || 'Найти'}</button>
@@ -2548,9 +2582,9 @@
                                     <div className="mt-4 p-3 bg-secondary rounded-lg flex flex-col md:flex-row justify-between items-center text-center md:text-left">
                                         <div className="mb-2 md:mb-0">
                                             <p className="font-semibold text-primary">{foundUser.displayName || foundUser.email}</p>
-                                            <p className="text-sm text-secondary break-all">{foundUser.id}</p>
+                                            <p className="text-sm text-secondary break-all">{generateShortId(foundUser.id)}</p> {/* Display short ID */}
                                         </div>
-                                        <button onClick={() => handleSendChatRequest(foundUser)} className="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded-lg">
+                                        <button onClick={() => handleSendFriendRequest(foundUser)} className="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded-lg">
                                             {t.sendRequest || 'Отправить запрос'}
                                         </button>
                                     </div>
@@ -2563,9 +2597,9 @@
                             onClose={() => setIsChatWindowOpen(false)} 
                             setAlertInfo={setAlertInfo} 
                             t={t} 
-                            chatId={currentChatInfo.chatId} 
-                            chatType={currentChatInfo.chatType} 
-                            participantInfo={currentChatInfo.participantInfo}
+                            chatId={currentChatInfo.id} 
+                            chatType={currentChatInfo.type} 
+                            participantInfo={currentChatInfo}
                         />
                     )}
                 </div>
@@ -2584,8 +2618,16 @@
             useEffect(() => {
                 // Fetch list of all chats (users who initiated contact)
                 const q = query(collection(db, "chats"), orderBy('lastMessageTimestamp', 'desc'));
-                const unsubscribe = onSnapshot(q, (snapshot) => {
-                    setUserChats(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+                const unsubscribe = onSnapshot(q, async (snapshot) => {
+                    const chatsData = await Promise.all(snapshot.docs.map(async (docSnap) => {
+                        const chat = { id: docSnap.id, ...docSnap.data() };
+                        const userDoc = await getDoc(doc(db, 'users', chat.userId));
+                        return { 
+                            ...chat, 
+                            userName: userDoc.exists() ? (userDoc.data().displayName || userDoc.data().email) : chat.userEmail || chat.userId
+                        };
+                    }));
+                    setUserChats(chatsData);
                     setLoadingChats(false);
                 }, (error) => {
                     console.error("Error fetching user chats:", error);
@@ -2635,7 +2677,7 @@
 
                 try {
                     await addDoc(collection(db, `chats/${selectedUserChat.userId}/messages`), {
-                        senderId: 'admin', // Admin UID
+                        senderId: ADMIN_UID, // Admin UID
                         senderName: 'Admin',
                         message: newMessage,
                         timestamp: serverTimestamp(),
@@ -2657,13 +2699,19 @@
             const handleFindUserById = async () => {
                 const userIdToFind = prompt(t.enterUserIdToFind || 'Введите ID пользователя:');
                 if (userIdToFind) {
-                    // Admins will likely need to search across both 'chats' (admin-specific) and 'userChats'
-                    // For now, only searching 'chats'.
-                    const chatRef = doc(db, 'chats', userIdToFind); 
-                    const chatSnap = await getDoc(chatRef);
-                    if (chatSnap.exists()) {
-                        const userData = (await getDoc(doc(db, 'users', userIdToFind))).data();
-                        setSelectedUserChat({ id: chatSnap.id, ...chatSnap.data(), userName: userData?.displayName || userData?.email || userIdToFind });
+                    const userDocRef = doc(db, 'users', userIdToFind);
+                    const userDocSnap = await getDoc(userDocRef);
+                    if (userDocSnap.exists()) {
+                        const userData = userDocSnap.data();
+                        const existingChatDoc = await getDoc(doc(db, 'chats', userIdToFind));
+                        let chatToSelect;
+                        if (existingChatDoc.exists()) {
+                            chatToSelect = { id: existingChatDoc.id, ...existingChatDoc.data(), userName: userData?.displayName || userData?.email || userIdToFind };
+                        } else {
+                            // If no direct admin chat, create a dummy entry for selection
+                            chatToSelect = { id: userIdToFind, userId: userIdToFind, userEmail: userData?.email || userIdToFind, userName: userData?.displayName || userIdToFind, lastMessage: t.noChatYet || 'Нет чата', lastMessageTimestamp: new Date(), hasUnreadAdmin: false };
+                        }
+                        setSelectedUserChat(chatToSelect);
                     } else {
                         setAlertInfo({ message: t.userNotFound || 'Пользователь с таким ID не найден.' });
                     }
@@ -2855,19 +2903,24 @@
                                     email: currentUser.email,
                                     photoURL: currentUser.photoURL || '',
                                     createdAt: serverTimestamp(),
-                                    lastLogin: serverTimestamp()
+                                    lastLogin: serverTimestamp(),
+                                    friends: [], // Initialize friends array
+                                    friendRequests: [] // Initialize friendRequests array
                                 }, { merge: true });
                             } else {
                                 // Update existing user's display name and photoURL from auth if they change it in profile modal
-                                if (docSnap.data().displayName !== currentUser.displayName || docSnap.data().photoURL !== currentUser.photoURL) {
-                                    updateDoc(userDocRef, { 
-                                        displayName: currentUser.displayName || currentUser.email.split('@')[0], 
-                                        photoURL: currentUser.photoURL || '',
-                                        lastLogin: serverTimestamp()
-                                    });
-                                } else {
-                                    updateDoc(userDocRef, { lastLogin: serverTimestamp() });
+                                const updateData = { lastLogin: serverTimestamp() };
+                                if (docSnap.data().displayName !== currentUser.displayName) {
+                                    updateData.displayName = currentUser.displayName || currentUser.email.split('@')[0];
                                 }
+                                if (docSnap.data().photoURL !== currentUser.photoURL) {
+                                    updateData.photoURL = currentUser.photoURL || '';
+                                }
+                                // Ensure friends and friendRequests are initialized if not present
+                                if (!docSnap.data().friends) updateData.friends = [];
+                                if (!docSnap.data().friendRequests) updateData.friendRequests = [];
+
+                                updateDoc(userDocRef, updateData);
                             }
                         }).catch(error => console.error("Error setting user doc:", error));
                     }
@@ -3262,38 +3315,35 @@
                 sendRequest: 'Отправить запрос', // Changed from sendChatRequest
                 enterUserIdToFind: 'Введите ID пользователя для поиска.', // New translation for chat search prompt
                 userNotFound: 'Пользователь с таким ID не найден.', // New translation for chat search
-                featureNotImplemented: 'Эта функция пока не реализована для пользователей.', // New translation for feature not implemented (old, will remove later)
-                myRequests: 'Мои запросы', // New translation
-                chatRequestsInfo: 'Здесь будут отображаться ваши исходящие и входящие запросы на чат.', // New translation for requests info
-                requestsNotImplemented: 'Функционал запросов пока не реализован.', // New translation (old, will remove later)
-                viewRequests: 'Посмотреть мои запросы', // New translation
-                cannotChatWithSelf: 'Вы не можете начать чат с самим собой.', // New translation
-                chatRequestSent: 'Запрос на чат отправлен пользователю', // New translation
-                chatRequestMessage: 'Я хочу начать с Вами чат. Пожалуйста, примите мой запрос.', // New translation for initial chat message
-                requestAlreadySent: 'Запрос на чат уже был отправлен этому пользователю.', // New translation
-                chatAlreadyExists: 'Чат с этим пользователем уже существует.', // New translation
-                incomingChatRequests: 'Входящие запросы', // New translation
+                cannotAddSelf: 'Вы не можете добавить себя в друзья.', // New translation
+                alreadyFriends: 'Этот пользователь уже у вас в друзьях.', // New translation
+                pendingRequestExists: 'Запрос дружбы с этим пользователем уже отправлен или находится на рассмотрении.', // New translation
+                friendRequestSent: 'Запрос дружбы отправлен пользователю', // New translation
+                chatRequestMessage: 'Я хочу начать с Вами чат. Пожалуйста, примите мой запрос.', // New translation for initial chat message (used for chat creation on accept)
+                incomingFriendRequests: 'Входящие запросы', // Changed from incomingChatRequests
                 noIncomingRequests: 'Нет входящих запросов.', // New translation
                 requestFrom: 'Запрос от', // New translation
                 accept: 'Принять', // New translation
-                outgoingChatRequests: 'Исходящие запросы', // New translation
+                outgoingFriendRequests: 'Исходящие запросы', // Changed from outgoingChatRequests
                 noOutgoingRequests: 'Нет исходящих запросов.', // New translation
                 requestTo: 'Запрос к', // New translation
                 pending: 'Ожидает', // New translation
                 chatAcceptedMessage: 'Чат был принят.', // New translation
                 chatRejectedMessage: 'Запрос на чат отклонен.', // New translation
-                requestAccepted: 'Запрос принят! Чат теперь активен.', // New translation
-                requestRejected: 'Запрос отклонен.', // New translation
+                friendRequestAccepted: 'Запрос дружбы принят! Пользователь добавлен в друзья.', // New translation
+                friendRequestRejected: 'Запрос дружбы отклонен.', // New translation
                 chatWithUser: 'Чат с пользователем', // New translation
                 unknownUser: 'Неизвестный пользователь', // New translation
                 groupChat: 'Групповой чат', // New translation
                 chatRequestSentInitialMessage: 'Запрос на чат отправлен.', // New translation (more specific)
-                hasIncomingRequest: 'У вас уже есть входящий запрос от этого пользователя. Пожалуйста, примите его.', // New translation
-                chatRequests: 'Запросы на чат', // New combined title for requests
+                hasIncomingRequest: 'У вас уже есть входящий запрос от этого пользователя. Пожалуйста, примите его.', // New translation (might not be needed with friend system)
+                chatRequests: 'Запросы на чат', // New combined title for requests (might not be needed with friend system)
                 cancelRequest: 'Отменить запрос', // New translation for cancelling outgoing requests
                 confirmCancelOutgoingRequest: 'Вы уверены, что хотите отменить этот исходящий запрос?', // New translation for confirmation
                 outgoingRequestCancelled: 'Исходящий запрос отменен.', // New translation for success message
                 outgoingRequestCancelledMessage: 'Исходящий запрос отменен.', // New translation for last message in chat
+                setColorBorder: 'Установить цвет рамки', // New translation for profile color
+                noChatYet: 'Нет активного чата.', // New translation for admin interface
             },
             en: {
                 home: 'Home', support: 'Support', faq: 'FAQ', adminPanelTitle: 'Admin Panel', profile: 'Profile', logout: 'Logout', login: 'Login',
@@ -3463,7 +3513,7 @@
                 statusRejected: 'Rad etildi',
                 statusContacted: 'Aloqani kutmoqda',
                 statusCancelled: 'Bekor qilingan',
-                contactSellerToReceive: 'Buyurtma ro\'yxatga olindi! Sotuvchi bilan bog\'laning va xarid kodini taqdim eting.',
+                contactSellerToReceive: 'Buyurtma ro\'yxatga olindi! Sotuvchi bilan bog\'lanish va xarid kodini taqdim eting.',
                 cancelOrder: 'Buyurtmani bekor qilish',
                 confirmCancelPurchase: 'Haqiqatan ҳам bu buyurtmani bekor qilmoqchimisiz?',
                 purchaseCancelled: 'Buyurtma bekor qilindi.',
