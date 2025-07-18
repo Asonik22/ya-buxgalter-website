@@ -121,7 +121,7 @@
             projectId: "ya-buxgalter",
             storageBucket: "ya-buxgalter.appspot.com",
             messagingSenderId: "640345805387",
-            appId: "1:640345805387:web:a1adade77f809af84cb3ce",
+            appId: "1:640345805387:web:a1adade77f8099af84cb3ce",
             measurementId: "G-0TKE25JVXG"
         };
         
@@ -444,7 +444,7 @@
                             <button onClick={() => handleMenuItemClick('home')} className="text-secondary hover:text-primary font-medium transition-colors">{t.home}</button>
                             {user && <button onClick={() => handleMenuItemClick('purchases')} className="text-secondary hover:text-primary font-medium transition-colors">{t.myPurchases}</button>}
                             <button onClick={() => handleMenuItemClick('faq')} className="text-secondary hover:text-primary font-medium transition-colors">{t.faq}</button>
-                            {user && <button onClick={() => handleMenuItemClick('chats')} className="text-secondary hover:text-primary font-medium transition-colors">{t.support}</button>} {/* Изменено: теперь ведет на страницу чатов, текст "Поддержка" */}
+                            {user && <button onClick={() => handleMenuItemClick('chats')} className="text-secondary hover:text-primary font-medium transition-colors">{t.support}</button>}
                         </nav>
                         <div className="flex items-center space-x-2 sm:space-x-4">
                             <div className="hidden md:block w-28"><CustomSelector value={language} onChange={e => setLanguage(e.target.value)} options={langOptions} /></div>
@@ -486,7 +486,7 @@
                         <button onClick={() => handleMenuItemClick('home')} className="mobile-menu-item">{t.home}</button>
                         {user && <button onClick={() => handleMenuItemClick('purchases')} className="mobile-menu-item">{t.myPurchases}</button>}
                         <button onClick={() => handleMenuItemClick('faq')} className="mobile-menu-item">{t.faq}</button>
-                        {user && <button onClick={() => handleMenuItemClick('chats')} className="mobile-menu-item">{t.support}</button>} {/* Изменено: теперь ведет на страницу чатов, текст "Поддержка" */}
+                        {user && <button onClick={() => handleMenuItemClick('chats')} className="mobile-menu-item">{t.support}</button>}
                         {user ? (
                             <>
                                 <button onClick={() => { setProfileVisible(true); setMobileMenuOpen(false); }} className="mobile-menu-item">{t.profile}</button>
@@ -743,7 +743,7 @@
                                 <span className="text-5xl font-bold accent-text">{convertPrice(currentVariant.price || product.price, currency)}</span>
                                 <div className="flex space-x-2">
                                     <button onClick={handleShare} className="bg-tertiary hover:bg-gray-700 p-4 rounded-lg transition-colors">
-                                        <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-primary" viewBox="0 0 20 20" fill="currentColor"><path d="M15 8a3 3 0 10-2.977-2.63l-4.94 2.47a3 3 0 100 4.319l4.94 2.47a3 3 0 10.895-1.789l-4.94-2.47a3.027 3.027 0 000-.74l4.94-2.47C13.456 7.68 14.19 8 15 8z" /></svg>
+                                        <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-primary" viewBox="0 0 20 20" fill="currentColor"><path d="M15 8a3 3 0 10-2.977-2.63l-4.94 2.47a3 3 0 100 4.319l4.94 2.47a3 3 0 10.895-1.789l-4.94-2.47C13.456 7.68 14.19 8 15 8z" /></svg>
                                     </button>
                                     <button onClick={handleBuyClick} className="accent-bg hover:accent-bg-secondary text-white font-bold py-4 px-8 rounded-lg text-lg" disabled={currentVariant.stockQuantity !== undefined && currentVariant.stockQuantity <= 0}>
                                         {currentVariant.stockQuantity !== undefined && currentVariant.stockQuantity <= 0 ? t.outOfStock : t.buy}
@@ -1286,7 +1286,7 @@
                                 popularity: 0, // Reset popularity for clone
                                 isOnSale: true, // Cloned items are on sale by default
                                 // Ensure variants are deep-copied and stock quantities are not references
-                                variants: productToClone.variants ? productToClone.variants.map(v => ({ ...v.original_variant_data, stockQuantity: v.stockQuantity || 0 })) : [],
+                                variants: productToClone.variants ? productToClone.variants.map(v => ({ ...v, stockQuantity: v.stockQuantity || 0 })) : [],
                                 // Do not copy ID, Firestore will generate a new one
                             };
                             delete clonedProductData.id; 
@@ -2601,7 +2601,7 @@
                             onClose={() => setIsChatWindowOpen(false)} 
                             setAlertInfo={setAlertInfo} 
                             t={t} 
-                            chatId={currentChatInfo.chatId} // Изменено
+                            chatId={currentChatInfo.chatId} 
                             chatType={currentChatInfo.type} 
                             participantInfo={currentChatInfo}
                         />
@@ -2793,7 +2793,6 @@
                 </div>
             );
         }
-
 
         function AdminPanel({ setPage, setAlertInfo, t, currency, convertPrice }) {
             const [activeTab, setActiveTab] = useState('products'); // 'products', 'promoCodes', 'receipts', 'chats', 'faq'
@@ -3147,7 +3146,7 @@
                     case 'admin': return isAdmin ? <AdminPanel {...{setPage, setAlertInfo, t, currency, convertPrice}} /> : <HomePage {...{products, onProductClick: setSelectedProduct, t, currency, convertPrice, loading: products.length === 0}} />;
                     case 'purchases': return user ? <MyPurchasesPage {...{user, t, currency, convertPrice, setAlertInfo}} /> : <div className="text-center text-primary p-10">{t.loginToView}</div>;
                     case 'faq': return <FAQPage faqs={faqs} t={t} />;
-                    case 'chats': return user ? <ChatsPage user={user} setAlertInfo={setAlertInfo} t={t} /> : <div className="text-center text-primary p-10">{t.loginToView}</div>; // Теперь рендерим ChatsPage
+                    case 'chats': return user ? <ChatsPage user={user} setAlertInfo={setAlertInfo} t={t} /> : <div className="text-center text-primary p-10">{t.loginToView}</div>;
                     default: return <HomePage {...{products, onProductClick: setSelectedProduct, t, currency, convertPrice, loading: products.length === 0}} />;
                 }
             };
