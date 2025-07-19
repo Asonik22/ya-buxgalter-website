@@ -12,12 +12,12 @@
         import { initializeApp } from "https://www.gstatic.com/firebasejs/9.6.10/firebase-app.js";
         import { getAuth, signInWithPopup, GoogleAuthProvider, onAuthStateChanged, signOut, updateProfile } from "https://www.gstatic.com/firebasejs/9.6.10/firebase-auth.js";
         import { getFirestore, collection, onSnapshot, addDoc, doc, deleteDoc, setDoc, serverTimestamp, query, where, orderBy, updateDoc, getDocs, increment, getDoc } from "https://www.gstatic.com/firebasejs/9.6.10/firebase-firestore.js";
-        import { getStorage, ref, uploadBytes, getDownloadURL, deleteObject } from "https://www.gstatic.com/firebasejs/9.6.10/firebase-storage.js"; // Added deleteObject
+        import { getStorage, ref, uploadBytes, getDownloadURL, deleteObject } from "https://www.gstatic.com/firebasejs/9.6.10/firebase-storage.js";
         
         window.firebase = {
             initializeApp, getAuth, signInWithPopup, GoogleAuthProvider, onAuthStateChanged, signOut, updateProfile,
             getFirestore, collection, onSnapshot, addDoc, doc, deleteDoc, setDoc, serverTimestamp, query, where, orderBy, updateDoc, getDocs, increment, getDoc,
-            getStorage, ref, uploadBytes, getDownloadURL, deleteObject // Added deleteObject
+            getStorage, ref, uploadBytes, getDownloadURL, deleteObject
         };
     </script>
     <style>
@@ -101,7 +101,7 @@
         const { 
             initializeApp, getAuth, signInWithPopup, GoogleAuthProvider, onAuthStateChanged, signOut, updateProfile,
             getFirestore, collection, onSnapshot, addDoc, doc, deleteDoc, setDoc, serverTimestamp, query, where, orderBy, updateDoc, getDocs, increment, getDoc,
-            getStorage, ref, uploadBytes, getDownloadURL, deleteObject // Added deleteObject
+            getStorage, ref, uploadBytes, getDownloadURL, deleteObject
         } = window.firebase;
 
         // --- App Configuration ---
@@ -115,7 +115,7 @@
             measurementId: "G-0TKE25JVXG"
         };
         
-        const ADMIN_UID = 'vhmtXZxkZnOWviNQ39R1W3GE8mw2'; // Ensure this matches your Firebase Admin UID
+        const ADMIN_UID = 'vhmtXZxkZnOWviNQ39R1W3GE8mw2';
         const ADMIN_PIN = '300414';
         const IMGBB_API_KEY = '96bf3f29606f1989bb5a450ad3770cce';
 
@@ -125,9 +125,8 @@
         const storage = getStorage(app);
         const provider = new GoogleAuthProvider();
         
-        const logoBase64 = "data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAYEBQYFBAYGBQYHBwYIChAKCgkJChQODwwQFxQYGBcUFhYaHSUfGhsjHBYWICwgIyYnKSopGR8tMC0oMCUoKSj/2wBDAQcHBwoIChMKChMoGhYaKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCj/wAARCAAgACADASIAAhEBARAf/8QAGQAAAgMBAAAAAAAAAAAAAAAAAAYDBAUH/8QAIxAAAQQCAgICAwAAAAAAAAAAAQIDBAUGEQASITFBURMUYf/EABQBAQAAAAAAAAAAAAAAAAAAAAD/xAAUEQEAAAAAAAAAAAAAAAAAAAAA/9oADAMBAAIRAxAPwD2ERkACK5uX1WzYtprKqKxckO2E5sNqS0lxLbqFpWlQBSoAgjYI9j39cZkABEV7OpaO6xYlXl0V6bYSHENNR2klS1qUoJSkAekkkgD+8YkABGczL6bT1kuyupLMNhhJWtbywkgD6Gz1J+g98ZkAB//2Q==";
-        // QR Code data removed completely as requested.
-
+        const logoBase64 = "data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAYEBQYFBAYGBQYHBwYIChAKCgkJChQODwwQFxQYGBcUFhYaHSUfGhsjHBYWICwgIyYnKSopGR8tMC0oMCUoKSj/2wBDAQcHBwoIChMKChMoGhYaKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCj/wAARCAAgACADASIAAhEBARAf/8QAGQAAAgMBAAAAAAAAAAAAAAAAAAYDBAUH/8QAIxAAAQQCAgICAwAAAAAAAAAAAQIDBAUGEQASITFBURMUYf/EABQBAQAAAAAAAAAAAAAAAAAAAAD/xAAUEQEAAAAAAAAAAAAAAAAAAAAA/9oADAMBAAIRAxEAPwD2ERkACK5uX1WzYtprKqKxckO2E5sNqS0lxLbqFpWlQBSoAgjYI9j39cZkABEV7OpaO6xYlXl0V6bYSHENNR2klS1qUoJSkAekkkgD+8YkABGczL6bT1kuyupLMNhhJWtbywkgD6Gz1J+g98ZkAB//2Q==";
+        
         // --- Helper Components & Functions ---
         const generatePurchaseCode = () => {
             const chars = 'ABCDEFGHIJKLMNPQRSTUVWXYZ13456789';
@@ -140,27 +139,25 @@
         
         const Logo = () => ( <div className="flex items-center space-x-2 cursor-pointer"> <img src={logoBase64} alt="Asonik Store Logo" className="h-12 w-12 object-contain"/> <span className="text-2xl md:text-3xl font-bold header-text tracking-wider"> Asonik <span className="accent-text">Store</span> </span> </div> );
         const LoadingSpinner = () => ( <div className="bg-primary min-h-screen flex items-center justify-center"><div className="animate-spin rounded-full h-32 w-32 border-t-4 border-b-4 accent-border"></div></div> );
-        const Modal = ({ children, onClose, size = 'max-w-md' }) => ( <div className="fixed inset-0 bg-black bg-opacity-75 z-50 flex justify-center items-center p-4 transition-opacity duration-300"> <div className={`bg-secondary rounded-2xl shadow-2xl p-6 md:p-8 w-full ${size} relative border-color transform transition-transform duration-300 scale-95 animate-scale-in`}> <button onClick={onClose} className="absolute top-4 right-4 text-secondary hover:text-primary transition-colors z-10"> <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg> </button> {children} </div> <style>{` @keyframes scale-in { from { transform: scale(0.9); opacity: 0; } to { transform: scale(1); opacity: 1; } } .animate-scale-in { animation: scale-in 0.3s ease-out forwards; } `}</style> </div> );
+        // FIX: Added border to modal for better visual separation, preventing the "transparent" look.
+        const Modal = ({ children, onClose, size = 'max-w-md' }) => ( <div className="fixed inset-0 bg-black bg-opacity-75 z-50 flex justify-center items-center p-4 transition-opacity duration-300"> <div className={`bg-secondary rounded-2xl shadow-2xl p-6 md:p-8 w-full ${size} relative border border-color transform transition-transform duration-300 scale-95 animate-scale-in`}> <button onClick={onClose} className="absolute top-4 right-4 text-secondary hover:text-primary transition-colors z-10"> <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg> </button> {children} </div> <style>{` @keyframes scale-in { from { transform: scale(0.9); opacity: 0; } to { transform: scale(1); opacity: 1; } } .animate-scale-in { animation: scale-in 0.3s ease-out forwards; } `}</style> </div> );
         const AlertModal = ({ message, onConfirm, onCancel, t }) => ( <Modal onClose={onCancel}> <div className="text-center"> <h2 className="text-2xl font-bold text-primary mb-4">{t.confirmation}</h2> <p className="text-secondary mb-6 whitespace-pre-wrap">{message}</p> <div className={`flex ${onConfirm ? 'justify-between' : 'justify-center'} space-x-4`}> <button onClick={onCancel} className="bg-tertiary hover:bg-gray-700 text-primary font-bold py-2 px-6 rounded-lg transition-colors">{onConfirm ? t.cancel : t.ok}</button> {onConfirm && ( <button onClick={onConfirm} className="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-6 rounded-lg transition-colors">{t.confirm}</button> )} </div> </div> </Modal> );
         
-        const ProfileModal = ({ user, onClose, t, setAlertInfo, onLogout }) => { // Added onLogout prop
+        const ProfileModal = ({ user, onClose, t, setAlertInfo, onLogout }) => {
             const [isUploading, setIsUploading] = useState(false);
             const [color, setColor] = useState('#8b5cf6');
             const fileInputRef = useRef(null);
             const [firstName, setFirstName] = useState('');
             const [lastName, setLastName] = useState('');
-            const [nickname, setNickname] = useState(''); // New state for nickname
+            const [nickname, setNickname] = useState('');
 
             useEffect(() => {
-                // Initialize from current user.displayName or empty
                 const currentDisplayName = user.displayName || '';
                 const parts = currentDisplayName.split(' ');
                 setFirstName(parts[0] || '');
                 setLastName(parts.slice(1).join(' ') || '');
-                // For nickname, assuming it's fetched from a custom user profile in Firestore if you have one.
-                // For this example, we'll just initialize it as an empty string or from a hypothetical user.nickname property.
                 setNickname(user.nickname || ''); 
-            }, [user]); // Depend on user object, so changes trigger this re-initialization
+            }, [user]);
 
             const handleUpdateProfile = async (e) => {
                 e.preventDefault();
@@ -168,29 +165,16 @@
                 try {
                     const newDisplayName = `${firstName} ${lastName}`.trim();
                     await updateProfile(auth.currentUser, { displayName: newDisplayName });
-                    
-                    // If you want to store nickname separately in Firestore:
-                    // await setDoc(doc(db, "users", user.uid), { nickname: nickname }, { merge: true });
-
                     setAlertInfo({ message: t.profileUpdated || 'Профиль обновлен!' });
-                    // Force a re-authentication or state update in App to reflect changes immediately
-                    // onAuthStateChanged should ideally handle this, but explicitly setting the user state in App
-                    // is a common workaround if direct Firebase updates don't immediately trigger listener.
-                    // Forcing a slight delay then re-setting user will help ensure update.
-                    setTimeout(() => {
-                        // This triggers the onAuthStateChanged listener in App component
-                        auth.updateCurrentUser(auth.currentUser); 
-                    }, 500); 
-
+                    setTimeout(() => { auth.updateCurrentUser(auth.currentUser); }, 500); 
                 } catch (error) {
                     console.error("Error updating profile:", error);
                     setAlertInfo({ message: `${t.errorOccurred}: ${error.message}` });
                 } finally {
                     setIsUploading(false);
-                    onClose(); // Close modal after attempt
+                    onClose();
                 }
             };
-
 
             const handleImageUpload = async (file) => {
                 if (!file) return;
@@ -213,7 +197,6 @@
             
             const handleColorAvatar = async () => {
                 const colorHex = color.substring(1);
-                // Fallback for user.displayName if it's null/undefined
                 const photoURL = `https://placehold.co/128x128/${colorHex}/FFFFFF?text=${user.displayName ? user.displayName.charAt(0) : '?'}`;
                 try {
                     await updateProfile(auth.currentUser, { photoURL });
@@ -240,7 +223,7 @@
                     <div className="text-center text-primary">
                         <h2 className="text-3xl font-bold mb-4">{t.profile}</h2>
                         <div className="relative mx-auto mb-4 w-24 h-24">
-                             <img src={user.photoURL} alt={user.displayName} className={`w-full h-full rounded-full mx-auto border-4 object-cover`} style={{ borderColor: user.photoURL && user.photoURL.includes('placehold.co') ? color : 'var(--accent-primary)' }}/> {/* Dynamic border color */}
+                             <img src={user.photoURL} alt={user.displayName} className={`w-full h-full rounded-full mx-auto border-4 object-cover`} style={{ borderColor: user.photoURL && user.photoURL.includes('placehold.co') ? color : 'var(--accent-primary)' }}/>
                              <button onClick={() => fileInputRef.current.click()} className="absolute bottom-0 right-0 bg-gray-700 p-2 rounded-full border border-color">
                                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-white" viewBox="0 0 20 20" fill="currentColor"><path d="M13.586 3.586a2 2 0 112.828 2.828l-7.293 7.293A1 1 0 018.657 14H5a1 1 0 01-1-1v-3.657a1 1 0 01.293-.707l7.293-7.293zM10 2a1 1 0 00-1 1v2a1 1 0 102 0V3a1 1 0 00-1-1z" /></svg>
                              </button>
@@ -266,18 +249,15 @@
                             </button>
                         </form>
 
-
                         <div className="space-y-3">
-                            {/* <button onClick={() => fileInputRef.current.click()} className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg transition-colors">{t.uploadAvatar}</button> */}
                             <div className="flex items-center space-x-2">
-                                <button onClick={handleColorAvatar} className="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded-lg transition-colors">{t.setColorAvatar || 'Установить цвет рамки'}</button> {/* Changed label */}
+                                <button onClick={handleColorAvatar} className="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded-lg transition-colors">{t.setColorAvatar || 'Установить цвет рамки'}</button>
                                 <input type="color" value={color} onChange={e => setColor(e.target.value)} className="p-1 h-10 w-14 block bg-tertiary border-color cursor-pointer rounded-lg"/>
                             </div>
                             <button onClick={handleRevertAvatar} className="w-full bg-gray-600 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded-lg transition-colors">{t.revertAvatar}</button>
-                            <button onClick={onLogout} className="w-full bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded-lg transition-colors mt-4">{t.logout}</button>
+                            {/* FIX: Removed logout button from profile modal as requested to reduce redundancy. */}
                         </div>
                         <input type="file" ref={fileInputRef} onChange={(e) => handleImageUpload(e.target.files[0])} accept="image/*" className="hidden"/>
-                        {/* {isUploading && <p className="accent-text mt-4">{t.uploadingAvatar}...</p>} */}
                     </div>
                 </Modal>
             );
@@ -325,7 +305,7 @@
             const [attempts, setAttempts] = useState(0);
             const [isLocked, setIsLocked] = useState(false);
             const [countdown, setCountdown] = useState(0);
-            const [rememberMeChecked, setRememberMeChecked] = useState(false); // New state for checkbox
+            const [rememberMeChecked, setRememberMeChecked] = useState(false);
 
             useEffect(() => {
                 let timer;
@@ -350,7 +330,7 @@
                 e.preventDefault();
                 if (isLocked) return;
 
-                const success = onSubmit(pin, rememberMeChecked); // Pass rememberMeChecked
+                const success = onSubmit(pin, rememberMeChecked);
                 if (!success) {
                     const newAttempts = attempts + 1;
                     setAttempts(newAttempts);
@@ -377,7 +357,6 @@
                         {error && !isLocked && <p className="text-red-500 text-sm mt-2">{error}</p>}
                         {isLocked && <p className="text-yellow-500 text-sm mt-2">Слишком много попыток. Попробуйте через {countdown} секунд.</p>}
                         
-                        {/* Remember Me checkbox */}
                         <div className="flex items-center justify-center mt-4">
                             <input
                                 type="checkbox"
@@ -400,7 +379,7 @@
         // --- Main Components ---
         function Header({ user, onLogin, onLogout, setPage, isAdmin, t, currency, setCurrency, language, setLanguage, setProfileVisible, theme, setTheme, onAdminClick }) {
             const [userDropdownOpen, setUserDropdownOpen] = useState(false);
-            const [mobileMenuOpen, setMobileMenuOpen] = useState(false); // New state for mobile menu
+            const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
             const userDropdownRef = useRef(null);
 
             const langOptions = [{value: 'ru', label: t.russian}, {value: 'en', label: t.english}, {value: 'uz', label: t.uzbek}];
@@ -417,7 +396,7 @@
             
             const handleMenuItemClick = (pageName) => {
                 setPage(pageName);
-                setMobileMenuOpen(false); // Close mobile menu on item click
+                setMobileMenuOpen(false);
             };
 
             return (
@@ -428,7 +407,8 @@
                             <button onClick={() => handleMenuItemClick('home')} className="text-secondary hover:text-primary font-medium transition-colors">{t.home}</button>
                             {user && <button onClick={() => handleMenuItemClick('purchases')} className="text-secondary hover:text-primary font-medium transition-colors">{t.myPurchases}</button>}
                             <button onClick={() => handleMenuItemClick('faq')} className="text-secondary hover:text-primary font-medium transition-colors">{t.faq}</button>
-                            {user && <button onClick={() => handleMenuItemClick('chats')} className="text-secondary hover:text-primary font-medium transition-colors">{t.chats}</button>} {/* New Chats button */}
+                            {/* FIX: Chats button now correctly navigates to the chats page */}
+                            {user && <button onClick={() => handleMenuItemClick('chats')} className="text-secondary hover:text-primary font-medium transition-colors">{t.chats}</button>}
                         </nav>
                         <div className="flex items-center space-x-2 sm:space-x-4">
                             <div className="hidden md:block w-28"><CustomSelector value={language} onChange={e => setLanguage(e.target.value)} options={langOptions} /></div>
@@ -460,7 +440,6 @@
                         </div>
                     </div>
 
-                    {/* Mobile Menu */}
                     <div className={`mobile-menu-container ${mobileMenuOpen ? 'open' : ''}`}>
                         <div className="flex justify-end mb-4">
                             <button className="p-2 rounded-md text-primary hover:bg-secondary" onClick={() => setMobileMenuOpen(false)}>
@@ -508,7 +487,7 @@
 
             const filteredAndSortedProducts = useMemo(() => {
                 return products
-                    .filter(p => p.isOnSale === undefined || p.isOnSale !== false) // Filter out products removed from sale, or include if isOnSale is undefined
+                    .filter(p => p.isOnSale === undefined || p.isOnSale !== false)
                     .filter(p => p.name.toLowerCase().includes(searchTerm.toLowerCase()))
                     .filter(p => filterCategory === 'all' || p.category === filterCategory)
                     .sort((a, b) => {
@@ -573,25 +552,23 @@
                     const minPrice = Math.min(...product.variants.map(v => v.price));
                     return convertPrice(minPrice, currency);
                 }
-                return convertPrice(product.price || 0, currency); // Fallback for old structure or if price is undefined
+                return convertPrice(product.price || 0, currency);
             }, [product.variants, product.price, currency]);
             
             const displayNominal = useMemo(() => {
                 if (product.variants && product.variants.length > 0) {
                     return product.variants[0].nominal;
                 }
-                return product.nominal; // Fallback for old structure
+                return product.nominal;
             }, [product.variants, product.nominal]);
 
             const displayStock = useMemo(() => {
                 if (product.variants && product.variants.length > 0) {
-                    // Sum stock quantities from all variants for overall card display
                     const totalStock = product.variants.reduce((sum, v) => sum + (parseInt(v.stockQuantity) || 0), 0);
                     return totalStock;
                 }
-                return (product.stockQuantity !== undefined ? product.stockQuantity : -1); // -1 means stock not tracked or old product
+                return (product.stockQuantity !== undefined ? product.stockQuantity : -1);
             }, [product.variants, product.stockQuantity]);
-
 
             return (
                 <div onClick={() => onProductClick(product)} className="bg-secondary rounded-2xl overflow-hidden shadow-lg border-color transform hover:-translate-y-2 transition-transform duration-300 flex flex-col cursor-pointer relative">
@@ -617,7 +594,7 @@
                         <div className="flex-grow"></div>
                         <div className="flex justify-between items-center mt-4">
                             <span className="text-3xl font-bold accent-text">{displayPrice}</span>
-                            {displayStock !== -1 && displayStock <= 0 && ( // General stock for card
+                            {displayStock !== -1 && displayStock <= 0 && (
                                 <span className="bg-red-500 text-white text-xs font-bold px-2 py-1 rounded-full">{t.outOfStock || 'Нет в наличии'}</span>
                             )}
                         </div>
@@ -632,46 +609,42 @@
             const [selectedVariantIndex, setSelectedVariantIndex] = useState(0);
 
             useEffect(() => {
-                // Reset selected variant when product changes or modal opens
                 setSelectedVariantIndex(0);
             }, [product]);
 
             const currentVariant = product.variants && product.variants.length > 0
                 ? product.variants[selectedVariantIndex]
-                : { nominal: product.nominal, price: product.price, stockQuantity: product.stockQuantity }; // Fallback for old structure
+                : { nominal: product.nominal, price: product.price, stockQuantity: product.stockQuantity };
 
-            const nextImage = () => {
-                setCurrentImageIndex((prevIndex) => (prevIndex + 1) % imageUrls.length);
-            };
-
-            const prevImage = () => {
-                setCurrentImageIndex((prevIndex) => (prevIndex - 1 + imageUrls.length) % imageUrls.length);
-            };
+            const nextImage = () => setCurrentImageIndex((prev) => (prev + 1) % imageUrls.length);
+            const prevImage = () => setCurrentImageIndex((prev) => (prev - 1 + imageUrls.length) % imageUrls.length);
 
              const handleShare = () => {
                 const productUrl = `${window.location.origin}${window.location.pathname}?product=${product.id}`;
+                // The fallback with `document.execCommand` is crucial for iframe environments.
                 navigator.clipboard.writeText(productUrl).then(() => {
                     setAlertInfo({ message: t.linkCopied });
                 }, () => {
-                    const dummy = document.createElement('textarea');
-                    document.body.appendChild(dummy);
-                    dummy.value = productUrl;
-                    dummy.select();
-                    document.execCommand('copy');
-                    document.body.removeChild(dummy);
-                    setAlertInfo({ message: t.linkCopied });
+                    try {
+                        const dummy = document.createElement('textarea');
+                        document.body.appendChild(dummy);
+                        dummy.value = productUrl;
+                        dummy.select();
+                        document.execCommand('copy');
+                        document.body.removeChild(dummy);
+                        setAlertInfo({ message: t.linkCopied });
+                    } catch (err) {
+                        setAlertInfo({ message: t.errorOccurred });
+                    }
                 });
             };
 
             const handleBuyClick = () => {
                 if (user) {
-                    // Check stock for the selected variant
                     if (currentVariant.stockQuantity !== undefined && currentVariant.stockQuantity <= 0) {
                         setAlertInfo({ message: t.outOfStockMessage || 'Этот товар временно отсутствует на складе.' });
                         return;
                     }
-                    // Pass product data + selected variant info
-                    // The onBuy function in App will now receive product.selectedVariant and product.selectedVariantIndex
                     onBuy({ ...product, selectedVariant: currentVariant, selectedVariantIndex: selectedVariantIndex });
                 } else {
                     setAlertInfo({ message: t.loginToBuy });
@@ -699,7 +672,6 @@
                             )}
                             <h2 className="text-4xl font-bold text-primary mb-2">{product.name}</h2>
                             
-                            {/* Variants Selection */}
                             {product.variants && product.variants.length > 0 && (
                                 <div className="my-4 space-y-2">
                                     <p className="text-lg font-semibold text-primary">{t.chooseOption || 'Выберите вариант:'}</p>
@@ -715,23 +687,28 @@
                                         ))}
                                     </div>
                                     {currentVariant.stockQuantity !== undefined && currentVariant.stockQuantity <= 0 && (
-                                        <p className="text-red-500 text-sm">{t.outOfStockMessage}</p>
+                                        <p className="text-red-500 text-sm mt-2">{t.outOfStockMessage}</p>
                                     )}
                                 </div>
                             )}
                             
-                            {/* Display current selected nominal/price from variant or old fields */}
                             {(currentVariant.nominal || product.nominal) && <p className="text-xl accent-text font-semibold mb-4">{currentVariant.nominal || product.nominal}</p>}
                             <p className="text-secondary mb-6 flex-grow">{product.description}</p>
-                            <div className="flex justify-between items-center">
-                                <span className="text-5xl font-bold accent-text">{convertPrice(currentVariant.price || product.price, currency)}</span>
-                                <div className="flex space-x-2">
-                                    <button onClick={handleShare} className="bg-tertiary hover:bg-gray-700 p-4 rounded-lg transition-colors">
-                                        <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-primary" viewBox="0 0 20 20" fill="currentColor"><path d="M15 8a3 3 0 10-2.977-2.63l-4.94 2.47a3 3 0 100 4.319l4.94 2.47a3 3 0 10.895-1.789l-4.94-2.47a3.027 3.027 0 000-.74l4.94-2.47C13.456 7.68 14.19 8 15 8z" /></svg>
-                                    </button>
-                                    <button onClick={handleBuyClick} className="accent-bg hover:accent-bg-secondary text-white font-bold py-4 px-8 rounded-lg text-lg" disabled={currentVariant.stockQuantity !== undefined && currentVariant.stockQuantity <= 0}>
-                                        {currentVariant.stockQuantity !== undefined && currentVariant.stockQuantity <= 0 ? t.outOfStock : t.buy}
-                                    </button>
+                            
+                            {/* FIX: Reworked layout for price and buttons to prevent overlap on smaller screens. */}
+                            <div className="mt-auto pt-6">
+                                <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-4">
+                                    <span className="text-4xl lg:text-5xl font-bold accent-text flex-shrink-0 text-center sm:text-left">
+                                        {convertPrice(currentVariant.price || product.price, currency)}
+                                    </span>
+                                    <div className="flex items-center justify-center sm:justify-end gap-2 w-full">
+                                        <button onClick={handleShare} className="bg-tertiary hover:bg-gray-700 p-3 rounded-lg transition-colors">
+                                            <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-primary" viewBox="0 0 20 20" fill="currentColor"><path d="M15 8a3 3 0 10-2.977-2.63l-4.94 2.47a3 3 0 100 4.319l4.94 2.47a3 3 0 10.895-1.789l-4.94-2.47a3.027 3.027 0 000-.74l4.94-2.47C13.456 7.68 14.19 8 15 8z" /></svg>
+                                        </button>
+                                        <button onClick={handleBuyClick} className="flex-grow sm:flex-grow-0 accent-bg hover:accent-bg-secondary text-white font-bold py-3 px-6 rounded-lg text-lg" disabled={currentVariant.stockQuantity !== undefined && currentVariant.stockQuantity <= 0}>
+                                            {currentVariant.stockQuantity !== undefined && currentVariant.stockQuantity <= 0 ? t.outOfStock : t.buy}
+                                        </button>
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -746,7 +723,7 @@
             const [error, setError] = useState('');
 
             const finalPrice = useMemo(() => {
-                const basePrice = product.selectedVariant ? product.selectedVariant.price : product.price; // Use selected variant price
+                const basePrice = product.selectedVariant ? product.selectedVariant.price : product.price;
                 if (!appliedPromo) return basePrice;
                 return basePrice * (1 - appliedPromo.discount / 100);
             }, [product.selectedVariant, product.price, appliedPromo]);
@@ -777,16 +754,13 @@
                 const purchaseDetails = {
                     finalPrice,
                     promoCodeUsed: appliedPromo ? appliedPromo.code : null,
-                    paymentMethod: 'Chat', // Changed to Chat
-                    nominal: product.selectedVariant ? product.selectedVariant.nominal : product.nominal, // Pass selected nominal
+                    paymentMethod: 'Chat',
+                    nominal: product.selectedVariant ? product.selectedVariant.nominal : product.nominal,
                 };
                 
-                // Pre-fill chat message based on product details
                 const initialChatMessage = `${t.autoChatMessagePrefix || 'Я хочу купить товар:'} ${product.name} (${purchaseDetails.nominal}) ${t.forPrice || 'за'} ${convertPrice(purchaseDetails.finalPrice, currency)}.`;
                 
-                // Now, call onConfirm from App, which will handle purchase record creation and stock decrement
                 await onConfirm(product, purchaseDetails, initialChatMessage); 
-                // setAlertInfo({ message: t.thankYouForRequest || 'Спасибо за запрос! Он будет обработан в течение 24 часов.' }); // Alert moved to App.handleConfirmPurchase
                 
                 onClose();
             };
@@ -796,7 +770,7 @@
                     finalPrice,
                     promoCodeUsed: appliedPromo ? appliedPromo.code : null,
                     paymentMethod: 'YooMoney',
-                    nominal: product.selectedVariant ? product.selectedVariant.nominal : product.nominal, // Pass selected nominal
+                    nominal: product.selectedVariant ? product.selectedVariant.nominal : product.nominal,
                 };
                 onYooMoney(product, purchaseDetails);
                 onClose();
@@ -808,7 +782,7 @@
                         <h2 className="text-3xl font-bold text-primary mb-2">{t.checkout}</h2>
                         <p className="text-secondary mb-4">
                             {t.youAreBuying}: <span className="font-bold accent-text">{product.name}</span>
-                            {product.selectedVariant && ` (${product.selectedVariant.nominal})`} {/* Display selected nominal */}
+                            {product.selectedVariant && ` (${product.selectedVariant.nominal})`}
                         </p>
                         
                         <div className="my-4">
@@ -870,7 +844,7 @@
                     });
                     onClose();
                 } catch (error) {
-                    // Error is already handled in the App component's handler
+                    // Error is handled in the App component
                 } finally {
                     setIsUploading(false);
                 }
@@ -882,7 +856,7 @@
                         <h2 className="text-2xl font-bold text-primary mb-4">{t.yooMoneyPayment}</h2>
                         <p className="text-secondary mb-4">{t.yooMoneyInstruction}</p>
                         
-                        <img src={qrCodeBase64} alt="YooMoney QR Code" className="w-48 h-48 mx-auto my-4 border-4 border-white rounded-lg"/>
+                        {/* QR Code functionality was removed as per user request, this can be re-added if needed */}
                         
                         <div className="my-4">
                             <p className="text-secondary">{t.amountToPay}:</p>
@@ -1078,6 +1052,58 @@
             );
         }
         
+        // NEW: Added a dedicated page for Chats
+        function ChatsPage({ t, user, setAlertInfo }) {
+            const handleCopyId = () => {
+                const userId = user?.uid;
+                if (userId) {
+                    navigator.clipboard.writeText(userId).then(() => {
+                        setAlertInfo({ message: t.idCopied });
+                    }, () => {
+                        try {
+                            const dummy = document.createElement('textarea');
+                            document.body.appendChild(dummy);
+                            dummy.value = userId;
+                            dummy.select();
+                            document.execCommand('copy');
+                            document.body.removeChild(dummy);
+                            setAlertInfo({ message: t.idCopied });
+                        } catch(err) {
+                            setAlertInfo({ message: t.errorOccurred });
+                        }
+                    });
+                }
+            };
+
+            return (
+                <div className="container mx-auto p-4 md:p-8 text-center">
+                    <h1 className="text-4xl font-bold text-primary mb-4">{t.chats}</h1>
+                    <div className="max-w-2xl mx-auto bg-secondary p-8 rounded-lg shadow-lg">
+                        <p className="text-secondary mb-6">{t.supportSubtitle}</p>
+                        {user ? (
+                            <>
+                                <div className="mb-6">
+                                    <p className="text-secondary mb-2">{t.yourId}:</p>
+                                    <div 
+                                        onClick={handleCopyId}
+                                        className="font-mono text-lg accent-text bg-tertiary inline-block px-4 py-2 rounded-lg cursor-pointer hover:bg-gray-700 transition-colors"
+                                        title={t.clickToCopy}
+                                    >
+                                        {user.uid}
+                                    </div>
+                                </div>
+                                <a href="https://t.me/asonikofficial" target="_blank" rel="noopener noreferrer" className="accent-bg hover:accent-bg-secondary text-white font-bold py-3 px-6 rounded-lg text-lg transition-transform transform hover:scale-105 inline-block">
+                                    {t.chatWithAdmin}
+                                </a>
+                            </>
+                        ) : (
+                            <p className="text-secondary">{t.loginForSupport}</p>
+                        )}
+                    </div>
+                </div>
+            );
+        }
+
         function Footer({t}) {
             return (
                 <footer className="bg-secondary text-secondary p-6 mt-12 border-t border-color">
@@ -1258,6 +1284,8 @@
                     case 'admin': return isAdmin ? <div className="text-center text-primary p-10">Админ-панель в разработке.</div> : <HomePage {...{products, onProductClick: setSelectedProduct, t, currency, convertPrice, loading: products.length === 0}} />;
                     case 'purchases': return user ? <MyPurchasesPage {...{user, t, currency, convertPrice, setAlertInfo}} /> : <div className="text-center text-primary p-10">{t.loginToView}</div>;
                     case 'faq': return <FAQPage faqs={faqs} t={t} />;
+                    // FIX: Added 'chats' case to render the new ChatsPage component.
+                    case 'chats': return user ? <ChatsPage {...{t, user, setAlertInfo}} /> : <div className="text-center text-primary p-10">{t.loginToView}</div>;
                     default: return <HomePage {...{products, onProductClick: setSelectedProduct, t, currency, convertPrice, loading: products.length === 0}} />;
                 }
             };
@@ -1277,7 +1305,7 @@
                     {purchasingProduct && user && <PurchaseModal product={purchasingProduct} onClose={() => setPurchasingProduct(null)} onConfirm={handleConfirmPurchase} onYooMoney={handleYooMoneyPayment} t={t} currency={currency} convertPrice={convertPrice} setAlertInfo={setAlertInfo} />}
                     {yooMoneyData && user && <YooMoneyModal data={yooMoneyData} onClose={() => setYooMoneyData(null)} onSubmitReceipt={handleReceiptSubmit} t={t} currency={currency} convertPrice={convertPrice} setAlertInfo={setAlertInfo} />}
                     {alertInfo && <AlertModal message={alertInfo.message} onConfirm={alertInfo.onConfirm ? handleAlertConfirm : null} onCancel={() => setAlertInfo(null)} t={t} />}
-                    {profileVisible && user && <ProfileModal user={user} onClose={() => setProfileVisible(false)} t={t} setAlertInfo={setAlertInfo} />}
+                    {profileVisible && user && <ProfileModal user={user} onClose={() => setProfileVisible(false)} t={t} setAlertInfo={setAlertInfo} onLogout={handleLogout} />}
                     {isPinModalVisible && <PinModal onSubmit={handlePinSubmit} error={pinError} onClose={() => setIsPinModalVisible(false)} t={t} />}
                     <Footer t={t}/>
                 </div>
@@ -1360,6 +1388,17 @@
                 yourPurchaseCode: 'Ваш уникальный код покупки',
                 idCopied: 'ID скопирован в буфер обмена!',
                 clickToCopy: 'Нажмите, чтобы скопировать',
+                outOfStock: 'Нет в наличии',
+                outOfStockMessage: 'Этот вариант товара временно отсутствует на складе.',
+                chooseOption: 'Выберите вариант:',
+                priceFrom: 'Цена от',
+                moreOptions: 'варианта',
+                updateProfile: 'Обновить профиль',
+                firstName: 'Имя',
+                lastName: 'Фамилия',
+                nickname: 'Никнейм',
+                profileUpdated: 'Профиль успешно обновлен!',
+                removedFromSale: 'Снято с продажи'
             },
             en: {
                 home: 'Home', support: 'Support', faq: 'FAQ', adminPanelTitle: 'Admin Panel', profile: 'Profile', logout: 'Logout', login: 'Login',
