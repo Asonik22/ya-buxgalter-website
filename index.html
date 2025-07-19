@@ -9,11 +9,13 @@
     <script src="https://unpkg.com/react-dom@17/umd/react-dom.development.js"></script>
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
     <script type="module">
+        // Импорт необходимых модулей Firebase
         import { initializeApp } from "https://www.gstatic.com/firebasejs/9.6.10/firebase-app.js";
         import { getAuth, signInWithPopup, GoogleAuthProvider, onAuthStateChanged, signOut, updateProfile } from "https://www.gstatic.com/firebasejs/9.6.10/firebase-auth.js";
         import { getFirestore, collection, onSnapshot, addDoc, doc, deleteDoc, setDoc, serverTimestamp, query, where, orderBy, updateDoc, getDocs, increment, getDoc } from "https://www.gstatic.com/firebasejs/9.6.10/firebase-firestore.js";
         import { getStorage, ref, uploadBytes, getDownloadURL, deleteObject } from "https://www.gstatic.com/firebasejs/9.6.10/firebase-storage.js";
         
+        // Предоставление доступа к Firebase через глобальный объект window для использования в Babel
         window.firebase = {
             initializeApp, getAuth, signInWithPopup, GoogleAuthProvider, onAuthStateChanged, signOut, updateProfile,
             getFirestore, collection, onSnapshot, addDoc, doc, deleteDoc, setDoc, serverTimestamp, query, where, orderBy, updateDoc, getDocs, increment, getDoc,
@@ -21,9 +23,11 @@
         };
     </script>
     <style>
+        /* Основные стили для body и шрифта */
         body { font-family: 'Inter', sans-serif; -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; transition: background-color 0.3s, color 0.3s; }
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap');
         
+        /* CSS переменные для темной темы по умолчанию (Фирменная Тёмная) */
         :root {
             --bg-primary: #111827;
             --bg-secondary: #1f2937;
@@ -34,33 +38,18 @@
             --accent-secondary: #a78bfa;
             --border-color: #374151;
         }
-        body.light {
+        /* CSS переменные для фирменной светлой темы */
+        body.asonik-light {
             --bg-primary: #f9fafb;
             --bg-secondary: #ffffff;
             --bg-tertiary: #f3f4f6;
             --text-primary: #111827;
             --text-secondary: #4b5563;
-            --border-color: #e5e7eb;
-        }
-        body.asonik {
-            --bg-primary: linear-gradient(to bottom right, #f3e8ff, #ffffff);
-            --bg-secondary: #ffffff;
-            --bg-tertiary: #f3f4f6;
-            --text-primary: #4c1d95;
-            --text-secondary: #6d28d9;
             --accent-primary: #8b5cf6;
             --accent-secondary: #a78bfa;
             --border-color: #e5e7eb;
         }
-        .asonik .accent-text { color: var(--accent-primary); }
-        .asonik .text-primary { color: var(--text-primary); }
-        .asonik .text-secondary { color: var(--text-secondary); }
-        .asonik .bg-secondary { box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.05), 0 2px 4px -2px rgb(0 0 0 / 0.05); }
-        .asonik .border-color { border-color: var(--border-color); }
-        .asonik .header-text { color: #4c1d95; }
-        .asonik .header-text:hover { color: #6d28d9; }
-
-        /* Mobile Menu styles */
+        /* Стили для мобильного меню */
         .mobile-menu-container {
             position: fixed;
             top: 0;
@@ -104,7 +93,7 @@
             getStorage, ref, uploadBytes, getDownloadURL, deleteObject
         } = window.firebase;
 
-        // --- App Configuration ---
+        // --- Конфигурация приложения ---
         const firebaseConfig = {
             apiKey: "AIzaSyC7smDYoy-LT58xCwjJsc9uZU9CgHQv5dM",
             authDomain: "ya-buxgalter.firebaseapp.com",
@@ -127,7 +116,7 @@
         
         const logoBase64 = "data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAYEBQYFBAYGBQYHBwYIChAKCgkJChQODwwQFxQYGBcUFhYaHSUfGhsjHBYWICwgIyYnKSopGR8tMC0oMCUoKSj/2wBDAQcHBwoIChMKChMoGhYaKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCj/wAARCAAgACADASIAAhEBARAf/8QAGQAAAgMBAAAAAAAAAAAAAAAAAAYDBAUH/8QAIxAAAQQCAgICAwAAAAAAAAAAAQIDBAUGEQASITFBURMUYf/EABQBAQAAAAAAAAAAAAAAAAAAAAD/xAAUEQEAAAAAAAAAAAAAAAAAAAAA/9oADAMBAAIRAxEAPwD2ERkACK5uX1WzYtprKqKxckO2E5sNqS0lxLbqFpWlQBSoAgjYI9j39cZkABEV7OpaO6xYlXl0V6bYSHENNR2klS1qUoJSkAekkkgD+8YkABGczL6bT1kuyupLMNhhJWtbywkgD6Gz1J+g98ZkAB//2Q==";
         
-        // --- Helper Components & Functions ---
+        // --- Вспомогательные компоненты и функции ---
         const generatePurchaseCode = () => {
             const chars = 'ABCDEFGHIJKLMNPQRSTUVWXYZ13456789';
             let result = '';
@@ -137,11 +126,13 @@
             return result.match(/.{1,3}/g).join('-');
         };
         
-        const Logo = () => ( <div className="flex items-center space-x-2 cursor-pointer"> <img src={logoBase64} alt="Asonik Store Logo" className="h-12 w-12 object-contain"/> <span className="text-2xl md:text-3xl font-bold header-text tracking-wider"> Asonik <span className="accent-text">Store</span> </span> </div> );
-        const LoadingSpinner = () => ( <div className="bg-primary min-h-screen flex items-center justify-center"><div className="animate-spin rounded-full h-32 w-32 border-t-4 border-b-4 accent-border"></div></div> );
-        // FIX: Added border to modal for better visual separation, preventing the "transparent" look.
-        const Modal = ({ children, onClose, size = 'max-w-md' }) => ( <div className="fixed inset-0 bg-black bg-opacity-75 z-50 flex justify-center items-center p-4 transition-opacity duration-300"> <div className={`bg-secondary rounded-2xl shadow-2xl p-6 md:p-8 w-full ${size} relative border border-color transform transition-transform duration-300 scale-95 animate-scale-in`}> <button onClick={onClose} className="absolute top-4 right-4 text-secondary hover:text-primary transition-colors z-10"> <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg> </button> {children} </div> <style>{` @keyframes scale-in { from { transform: scale(0.9); opacity: 0; } to { transform: scale(1); opacity: 1; } } .animate-scale-in { animation: scale-in 0.3s ease-out forwards; } `}</style> </div> );
-        const AlertModal = ({ message, onConfirm, onCancel, t }) => ( <Modal onClose={onCancel}> <div className="text-center"> <h2 className="text-2xl font-bold text-primary mb-4">{t.confirmation}</h2> <p className="text-secondary mb-6 whitespace-pre-wrap">{message}</p> <div className={`flex ${onConfirm ? 'justify-between' : 'justify-center'} space-x-4`}> <button onClick={onCancel} className="bg-tertiary hover:bg-gray-700 text-primary font-bold py-2 px-6 rounded-lg transition-colors">{onConfirm ? t.cancel : t.ok}</button> {onConfirm && ( <button onClick={onConfirm} className="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-6 rounded-lg transition-colors">{t.confirm}</button> )} </div> </div> </Modal> );
+        const Logo = () => ( <div className="flex items-center space-x-2 cursor-pointer"> <img src={logoBase64} alt="Asonik Store Logo" className="h-12 w-12 object-contain"/> <span className="text-2xl md:text-3xl font-bold text-text-primary tracking-wider"> Asonik <span style={{color: 'var(--accent-primary)'}}>Store</span> </span> </div> );
+        const LoadingSpinner = () => ( <div className="bg-primary min-h-screen flex items-center justify-center"><div className="animate-spin rounded-full h-32 w-32 border-t-4 border-b-4" style={{borderColor: 'var(--accent-primary)'}}></div></div> );
+        
+        // FIX: Добавлена рамка к модальному окну для лучшего визуального разделения.
+        const Modal = ({ children, onClose, size = 'max-w-md' }) => ( <div className="fixed inset-0 bg-black bg-opacity-75 z-50 flex justify-center items-center p-4 transition-opacity duration-300"> <div className={`bg-secondary rounded-2xl shadow-2xl p-6 md:p-8 w-full ${size} relative border border-border-color transform transition-transform duration-300 scale-95 animate-scale-in`}> <button onClick={onClose} className="absolute top-4 right-4 text-text-secondary hover:text-text-primary transition-colors z-10"> <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg> </button> {children} </div> <style>{` @keyframes scale-in { from { transform: scale(0.9); opacity: 0; } to { transform: scale(1); opacity: 1; } } .animate-scale-in { animation: scale-in 0.3s ease-out forwards; } `}</style> </div> );
+        
+        const AlertModal = ({ message, onConfirm, onCancel, t }) => ( <Modal onClose={onCancel}> <div className="text-center"> <h2 className="text-2xl font-bold text-text-primary mb-4">{t.confirmation}</h2> <p className="text-text-secondary mb-6 whitespace-pre-wrap">{message}</p> <div className={`flex ${onConfirm ? 'justify-between' : 'justify-center'} space-x-4`}> <button onClick={onCancel} className="bg-tertiary hover:bg-gray-700 text-text-primary font-bold py-2 px-6 rounded-lg transition-colors">{onConfirm ? t.cancel : t.ok}</button> {onConfirm && ( <button onClick={onConfirm} className="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-6 rounded-lg transition-colors">{t.confirm}</button> )} </div> </div> </Modal> );
         
         const ProfileModal = ({ user, onClose, t, setAlertInfo, onLogout }) => {
             const [isUploading, setIsUploading] = useState(false);
@@ -220,29 +211,29 @@
 
             return (
                 <Modal onClose={onClose}>
-                    <div className="text-center text-primary">
+                    <div className="text-center text-text-primary">
                         <h2 className="text-3xl font-bold mb-4">{t.profile}</h2>
                         <div className="relative mx-auto mb-4 w-24 h-24">
                              <img src={user.photoURL} alt={user.displayName} className={`w-full h-full rounded-full mx-auto border-4 object-cover`} style={{ borderColor: user.photoURL && user.photoURL.includes('placehold.co') ? color : 'var(--accent-primary)' }}/>
-                             <button onClick={() => fileInputRef.current.click()} className="absolute bottom-0 right-0 bg-gray-700 p-2 rounded-full border border-color">
+                             <button onClick={() => fileInputRef.current.click()} className="absolute bottom-0 right-0 bg-gray-700 p-2 rounded-full border border-border-color">
                                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-white" viewBox="0 0 20 20" fill="currentColor"><path d="M13.586 3.586a2 2 0 112.828 2.828l-7.293 7.293A1 1 0 018.657 14H5a1 1 0 01-1-1v-3.657a1 1 0 01.293-.707l7.293-7.293zM10 2a1 1 0 00-1 1v2a1 1 0 102 0V3a1 1 0 00-1-1z" /></svg>
                              </button>
                         </div>
                         <p className="text-xl mb-2">{user.displayName}</p>
-                        <p className="text-secondary mb-6">{user.email}</p>
+                        <p className="text-text-secondary mb-6">{user.email}</p>
                         
                         <form onSubmit={handleUpdateProfile} className="space-y-4 mb-6">
                             <div>
-                                <label className="block text-secondary text-sm font-bold mb-1">{t.firstName || 'Имя'}</label>
-                                <input type="text" value={firstName} onChange={e => setFirstName(e.target.value)} className="w-full p-2 bg-tertiary rounded-lg border-color text-primary"/>
+                                <label className="block text-text-secondary text-sm font-bold mb-1">{t.firstName || 'Имя'}</label>
+                                <input type="text" value={firstName} onChange={e => setFirstName(e.target.value)} className="w-full p-2 bg-tertiary rounded-lg border-border-color text-text-primary"/>
                             </div>
                             <div>
-                                <label className="block text-secondary text-sm font-bold mb-1">{t.lastName || 'Фамилия'}</label>
-                                <input type="text" value={lastName} onChange={e => setLastName(e.target.value)} className="w-full p-2 bg-tertiary rounded-lg border-color text-primary"/>
+                                <label className="block text-text-secondary text-sm font-bold mb-1">{t.lastName || 'Фамилия'}</label>
+                                <input type="text" value={lastName} onChange={e => setLastName(e.target.value)} className="w-full p-2 bg-tertiary rounded-lg border-border-color text-text-primary"/>
                             </div>
                             <div>
-                                <label className="block text-secondary text-sm font-bold mb-1">{t.nickname || 'Никнейм'}</label>
-                                <input type="text" value={nickname} onChange={e => setNickname(e.target.value)} className="w-full p-2 bg-tertiary rounded-lg border-color text-primary"/>
+                                <label className="block text-text-secondary text-sm font-bold mb-1">{t.nickname || 'Никнейм'}</label>
+                                <input type="text" value={nickname} onChange={e => setNickname(e.target.value)} className="w-full p-2 bg-tertiary rounded-lg border-border-color text-text-primary"/>
                             </div>
                             <button type="submit" className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg transition-colors" disabled={isUploading}>
                                 {isUploading ? t.sending : t.updateProfile || 'Обновить профиль'}
@@ -252,10 +243,9 @@
                         <div className="space-y-3">
                             <div className="flex items-center space-x-2">
                                 <button onClick={handleColorAvatar} className="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded-lg transition-colors">{t.setColorAvatar || 'Установить цвет рамки'}</button>
-                                <input type="color" value={color} onChange={e => setColor(e.target.value)} className="p-1 h-10 w-14 block bg-tertiary border-color cursor-pointer rounded-lg"/>
+                                <input type="color" value={color} onChange={e => setColor(e.target.value)} className="p-1 h-10 w-14 block bg-tertiary border-border-color cursor-pointer rounded-lg"/>
                             </div>
                             <button onClick={handleRevertAvatar} className="w-full bg-gray-600 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded-lg transition-colors">{t.revertAvatar}</button>
-                            {/* FIX: Removed logout button from profile modal as requested to reduce redundancy. */}
                         </div>
                         <input type="file" ref={fileInputRef} onChange={(e) => handleImageUpload(e.target.files[0])} accept="image/*" className="hidden"/>
                     </div>
@@ -282,15 +272,15 @@
 
             return (
                 <div className="relative" ref={wrapperRef}>
-                    <button onClick={() => setIsOpen(!isOpen)} className="flex items-center justify-between w-full bg-tertiary hover:bg-gray-700 text-primary font-semibold py-2 px-4 rounded-lg transition-colors">
+                    <button onClick={() => setIsOpen(!isOpen)} className="flex items-center justify-between w-full bg-tertiary hover:bg-gray-700 text-text-primary font-semibold py-2 px-4 rounded-lg transition-colors">
                         <span>{options.find(o => o.value === value).label}</span>
                         <svg className={`w-4 h-4 transition-transform ${isOpen ? 'transform rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path></svg>
                     </button>
                     {isOpen && (
-                        <div className="absolute right-0 mt-2 w-full bg-tertiary rounded-md shadow-lg py-1 z-50 border-color">
+                        <div className="absolute right-0 mt-2 w-full bg-tertiary rounded-md shadow-lg py-1 z-50 border border-border-color">
                             {options.map(opt => (
                                 <a href="#" key={opt.value} onClick={(e) => { e.preventDefault(); handleSelect(opt.value); }}
-                                    className={`block px-4 py-2 text-sm text-secondary hover:text-primary hover:accent-bg ${value === opt.value ? 'accent-bg text-white' : ''}`}>
+                                    className={`block px-4 py-2 text-sm text-text-secondary hover:text-text-primary hover:bg-purple-600 ${value === opt.value ? 'bg-purple-600 text-white' : ''}`}>
                                     {opt.label}
                                 </a>
                             ))}
@@ -343,13 +333,13 @@
             return (
                 <Modal onClose={onClose} size="max-w-sm">
                     <form onSubmit={handleSubmit} className="text-center">
-                        <h2 className="text-2xl font-bold text-primary mb-4">{t.adminAccess}</h2>
-                        <p className="text-secondary mb-6">{t.enterPin}</p>
+                        <h2 className="text-2xl font-bold text-text-primary mb-4">{t.adminAccess}</h2>
+                        <p className="text-text-secondary mb-6">{t.enterPin}</p>
                         <input
                             type="password"
                             value={pin}
                             onChange={(e) => setPin(e.target.value)}
-                            className="w-full p-3 bg-tertiary rounded-lg border-color text-primary text-center text-2xl tracking-[.5em] disabled:opacity-50"
+                            className="w-full p-3 bg-tertiary rounded-lg border-border-color text-text-primary text-center text-2xl tracking-[.5em] disabled:opacity-50"
                             maxLength="6"
                             autoFocus
                             disabled={isLocked}
@@ -365,10 +355,10 @@
                                 onChange={(e) => setRememberMeChecked(e.target.checked)}
                                 className="form-checkbox h-4 w-4 text-purple-600 rounded"
                             />
-                            <label htmlFor="rememberMe" className="ml-2 text-sm text-secondary">{t.rememberMe || 'Запомнить меня (10 минут)'}</label>
+                            <label htmlFor="rememberMe" className="ml-2 text-sm text-text-secondary">{t.rememberMe || 'Запомнить меня (10 минут)'}</label>
                         </div>
 
-                        <button type="submit" className="w-full mt-6 accent-bg hover:accent-bg-secondary text-white font-bold py-3 px-4 rounded-lg transition-colors disabled:bg-gray-500" disabled={isLocked}>
+                        <button type="submit" className="w-full mt-6 bg-purple-600 hover:bg-purple-700 text-white font-bold py-3 px-4 rounded-lg transition-colors disabled:bg-gray-500" disabled={isLocked}>
                             {isLocked ? `Заблокировано (${countdown})` : t.enter}
                         </button>
                     </form>
@@ -376,7 +366,7 @@
             );
         };
 
-        // --- Main Components ---
+        // --- Основные компоненты ---
         function Header({ user, onLogin, onLogout, setPage, isAdmin, t, currency, setCurrency, language, setLanguage, setProfileVisible, theme, setTheme, onAdminClick }) {
             const [userDropdownOpen, setUserDropdownOpen] = useState(false);
             const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -384,7 +374,12 @@
 
             const langOptions = [{value: 'ru', label: t.russian}, {value: 'en', label: t.english}, {value: 'uz', label: t.uzbek}];
             const currencyOptions = [{value: 'RUB', label: t.ruble}, {value: 'USD', label: t.dollar}, {value: 'UZS', label: t.sum}];
-            const themeOptions = [{value: 'dark', label: t.darkTheme}, {value: 'light', label: t.lightTheme}, {value: 'asonik', label: t.asonikTheme}];
+            
+            // UPDATE: Изменены опции тем согласно запросу
+            const themeOptions = [
+                {value: 'asonik-light', label: t.asonikThemeLight}, 
+                {value: 'dark', label: t.asonikThemeDark}
+            ];
 
             useEffect(() => {
                 function handleClickOutside(event) {
@@ -400,41 +395,40 @@
             };
 
             return (
-                <header className="bg-secondary p-4 shadow-lg sticky top-0 z-40 border-b border-color">
+                <header className="bg-secondary p-4 shadow-lg sticky top-0 z-40 border-b border-border-color">
                     <div className="container mx-auto flex justify-between items-center">
                         <div onClick={() => handleMenuItemClick('home')}><Logo /></div>
                         <nav className="hidden md:flex items-center space-x-6">
-                            <button onClick={() => handleMenuItemClick('home')} className="text-secondary hover:text-primary font-medium transition-colors">{t.home}</button>
-                            {user && <button onClick={() => handleMenuItemClick('purchases')} className="text-secondary hover:text-primary font-medium transition-colors">{t.myPurchases}</button>}
-                            <button onClick={() => handleMenuItemClick('faq')} className="text-secondary hover:text-primary font-medium transition-colors">{t.faq}</button>
-                            {/* FIX: Chats button now correctly navigates to the chats page */}
-                            {user && <button onClick={() => handleMenuItemClick('chats')} className="text-secondary hover:text-primary font-medium transition-colors">{t.chats}</button>}
+                            <button onClick={() => handleMenuItemClick('home')} className="text-text-secondary hover:text-text-primary font-medium transition-colors">{t.home}</button>
+                            {user && <button onClick={() => handleMenuItemClick('purchases')} className="text-text-secondary hover:text-text-primary font-medium transition-colors">{t.myPurchases}</button>}
+                            <button onClick={() => handleMenuItemClick('faq')} className="text-text-secondary hover:text-text-primary font-medium transition-colors">{t.faq}</button>
+                            {user && <button onClick={() => handleMenuItemClick('chats')} className="text-text-secondary hover:text-text-primary font-medium transition-colors">{t.chats}</button>}
                         </nav>
                         <div className="flex items-center space-x-2 sm:space-x-4">
-                            <div className="hidden md:block w-28"><CustomSelector value={language} onChange={e => setLanguage(e.target.value)} options={langOptions} /></div>
+                            <div className="hidden md:block w-36"><CustomSelector value={language} onChange={e => setLanguage(e.target.value)} options={langOptions} /></div>
                             <div className="hidden md:block w-28"><CustomSelector value={currency} onChange={e => setCurrency(e.target.value)} options={currencyOptions} /></div>
-                            <div className="hidden md:block w-32"><CustomSelector value={theme} onChange={e => setTheme(e.target.value)} options={themeOptions} /></div>
+                            <div className="hidden md:block w-48"><CustomSelector value={theme} onChange={e => setTheme(e.target.value)} options={themeOptions} /></div>
                             
                             {user ? (
                                 <div className="relative" ref={userDropdownRef}>
                                     <button onClick={() => setUserDropdownOpen(!userDropdownOpen)} className="flex items-center space-x-2">
-                                        <img src={user.photoURL} alt={user.displayName} className="h-10 w-10 rounded-full border-2 accent-border object-cover" />
-                                        <svg className={`w-4 h-4 text-primary transition-transform ${userDropdownOpen ? 'transform rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path></svg>
+                                        <img src={user.photoURL} alt={user.displayName} className="h-10 w-10 rounded-full border-2 object-cover" style={{borderColor: 'var(--accent-primary)'}}/>
+                                        <svg className={`w-4 h-4 text-text-primary transition-transform ${userDropdownOpen ? 'transform rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path></svg>
                                     </button>
                                     {userDropdownOpen && (
-                                        <div className={`absolute right-0 mt-2 w-48 bg-secondary rounded-md shadow-lg py-1 z-50 border-color`}>
-                                            <a href="#" onClick={(e) => { e.preventDefault(); setProfileVisible(true); setUserDropdownOpen(false); }} className="block px-4 py-2 text-sm text-secondary hover:text-primary hover:accent-bg">{t.profile}</a>
-                                            {isAdmin && <a href="#" onClick={(e) => { e.preventDefault(); onAdminClick(); setUserDropdownOpen(false); }} className="block px-4 py-2 text-sm text-red-500 hover:text-red-400 hover:accent-bg">{t.adminPanelTitle}</a>}
-                                            <a href="#" onClick={(e) => { e.preventDefault(); onLogout(); setUserDropdownOpen(false); }} className="block px-4 py-2 text-sm text-secondary hover:text-primary hover:accent-bg">{t.logout}</a>
+                                        <div className={`absolute right-0 mt-2 w-48 bg-secondary rounded-md shadow-lg py-1 z-50 border border-border-color`}>
+                                            <a href="#" onClick={(e) => { e.preventDefault(); setProfileVisible(true); setUserDropdownOpen(false); }} className="block px-4 py-2 text-sm text-text-secondary hover:text-text-primary hover:bg-purple-600">{t.profile}</a>
+                                            {isAdmin && <a href="#" onClick={(e) => { e.preventDefault(); onAdminClick(); setUserDropdownOpen(false); }} className="block px-4 py-2 text-sm text-red-500 hover:text-red-400 hover:bg-purple-600">{t.adminPanelTitle}</a>}
+                                            <a href="#" onClick={(e) => { e.preventDefault(); onLogout(); setUserDropdownOpen(false); }} className="block px-4 py-2 text-sm text-text-secondary hover:text-text-primary hover:bg-purple-600">{t.logout}</a>
                                         </div>
                                     )}
                                 </div>
                             ) : (
-                                <button onClick={onLogin} className="accent-bg hover:accent-bg-secondary text-white font-bold py-2 px-4 rounded-lg transition-transform transform hover:scale-105 flex items-center space-x-2">
+                                <button onClick={onLogin} className="bg-purple-600 hover:bg-purple-700 text-white font-bold py-2 px-4 rounded-lg transition-transform transform hover:scale-105 flex items-center space-x-2">
                                     <span>{t.login}</span>
                                 </button>
                             )}
-                            <button className="md:hidden p-2 rounded-md text-primary hover:bg-tertiary" onClick={() => setMobileMenuOpen(!mobileMenuOpen)}>
+                            <button className="md:hidden p-2 rounded-md text-text-primary hover:bg-tertiary" onClick={() => setMobileMenuOpen(!mobileMenuOpen)}>
                                 <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" /></svg>
                             </button>
                         </div>
@@ -442,7 +436,7 @@
 
                     <div className={`mobile-menu-container ${mobileMenuOpen ? 'open' : ''}`}>
                         <div className="flex justify-end mb-4">
-                            <button className="p-2 rounded-md text-primary hover:bg-secondary" onClick={() => setMobileMenuOpen(false)}>
+                            <button className="p-2 rounded-md text-text-primary hover:bg-secondary" onClick={() => setMobileMenuOpen(false)}>
                                 <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
                             </button>
                         </div>
@@ -459,7 +453,7 @@
                         ) : (
                             <button onClick={() => { onLogin(); setMobileMenuOpen(false); }} className="mobile-menu-item">{t.login}</button>
                         )}
-                         <div className="mt-auto pt-4 border-t border-color flex flex-col items-center">
+                         <div className="mt-auto pt-4 border-t border-border-color flex flex-col items-center">
                             <div className="w-full mb-2"><CustomSelector value={language} onChange={e => setLanguage(e.target.value)} options={langOptions} /></div>
                             <div className="w-full mb-2"><CustomSelector value={currency} onChange={e => setCurrency(e.target.value)} options={currencyOptions} /></div>
                             <div className="w-full"><CustomSelector value={theme} onChange={e => setTheme(e.target.value)} options={themeOptions} /></div>
@@ -470,7 +464,7 @@
         }
         
         const SkeletonCard = () => (
-            <div className="bg-secondary rounded-2xl overflow-hidden shadow-lg border-color animate-pulse">
+            <div className="bg-secondary rounded-2xl overflow-hidden shadow-lg border-border-color animate-pulse">
                 <div className="w-full h-56 bg-tertiary"></div>
                 <div className="p-6">
                     <div className="h-8 bg-tertiary rounded w-3/4 mb-2"></div>
@@ -499,7 +493,7 @@
             }, [products, searchTerm, filterCategory, sortBy]);
 
             const FilterButton = ({ value, state, setState, children }) => (
-                <button onClick={() => setState(value)} className={`px-4 py-2 rounded-lg text-sm transition-colors ${state === value ? 'accent-bg text-white' : 'bg-tertiary text-primary hover:bg-gray-600'}`}>
+                <button onClick={() => setState(value)} className={`px-4 py-2 rounded-lg text-sm transition-colors ${state === value ? 'bg-purple-600 text-white' : 'bg-tertiary text-text-primary hover:bg-gray-600'}`}>
                     {children}
                 </button>
             );
@@ -512,17 +506,17 @@
 
             return (
                 <main className="container mx-auto p-4 md:p-8">
-                    <h1 className="text-4xl md:text-5xl font-black text-primary text-center mb-4 tracking-wide">{t.catalogTitle}</h1>
-                    <p className="accent-text text-center mb-8 text-lg">{t.catalogSubtitle}</p>
+                    <h1 className="text-4xl md:text-5xl font-black text-text-primary text-center mb-4 tracking-wide">{t.catalogTitle}</h1>
+                    <p className="text-center mb-8 text-lg" style={{color: 'var(--accent-primary)'}}>{t.catalogSubtitle}</p>
                     
                     <div className="bg-secondary p-4 rounded-xl mb-8 flex flex-col md:flex-row gap-4 items-center">
-                        <input type="text" placeholder={t.searchPlaceholder} value={searchTerm} onChange={e => setSearchTerm(e.target.value)} className="w-full md:w-1/3 p-3 bg-tertiary rounded-lg border-color focus:outline-none focus:ring-2 accent-border text-primary" />
+                        <input type="text" placeholder={t.searchPlaceholder} value={searchTerm} onChange={e => setSearchTerm(e.target.value)} className="w-full md:w-1/3 p-3 bg-tertiary rounded-lg border-border-color focus:outline-none focus:ring-2 focus:ring-purple-500 text-text-primary" />
                         <div className="flex items-center gap-2">
-                            <span className="text-secondary font-semibold">{t.category}:</span>
+                            <span className="text-text-secondary font-semibold">{t.category}:</span>
                             <div className="w-40"><CustomSelector value={filterCategory} onChange={e => setFilterCategory(e.target.value)} options={categories} /></div>
                         </div>
                         <div className="flex items-center gap-2 ml-auto">
-                            <span className="text-secondary font-semibold">{t.sortBy}:</span>
+                            <span className="text-text-secondary font-semibold">{t.sortBy}:</span>
                             <FilterButton value="new" state={sortBy} setState={setSortBy}>{t.newSort}</FilterButton>
                             <FilterButton value="popular" state={sortBy} setState={setSortBy}>{t.popularSort}</FilterButton>
                         </div>
@@ -533,7 +527,7 @@
                             {[...Array(6)].map((_, i) => <SkeletonCard key={i} />)}
                         </div>
                     ) : filteredAndSortedProducts.length === 0 ? (
-                         <p className="text-center text-secondary text-xl mt-12">{t.productsNotFound}</p>
+                         <p className="text-center text-text-secondary text-xl mt-12">{t.productsNotFound}</p>
                     ) : (
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
                             {filteredAndSortedProducts.map(product => (
@@ -571,7 +565,7 @@
             }, [product.variants, product.stockQuantity]);
 
             return (
-                <div onClick={() => onProductClick(product)} className="bg-secondary rounded-2xl overflow-hidden shadow-lg border-color transform hover:-translate-y-2 transition-transform duration-300 flex flex-col cursor-pointer relative">
+                <div onClick={() => onProductClick(product)} className="bg-secondary rounded-2xl overflow-hidden shadow-lg border border-border-color transform hover:-translate-y-2 transition-transform duration-300 flex flex-col cursor-pointer relative">
                     {product.pinned && <div className="absolute top-0 right-0 bg-yellow-400 text-black text-xs font-bold px-3 py-1 rounded-bl-lg z-10">{t.pinned}</div>}
                     {product.isOnSale === false && <span className="absolute top-2 left-2 bg-gray-500 text-white text-xs font-bold px-2 py-1 rounded-full">{t.removedFromSale || 'Снято с продажи'}</span>}
                     <img className="w-full h-56 object-cover" src={imageUrl} alt={product.name} onError={(e) => { e.target.onerror = null; e.target.src=`https://placehold.co/600x400/1f2937/374151?text=${encodeURIComponent(t.imageNotFound)}`; }}/>
@@ -582,18 +576,18 @@
                                 {t.verifiedByStore}
                             </div>
                         )}
-                        <h3 className="text-2xl font-bold text-primary mb-1">{product.name}</h3>
-                        {displayNominal && <p className="accent-text font-semibold mb-2">{displayNominal}</p>}
+                        <h3 className="text-2xl font-bold text-text-primary mb-1">{product.name}</h3>
+                        {displayNominal && <p className="font-semibold mb-2" style={{color: 'var(--accent-primary)'}}>{displayNominal}</p>}
                         
                         {product.variants && product.variants.length > 1 && (
-                            <p className="text-secondary text-sm mb-2">
+                            <p className="text-text-secondary text-sm mb-2">
                                 {t.priceFrom}: {displayPrice} {product.variants.length > 1 && `+ ${product.variants.length - 1} ${t.moreOptions || 'варианта'}`}
                             </p>
                         )}
                         
                         <div className="flex-grow"></div>
                         <div className="flex justify-between items-center mt-4">
-                            <span className="text-3xl font-bold accent-text">{displayPrice}</span>
+                            <span className="text-3xl font-bold" style={{color: 'var(--accent-primary)'}}>{displayPrice}</span>
                             {displayStock !== -1 && displayStock <= 0 && (
                                 <span className="bg-red-500 text-white text-xs font-bold px-2 py-1 rounded-full">{t.outOfStock || 'Нет в наличии'}</span>
                             )}
@@ -621,7 +615,6 @@
 
              const handleShare = () => {
                 const productUrl = `${window.location.origin}${window.location.pathname}?product=${product.id}`;
-                // The fallback with `document.execCommand` is crucial for iframe environments.
                 navigator.clipboard.writeText(productUrl).then(() => {
                     setAlertInfo({ message: t.linkCopied });
                 }, () => {
@@ -670,17 +663,17 @@
                                     {t.verifiedByStore}
                                 </div>
                             )}
-                            <h2 className="text-4xl font-bold text-primary mb-2">{product.name}</h2>
+                            <h2 className="text-4xl font-bold text-text-primary mb-2">{product.name}</h2>
                             
                             {product.variants && product.variants.length > 0 && (
                                 <div className="my-4 space-y-2">
-                                    <p className="text-lg font-semibold text-primary">{t.chooseOption || 'Выберите вариант:'}</p>
+                                    <p className="text-lg font-semibold text-text-primary">{t.chooseOption || 'Выберите вариант:'}</p>
                                     <div className="flex flex-wrap gap-2">
                                         {product.variants.map((variant, index) => (
                                             <button
                                                 key={index}
                                                 onClick={() => setSelectedVariantIndex(index)}
-                                                className={`px-4 py-2 rounded-lg text-sm font-semibold transition-colors ${selectedVariantIndex === index ? 'accent-bg text-white' : 'bg-tertiary text-primary hover:bg-gray-600'}`}
+                                                className={`px-4 py-2 rounded-lg text-sm font-semibold transition-colors ${selectedVariantIndex === index ? 'bg-purple-600 text-white' : 'bg-tertiary text-text-primary hover:bg-gray-600'}`}
                                             >
                                                 {variant.nominal} - {convertPrice(variant.price, currency)}
                                             </button>
@@ -692,20 +685,19 @@
                                 </div>
                             )}
                             
-                            {(currentVariant.nominal || product.nominal) && <p className="text-xl accent-text font-semibold mb-4">{currentVariant.nominal || product.nominal}</p>}
-                            <p className="text-secondary mb-6 flex-grow">{product.description}</p>
+                            {(currentVariant.nominal || product.nominal) && <p className="text-xl font-semibold mb-4" style={{color: 'var(--accent-primary)'}}>{currentVariant.nominal || product.nominal}</p>}
+                            <p className="text-text-secondary mb-6 flex-grow">{product.description}</p>
                             
-                            {/* FIX: Reworked layout for price and buttons to prevent overlap on smaller screens. */}
                             <div className="mt-auto pt-6">
                                 <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-4">
-                                    <span className="text-4xl lg:text-5xl font-bold accent-text flex-shrink-0 text-center sm:text-left">
+                                    <span className="text-4xl lg:text-5xl font-bold flex-shrink-0 text-center sm:text-left" style={{color: 'var(--accent-primary)'}}>
                                         {convertPrice(currentVariant.price || product.price, currency)}
                                     </span>
                                     <div className="flex items-center justify-center sm:justify-end gap-2 w-full">
                                         <button onClick={handleShare} className="bg-tertiary hover:bg-gray-700 p-3 rounded-lg transition-colors">
-                                            <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-primary" viewBox="0 0 20 20" fill="currentColor"><path d="M15 8a3 3 0 10-2.977-2.63l-4.94 2.47a3 3 0 100 4.319l4.94 2.47a3 3 0 10.895-1.789l-4.94-2.47a3.027 3.027 0 000-.74l4.94-2.47C13.456 7.68 14.19 8 15 8z" /></svg>
+                                            <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-text-primary" viewBox="0 0 20 20" fill="currentColor"><path d="M15 8a3 3 0 10-2.977-2.63l-4.94 2.47a3 3 0 100 4.319l4.94 2.47a3 3 0 10.895-1.789l-4.94-2.47a3.027 3.027 0 000-.74l4.94-2.47C13.456 7.68 14.19 8 15 8z" /></svg>
                                         </button>
-                                        <button onClick={handleBuyClick} className="flex-grow sm:flex-grow-0 accent-bg hover:accent-bg-secondary text-white font-bold py-3 px-6 rounded-lg text-lg" disabled={currentVariant.stockQuantity !== undefined && currentVariant.stockQuantity <= 0}>
+                                        <button onClick={handleBuyClick} className="flex-grow sm:flex-grow-0 bg-purple-600 hover:bg-purple-700 text-white font-bold py-3 px-6 rounded-lg text-lg" disabled={currentVariant.stockQuantity !== undefined && currentVariant.stockQuantity <= 0}>
                                             {currentVariant.stockQuantity !== undefined && currentVariant.stockQuantity <= 0 ? t.outOfStock : t.buy}
                                         </button>
                                     </div>
@@ -779,29 +771,29 @@
             return (
                 <Modal onClose={onClose}>
                     <div className="text-center">
-                        <h2 className="text-3xl font-bold text-primary mb-2">{t.checkout}</h2>
-                        <p className="text-secondary mb-4">
-                            {t.youAreBuying}: <span className="font-bold accent-text">{product.name}</span>
+                        <h2 className="text-3xl font-bold text-text-primary mb-2">{t.checkout}</h2>
+                        <p className="text-text-secondary mb-4">
+                            {t.youAreBuying}: <span className="font-bold" style={{color: 'var(--accent-primary)'}}>{product.name}</span>
                             {product.selectedVariant && ` (${product.selectedVariant.nominal})`}
                         </p>
                         
                         <div className="my-4">
                             {appliedPromo ? (
                                 <div>
-                                    <span className="text-2xl text-secondary line-through">{convertPrice(product.selectedVariant ? product.selectedVariant.price : product.price, currency)}</span>
-                                    <span className="text-4xl font-bold accent-text ml-2">{convertPrice(finalPrice, currency)}</span>
+                                    <span className="text-2xl text-text-secondary line-through">{convertPrice(product.selectedVariant ? product.selectedVariant.price : product.price, currency)}</span>
+                                    <span className="text-4xl font-bold ml-2" style={{color: 'var(--accent-primary)'}}>{convertPrice(finalPrice, currency)}</span>
                                 </div>
                             ) : (
-                                <span className="text-4xl font-bold accent-text">{convertPrice(product.selectedVariant ? product.selectedVariant.price : product.price, currency)}</span>
+                                <span className="text-4xl font-bold" style={{color: 'var(--accent-primary)'}}>{convertPrice(product.selectedVariant ? product.selectedVariant.price : product.price, currency)}</span>
                             )}
                         </div>
 
                         <div className="space-y-4">
-                            <h3 className="text-xl text-primary">{t.choosePayment}</h3>
+                            <h3 className="text-xl text-text-primary">{t.choosePayment}</h3>
                             <div className="bg-tertiary p-4 rounded-lg">
-                                <label className="block text-secondary text-sm font-bold mb-2">{t.payWithPromo}</label>
+                                <label className="block text-text-secondary text-sm font-bold mb-2">{t.payWithPromo}</label>
                                 <div className="flex space-x-2">
-                                    <input type="text" value={promoCode} onChange={(e) => setPromoCode(e.target.value.toUpperCase())} placeholder={t.promoCodeName} className="w-full p-2 bg-primary rounded-lg border-color text-primary"/>
+                                    <input type="text" value={promoCode} onChange={(e) => setPromoCode(e.target.value.toUpperCase())} placeholder={t.promoCodeName} className="w-full p-2 bg-primary rounded-lg border-border-color text-text-primary"/>
                                     <button onClick={handleApplyPromo} className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg">{t.apply}</button>
                                 </div>
                                 {error && <p className="text-red-500 text-sm mt-2">{error}</p>}
@@ -844,7 +836,7 @@
                     });
                     onClose();
                 } catch (error) {
-                    // Error is handled in the App component
+                    // Ошибка обрабатывается в компоненте App
                 } finally {
                     setIsUploading(false);
                 }
@@ -853,36 +845,34 @@
             return (
                 <Modal onClose={onClose} size="max-w-lg">
                     <div className="text-center">
-                        <h2 className="text-2xl font-bold text-primary mb-4">{t.yooMoneyPayment}</h2>
-                        <p className="text-secondary mb-4">{t.yooMoneyInstruction}</p>
-                        
-                        {/* QR Code functionality was removed as per user request, this can be re-added if needed */}
+                        <h2 className="text-2xl font-bold text-text-primary mb-4">{t.yooMoneyPayment}</h2>
+                        <p className="text-text-secondary mb-4">{t.yooMoneyInstruction}</p>
                         
                         <div className="my-4">
-                            <p className="text-secondary">{t.amountToPay}:</p>
-                            <p className="text-3xl font-bold accent-text">{convertPrice(purchaseDetails.finalPrice, currency)}</p>
+                            <p className="text-text-secondary">{t.amountToPay}:</p>
+                            <p className="text-3xl font-bold" style={{color: 'var(--accent-primary)'}}>{convertPrice(purchaseDetails.finalPrice, currency)}</p>
                         </div>
                         
                         <div className="bg-tertiary p-3 rounded-lg mb-6">
-                            <p className="text-secondary text-sm">{t.orPayWithLink}:</p>
+                            <p className="text-text-secondary text-sm">{t.orPayWithLink}:</p>
                             <a href="https://yoomoney.ru/to/4100118308403073/0" target="_blank" rel="noopener noreferrer" className="text-blue-400 hover:underline break-words">
                                 https://yoomoney.ru/to/4100118308403073/0
                             </a>
                         </div>
 
                         <form onSubmit={handleSubmit} className="space-y-4 text-left">
-                            <h3 className="text-xl font-bold text-primary text-center">{t.afterPaymentTitle}</h3>
+                            <h3 className="text-xl font-bold text-text-primary text-center">{t.afterPaymentTitle}</h3>
                             <div>
-                                <label className="block text-secondary mb-1">{t.telegramUsername}</label>
-                                <input type="text" value={contactTelegram} onChange={e => setContactTelegram(e.target.value)} placeholder="@username" className="w-full p-2 bg-primary rounded-lg border-color text-primary"/>
+                                <label className="block text-text-secondary mb-1">{t.telegramUsername}</label>
+                                <input type="text" value={contactTelegram} onChange={e => setContactTelegram(e.target.value)} placeholder="@username" className="w-full p-2 bg-primary rounded-lg border-border-color text-text-primary"/>
                             </div>
                             <div>
-                                <label className="block text-secondary mb-1">{t.contactEmail}</label>
-                                <input type="email" value={contactEmail} onChange={e => setContactEmail(e.target.value)} placeholder="email@example.com" className="w-full p-2 bg-primary rounded-lg border-color text-primary"/>
+                                <label className="block text-text-secondary mb-1">{t.contactEmail}</label>
+                                <input type="email" value={contactEmail} onChange={e => setContactEmail(e.target.value)} placeholder="email@example.com" className="w-full p-2 bg-primary rounded-lg border-border-color text-text-primary"/>
                             </div>
                              <div>
-                                <label className="block text-secondary mb-1">{t.uploadReceipt}</label>
-                                <input type="file" onChange={handleFileChange} accept="image/*" className="w-full text-sm text-secondary file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-purple-50 file:text-purple-700 hover:file:bg-purple-100"/>
+                                <label className="block text-text-secondary mb-1">{t.uploadReceipt}</label>
+                                <input type="file" onChange={handleFileChange} accept="image/*" className="w-full text-sm text-text-secondary file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-purple-50 file:text-purple-700 hover:file:bg-purple-100"/>
                             </div>
                             <button type="submit" disabled={isUploading} className="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-4 rounded-lg transition-colors disabled:bg-gray-500">
                                 {isUploading ? t.sending : t.sendForVerification}
@@ -897,15 +887,15 @@
             const [openIndex, setOpenIndex] = useState(null);
             return (
                 <div className="container mx-auto p-4 md:p-8">
-                    <h1 className="text-4xl font-bold text-center mb-8 text-primary">{t.faqTitle}</h1>
+                    <h1 className="text-4xl font-bold text-center mb-8 text-text-primary">{t.faqTitle}</h1>
                     <div className="space-y-4 max-w-3xl mx-auto">
                         {faqs.map((faq, index) => (
                             <div key={faq.id} className="bg-secondary rounded-lg">
                                 <button onClick={() => setOpenIndex(openIndex === index ? null : index)} className="w-full text-left p-4 flex justify-between items-center">
-                                    <span className="font-semibold text-primary">{faq.question}</span>
-                                    <svg className={`w-6 h-6 transform transition-transform text-primary ${openIndex === index ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path></svg>
+                                    <span className="font-semibold text-text-primary">{faq.question}</span>
+                                    <svg className={`w-6 h-6 transform transition-transform text-text-primary ${openIndex === index ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path></svg>
                                 </button>
-                                {openIndex === index && ( <div className="p-4 border-t border-color text-secondary"> {faq.answer} </div> )}
+                                {openIndex === index && ( <div className="p-4 border-t border-border-color text-text-secondary"> {faq.answer} </div> )}
                             </div>
                         ))}
                     </div>
@@ -989,38 +979,38 @@
                 }
             };
             const FilterButton = ({ value, state, setState, children }) => (
-                <button onClick={() => setState(value)} className={`px-4 py-2 rounded-lg text-sm transition-colors ${state === value ? 'accent-bg text-white' : 'bg-tertiary text-primary hover:bg-gray-600'}`}>
+                <button onClick={() => setState(value)} className={`px-4 py-2 rounded-lg text-sm transition-colors ${state === value ? 'bg-purple-600 text-white' : 'bg-tertiary text-text-primary hover:bg-gray-600'}`}>
                     {children}
                 </button>
             );
 
             return (
                 <div className="container mx-auto p-4 md:p-8">
-                    <h1 className="text-4xl font-bold text-center mb-8 text-primary">{t.myPurchases}</h1>
+                    <h1 className="text-4xl font-bold text-center mb-8 text-text-primary">{t.myPurchases}</h1>
                     <div className="max-w-3xl mx-auto bg-secondary p-4 rounded-lg mb-6 flex flex-col sm:flex-row justify-between items-center gap-4">
                         <div className="flex items-center gap-2">
-                           <span className="text-secondary font-semibold">{t.filterByDate}:</span>
+                           <span className="text-text-secondary font-semibold">{t.filterByDate}:</span>
                            <FilterButton value="all" state={dateFilter} setState={setDateFilter}>{t.all}</FilterButton>
                            <FilterButton value="today" state={dateFilter} setState={setDateFilter}>{t.today}</FilterButton>
                            <FilterButton value="3days" state={dateFilter} setState={setDateFilter}>{t.last3days}</FilterButton>
                         </div>
                          <div className="flex items-center gap-2">
-                           <span className="text-secondary font-semibold">{t.sortBy}:</span>
+                           <span className="text-text-secondary font-semibold">{t.sortBy}:</span>
                            <FilterButton value="date_desc" state={sortOrder} setState={setSortOrder}>{t.newSort}</FilterButton>
                            <FilterButton value="price_asc" state={sortOrder} setState={setSortOrder}>{t.priceAsc}</FilterButton>
                         </div>
                     </div>
                     {loading ? <LoadingSpinner /> : (
-                        filteredAndSortedPurchases.length === 0 ? <p className="text-center text-secondary">{t.noPurchasesYet}</p> : (
+                        filteredAndSortedPurchases.length === 0 ? <p className="text-center text-text-secondary">{t.noPurchasesYet}</p> : (
                             <div className="space-y-4 max-w-3xl mx-auto">
                                 {filteredAndSortedPurchases.map(purchase => (
                                     <div key={purchase.id} className="bg-secondary p-4 rounded-lg">
                                         <div className="flex justify-between items-start flex-wrap">
                                             <div>
-                                                <p className="font-bold text-primary text-lg">{purchase.productName}</p>
-                                                <p className="font-mono text-sm accent-text bg-tertiary inline-block px-2 py-1 rounded my-1">Код: {purchase.purchaseCode}</p>
-                                                <p className="text-sm text-secondary">{purchase.timestamp?.toDate ? new Date(purchase.timestamp.toDate()).toLocaleString() : '...'}</p>
-                                                <p className="text-sm text-secondary">{t.amount}: {convertPrice(purchase.finalPrice, currency)}</p>
+                                                <p className="font-bold text-text-primary text-lg">{purchase.productName}</p>
+                                                <p className="font-mono text-sm bg-tertiary inline-block px-2 py-1 rounded my-1" style={{color: 'var(--accent-primary)'}}>Код: {purchase.purchaseCode}</p>
+                                                <p className="text-sm text-text-secondary">{purchase.timestamp?.toDate ? new Date(purchase.timestamp.toDate()).toLocaleString() : '...'}</p>
+                                                <p className="text-sm text-text-secondary">{t.amount}: {convertPrice(purchase.finalPrice, currency)}</p>
                                             </div>
                                             <span className={`mt-2 sm:mt-0 px-2 py-1 text-xs font-bold text-white rounded-full ${getStatusClass(purchase.status)}`}>
                                                 {getStatusText(purchase.status)}
@@ -1028,7 +1018,7 @@
                                         </div>
                                         {purchase.adminComment && (
                                             <div className="mt-2 p-2 bg-tertiary rounded-md">
-                                                <p className="text-sm text-secondary"><b>{t.adminComment}:</b> {purchase.adminComment}</p>
+                                                <p className="text-sm text-text-secondary"><b>{t.adminComment}:</b> {purchase.adminComment}</p>
                                             </div>
                                         )}
                                         <div className="flex space-x-2 mt-4">
@@ -1052,7 +1042,6 @@
             );
         }
         
-        // NEW: Added a dedicated page for Chats
         function ChatsPage({ t, user, setAlertInfo }) {
             const handleCopyId = () => {
                 const userId = user?.uid;
@@ -1077,27 +1066,28 @@
 
             return (
                 <div className="container mx-auto p-4 md:p-8 text-center">
-                    <h1 className="text-4xl font-bold text-primary mb-4">{t.chats}</h1>
+                    <h1 className="text-4xl font-bold text-text-primary mb-4">{t.chats}</h1>
                     <div className="max-w-2xl mx-auto bg-secondary p-8 rounded-lg shadow-lg">
-                        <p className="text-secondary mb-6">{t.supportSubtitle}</p>
+                        <p className="text-text-secondary mb-6">{t.supportSubtitle}</p>
                         {user ? (
                             <>
                                 <div className="mb-6">
-                                    <p className="text-secondary mb-2">{t.yourId}:</p>
+                                    <p className="text-text-secondary mb-2">{t.yourId}:</p>
                                     <div 
                                         onClick={handleCopyId}
-                                        className="font-mono text-lg accent-text bg-tertiary inline-block px-4 py-2 rounded-lg cursor-pointer hover:bg-gray-700 transition-colors"
+                                        className="font-mono text-lg bg-tertiary inline-block px-4 py-2 rounded-lg cursor-pointer hover:bg-gray-700 transition-colors"
+                                        style={{color: 'var(--accent-primary)'}}
                                         title={t.clickToCopy}
                                     >
                                         {user.uid}
                                     </div>
                                 </div>
-                                <a href="https://t.me/asonikofficial" target="_blank" rel="noopener noreferrer" className="accent-bg hover:accent-bg-secondary text-white font-bold py-3 px-6 rounded-lg text-lg transition-transform transform hover:scale-105 inline-block">
+                                <a href="https://t.me/asonikofficial" target="_blank" rel="noopener noreferrer" className="bg-purple-600 hover:bg-purple-700 text-white font-bold py-3 px-6 rounded-lg text-lg transition-transform transform hover:scale-105 inline-block">
                                     {t.chatWithAdmin}
                                 </a>
                             </>
                         ) : (
-                            <p className="text-secondary">{t.loginForSupport}</p>
+                            <p className="text-text-secondary">{t.loginForSupport}</p>
                         )}
                     </div>
                 </div>
@@ -1106,7 +1096,7 @@
 
         function Footer({t}) {
             return (
-                <footer className="bg-secondary text-secondary p-6 mt-12 border-t border-color">
+                <footer className="bg-secondary text-text-secondary p-6 mt-12 border-t border-border-color">
                     <div className="container mx-auto text-center">
                         <p>&copy; {new Date().getFullYear()} Asonik Store. {t.rightsReserved}</p>
                         <p className="text-sm mt-2">{t.developedWithLove}</p>
@@ -1129,9 +1119,12 @@
             const [selectedProduct, setSelectedProduct] = useState(null);
             const [purchasingProduct, setPurchasingProduct] = useState(null);
             const [yooMoneyData, setYooMoneyData] = useState(null);
-            const [theme, setTheme] = useState('asonik');
+            const [theme, setTheme] = useState('dark'); // 'dark' или 'asonik-light'
 
-            useEffect(() => { document.body.className = theme; }, [theme]);
+            useEffect(() => { 
+                document.body.className = theme; 
+            }, [theme]);
+
             useEffect(() => {
                  const params = new URLSearchParams(window.location.search);
                 const productId = params.get('product');
@@ -1281,11 +1274,10 @@
 
             const renderContent = () => {
                 switch (page) {
-                    case 'admin': return isAdmin ? <div className="text-center text-primary p-10">Админ-панель в разработке.</div> : <HomePage {...{products, onProductClick: setSelectedProduct, t, currency, convertPrice, loading: products.length === 0}} />;
-                    case 'purchases': return user ? <MyPurchasesPage {...{user, t, currency, convertPrice, setAlertInfo}} /> : <div className="text-center text-primary p-10">{t.loginToView}</div>;
+                    case 'admin': return isAdmin ? <div className="text-center text-text-primary p-10">Админ-панель в разработке.</div> : <HomePage {...{products, onProductClick: setSelectedProduct, t, currency, convertPrice, loading: products.length === 0}} />;
+                    case 'purchases': return user ? <MyPurchasesPage {...{user, t, currency, convertPrice, setAlertInfo}} /> : <div className="text-center text-text-primary p-10">{t.loginToView}</div>;
                     case 'faq': return <FAQPage faqs={faqs} t={t} />;
-                    // FIX: Added 'chats' case to render the new ChatsPage component.
-                    case 'chats': return user ? <ChatsPage {...{t, user, setAlertInfo}} /> : <div className="text-center text-primary p-10">{t.loginToView}</div>;
+                    case 'chats': return user ? <ChatsPage {...{t, user, setAlertInfo}} /> : <div className="text-center text-text-primary p-10">{t.loginToView}</div>;
                     default: return <HomePage {...{products, onProductClick: setSelectedProduct, t, currency, convertPrice, loading: products.length === 0}} />;
                 }
             };
@@ -1342,7 +1334,7 @@
                 linkCopied: 'Ссылка скопирована!',
                 manageProducts: 'Управление товарами', backToPanel: 'Назад в панель', uploadAvatar: 'Загрузить аватар',
                 chatWithAdmin: 'Чат с администрацией', chatWith: 'Чат с', supportSubtitle: 'Если у вас есть вопросы, нажмите кнопку ниже, чтобы начать чат.',
-                darkTheme: 'Темная', lightTheme: 'Светлая', asonikTheme: 'Фирменная', setColorAvatar: 'Установить цвет',
+                asonikThemeLight: 'Фирменная (Светлая)', asonikThemeDark: 'Фирменная (Тёмная)', setColorAvatar: 'Установить цвет',
                 manageFaq: 'Управление FAQ', faqTitle: 'Часто задаваемые вопросы',
                 managePromoCodes: 'Промокоды', promoCode: 'Промокод', discount: 'Скидка', addPromoCode: 'Добавить промокод',
                 promoCodeName: 'Название промокода', discountPercentage: 'Размер скидки', existingPromoCodes: 'Существующие промокоды',
@@ -1429,7 +1421,7 @@
                 linkCopied: 'Link copied!',
                 manageProducts: 'Manage Products', backToPanel: 'Back to Panel', uploadAvatar: 'Upload Avatar',
                 chatWithAdmin: 'Chat with Administration', chatWith: 'Chat with', supportSubtitle: 'If you have questions, press the button below to start a chat.',
-                darkTheme: 'Dark', lightTheme: 'Light', asonikTheme: 'Asonik', setColorAvatar: 'Set Color',
+                asonikThemeLight: 'Branded (Light)', asonikThemeDark: 'Branded (Dark)', setColorAvatar: 'Set Color',
                 manageFaq: 'Manage FAQ', faqTitle: 'Frequently Asked Questions',
                 managePromoCodes: 'Promo Codes', promoCode: 'Promo Code', discount: 'Discount', addPromoCode: 'Add Promo Code',
                 promoCodeName: 'Promo Code Name', discountPercentage: 'Discount Percentage', existingPromoCodes: 'Existing Promo Codes',
@@ -1505,7 +1497,7 @@
                 linkCopied: 'Havola nusxalandi!',
                 manageProducts: 'Mahsulotlarni boshqarish', backToPanel: 'Panelga qaytish', uploadAvatar: 'Avatar yuklash',
                 chatWithAdmin: 'Ma\'muriyat bilan suhbat', chatWith: 'Suhbat', supportSubtitle: 'Savollaringiz bo\'lsa, suhbatni boshlash uchun quyidagi tugmani bosing.',
-                darkTheme: 'Qorong\'u', lightTheme: 'Yorug\'', asonikTheme: 'Asonik', setColorAvatar: 'Rangni o\'rnatish',
+                asonikThemeLight: 'Firmali (Ochiq)', asonikThemeDark: 'Firmali (To\'q)', setColorAvatar: 'Rangni o\'rnatish',
                 manageFaq: 'FAQ boshqaruvi', faqTitle: 'Tez-tez so\'raladigan savollar',
                 managePromoCodes: 'Promokodlar', promoCode: 'Promokod', discount: 'Chegirma', addPromoCode: 'Promokod qo\'shish',
                 promoCodeName: 'Promokod nomi', discountPercentage: 'Chegirma foizi', existingPromoCodes: 'Mavjud promokodlar',
