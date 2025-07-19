@@ -67,14 +67,13 @@
             left: 0;
             right: 0;
             bottom: 0;
-            background-color: var(--bg-primary); /* Use var for consistency, or solid color if needed */
+            background-color: var(--bg-primary);
             z-index: 50;
             display: flex;
             flex-direction: column;
             padding: 1rem;
             transform: translateX(100%);
             transition: transform 0.3s ease-out;
-            overflow-y: auto; /* Add scroll for content that overflows */
         }
         .mobile-menu-container.open {
             transform: translateX(0%);
@@ -193,7 +192,7 @@
                         // If it doesn't immediately reflect, a slight delay or manual state update in App might be needed
                         // For now, relying on onAuthStateChanged to eventually update App's user state.
                     });
-                }  catch (error) {
+                } catch (error) {
                     console.error("Error updating profile:", error);
                     setAlertInfo({ message: `${t.errorOccurred}: ${error.message}` });
                 } finally {
@@ -250,7 +249,7 @@
                         <div className="relative mx-auto mb-4 w-24 h-24">
                              <img src={user.photoURL} alt={user.displayName} className={`w-full h-full rounded-full mx-auto border-4 object-cover`} style={{ borderColor: user.photoURL && user.photoURL.includes('placehold.co') ? color : 'var(--accent-primary)' }}/> {/* Dynamic border color */}
                              <button onClick={() => fileInputRef.current.click()} className="absolute bottom-0 right-0 bg-gray-700 p-2 rounded-full border border-color">
-                                 <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path d="M13.586 3.586a2 2 0 112.828 2.828l-7.293 7.293A1 1 0 018.657 14H5a1 1 0 01-1-1v-3.657a1 1 0 01.293-.707l7.293-7.293zM10 2a1 1 0 00-1 1v2a1 1 0 102 0V3a1 1 0 00-1-1z" /></svg>
+                                 <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-white" viewBox="0 0 20 20" fill="currentColor"><path d="M13.586 3.586a2 2 0 112.828 2.828l-7.293 7.293A1 1 0 018.657 14H5a1 1 0 01-1-1v-3.657a1 1 0 01.293-.707l7.293-7.293zM10 2a1 1 0 00-1 1v2a1 1 0 102 0V3a1 1 0 00-1-1z" /></svg>
                              </button>
                         </div>
                         <p className="text-xl mb-2">{user.displayName}</p>
@@ -394,7 +393,7 @@
                                 onChange={(e) => setRememberMeChecked(e.target.checked)}
                                 className="form-checkbox h-4 w-4 text-purple-600 rounded"
                             />
-                            <label htmlFor="rememberMe" className="ml-2 text-sm text-secondary">{t.rememberMe || 'Запомнить меня (15 минут)'}</label> {/* Changed to 15 minutes */}
+                            <label htmlFor="rememberMe" className="ml-2 text-sm text-secondary">{t.rememberMe || 'Запомнить меня (10 минут)'}</label>
                         </div>
 
                         <button type="submit" className="w-full mt-6 accent-bg hover:accent-bg-secondary text-white font-bold py-3 px-4 rounded-lg transition-colors disabled:bg-gray-500" disabled={isLocked}>
@@ -447,7 +446,7 @@
                                 <div className="relative" ref={userDropdownRef}>
                                     <button onClick={() => setUserDropdownOpen(!userDropdownOpen)} className="flex items-center space-x-2">
                                         <img src={user.photoURL} alt={user.displayName} className="h-10 w-10 rounded-full border-2 accent-border object-cover" />
-                                        <svg className={`w-4 h-4 text-primary transition-transform ${userDropdownOpen ? 'transform rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7"></path></svg>
+                                        <svg className={`w-4 h-4 text-primary transition-transform ${userDropdownOpen ? 'transform rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path></svg>
                                     </button>
                                     {userDropdownOpen && (
                                         <div className={`absolute right-0 mt-2 w-48 bg-secondary rounded-md shadow-lg py-1 z-50 border-color`}>
@@ -1392,7 +1391,7 @@
                     <div className="flex justify-between items-center mb-6">
                         <h2 className="text-3xl font-bold text-primary">{t.manageProducts}</h2>
                         <button onClick={() => { resetForm(); setIsModalOpen(true); }} className="accent-bg hover:accent-bg-secondary text-white font-bold py-2 px-4 rounded-lg transition-colors flex items-center space-x-2">
-                            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clipRule="evenodd" /></svg>
+                            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1  0 110-2h5V4a1 1 0 011-1z" clipRule="evenodd" /></svg>
                             <span>{t.addProduct}</span>
                         </button>
                     </div>
@@ -1865,7 +1864,6 @@
                     });
                     setAlertInfo({ message: status === 'approved' ? t.purchaseApproved || 'Покупка одобрена!' : t.purchaseRejected || 'Покупка отклонена.' });
                     setSelectedReceipt(null); // Close modal
-                    setAlertInfo(null); // Clear previous alert
                     setAdminComment(''); // Clear comment
                 } catch (error) {
                     console.error("Error updating purchase status:", error);
@@ -1887,7 +1885,7 @@
                                         <p className="font-bold text-primary text-lg">{purchase.productName}</p>
                                         <p className="text-secondary text-sm">{t.user}: {purchase.userEmail}</p>
                                         <p className="text-secondary text-sm">{t.amount}: {convertPrice(purchase.finalPrice, currency)}</p>
-                                        <p className="text-sm text-secondary mb-2">{t.date}: {purchase.timestamp?.toDate ? new Date(purchase.timestamp.toDate()).toLocaleString() : '...'}</p>
+                                        <p className="text-secondary text-sm mb-2">{t.date}: {purchase.timestamp?.toDate ? new Date(purchase.timestamp.toDate()).toLocaleString() : '...'}</p>
                                         <p className="font-mono text-sm accent-text bg-gray-600 inline-block px-2 py-1 rounded my-1">Код: {purchase.purchaseCode}</p>
 
                                         {purchase.receiptImageUrl && (
@@ -1930,61 +1928,28 @@
         }
 
         // New Chat Components
-        // This component will now handle displaying messages for a specific chat ID.
-        // It will be reused for both admin chat and user-to-user chats.
-        function ChatWindow({ currentUser, setAlertInfo, t, onClose, chatId, chatType, participantInfo }) { 
+        function UserChatInterface({ user, setAlertInfo, t, onClose, initialMessage = '' }) { // Added initialMessage prop
             const [messages, setMessages] = useState([]);
-            const [newMessage, setNewMessage] = useState('');
-            const [loadingMessages, setLoadingMessages] = useState(true);
+            const [newMessage, setNewMessage] = useState(initialMessage); // Initialize with initial message
+            const [loading, setLoading] = useState(true);
             const messagesEndRef = useRef(null);
 
-            const isCurrentUserAdmin = currentUser.uid === ADMIN_UID;
-            const chatCollectionPath = chatType === 'admin' ? `chats/${currentUser.uid}/messages` : `userChats/${chatId}/messages`;
-
             useEffect(() => {
-                if (!currentUser || !chatId) { setLoadingMessages(false); return; }
-
-                setLoadingMessages(true);
+                if (!user) { setLoading(false); return; }
                 const q = query(
-                    collection(db, chatCollectionPath),
+                    collection(db, `chats/${user.uid}/messages`),
                     orderBy('timestamp', 'asc')
                 );
                 const unsubscribe = onSnapshot(q, (snapshot) => {
                     setMessages(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
-                    setLoadingMessages(false);
-
-                    // Mark messages as read for the current user
-                    const unreadMessages = snapshot.docs.filter(doc => {
-                        const data = doc.data();
-                        if (chatType === 'admin') {
-                            // If it's an admin chat, user marks admin's messages as read.
-                            return data.isAdmin && !data.isRead; 
-                        } else {
-                            // For user-to-user chat, mark messages from other participant as read.
-                            return data.senderId !== currentUser.uid && !data.isRead;
-                        }
-                    });
-
-                    unreadMessages.forEach(async (msgDoc) => {
-                        await updateDoc(doc(db, chatCollectionPath, msgDoc.id), { isRead: true });
-                    });
-
-                    // Update main chat document to reflect read status for the current user
-                    if (chatType === 'admin') {
-                        // Mark hasUnreadUser as false for the user when they read admin messages
-                        updateDoc(doc(db, "chats", currentUser.uid), { hasUnreadUser: false });
-                    } else {
-                        // For user-to-user chats, update hasUnread[currentUser.uid] to false
-                        updateDoc(doc(db, "userChats", chatId), { [`hasUnread.${currentUser.uid}`]: false });
-                    }
-
+                    setLoading(false);
                 }, (error) => {
                     console.error("Error fetching chat messages:", error);
-                    setLoadingMessages(false);
+                    setLoading(false);
                     setAlertInfo({ message: `${t.errorOccurred}: ${error.message}` });
                 });
                 return () => unsubscribe();
-            }, [currentUser, chatId, chatType]);
+            }, [user]);
 
             useEffect(() => {
                 messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -1992,41 +1957,27 @@
 
             const sendMessage = async (e) => {
                 e.preventDefault();
-                if (newMessage.trim() === '' || !currentUser) return;
+                if (newMessage.trim() === '') return;
+                if (!user) { setAlertInfo({ message: t.loginForSupport }); return; }
 
                 try {
-                    await addDoc(collection(db, chatCollectionPath), {
-                        senderId: currentUser.uid,
-                        senderName: currentUser.displayName || currentUser.email,
+                    await addDoc(collection(db, `chats/${user.uid}/messages`), {
+                        senderId: user.uid,
+                        senderName: user.displayName || user.email,
                         message: newMessage,
-                        // Fix: Use new Date() for timestamp within messages subcollection
-                        timestamp: new Date(), 
+                        timestamp: serverTimestamp(),
                         isRead: false,
-                        isAdmin: isCurrentUserAdmin 
+                        isAdmin: false
                     });
-
-                    // Update the last message and timestamp in the main chat document
-                    if (chatType === 'admin') {
-                        await updateDoc(doc(db, "chats", currentUser.uid), {
-                            lastMessage: newMessage,
-                            lastMessageTimestamp: serverTimestamp(), // Here serverTimestamp() is fine
-                            hasUnreadAdmin: isCurrentUserAdmin ? false : true, 
-                            hasUnreadUser: isCurrentUserAdmin ? true : false, 
-                        });
-                    } else { // User-to-user chat
-                        const updateData = {
-                            lastMessage: newMessage,
-                            lastMessageTimestamp: serverTimestamp(), // Here serverTimestamp() is fine
-                            [`hasUnread.${currentUser.uid}`]: false, // Current user sent, so they read it
-                        };
-                        // Mark other participants as unread
-                        participantInfo.participants.forEach(pId => {
-                            if (pId !== currentUser.uid) {
-                                updateData[`hasUnread.${pId}`] = true;
-                            }
-                        });
-                        await updateDoc(doc(db, "userChats", chatId), updateData);
-                    }
+                    await setDoc(doc(db, "chats", user.uid), {
+                        lastMessage: newMessage,
+                        lastMessageTimestamp: serverTimestamp(),
+                        userId: user.uid,
+                        userName: user.displayName || user.email,
+                        userEmail: user.email,
+                        hasUnreadAdmin: true, // Admin needs to read this
+                        hasUnreadUser: false, // User just sent, so they've read it
+                    }, { merge: true });
 
                     setNewMessage('');
                 } catch (error) {
@@ -2035,20 +1986,37 @@
                 }
             };
 
-            const chatTitle = chatType === 'admin' ? t.chatWithAdmin : (participantInfo?.displayPeerName || t.chatWithUser || 'Чат с пользователем');
+            const copyUserIdToClipboard = () => {
+                if (user && user.uid) {
+                    navigator.clipboard.writeText(user.uid).then(() => {
+                        setAlertInfo({ message: t.idCopied || 'ID скопирован в буфер обмена!' });
+                    }, (err) => {
+                        console.error('Could not copy text: ', err);
+                    });
+                }
+            };
+
 
             return (
-                <Modal onClose={onClose} size="max-w-4xl">
-                    <h2 className="text-2xl font-bold text-primary mb-4 text-center">{chatTitle}</h2>
+                <Modal onClose={onClose} size="max-w-4xl"> {/* Use onClose from props */}
+                    <h2 className="text-2xl font-bold text-primary mb-4 text-center">{t.chatWithAdmin}</h2>
+                     {/* Your ID and Copy button are now in ChatsPage, not here */}
+                    {/* <div className="flex justify-between items-center bg-tertiary p-3 rounded-lg mb-4">
+                        <p className="text-secondary text-sm">{t.yourId || 'Ваш уникальный ID для связи'}: <span className="font-mono text-primary">{user.uid}</span></p>
+                        <button onClick={copyUserIdToClipboard} className="bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold py-1 px-3 rounded-lg">
+                            {t.clickToCopy || 'Нажмите, чтобы скопировать'}
+                        </button>
+                    </div> */}
+
                     <div className="flex-grow overflow-y-auto pr-2 mb-4 space-y-4 h-96">
-                        {loadingMessages ? <LoadingSpinner /> : (
+                        {loading ? <LoadingSpinner /> : (
                             messages.length === 0 ? (
                                 <p className="text-center text-secondary text-xl mt-12">{t.noChatMessages}</p>
                             ) : (
                                 messages.map((msg) => (
-                                    <div key={msg.id} className={`flex ${msg.senderId === currentUser.uid ? 'justify-end' : 'justify-start'}`}>
-                                        <div className={`${msg.senderId === currentUser.uid ? 'accent-bg text-white rounded-bl-none' : 'bg-tertiary rounded-br-none'} max-w-[75%] p-3 rounded-lg shadow`}>
-                                            <p className="font-bold text-sm mb-1">{msg.senderId === currentUser.uid ? t.you : (msg.senderName || t.user)}</p>
+                                    <div key={msg.id} className={`flex ${msg.isAdmin ? 'justify-start' : 'justify-end'}`}>
+                                        <div className={`${msg.isAdmin ? 'bg-tertiary rounded-br-none' : 'accent-bg text-white rounded-bl-none'} max-w-[75%] p-3 rounded-lg shadow`}>
+                                            <p className="font-bold text-sm mb-1">{msg.isAdmin ? 'Admin' : (msg.senderName || t.you)}</p>
                                             <p>{msg.message}</p>
                                             <p className="text-xs mt-1 text-right opacity-70">
                                                 {msg.timestamp?.toDate ? new Date(msg.timestamp.toDate()).toLocaleTimeString() : ''}
@@ -2067,134 +2035,53 @@
                             onChange={(e) => setNewMessage(e.target.value)}
                             placeholder={t.enterMessagePlaceholder}
                             className="flex-grow p-3 bg-tertiary rounded-l-lg border-color text-primary focus:outline-none focus:ring-2 accent-border"
-                            disabled={!currentUser}
+                            disabled={!user}
                         />
-                        <button type="submit" className="accent-bg hover:accent-bg-secondary text-white font-bold py-3 px-6 rounded-r-lg transition-colors disabled:bg-gray-500" disabled={!currentUser}>
+                        <button type="submit" className="accent-bg hover:accent-bg-secondary text-white font-bold py-3 px-6 rounded-r-lg transition-colors disabled:bg-gray-500" disabled={!user}>
                             {t.send || 'Отправить'}
                         </button>
                     </form>
-                    {!currentUser && <p className="text-red-500 text-center text-sm mt-2">{t.loginForSupport}</p>}
+                    {!user && <p className="text-red-500 text-center text-sm mt-2">{t.loginForSupport}</p>}
                 </Modal>
             );
         }
 
-
         // --- New Chats Page Component ---
         function ChatsPage({ user, setAlertInfo, t }) {
-            const [isChatWindowOpen, setIsChatWindowOpen] = useState(false); // Renamed from isChatModalOpen
-            const [currentChatInfo, setCurrentChatInfo] = useState(null); // { chatId, chatType, participantInfo }
-            const [loadingChats, setLoadingChats] = useState(true); // Renamed from loadingUserChats
-            const [allChats, setAllChats] = useState([]); // Will hold both admin and user-to-user chats
-            const [isFindUserModalOpen, setIsFindUserModalOpen] = useState(false); // New state for find user modal
-            const [searchUserId, setSearchUserId] = useState('');
-            const [foundUser, setFoundUser] = useState(null);
-            const [searchError, setSearchError] = useState('');
-            const [loadingRequests, setLoadingRequests] = useState(true);
-            const [incomingRequests, setIncomingRequests] = useState([]);
-            const [outgoingRequests, setOutgoingRequests] = useState([]);
+            const [isChatModalOpen, setIsChatModalOpen] = useState(false);
+            const [loadingUserChats, setLoadingUserChats] = useState(true);
+            const [userChatsList, setUserChatsList] = useState([]); // List of main chat documents for admin to track
+            const [searchUserId, setSearchUserId] = useState(''); // New state for search input
+            const [foundUser, setFoundUser] = useState(null); // New state for found user
 
-
+            // This effect will listen for the user's chat with the admin (if it exists)
+            // and any new "user-to-user" chat requests.
             useEffect(() => {
-                if (!user) { 
-                    setLoadingChats(false);
-                    setLoadingRequests(false);
-                    setAllChats([]);
-                    setIncomingRequests([]);
-                    setOutgoingRequests([]);
-                    return; 
-                }
+                if (!user) { setLoadingUserChats(false); return; }
                 
-                // 1. Listen for the user's direct chat with admin
+                // Listener for the user's direct chat with admin
                 const adminChatQuery = query(collection(db, "chats"), where("userId", "==", user.uid));
-                const unsubscribeAdminChat = onSnapshot(adminChatQuery, async (snapshot) => {
-                    const adminChatDoc = snapshot.docs.length > 0 ? { id: snapshot.docs[0].id, ...snapshot.docs[0].data(), type: 'admin', displayPeerName: t.projectAdmin } : null;
+                const unsubscribeAdminChat = onSnapshot(adminChatQuery, (snapshot) => {
+                    // This assumes a user will only have one direct chat document with the admin
+                    // (the existing 'chats' collection is designed for user-admin chats).
+                    const chat = snapshot.docs.length > 0 ? { id: snapshot.docs[0].id, ...snapshot.docs[0].data(), type: 'admin' } : null;
                     
-                    // 2. Listen for all user-to-user chats where the current user is a participant
-                    const userChatsQuery = query(collection(db, "userChats"), where("participants", "array-contains", user.uid));
-                    const unsubscribeUserChats = onSnapshot(userChatsQuery, async (userChatsSnapshot) => {
-                        const userChatsData = await Promise.all(userChatsSnapshot.docs.map(async (docSnap) => {
-                            const chatData = docSnap.data();
-                            let displayPeerName = '';
-                            let isRequest = false;
-
-                            // Find the request relevant to the current user
-                            const relevantRequest = chatData.requests?.find(req => 
-                                (req.status === 'pending' && req.invitedId === user.uid) || // Incoming
-                                (req.status === 'pending' && req.requesterId === user.uid)  // Outgoing
-                            );
-
-                            if (relevantRequest) {
-                                isRequest = true;
-                                const peerId = relevantRequest.requesterId === user.uid ? relevantRequest.invitedId : relevantRequest.requesterId;
-                                const peerDoc = await getDoc(doc(db, 'users', peerId));
-                                displayPeerName = peerDoc.exists() ? (peerDoc.data().displayName || peerDoc.data().email) : t.unknownUser;
-                            } else {
-                                // Regular active chat
-                                const otherParticipantId = chatData.participants.find(pId => pId !== user.uid);
-                                if (otherParticipantId) {
-                                    const otherUserDoc = await getDoc(doc(db, 'users', otherParticipantId));
-                                    displayPeerName = otherUserDoc.exists() ? (otherUserDoc.data().displayName || otherUserDoc.data().email) : t.unknownUser;
-                                } else {
-                                    // Should not happen for private chats, but good for groups
-                                    displayPeerName = chatData.name || t.groupChat; 
-                                }
-                            }
-
-                            // Determine if current user has unread messages in this chat
-                            // hasUnread for user-to-user chats is an object { UID: boolean }
-                            const hasUnread = chatData.hasUnread && chatData.hasUnread[user.uid];
-
-                            return { 
-                                id: docSnap.id, 
-                                ...chatData, 
-                                type: 'userToUser', 
-                                displayPeerName,
-                                isRequest,
-                                hasUnread,
-                                // Add a sortable timestamp if needed for requests too.
-                                sortTimestamp: chatData.lastMessageTimestamp || chatData.createdAt,
-                            };
-                        }));
-
-                        // Separate active chats from requests
-                        const activeUserChats = userChatsData.filter(chat => !chat.isRequest);
-                        const incoming = userChatsData.filter(chat => chat.isRequest && chat.requests.some(req => req.status === 'pending' && req.invitedId === user.uid));
-                        const outgoing = userChatsData.filter(chat => chat.isRequest && chat.requests.some(req => req.status === 'pending' && req.requesterId === user.uid));
-
-                        setIncomingRequests(incoming);
-                        setOutgoingRequests(outgoing);
-                        setLoadingRequests(false);
-
-
-                        // Combine all active chats
-                        const combinedChats = [];
-                        if (adminChatDoc) combinedChats.push(adminChatDoc);
-                        combinedChats.push(...activeUserChats);
-
-                        // Sort all combined chats by last message timestamp
-                        combinedChats.sort((a, b) => {
-                            const tsA = a.lastMessageTimestamp?.toMillis() || a.createdAt?.toMillis() || 0; // Use createdAt if lastMessageTimestamp not available
-                            const tsB = b.lastMessageTimestamp?.toMillis() || b.createdAt?.toMillis() || 0; // Use createdAt if lastMessageTimestamp not available
-                            return tsB - tsA;
-                        });
-
-                        setAllChats(combinedChats);
-                        setLoadingChats(false);
-
-                    }, (error) => {
-                        console.error("Error fetching user-to-user chats:", error);
-                        setLoadingChats(false);
-                        setLoadingRequests(false);
-                    });
-                    return () => unsubscribeUserChats();
+                    // Combine with other chat types if they existed
+                    // For now, we'll just put the admin chat in the list if it exists.
+                    // Later, we'll fetch 'userChats' and combine them.
+                    setUserChatsList(chat ? [chat] : []); 
+                    setLoadingUserChats(false);
                 }, (error) => {
-                    console.error("Error fetching user's admin chat document:", error);
-                    setLoadingChats(false);
-                    setLoadingRequests(false);
+                    console.error("Error fetching user's chat document:", error);
+                    setLoadingUserChats(false);
                 });
+
+                // Here we will add listeners for 'userChats' (private/group chats) in the future.
+                // For now, let's keep it focused on the search and request UI.
 
                 return () => {
                     unsubscribeAdminChat();
+                    // return unsubscribeUserChats(); // This will be added later
                 };
             }, [user]);
 
@@ -2208,186 +2095,94 @@
                 }
             };
 
+            // This function needs to search for other users.
+            // For now, we'll simulate a search or assume a 'users' collection.
+            // In a real app, you'd have a 'users' collection where you store user profiles (UID, displayName, photoURL).
             const handleFindUserById = async () => {
-                setFoundUser(null);
-                setSearchError('');
-
                 if (!searchUserId.trim()) {
-                    setSearchError(t.enterUserIdToFind || 'Введите ID пользователя для поиска.');
+                    setAlertInfo({ message: t.enterUserIdToFind || 'Введите ID пользователя для поиска.' });
+                    setFoundUser(null);
                     return;
                 }
 
                 if (searchUserId === user.uid) {
-                    setSearchError(t.cannotChatWithSelf || 'Вы не можете начать чат с самим собой.');
+                    setAlertInfo({ message: t.cannotChatWithSelf || 'Вы не можете начать чат с самим собой.' });
+                    setFoundUser(null);
                     return;
                 }
 
                 try {
-                    const userDocRef = doc(db, 'users', searchUserId);
+                    // Simulate fetching user data from a 'users' collection
+                    // In a real scenario, you'd have a `users` collection in Firestore
+                    // where you store public user profiles.
+                    const userDocRef = doc(db, 'users', searchUserId); // Assuming 'users' collection exists
                     const userDocSnap = await getDoc(userDocRef);
 
                     if (userDocSnap.exists()) {
                         setFoundUser({ id: userDocSnap.id, ...userDocSnap.data() });
+                        setAlertInfo({ message: t.userFound || 'Пользователь найден.' });
                     } else {
-                        setSearchError(t.userNotFound || 'Пользователь с таким ID не найден.');
+                        setFoundUser(null);
+                        setAlertInfo({ message: t.userNotFound || 'Пользователь с таким ID не найден.' });
                     }
                 } catch (error) {
                     console.error("Error searching user by ID:", error);
-                    setSearchError(`${t.errorOccurred}: ${error.message}`);
+                    setAlertInfo({ message: `${t.errorOccurred}: ${error.message}` });
+                    setFoundUser(null);
                 }
             };
 
             const handleSendChatRequest = async (targetUser) => {
                 if (!user || !targetUser) return;
 
-                // Check if a chat (or pending request) already exists between these two users
-                const existingChatQuery = query(
-                    collection(db, 'userChats'),
-                    where('participants', 'array-contains', user.uid),
-                    where('participants', 'array-contains', targetUser.id) // Check for both participants
-                );
-                const existingChatSnap = await getDocs(existingChatQuery);
-                const existingChat = existingChatSnap.docs.find(doc => {
-                    const data = doc.data();
-                    // Ensure it's exactly between these two, not a group with more people
-                    return data.participants.length === 2 && 
-                           data.participants.includes(user.uid) && 
-                           data.participants.includes(targetUser.id);
-                });
-
-                if (existingChat) {
-                    const chatData = existingChat.data();
-                    // Check if there's a pending request from current user to target
-                    if (chatData.requests && chatData.requests.some(req => req.status === 'pending' && req.invitedId === targetUser.id && req.requesterId === user.uid)) {
-                        setAlertInfo({ message: t.requestAlreadySent || 'Запрос на чат уже был отправлен этому пользователю.' });
-                        return;
-                    }
-                    // Check if there's an active chat (no pending requests)
-                    if (!chatData.requests || chatData.requests.every(req => req.status !== 'pending')) { 
-                        setAlertInfo({ message: t.chatAlreadyExists || 'Чат с этим пользователем уже существует.' });
-                        return;
-                    }
-                    // If there's an incoming pending request from target to current user, the user should accept it, not send new.
-                    if (chatData.requests && chatData.requests.some(req => req.status === 'pending' && req.invitedId === user.uid && req.requesterId === targetUser.id)) {
-                        setAlertInfo({ message: t.hasIncomingRequest || 'У вас уже есть входящий запрос от этого пользователя. Пожалуйста, примите его.' });
-                        return;
-                    }
-                }
+                // Implement the chat request logic here
+                // This would involve creating a new 'userChat' document or updating an existing one
+                // with a 'pending' invitation status.
 
                 try {
-                    const newChatDocRef = doc(collection(db, 'userChats')); 
+                    // Check if a chat already exists between these two users
+                    // A proper implementation would check for existing chat documents
+                    // where both user.uid and targetUser.id are in the 'participants' array.
+                    // For simplicity, we'll assume a new chat/request for now.
+
+                    const newChatDocRef = doc(collection(db, 'userChats')); // Create a new document reference with auto-generated ID
                     
+                    // Create the initial chat document with a pending request
                     await setDoc(newChatDocRef, {
-                        participants: [user.uid, targetUser.id],
+                        participants: [user.uid, targetUser.id], // Both users are participants
                         type: 'private',
-                        name: `${user.displayName || user.email} & ${targetUser.displayName || targetUser.email}`,
-                        createdAt: new Date(), // Use new Date() here
-                        lastMessage: t.chatRequestSentInitialMessage || 'Запрос на чат отправлен.',
-                        lastMessageTimestamp: new Date(), // Use new Date() here
+                        name: `${user.displayName || user.email} & ${targetUser.displayName || targetUser.email}`, // Auto-generated name for private chat
+                        createdAt: serverTimestamp(),
+                        lastMessage: t.chatRequestSent || 'Запрос на чат отправлен.',
+                        lastMessageTimestamp: serverTimestamp(),
+                        // Add a subcollection for requests or a field in the chat document
                         requests: [{
                             requesterId: user.uid,
                             invitedId: targetUser.id,
                             status: 'pending',
-                            timestamp: new Date() // Use new Date() here
+                            timestamp: serverTimestamp()
                         }],
-                        hasUnread: {
-                            [targetUser.id]: true // Mark as unread for the target user (for the request)
+                        // For user notifications
+                        hasUnreadRequest: {
+                            [targetUser.id]: true // Mark as unread for the target user
                         }
                     });
 
+                    // Add an initial message to the chat's messages subcollection
                     await addDoc(collection(db, `userChats/${newChatDocRef.id}/messages`), {
                         senderId: user.uid,
                         senderName: user.displayName || user.email,
                         message: t.chatRequestMessage || `Я хочу начать с Вами чат. Пожалуйста, примите мой запрос.`,
-                        timestamp: new Date(), // Use new Date() here
+                        timestamp: serverTimestamp(),
                         isRead: false,
-                        isAdmin: false
+                        isAdmin: false // This is not an admin message
                     });
 
                     setAlertInfo({ message: `${t.chatRequestSent || 'Запрос на чат отправлен пользователю:'} ${targetUser.displayName || targetUser.email}` });
-                    setFoundUser(null);
-                    setSearchUserId('');
-                    setIsFindUserModalOpen(false); // Close the modal after sending
+                    setFoundUser(null); // Clear found user after sending request
+                    setSearchUserId(''); // Clear search input
                 } catch (error) {
                     console.error("Error sending chat request:", error);
-                    setAlertInfo({ message: `${t.errorOccurred}: ${error.message}` });
-                }
-            };
-
-            const handleAcceptRequest = async (chatId, requestIndex) => {
-                if (!user) return;
-                try {
-                    const chatRef = doc(db, 'userChats', chatId);
-                    const chatSnap = await getDoc(chatRef);
-                    if (chatSnap.exists()) {
-                        const chatData = chatSnap.data();
-                        const updatedRequests = [...chatData.requests];
-                        if (updatedRequests[requestIndex]) {
-                            updatedRequests[requestIndex].status = 'accepted';
-                        }
-                        
-                        // Clear unread request flag for this user
-                        const updatedUnread = { ...chatData.hasUnread, [user.uid]: false };
-
-                        await updateDoc(chatRef, { 
-                            requests: updatedRequests,
-                            lastMessage: t.chatAcceptedMessage || 'Чат был принят.',
-                            lastMessageTimestamp: serverTimestamp(), // Here serverTimestamp() is fine as it's top-level
-                            hasUnread: updatedUnread,
-                        });
-
-                        await addDoc(collection(db, `userChats/${chatId}/messages`), {
-                            senderId: user.uid,
-                            senderName: user.displayName || user.email,
-                            message: t.chatAcceptedMessage || 'Чат был принят.',
-                            timestamp: new Date(), // Use new Date() here
-                            isRead: false,
-                            isAdmin: false
-                        });
-
-                        setAlertInfo({ message: t.requestAccepted || 'Запрос принят! Чат теперь активен.' });
-                    }
-                } catch (error) {
-                    console.error("Error accepting chat request:", error);
-                    setAlertInfo({ message: `${t.errorOccurred}: ${error.message}` });
-                }
-            };
-
-            const handleRejectRequest = async (chatId, requestIndex) => {
-                if (!user) return;
-                try {
-                    const chatRef = doc(db, 'userChats', chatId);
-                    const chatSnap = await getDoc(chatRef);
-                    if (chatSnap.exists()) {
-                        const chatData = chatSnap.data();
-                        const updatedRequests = [...chatData.requests];
-                        if (updatedRequests[requestIndex]) {
-                            updatedRequests[requestIndex].status = 'rejected';
-                        }
-                        
-                        // Clear unread request flag for this user
-                        const updatedUnread = { ...chatData.hasUnread, [user.uid]: false };
-
-                        await updateDoc(chatRef, { 
-                            requests: updatedRequests,
-                            lastMessage: t.chatRejectedMessage || 'Запрос на чат отклонен.',
-                            lastMessageTimestamp: serverTimestamp(), // Here serverTimestamp() is fine
-                            hasUnread: updatedUnread,
-                        });
-
-                        await addDoc(collection(db, `userChats/${chatId}/messages`), {
-                            senderId: user.uid,
-                            senderName: user.displayName || user.email,
-                            message: t.chatRejectedMessage || 'Запрос на чат отклонен.',
-                            timestamp: new Date(), // Use new Date() here
-                            isRead: false,
-                            isAdmin: false
-                        });
-
-                        setAlertInfo({ message: t.requestRejected || 'Запрос отклонен.' });
-                    }
-                } catch (error) {
-                    console.error("Error rejecting chat request:", error);
                     setAlertInfo({ message: `${t.errorOccurred}: ${error.message}` });
                 }
             };
@@ -2400,146 +2195,88 @@
                         
                         {user && (
                             <div className="bg-tertiary p-3 rounded-lg mb-4 flex justify-between items-center flex-wrap">
-                                <p className="text-secondary text-sm">
-                                    {t.yourId || 'Ваш уникальный ID для связи'}: 
-                                    <span className="font-mono text-primary font-bold break-all ml-2">{user.uid}</span> {/* Made ID bold */}
-                                </p>
-                                <div className="flex items-center space-x-2 mt-2 md:mt-0">
-                                    <button onClick={copyUserIdToClipboard} className="bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold py-1 px-3 rounded-lg">
-                                        {t.clickToCopy || 'Нажмите, чтобы скопировать'}
-                                    </button>
-                                    <button onClick={() => setIsFindUserModalOpen(true)} className="bg-green-600 hover:bg-green-700 text-white font-bold p-2 rounded-full"> {/* Plus button */}
-                                        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clipRule="evenodd" /></svg>
-                                    </button>
-                                </div>
+                                <p className="text-secondary text-sm">{t.yourId || 'Ваш уникальный ID для связи'}: <span className="font-mono text-primary break-all">{user.uid}</span></p>
+                                <button onClick={copyUserIdToClipboard} className="bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold py-1 px-3 rounded-lg mt-2 md:mt-0">
+                                    {t.clickToCopy || 'Нажмите, чтобы скопировать'}
+                                </button>
                             </div>
                         )}
 
                         <div className="mb-6 space-y-4">
                             <h3 className="text-xl font-bold text-primary">{t.activeChats || 'Активные чаты'}</h3>
-                            {loadingChats ? <LoadingSpinner /> : (
-                                (allChats.length > 0) ? (
-                                    allChats.map(chat => (
+                            {loadingUserChats ? <LoadingSpinner /> : (
+                                (userChatsList.length > 0) ? (
+                                    userChatsList.map(chat => (
                                         <button 
                                             key={chat.id}
                                             onClick={() => {
-                                                setCurrentChatInfo({ 
-                                                    chatId: chat.id, 
-                                                    chatType: chat.type, 
-                                                    participantInfo: chat 
-                                                });
-                                                setIsChatWindowOpen(true);
+                                                // For now, if it's admin chat, open admin chat modal.
+                                                // Later, differentiate between admin chat and user-to-user chats.
+                                                if (chat.type === 'admin') {
+                                                    setIsChatModalOpen(true);
+                                                } else {
+                                                    // Logic to open user-to-user chat modal
+                                                    setAlertInfo({ message: `Opening chat with ${chat.name}` });
+                                                }
                                             }}
                                             className="w-full text-left p-3 bg-tertiary rounded-lg hover:bg-gray-700 transition-colors flex justify-between items-center"
                                         >
                                             <div>
-                                                <p className="font-semibold text-primary">{chat.displayPeerName}</p>
+                                                <p className="font-semibold text-primary">
+                                                    {chat.type === 'admin' ? t.projectAdmin || 'Администрация проекта' : (chat.name || 'Чат с пользователем')}
+                                                </p>
                                                 <p className="text-sm text-secondary truncate">{t.lastMessage || 'Последнее сообщение'}: {chat.lastMessage}</p>
                                             </div>
-                                            {chat.hasUnread && ( // hasUnread is now a boolean for the current user
+                                            {chat.hasUnreadUser && ( // User has unread from admin, indicates a new message for the user (for admin chat)
                                                 <span className="bg-red-500 text-white text-xs font-bold px-2 py-1 rounded-full">{t.new || 'Новое'}</span>
                                             )}
+                                             {/* Later, we'll add logic for user-to-user chat unread messages */}
                                         </button>
                                     ))
                                 ) : (
                                     <p className="text-secondary">{t.noActiveChats || 'Нет активных чатов. Начните новый чат с администрацией.'}</p>
                                 )
                             )}
-                            {/* Option to start a new chat with admin if no active chats with admin are found */}
-                            {user && allChats.every(chat => chat.type !== 'admin') && (
-                                <button onClick={() => {
-                                    setCurrentChatInfo({ 
-                                        chatId: user.uid, // Admin chat uses user's UID as doc ID
-                                        chatType: 'admin', 
-                                        participantInfo: { displayPeerName: t.projectAdmin } // Dummy info for admin chat
-                                    });
-                                    setIsChatWindowOpen(true);
-                                }} className="w-full accent-bg hover:accent-bg-secondary text-white font-bold py-2 px-4 rounded-lg transition-colors mt-4">
+                            {/* Option to start a new chat with admin if no active chats, or always */}
+                             {user && userChatsList.every(chat => chat.type !== 'admin') && ( // Only show if user is logged in and no active admin chat
+                                <button onClick={() => setIsChatModalOpen(true)} className="w-full accent-bg hover:accent-bg-secondary text-white font-bold py-2 px-4 rounded-lg transition-colors mt-4">
                                     {t.startNewChat || 'Начать новый чат с администрацией'}
                                 </button>
                             )}
                         </div>
 
-                        {/* Moved "Find User To Chat" into a modal triggered by the plus button */}
-                        {isFindUserModalOpen && (
-                            <Modal onClose={() => { setIsFindUserModalOpen(false); setFoundUser(null); setSearchError(''); setSearchUserId(''); }} size="max-w-md">
-                                <h3 className="text-2xl font-bold text-primary mb-4 text-center">{t.findUserToChat || 'Найти пользователя для чата'}</h3>
-                                <div className="flex space-x-2 mb-4">
-                                    <input type="text" value={searchUserId} onChange={e => setSearchUserId(e.target.value)} placeholder={t.enterUserIdToFind || 'Введите ID пользователя'} className="flex-grow p-3 bg-primary rounded-lg border-color text-primary"/>
-                                    <button onClick={handleFindUserById} className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg">{t.findUser || 'Найти'}</button>
-                                </div>
-
-                                {searchError && <p className="text-red-500 text-sm mt-2 text-center">{searchError}</p>}
-                                {foundUser && (
-                                    <div className="mt-4 p-3 bg-secondary rounded-lg flex flex-col md:flex-row justify-between items-center text-center md:text-left">
-                                        <div className="mb-2 md:mb-0">
-                                            <p className="font-semibold text-primary">{foundUser.displayName || foundUser.email}</p>
-                                            <p className="text-sm text-secondary break-all">{foundUser.id}</p>
-                                        </div>
-                                        <button onClick={() => handleSendChatRequest(foundUser)} className="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded-lg">
-                                            {t.sendChatRequest || 'Отправить запрос на чат'}
-                                        </button>
-                                    </div>
-                                )}
-                            </Modal>
-                        )}
-
-
-                        {/* Incoming Chat Requests */}
+                        {/* New section for finding other users and sending chat requests */}
                         <div className="space-y-4 mb-6 p-4 bg-tertiary rounded-lg border-color">
-                            <h3 className="text-xl font-bold text-primary">{t.incomingChatRequests || 'Входящие запросы на чат'}</h3>
-                            {loadingRequests ? <LoadingSpinner /> : (
-                                incomingRequests.length === 0 ? (
-                                    <p className="text-secondary text-sm">{t.noIncomingRequests || 'Нет входящих запросов.'}</p>
-                                ) : (
-                                    incomingRequests.map(request => (
-                                        <div key={request.id} className="p-3 bg-secondary rounded-lg flex flex-col md:flex-row justify-between items-center mb-2">
-                                            <div>
-                                                <p className="font-semibold text-primary">{t.requestFrom}: {request.displayPeerName}</p>
-                                                <p className="text-sm text-secondary">{t.message}: {request.lastMessage}</p>
-                                            </div>
-                                            <div className="flex space-x-2 mt-2 md:mt-0">
-                                                <button onClick={() => handleAcceptRequest(request.id, request.requests.findIndex(req => req.invitedId === user.uid && req.status === 'pending'))} className="bg-green-600 hover:bg-green-700 text-white font-bold py-1 px-3 rounded-lg text-sm">{t.accept || 'Принять'}</button>
-                                                <button onClick={() => handleRejectRequest(request.id, request.requests.findIndex(req => req.invitedId === user.uid && req.status === 'pending'))} className="bg-red-600 hover:bg-red-700 text-white font-bold py-1 px-3 rounded-lg text-sm">{t.reject || 'Отклонить'}</button>
-                                            </div>
-                                        </div>
-                                    ))
-                                )
+                            <h3 className="text-xl font-bold text-primary">{t.findUserToChat || 'Найти пользователя для чата'}</h3>
+                            <div className="flex space-x-2">
+                                <input type="text" value={searchUserId} onChange={e => setSearchUserId(e.target.value)} placeholder={t.enterUserIdToFind || 'Введите ID пользователя'} className="flex-grow p-3 bg-primary rounded-lg border-color text-primary"/>
+                                <button onClick={handleFindUserById} className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg">{t.findUser || 'Найти'}</button>
+                            </div>
+
+                            {foundUser && (
+                                <div className="mt-4 p-3 bg-secondary rounded-lg flex justify-between items-center">
+                                    <div>
+                                        <p className="font-semibold text-primary">{foundUser.displayName || foundUser.email}</p>
+                                        <p className="text-sm text-secondary">{foundUser.id}</p>
+                                    </div>
+                                    <button onClick={() => handleSendChatRequest(foundUser)} className="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded-lg">
+                                        {t.sendChatRequest || 'Отправить запрос на чат'}
+                                    </button>
+                                </div>
                             )}
                         </div>
 
-                        {/* Outgoing Chat Requests */}
-                        <div className="space-y-4 p-4 bg-tertiary rounded-lg border-color">
-                            <h3 className="text-xl font-bold text-primary">{t.outgoingChatRequests || 'Исходящие запросы на чат'}</h3>
-                            {loadingRequests ? <LoadingSpinner /> : (
-                                outgoingRequests.length === 0 ? (
-                                    <p className="text-secondary text-sm">{t.noOutgoingRequests || 'Нет исходящих запросов.'}</p>
-                                ) : (
-                                    outgoingRequests.map(request => (
-                                        <div key={request.id} className="p-3 bg-secondary rounded-lg flex flex-col md:flex-row justify-between items-center mb-2">
-                                            <div>
-                                                <p className="font-semibold text-primary">{t.requestTo}: {request.displayPeerName}</p>
-                                                <p className="text-sm text-secondary">{t.status}: {t.pending || 'Ожидает'}</p>
-                                            </div>
-                                            {/* No actions needed for outgoing requests here, just display status */}
-                                        </div>
-                                    ))
-                                )
-                            )}
+                        {/* Existing "My Requests" section (can be repurposed for chat requests later) */}
+                        <div className="space-y-4">
+                            <h3 className="text-xl font-bold text-primary">{t.myRequests || 'Мои запросы'}</h3>
+                            <p className="text-secondary text-sm">{t.chatRequestsInfo || 'Здесь будут отображаться ваши исходящие и входящие запросы на чат.'}</p>
+                            <button className="w-full bg-gray-600 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded-lg transition-colors disabled:opacity-50" disabled>
+                                {t.viewRequests || 'Посмотреть мои запросы'}
+                            </button>
                         </div>
                         
                     </div>
-                    {isChatWindowOpen && user && currentChatInfo && (
-                        <ChatWindow 
-                            currentUser={user} 
-                            onClose={() => setIsChatWindowOpen(false)} 
-                            setAlertInfo={setAlertInfo} 
-                            t={t} 
-                            chatId={currentChatInfo.chatId} 
-                            chatType={currentChatInfo.chatType} 
-                            participantInfo={currentChatInfo.participantInfo}
-                        />
-                    )}
+                    {isChatModalOpen && user && <UserChatInterface user={user} onClose={() => setIsChatModalOpen(false)} setAlertInfo={setAlertInfo} t={t} />}
                 </div>
             );
         }
@@ -2629,11 +2366,10 @@
             const handleFindUserById = async () => {
                 const userIdToFind = prompt(t.enterUserIdToFind || 'Введите ID пользователя:');
                 if (userIdToFind) {
-                    // Admins will likely need to search across both 'chats' (admin-specific) and 'userChats'
-                    // For now, only searching 'chats'.
-                    const chatRef = doc(db, 'chats', userIdToFind); 
+                    const chatRef = doc(db, 'chats', userIdToFind); // This currently only finds admin chats. Needs to be updated for userChats.
                     const chatSnap = await getDoc(chatRef);
                     if (chatSnap.exists()) {
+                        // For admin, we should also try to get user data from 'users' collection
                         const userData = (await getDoc(doc(db, 'users', userIdToFind))).data();
                         setSelectedUserChat({ id: chatSnap.id, ...chatSnap.data(), userName: userData?.displayName || userData?.email || userIdToFind });
                     } else {
@@ -2810,23 +2546,14 @@
                             if (!docSnap.exists()) {
                                 setDoc(userDocRef, {
                                     uid: currentUser.uid,
-                                    displayName: currentUser.displayName || currentUser.email.split('@')[0], // Use email prefix if no display name
+                                    displayName: currentUser.displayName || 'Anonim',
                                     email: currentUser.email,
                                     photoURL: currentUser.photoURL || '',
                                     createdAt: serverTimestamp(),
                                     lastLogin: serverTimestamp()
                                 }, { merge: true });
                             } else {
-                                // Update existing user's display name and photoURL from auth if they change it in profile modal
-                                if (docSnap.data().displayName !== currentUser.displayName || docSnap.data().photoURL !== currentUser.photoURL) {
-                                    updateDoc(userDocRef, { 
-                                        displayName: currentUser.displayName || currentUser.email.split('@')[0], 
-                                        photoURL: currentUser.photoURL || '',
-                                        lastLogin: serverTimestamp()
-                                    });
-                                } else {
-                                    updateDoc(userDocRef, { lastLogin: serverTimestamp() });
-                                }
+                                updateDoc(userDocRef, { lastLogin: serverTimestamp() });
                             }
                         }).catch(error => console.error("Error setting user doc:", error));
                     }
@@ -2864,7 +2591,7 @@
             const handlePinSubmit = (pin, rememberMe) => {
                 if (pin === ADMIN_PIN) {
                     if (rememberMe) {
-                        const expiryTime = Date.now() + 15 * 60 * 1000; // Changed to 15 minutes
+                        const expiryTime = Date.now() + 10 * 60 * 1000; // 10 minutes
                         localStorage.setItem('adminSession', JSON.stringify({ expiryTime }));
                         setIsAdminSessionActive(true);
                     }
@@ -3178,7 +2905,7 @@
                 selectUserToChat: 'Выберите пользователя для просмотра чата.',
                 clearAllFaqs: 'Очистить все FAQ', // New translation
                 allFaqsCleared: 'Все FAQ успешно удалены.', // New translation
-                rememberMe: 'Запомнить меня (15 минут)', // New translation (updated to 15 minutes)
+                rememberMe: 'Запомнить меня (10 минут)', // New translation
                 cloneProduct: 'Клонировать товар', // New translation for product cloning
                 productCloned: 'Товар успешно клонирован!', // New translation for product cloning
                 copyText: 'Копия', // Used for naming cloned products
@@ -3229,25 +2956,6 @@
                 cannotChatWithSelf: 'Вы не можете начать чат с самим собой.', // New translation
                 chatRequestSent: 'Запрос на чат отправлен пользователю', // New translation
                 chatRequestMessage: 'Я хочу начать с Вами чат. Пожалуйста, примите мой запрос.', // New translation for initial chat message
-                requestAlreadySent: 'Запрос на чат уже был отправлен этому пользователю.', // New translation
-                chatAlreadyExists: 'Чат с этим пользователем уже существует.', // New translation
-                incomingChatRequests: 'Входящие запросы на чат', // New translation
-                noIncomingRequests: 'Нет входящих запросов.', // New translation
-                requestFrom: 'Запрос от', // New translation
-                accept: 'Принять', // New translation
-                outgoingChatRequests: 'Исходящие запросы на чат', // New translation
-                noOutgoingRequests: 'Нет исходящих запросов.', // New translation
-                requestTo: 'Запрос к', // New translation
-                pending: 'Ожидает', // New translation
-                chatAcceptedMessage: 'Чат был принят.', // New translation
-                chatRejectedMessage: 'Запрос на чат отклонен.', // New translation
-                requestAccepted: 'Запрос принят! Чат теперь активен.', // New translation
-                requestRejected: 'Запрос отклонен.', // New translation
-                chatWithUser: 'Чат с пользователем', // New translation
-                unknownUser: 'Неизвестный пользователь', // New translation
-                groupChat: 'Групповой чат', // New translation
-                chatRequestSentInitialMessage: 'Запрос на чат отправлен.', // New translation (more specific)
-                hasIncomingRequest: 'У вас уже есть входящий запрос от этого пользователя. Пожалуйста, примите его.', // New translation
             },
             en: {
                 home: 'Home', support: 'Support', faq: 'FAQ', adminPanelTitle: 'Admin Panel', profile: 'Profile', logout: 'Logout', login: 'Login',
@@ -3326,7 +3034,7 @@
                 clickToCopy: 'Click to copy',
                 clearAllFaqs: 'Clear All FAQs',
                 allFaqsCleared: 'All FAQs successfully cleared.',
-                rememberMe: 'Remember Me (15 minutes)',
+                rememberMe: 'Remember Me (10 minutes)',
                 cloneProduct: 'Clone Product',
                 productCloned: 'Product successfully cloned!',
                 copyText: 'Copy',
