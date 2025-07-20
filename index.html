@@ -47,7 +47,7 @@
         .admin-sidebar a.active { background-color: var(--accent-primary); color: white; }
     </style>
 </head>
-<body class="bg-primary text-primary">
+<body class="firm-dark bg-primary text-primary">
     <div id="root"></div>
 
     <script type="text/babel">
@@ -1093,8 +1093,7 @@
             
             const [language, setLanguage] = useState(() => localStorage.getItem('asonikLang') || 'ru');
             const [currency, setCurrency] = useState(() => localStorage.getItem('asonikCurrency') || 'UZS');
-            const [theme, setTheme] = useState('firm-dark'); // Always start with dark theme
-
+            
             const [profileVisible, setProfileVisible] = useState(false);
             const [selectedProduct, setSelectedProduct] = useState(null);
             const [isCartVisible, setIsCartVisible] = useState(false);
@@ -1108,11 +1107,6 @@
             const { cartItems, clearCart } = useCart();
             const isAdmin = user && user.uid === ADMIN_UID;
             const t = translations[language] || translations.ru;
-            
-            useEffect(() => { 
-                document.body.className = theme;
-                localStorage.setItem('asonikTheme', theme);
-            }, [theme]);
             
             useEffect(() => { localStorage.setItem('asonikLang', language); }, [language]);
             useEffect(() => { localStorage.setItem('asonikCurrency', currency); }, [currency]);
