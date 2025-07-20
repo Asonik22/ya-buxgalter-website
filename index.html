@@ -26,25 +26,15 @@
         body { font-family: 'Inter', sans-serif; -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; transition: background-color 0.3s, color 0.3s; }
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;900&display=swap');
         
-        /* --- THEMES --- */
-        :root, body.firm-dark {
+        /* --- THEME --- */
+        :root, body {
             --bg-primary: #111827; --bg-secondary: #1f2937; --bg-tertiary: #374151;
             --text-primary: #f9fafb; --text-secondary: #d1d5db;
             --accent-primary: #8b5cf6; --accent-secondary: #a78bfa;
             --border-color: #374151;
             --modal-overlay: rgba(17, 24, 39, 0.8);
         }
-        body.firm-light {
-            --bg-primary: #f3e8ff; --bg-secondary: #ffffff; --bg-tertiary: #f3f4f6;
-            --text-primary: #4c1d95; --text-secondary: #6d28d9;
-            --accent-primary: #8b5cf6; --accent-secondary: #a78bfa; --border-color: #e5e7eb;
-            --modal-overlay: rgba(243, 232, 255, 0.8);
-        }
         
-        /* --- Additional Styles --- */
-        .firm-light .bg-secondary { box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.05), 0 2px 4px -2px rgb(0 0 0 / 0.05); }
-        .firm-light .header-text { color: #4c1d95; }
-        .firm-light .header-text:hover { color: #6d28d9; }
         .accent-text { color: var(--accent-primary); }
         .accent-bg { background-color: var(--accent-primary); }
         .accent-bg-secondary { background-color: var(--accent-secondary); }
@@ -54,15 +44,10 @@
             display: flex; flex-direction: column; padding: 1rem; transform: translateX(100%); transition: transform 0.3s ease-out;
         }
         .mobile-menu-container.open { transform: translateX(0%); }
-        .mobile-menu-item {
-            padding: 0.75rem 1rem; margin-bottom: 0.5rem; font-size: 1.25rem; font-weight: 600;
-            color: var(--text-primary); cursor: pointer; border-radius: 0.5rem; transition: background-color 0.2s;
-        }
-        .mobile-menu-item:hover { background-color: var(--bg-secondary); }
         .admin-sidebar a.active { background-color: var(--accent-primary); color: white; }
     </style>
 </head>
-<body>
+<body class="bg-primary text-primary">
     <div id="root"></div>
 
     <script type="text/babel">
@@ -122,10 +107,10 @@
 
             const addToCart = (product, selectedVariant) => {
                 setCartItems(prevItems => {
-                    const itemInCart = prevItems.find(item => item.id === product.id && item.variant.nominal === selectedVariant.nominal);
+                    const itemInCart = prevItems.find(item => item.id === product.id && item.variant.nominal.ru === selectedVariant.nominal.ru);
                     if (itemInCart) {
                         return prevItems.map(item =>
-                            item.id === product.id && item.variant.nominal === selectedVariant.nominal
+                            item.id === product.id && item.variant.nominal.ru === selectedVariant.nominal.ru
                                 ? { ...item, quantity: item.quantity + 1 } : item
                         );
                     } else {
@@ -133,16 +118,16 @@
                     }
                 });
             };
-            const removeFromCart = (productId, variantNominal) => {
-                setCartItems(prevItems => prevItems.filter(item => !(item.id === productId && item.variant.nominal === variantNominal)));
+            const removeFromCart = (productId, variantNominalRu) => {
+                setCartItems(prevItems => prevItems.filter(item => !(item.id === productId && item.variant.nominal.ru === variantNominalRu)));
             };
-            const updateQuantity = (productId, variantNominal, quantity) => {
+            const updateQuantity = (productId, variantNominalRu, quantity) => {
                 if (quantity <= 0) {
-                    removeFromCart(productId, variantNominal);
+                    removeFromCart(productId, variantNominalRu);
                 } else {
                     setCartItems(prevItems =>
                         prevItems.map(item =>
-                            item.id === productId && item.variant.nominal === variantNominal
+                            item.id === productId && item.variant.nominal.ru === variantNominalRu
                                 ? { ...item, quantity } : item
                         )
                     );
@@ -161,13 +146,14 @@
 
         // --- Helper Components & Functions ---
         const generatePurchaseCode = () => 'A' + Math.random().toString(36).substr(2, 8).toUpperCase();
-        const Logo = ({t}) => ( <Link to="#/" className="flex items-center space-x-2 cursor-pointer"> <img src={logoBase64} alt="Asonik Store Logo" className="h-12 w-12 object-contain"/> <span className="text-2xl md:text-3xl font-bold header-text tracking-wider"> Asonik <span className="accent-text">Store</span> </span> </Link> );
+        const Logo = ({t}) => ( <Link to="#/" className="flex items-center space-x-2 cursor-pointer"> <img src={logoBase64} alt="Asonik Store Logo" className="h-12 w-12 object-contain"/> <span className="text-2xl md:text-3xl font-bold text-primary tracking-wider"> Asonik <span className="accent-text">Store</span> </span> </Link> );
         const LoadingSpinner = () => ( <div className="bg-primary min-h-screen flex items-center justify-center"><div className="animate-spin rounded-full h-32 w-32 border-t-4 border-b-4 border-purple-500"></div></div> );
-        const Modal = ({ children, onClose, size = 'max-w-md' }) => ( <div className="fixed inset-0 z-50 flex justify-center items-center p-4 transition-opacity duration-300" style={{backgroundColor: 'var(--modal-overlay)'}}> <div className={`bg-secondary rounded-2xl shadow-2xl p-6 md:p-8 w-full ${size} relative border-color transform transition-transform duration-300 scale-95 animate-scale-in`}> <button onClick={onClose} className="absolute top-4 right-4 text-secondary hover:text-primary transition-colors z-10"> <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg> </button> {children} </div> <style>{` @keyframes scale-in { from { transform: scale(0.95); opacity: 0; } to { transform: scale(1); opacity: 1; } } .animate-scale-in { animation: scale-in 0.2s ease-out forwards; } `}</style> </div> );
+        const Modal = ({ children, onClose, size = 'max-w-md' }) => ( <div className="fixed inset-0 z-50 flex justify-center items-center p-4 transition-opacity duration-300 backdrop-blur-sm" style={{backgroundColor: 'var(--modal-overlay)'}}> <div className={`bg-secondary rounded-2xl shadow-2xl p-6 md:p-8 w-full ${size} relative border-color transform transition-transform duration-300 scale-95 animate-scale-in`}> <button onClick={onClose} className="absolute top-4 right-4 text-secondary hover:text-primary transition-colors z-10"> <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg> </button> {children} </div> <style>{` @keyframes scale-in { from { transform: scale(0.95); opacity: 0; } to { transform: scale(1); opacity: 1; } } .animate-scale-in { animation: scale-in 0.2s ease-out forwards; } `}</style> </div> );
         const AlertModal = ({ message, onConfirm, onCancel, t }) => ( <Modal onClose={onCancel}> <div className="text-center"> <h2 className="text-2xl font-bold text-primary mb-4">{t.confirmation}</h2> <p className="text-secondary mb-6 whitespace-pre-wrap">{message}</p> <div className={`flex ${onConfirm ? 'justify-between' : 'justify-center'} space-x-4`}> <button onClick={onCancel} className="bg-tertiary hover:bg-gray-700 text-primary font-bold py-2 px-6 rounded-lg transition-colors">{onConfirm ? t.cancel : t.ok}</button> {onConfirm && ( <button onClick={onConfirm} className="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-6 rounded-lg transition-colors">{t.confirm}</button> )} </div> </div> </Modal> );
         const PinModal = ({ onSubmit, onClose, error, t }) => {
             const [pin, setPin] = useState('');
-            const handleSubmit = (e) => { e.preventDefault(); onSubmit(pin); };
+            const [remember, setRemember] = useState(false);
+            const handleSubmit = (e) => { e.preventDefault(); onSubmit(pin, remember); };
             return (
                 <Modal onClose={onClose} size="max-w-sm">
                     <form onSubmit={handleSubmit} className="text-center">
@@ -175,6 +161,10 @@
                         <p className="text-secondary mb-6">{t.enterPin}</p>
                         <input type="password" value={pin} onChange={(e) => setPin(e.target.value)} className="w-full p-3 bg-tertiary rounded-lg border-color text-primary text-center text-2xl tracking-[.5em]" maxLength="6" autoFocus />
                         {error && <p className="text-red-500 text-sm mt-2">{error}</p>}
+                        <div className="flex items-center justify-center mt-4">
+                            <input type="checkbox" id="rememberMe" checked={remember} onChange={(e) => setRemember(e.target.checked)} className="h-4 w-4 accent-purple-600"/>
+                            <label htmlFor="rememberMe" className="ml-2 text-secondary">{t.rememberMe15min}</label>
+                        </div>
                         <button type="submit" className="w-full mt-6 accent-bg hover:accent-bg-secondary text-white font-bold py-3 px-4 rounded-lg transition-colors">{t.enter}</button>
                     </form>
                 </Modal>
@@ -300,7 +290,7 @@
         };
 
         // --- Cart Components ---
-        function CartModal({ onClose, onCheckout, t, currency, convertPrice }) {
+        function CartModal({ onClose, onCheckout, t, currency, convertPrice, language }) {
             const { cartItems, removeFromCart, updateQuantity, cartTotal } = useCart();
             return (
                 <Modal onClose={onClose} size="max-w-2xl">
@@ -311,22 +301,22 @@
                         <>
                             <div className="space-y-4 max-h-[60vh] overflow-y-auto pr-2">
                                 {cartItems.map(item => (
-                                    <div key={`${item.id}-${item.variant.nominal}`} className="flex items-center justify-between bg-tertiary p-3 rounded-lg">
+                                    <div key={`${item.id}-${item.variant.nominal.ru}`} className="flex items-center justify-between bg-tertiary p-3 rounded-lg">
                                         <div className="flex items-center space-x-4">
-                                            <img src={item.imageUrls?.[0] || item.imageUrl} alt={item.name} className="w-16 h-16 rounded-md object-cover"/>
+                                            <img src={item.imageUrls?.[0] || item.imageUrl} alt={item.name[language] || item.name.ru} className="w-16 h-16 rounded-md object-cover"/>
                                             <div>
-                                                <p className="font-bold text-primary">{item.name}</p>
-                                                <p className="text-sm text-secondary">{item.variant.nominal}</p>
+                                                <p className="font-bold text-primary">{item.name[language] || item.name.ru}</p>
+                                                <p className="text-sm text-secondary">{item.variant.nominal[language] || item.variant.nominal.ru}</p>
                                             </div>
                                         </div>
                                         <div className="flex items-center space-x-4">
                                             <div className="flex items-center space-x-2">
-                                                <button onClick={() => updateQuantity(item.id, item.variant.nominal, item.quantity - 1)} className="px-2 py-1 bg-primary rounded-md">-</button>
+                                                <button onClick={() => updateQuantity(item.id, item.variant.nominal.ru, item.quantity - 1)} className="px-2 py-1 bg-primary rounded-md">-</button>
                                                 <span>{item.quantity}</span>
-                                                <button onClick={() => updateQuantity(item.id, item.variant.nominal, item.quantity + 1)} className="px-2 py-1 bg-primary rounded-md">+</button>
+                                                <button onClick={() => updateQuantity(item.id, item.variant.nominal.ru, item.quantity + 1)} className="px-2 py-1 bg-primary rounded-md">+</button>
                                             </div>
                                             <p className="font-bold w-24 text-right">{convertPrice(item.variant.price * item.quantity, currency)}</p>
-                                            <button onClick={() => removeFromCart(item.id, item.variant.nominal)} className="text-red-500 hover:text-red-400">
+                                            <button onClick={() => removeFromCart(item.id, item.variant.nominal.ru)} className="text-red-500 hover:text-red-400">
                                                 <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
                                             </button>
                                         </div>
@@ -412,7 +402,7 @@
         }
 
         // --- Main User-Facing Components ---
-        function Header({ user, onLogin, onLogout, isAdmin, t, currency, setCurrency, language, setLanguage, setProfileVisible, theme, setTheme, onCartClick }) {
+        function Header({ user, onLogin, onLogout, isAdmin, t, currency, setCurrency, language, setLanguage, setProfileVisible, onCartClick }) {
             const { cartItems } = useCart();
             const { path } = useHashRouter();
             const [userDropdownOpen, setUserDropdownOpen] = useState(false);
@@ -420,7 +410,6 @@
             
             const langOptions = [{value: 'ru', label: t.russian}, {value: 'uz', label: t.uzbek}];
             const currencyOptions = [{value: 'USD', label: t.dollar}, {value: 'UZS', label: t.sum}];
-            const themeOptions = [{value: 'firm-light', label: t.lightTheme}, {value: 'firm-dark', label: t.darkTheme}];
 
             useEffect(() => {
                 function handleClickOutside(event) {
@@ -441,7 +430,6 @@
                             {isAdmin && <Link to="#/admin/dashboard" className="text-red-500 hover:text-red-400 font-medium transition-colors">{t.adminPanelTitle}</Link>}
                         </nav>
                         <div className="flex items-center space-x-2 sm:space-x-4">
-                            <div className="hidden md:block w-40 min-w-max"><CustomSelector value={theme} onChange={e => setTheme(e.target.value)} options={themeOptions} /></div>
                             <div className="hidden md:block w-28 min-w-max"><CustomSelector value={currency} onChange={e => setCurrency(e.target.value)} options={currencyOptions} /></div>
                             <div className="hidden md:block w-28 min-w-max"><CustomSelector value={language} onChange={e => setLanguage(e.target.value)} options={langOptions} /></div>
 
@@ -471,7 +459,7 @@
                 </header>
             );
         }
-        function HomePage({ products, onProductClick, t, currency, convertPrice, loading }) {
+        function HomePage({ products, onProductClick, t, currency, convertPrice, loading, language }) {
             const [searchTerm, setSearchTerm] = useState('');
             const [filterCategory, setFilterCategory] = useState('all');
             const [sortBy, setSortBy] = useState('new');
@@ -479,7 +467,7 @@
             const filteredAndSortedProducts = useMemo(() => {
                 return products
                     .filter(p => p.isOnSale === undefined || p.isOnSale !== false)
-                    .filter(p => p.name.toLowerCase().includes(searchTerm.toLowerCase()))
+                    .filter(p => (p.name[language] || p.name.ru).toLowerCase().includes(searchTerm.toLowerCase()))
                     .filter(p => filterCategory === 'all' || p.category === filterCategory)
                     .sort((a, b) => {
                         if (a.pinned && !b.pinned) return -1;
@@ -488,7 +476,7 @@
                         if (a.createdAt && b.createdAt) return b.createdAt.toMillis() - a.createdAt.toMillis();
                         return 0;
                     });
-            }, [products, searchTerm, filterCategory, sortBy]);
+            }, [products, searchTerm, filterCategory, sortBy, language]);
 
             const FilterButton = ({ value, state, setState, children }) => (
                 <button onClick={() => setState(value)} className={`px-4 py-2 rounded-lg text-sm transition-colors ${state === value ? 'accent-bg text-white' : 'bg-tertiary text-primary hover:bg-gray-600'}`}>
@@ -529,14 +517,14 @@
                     ) : (
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
                             {filteredAndSortedProducts.map(product => (
-                                <ProductCard key={product.id} {...{product, onProductClick, t, currency, convertPrice}} />
+                                <ProductCard key={product.id} {...{product, onProductClick, t, currency, convertPrice, language}} />
                             ))}
                         </div>
                     )}
                 </main>
             );
         }
-        function ProductCard({ product, onProductClick, t, currency, convertPrice }) {
+        function ProductCard({ product, onProductClick, t, currency, convertPrice, language }) {
             const imageUrl = (product.imageUrls && product.imageUrls.length > 0) ? product.imageUrls[0] : (product.imageUrl || '');
             const displayPrice = useMemo(() => {
                 if (product.variants && product.variants.length > 0) {
@@ -558,9 +546,9 @@
                 <div onClick={() => onProductClick(product)} className="bg-secondary rounded-2xl overflow-hidden shadow-lg border-color transform hover:-translate-y-2 transition-transform duration-300 flex flex-col cursor-pointer relative">
                     {product.pinned && <div className="absolute top-0 right-0 bg-yellow-400 text-black text-xs font-bold px-3 py-1 rounded-bl-lg z-10">{t.pinned}</div>}
                     {product.isOnSale === false && <span className="absolute top-2 left-2 bg-gray-500 text-white text-xs font-bold px-2 py-1 rounded-full">{t.removedFromSale || 'Снято с продажи'}</span>}
-                    <img className="w-full h-56 object-cover" src={imageUrl} alt={product.name} onError={(e) => { e.target.onerror = null; e.target.src=`https://placehold.co/600x400/1f2937/374151?text=${encodeURIComponent(t.imageNotFound)}`; }}/>
+                    <img className="w-full h-56 object-cover" src={imageUrl} alt={product.name[language] || product.name.ru} onError={(e) => { e.target.onerror = null; e.target.src=`https://placehold.co/600x400/1f2937/374151?text=${encodeURIComponent(t.imageNotFound)}`; }}/>
                     <div className="p-6 flex flex-col flex-grow">
-                        <h3 className="text-2xl font-bold text-primary mb-1">{product.name}</h3>
+                        <h3 className="text-2xl font-bold text-primary mb-1">{product.name[language] || product.name.ru}</h3>
                         <div className="flex-grow"></div>
                         <div className="flex justify-between items-center mt-4">
                             <span className="text-3xl font-bold accent-text">{displayPrice}</span>
@@ -572,7 +560,7 @@
                 </div>
             );
         }
-        function ProductModal({ product, user, onClose, setAlertInfo, t, currency, convertPrice }) {
+        function ProductModal({ product, user, onClose, setAlertInfo, t, currency, convertPrice, language }) {
             const [currentImageIndex, setCurrentImageIndex] = useState(0);
             const imageUrls = (product.imageUrls && product.imageUrls.length > 0) ? product.imageUrls : [product.imageUrl || ''];
             const [selectedVariantIndex, setSelectedVariantIndex] = useState(0);
@@ -587,15 +575,17 @@
                 setAlertInfo({ message: t.productAddedToCart || 'Товар добавлен в корзину!' });
                 onClose();
             };
+            
+            const variantDescription = currentVariant.description ? (currentVariant.description[language] || currentVariant.description.ru) : (product.description[language] || product.description.ru);
 
             return (
                 <Modal onClose={onClose} size="max-w-4xl">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                         <div> {/* Image viewer */}
-                           <img src={imageUrls[currentImageIndex]} alt={product.name} className="w-full h-auto object-cover rounded-lg"/>
+                           <img src={imageUrls[currentImageIndex]} alt={product.name[language] || product.name.ru} className="w-full h-auto object-cover rounded-lg"/>
                         </div>
                         <div className="flex flex-col">
-                            <h2 className="text-4xl font-bold text-primary mb-2">{product.name}</h2>
+                            <h2 className="text-4xl font-bold text-primary mb-2">{product.name[language] || product.name.ru}</h2>
                             {product.variants && product.variants.length > 0 && (
                                 <div className="my-4 space-y-2">
                                     <p className="text-lg font-semibold text-primary">{t.chooseOption || 'Выберите вариант:'}</p>
@@ -603,7 +593,7 @@
                                         {product.variants.map((variant, index) => (
                                             <button key={index} onClick={() => setSelectedVariantIndex(index)}
                                                 className={`px-4 py-2 rounded-lg text-sm font-semibold transition-colors ${selectedVariantIndex === index ? 'accent-bg text-white' : 'bg-tertiary text-primary hover:bg-gray-600'}`}>
-                                                {variant.nominal} - {convertPrice(variant.price, currency)}
+                                                {(variant.nominal[language] || variant.nominal.ru)} - {convertPrice(variant.price, currency)}
                                             </button>
                                         ))}
                                     </div>
@@ -612,7 +602,7 @@
                                     )}
                                 </div>
                             )}
-                            <p className="text-secondary mb-6 flex-grow">{product.description}</p>
+                            <p className="text-secondary mb-6 flex-grow">{variantDescription}</p>
                             <div className="flex justify-between items-center">
                                 <span className="text-5xl font-bold accent-text">{convertPrice(currentVariant.price || product.price, currency)}</span>
                                 <button onClick={handleAddToCart} className="accent-bg hover:accent-bg-secondary text-white font-bold py-4 px-8 rounded-lg text-lg" disabled={currentVariant.stockQuantity !== undefined && currentVariant.stockQuantity <= 0}>
@@ -624,7 +614,7 @@
                 </Modal>
             );
         }
-        function MyPurchasesPage({ user, t, currency, convertPrice, setAlertInfo }) {
+        function MyPurchasesPage({ user, t, currency, convertPrice, setAlertInfo, language }) {
             const [myPurchases, setMyPurchases] = useState([]);
             const [loading, setLoading] = useState(true);
 
@@ -636,6 +626,9 @@
                     purchasesData.sort((a, b) => (b.timestamp?.toMillis() || 0) - (a.timestamp?.toMillis() || 0));
                     setMyPurchases(purchasesData);
                     setLoading(false);
+                }, (error) => {
+                    console.error("Error fetching purchases:", error);
+                    setLoading(false);
                 });
                 return () => unsubscribe();
             }, [user]);
@@ -643,30 +636,30 @@
             const getStatusClass = (status) => ({ approved: 'bg-green-500', rejected: 'bg-red-500', contacted: 'bg-blue-500', cancelled: 'bg-gray-500' }[status] || 'bg-yellow-500');
             const getStatusText = (status) => ({ approved: t.statusApproved, rejected: t.statusRejected, contacted: t.statusContacted, cancelled: t.statusCancelled }[status] || t.statusPending);
 
+            if (loading) return <LoadingSpinner />;
+
             return (
                 <div className="container mx-auto p-4 md:p-8">
                     <h1 className="text-4xl font-bold text-center mb-8 text-primary">{t.myPurchases}</h1>
-                    {loading ? <LoadingSpinner /> : (
-                        myPurchases.length === 0 ? <p className="text-center text-secondary">{t.noPurchasesYet}</p> : (
-                            <div className="space-y-4 max-w-3xl mx-auto">
-                                {myPurchases.map(p => (
-                                    <div key={p.id} className="bg-secondary p-4 rounded-lg">
-                                        <div className="flex justify-between items-start flex-wrap">
-                                            <div>
-                                                <p className="font-mono text-sm accent-text bg-tertiary inline-block px-2 py-1 rounded my-1">Код: {p.purchaseCode}</p>
-                                                <p className="text-sm text-secondary">{p.timestamp?.toDate ? new Date(p.timestamp.toDate()).toLocaleString() : '...'}</p>
-                                                <p className="text-sm text-secondary">{t.amount}: {convertPrice(p.totalPrice, currency)}</p>
-                                            </div>
-                                            <span className={`mt-2 sm:mt-0 px-2 py-1 text-xs font-bold text-white rounded-full ${getStatusClass(p.status)}`}>{getStatusText(p.status)}</span>
+                    {myPurchases.length === 0 ? <p className="text-center text-secondary">{t.noPurchasesYet}</p> : (
+                        <div className="space-y-4 max-w-3xl mx-auto">
+                            {myPurchases.map(p => (
+                                <div key={p.id} className="bg-secondary p-4 rounded-lg">
+                                    <div className="flex justify-between items-start flex-wrap">
+                                        <div>
+                                            <p className="font-mono text-sm accent-text bg-tertiary inline-block px-2 py-1 rounded my-1">Код: {p.purchaseCode}</p>
+                                            <p className="text-sm text-secondary">{p.timestamp?.toDate ? new Date(p.timestamp.toDate()).toLocaleString() : '...'}</p>
+                                            <p className="text-sm text-secondary">{t.amount}: {convertPrice(p.totalPrice, currency)}</p>
                                         </div>
-                                        <div className="mt-2 border-t border-gray-700 pt-2">
-                                            {p.items.map((item, index) => <p key={index} className="text-primary">{item.name} ({item.variant.nominal}) x {item.quantity}</p>)}
-                                        </div>
-                                        {p.adminComment && <div className="mt-2 p-2 bg-tertiary rounded-md"><p className="text-sm text-secondary"><b>{t.adminComment}:</b> {p.adminComment}</p></div>}
+                                        <span className={`mt-2 sm:mt-0 px-2 py-1 text-xs font-bold text-white rounded-full ${getStatusClass(p.status)}`}>{getStatusText(p.status)}</span>
                                     </div>
-                                ))}
-                            </div>
-                        )
+                                    <div className="mt-2 border-t border-gray-700 pt-2">
+                                        {p.items && p.items.map((item, index) => <p key={index} className="text-primary">{(item.name[language] || item.name.ru)} ({(item.variant.nominal[language] || item.variant.nominal.ru)}) x {item.quantity}</p>)}
+                                    </div>
+                                    {p.adminComment && <div className="mt-2 p-2 bg-tertiary rounded-md"><p className="text-sm text-secondary"><b>{t.adminComment}:</b> {p.adminComment}</p></div>}
+                                </div>
+                            ))}
+                        </div>
                     )}
                 </div>
             );
@@ -736,28 +729,42 @@
         };
         const ProductEditModal = ({ product, onClose, t, setAlertInfo }) => {
             const [formData, setFormData] = useState({
-                name: '', description: '', category: 'games', imageUrls: [''], pinned: false, isOnSale: true,
-                variants: [{ nominal: '', price: 0, stockQuantity: 0 }],
+                name: { ru: '', uz: '' },
+                description: { ru: '', uz: '' },
+                category: 'games', imageUrls: [''], pinned: false, isOnSale: true,
+                variants: [{ nominal: { ru: '', uz: '' }, description: { ru: '', uz: '' }, price: 0, stockQuantity: 0, priceCurrency: 'UZS' }],
                 ...product,
+                name: product.name || { ru: '', uz: '' },
+                description: product.description || { ru: '', uz: '' },
                 imageUrls: product.imageUrls && product.imageUrls.length > 0 ? product.imageUrls : [''],
-                variants: product.variants && product.variants.length > 0 ? product.variants : [{ nominal: '', price: 0, stockQuantity: 0 }],
+                variants: product.variants && product.variants.length > 0 ? product.variants.map(v => ({...v, priceCurrency: v.priceCurrency || 'UZS'})) : [{ nominal: { ru: '', uz: '' }, description: { ru: '', uz: '' }, price: 0, stockQuantity: 0, priceCurrency: 'UZS' }],
             });
             const [isUploading, setIsUploading] = useState(false);
 
             const handleChange = (e) => {
                 const { name, value, type, checked } = e.target;
-                setFormData(prev => ({ ...prev, [name]: type === 'checkbox' ? checked : value }));
+                if (name === 'name.ru' || name === 'name.uz' || name === 'description.ru' || name === 'description.uz') {
+                    const [field, lang] = name.split('.');
+                    setFormData(prev => ({ ...prev, [field]: { ...prev[field], [lang]: value } }));
+                } else {
+                    setFormData(prev => ({ ...prev, [name]: type === 'checkbox' ? checked : value }));
+                }
             };
             
             const handleVariantChange = (index, e) => {
                 const { name, value } = e.target;
                 const newVariants = [...formData.variants];
-                newVariants[index][name] = name === 'price' || name === 'stockQuantity' ? Number(value) : value;
+                if (name.includes('.')) {
+                    const [field, lang] = name.split('.');
+                    newVariants[index][field] = { ...newVariants[index][field], [lang]: value };
+                } else {
+                    newVariants[index][name] = (name === 'price' || name === 'stockQuantity') ? Number(value) : value;
+                }
                 setFormData(prev => ({ ...prev, variants: newVariants }));
             };
 
             const addVariant = () => {
-                setFormData(prev => ({ ...prev, variants: [...prev.variants, { nominal: '', price: 0, stockQuantity: 0 }] }));
+                setFormData(prev => ({ ...prev, variants: [...prev.variants, { nominal: { ru: '', uz: '' }, description: { ru: '', uz: '' }, price: 0, stockQuantity: 0, priceCurrency: 'UZS' }] }));
             };
             
             const removeVariant = (index) => {
@@ -786,7 +793,14 @@
                 e.preventDefault();
                 setIsUploading(true);
                 try {
-                    const payload = { ...formData, createdAt: formData.createdAt || serverTimestamp() };
+                    const payload = { 
+                        ...formData, 
+                        variants: formData.variants.map(v => {
+                            const priceInRub = v.price / (currencyRates[v.priceCurrency] || 1);
+                            return { ...v, price: priceInRub };
+                        }),
+                        createdAt: formData.createdAt || serverTimestamp() 
+                    };
                     if (product.id) {
                         await setDoc(doc(db, "products", product.id), payload);
                         setAlertInfo({ message: t.productUpdated });
@@ -806,8 +820,12 @@
                 <Modal onClose={onClose} size="max-w-3xl">
                     <h2 className="text-2xl font-bold mb-4">{product.id ? t.editProduct : t.addProduct}</h2>
                     <form onSubmit={handleSubmit} className="space-y-4 max-h-[80vh] overflow-y-auto p-2">
-                        <input name="name" value={formData.name} onChange={handleChange} placeholder={t.productName} className="w-full p-2 bg-tertiary rounded" required />
-                        <textarea name="description" value={formData.description} onChange={handleChange} placeholder={t.description} className="w-full p-2 bg-tertiary rounded h-24" required />
+                        <input name="name.ru" value={formData.name.ru} onChange={handleChange} placeholder={t.productName + " (RU)"} className="w-full p-2 bg-tertiary rounded" required />
+                        <input name="name.uz" value={formData.name.uz} onChange={handleChange} placeholder={t.productName + " (UZ)"} className="w-full p-2 bg-tertiary rounded" required />
+                        
+                        <textarea name="description.ru" value={formData.description.ru} onChange={handleChange} placeholder={t.description + " (RU)"} className="w-full p-2 bg-tertiary rounded h-24" required />
+                        <textarea name="description.uz" value={formData.description.uz} onChange={handleChange} placeholder={t.description + " (UZ)"} className="w-full p-2 bg-tertiary rounded h-24" required />
+
                         <select name="category" value={formData.category} onChange={handleChange} className="w-full p-2 bg-tertiary rounded">
                             <option value="games">{t.games}</option>
                             <option value="apps">{t.apps}</option>
@@ -827,9 +845,18 @@
                         <div>
                             <h3 className="font-bold mb-2">{t.variants || 'Варианты'}</h3>
                             {formData.variants.map((variant, index) => (
-                                <div key={index} className="grid grid-cols-1 md:grid-cols-4 gap-2 mb-2 p-2 border border-color rounded">
-                                    <input name="nominal" value={variant.nominal} onChange={(e) => handleVariantChange(index, e)} placeholder={t.productNominal} className="w-full p-2 bg-tertiary rounded" required />
-                                    <input type="number" name="price" value={variant.price} onChange={(e) => handleVariantChange(index, e)} placeholder={t.priceInRub} className="w-full p-2 bg-tertiary rounded" required />
+                                <div key={index} className="p-2 border border-color rounded space-y-2 mb-2">
+                                    <input name="nominal.ru" value={variant.nominal.ru} onChange={(e) => handleVariantChange(index, e)} placeholder={t.productNominal + " (RU)"} className="w-full p-2 bg-tertiary rounded" required />
+                                    <input name="nominal.uz" value={variant.nominal.uz} onChange={(e) => handleVariantChange(index, e)} placeholder={t.productNominal + " (UZ)"} className="w-full p-2 bg-tertiary rounded" required />
+                                    <textarea name="description.ru" value={variant.description.ru} onChange={(e) => handleVariantChange(index, e)} placeholder={t.description + " (RU)"} className="w-full p-2 bg-tertiary rounded h-16" />
+                                    <textarea name="description.uz" value={variant.description.uz} onChange={(e) => handleVariantChange(index, e)} placeholder={t.description + " (UZ)"} className="w-full p-2 bg-tertiary rounded h-16" />
+                                    <div className="flex gap-2">
+                                        <input type="number" name="price" value={variant.price} onChange={(e) => handleVariantChange(index, e)} placeholder={t.price} className="w-full p-2 bg-tertiary rounded" required />
+                                        <select name="priceCurrency" value={variant.priceCurrency} onChange={(e) => handleVariantChange(index, e)} className="p-2 bg-tertiary rounded">
+                                            <option value="UZS">UZS</option>
+                                            <option value="USD">USD</option>
+                                        </select>
+                                    </div>
                                     <input type="number" name="stockQuantity" value={variant.stockQuantity} onChange={(e) => handleVariantChange(index, e)} placeholder={t.stock} className="w-full p-2 bg-tertiary rounded" required />
                                     {formData.variants.length > 1 && <button type="button" onClick={() => removeVariant(index)} className="bg-red-600 text-white px-3 py-1 rounded">{t.delete}</button>}
                                 </div>
@@ -853,7 +880,7 @@
                 </Modal>
             );
         };
-        const AdminProducts = ({ t, products, setAlertInfo }) => {
+        const AdminProducts = ({ t, products, setAlertInfo, language }) => {
             const [editingProduct, setEditingProduct] = useState(null);
 
             const handleDelete = (id) => {
@@ -891,7 +918,7 @@
                            <tbody>
                                 {products.map(p => (
                                     <tr key={p.id} className="border-b border-color">
-                                        <td className="p-3">{p.name}</td>
+                                        <td className="p-3">{p.name[language] || p.name.ru}</td>
                                         <td className="p-3">{p.category}</td>
                                         <td className="p-3">{p.variants?.[0]?.price || p.price} RUB</td>
                                         <td className="p-3">{p.variants?.reduce((s, v) => s + v.stockQuantity, 0) || 0}</td>
@@ -908,7 +935,7 @@
                 </div>
             );
         };
-        const AdminPurchases = ({ t, purchases, setAlertInfo, convertPrice, currency }) => {
+        const AdminPurchases = ({ t, purchases, setAlertInfo, convertPrice, currency, language }) => {
             const [searchTerm, setSearchTerm] = useState('');
 
             const filteredPurchases = useMemo(() => {
@@ -945,7 +972,7 @@
                                     <tr key={p.id} className="border-b border-color">
                                         <td className="p-3 whitespace-nowrap">{p.timestamp?.toDate().toLocaleDateString()}</td>
                                         <td className="p-3">{p.userEmail}</td>
-                                        <td className="p-3">{p.items.map(i => `${i.name} x${i.quantity}`).join(', ')}</td>
+                                        <td className="p-3">{p.items.map(i => `${i.name[language] || i.name.ru} x${i.quantity}`).join(', ')}</td>
                                         <td className="p-3">{convertPrice(p.totalPrice, currency)}</td>
                                         <td className="p-3">
                                             <select value={p.status} onChange={(e) => handleStatusChange(p.id, e.target.value)} className="bg-primary p-1 rounded">
@@ -1066,7 +1093,7 @@
             
             const [language, setLanguage] = useState(() => localStorage.getItem('asonikLang') || 'ru');
             const [currency, setCurrency] = useState(() => localStorage.getItem('asonikCurrency') || 'UZS');
-            const [theme, setTheme] = useState(() => localStorage.getItem('asonikTheme') || 'firm-light');
+            const [theme, setTheme] = useState(() => localStorage.getItem('asonikTheme') || 'firm-dark');
 
             const [profileVisible, setProfileVisible] = useState(false);
             const [selectedProduct, setSelectedProduct] = useState(null);
@@ -1177,14 +1204,14 @@
                         for (const item of cartItems) {
                             const productRef = doc(db, "products", item.id);
                             const productDoc = await transaction.get(productRef);
-                            if (!productDoc.exists()) throw new Error(`Product ${item.name} not found`);
+                            if (!productDoc.exists()) throw new Error(`Product ${item.name.ru} not found`);
                             
                             const variants = productDoc.data().variants;
-                            const variantIndex = variants.findIndex(v => v.nominal === item.variant.nominal);
-                            if (variantIndex === -1) throw new Error(`Variant ${item.variant.nominal} not found`);
+                            const variantIndex = variants.findIndex(v => v.nominal.ru === item.variant.nominal.ru);
+                            if (variantIndex === -1) throw new Error(`Variant ${item.variant.nominal.ru} not found`);
                             
                             const currentStock = variants[variantIndex].stockQuantity;
-                            if (currentStock < item.quantity) throw new Error(`${t.notEnoughStock || 'Недостаточно товара на складе для'} ${item.name} (${item.variant.nominal})`);
+                            if (currentStock < item.quantity) throw new Error(`${t.notEnoughStock || 'Недостаточно товара на складе для'} ${item.name.ru} (${item.variant.nominal.ru})`);
                             
                             variants[variantIndex].stockQuantity -= item.quantity;
                             transaction.update(productRef, { variants });
@@ -1224,17 +1251,17 @@
                     return (
                         <AdminLayout t={t}>
                             {adminRoute === 'dashboard' && <AdminDashboard t={t} purchases={purchases} products={products} currency={currency} convertPrice={convertPrice} />}
-                            {adminRoute === 'products' && <AdminProducts t={t} products={products} setAlertInfo={setAlertInfo} />}
-                            {adminRoute === 'purchases' && <AdminPurchases t={t} setAlertInfo={setAlertInfo} purchases={purchases} convertPrice={convertPrice} currency={currency} />}
+                            {adminRoute === 'products' && <AdminProducts t={t} products={products} setAlertInfo={setAlertInfo} language={language} />}
+                            {adminRoute === 'purchases' && <AdminPurchases t={t} setAlertInfo={setAlertInfo} purchases={purchases} convertPrice={convertPrice} currency={currency} language={language} />}
                             {adminRoute === 'faq' && <AdminFaq t={t} faqs={faqs} setAlertInfo={setAlertInfo} />}
                             {adminRoute === 'promo' && <AdminPromo t={t} promoCodes={promoCodes} setAlertInfo={setAlertInfo} />}
                         </AdminLayout>
                     );
                 }
                 switch (path) {
-                    case '#/purchases': return user ? <MyPurchasesPage {...{user, t, currency, convertPrice, setAlertInfo}} /> : <div className="text-center text-primary p-10">{t.loginToView}</div>;
+                    case '#/purchases': return user ? <MyPurchasesPage {...{user, t, currency, convertPrice, setAlertInfo, language}} /> : <div className="text-center text-primary p-10">{t.loginToView}</div>;
                     case '#/faq': return <FAQPage faqs={faqs} t={t} />;
-                    default: return <HomePage {...{products, onProductClick: setSelectedProduct, t, currency, convertPrice, loading: products.length === 0}} />;
+                    default: return <HomePage {...{products, onProductClick: setSelectedProduct, t, currency, convertPrice, loading: products.length === 0, language}} />;
                 }
             };
             
@@ -1242,13 +1269,13 @@
             
             return (
                 <div className="bg-primary min-h-screen font-sans flex flex-col">
-                    <Header {...{user, onLogin: handleLogin, onLogout: handleLogout, isAdmin, t, currency, setCurrency, language, setLanguage, setProfileVisible, theme, setTheme, onCartClick: () => setIsCartVisible(true)}} />
+                    <Header {...{user, onLogin: handleLogin, onLogout: handleLogout, isAdmin, t, currency, setCurrency, language, setLanguage, setProfileVisible, onCartClick: () => setIsCartVisible(true)}} />
                     <div className="flex-grow">
                         {renderContent()}
                     </div>
                     
-                    {selectedProduct && <ProductModal product={selectedProduct} user={user} onClose={() => setSelectedProduct(null)} setAlertInfo={setAlertInfo} t={t} currency={currency} convertPrice={convertPrice} />}
-                    {isCartVisible && <CartModal onClose={() => setIsCartVisible(false)} onCheckout={handleCheckout} t={t} currency={currency} convertPrice={convertPrice} />}
+                    {selectedProduct && <ProductModal product={selectedProduct} user={user} onClose={() => setSelectedProduct(null)} setAlertInfo={setAlertInfo} t={t} currency={currency} convertPrice={convertPrice} language={language} />}
+                    {isCartVisible && <CartModal onClose={() => setIsCartVisible(false)} onCheckout={handleCheckout} t={t} currency={currency} convertPrice={convertPrice} language={language} />}
                     {isCheckoutVisible && <CheckoutModal onClose={() => setIsCheckoutVisible(false)} onConfirm={handleConfirmPurchase} t={t} currency={currency} convertPrice={convertPrice} setAlertInfo={setAlertInfo} />}
                     {alertInfo && <AlertModal message={alertInfo.message} onConfirm={alertInfo.onConfirm} onCancel={() => setAlertInfo(null)} t={t} />}
                     {profileVisible && user && <ProfileModal user={user} onClose={() => setProfileVisible(false)} t={t} setAlertInfo={setAlertInfo} onLogout={handleLogout} />}
