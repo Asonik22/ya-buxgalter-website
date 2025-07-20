@@ -277,10 +277,12 @@
                 setIsOpen(false);
             };
 
+            const selectedOption = options.find(o => o.value === value);
+
             return (
                 <div className="relative" ref={wrapperRef}>
                     <button onClick={() => setIsOpen(!isOpen)} className="flex items-center justify-between w-full bg-tertiary hover:bg-gray-700 text-primary font-semibold py-2 px-4 rounded-lg transition-colors">
-                        <span>{options.find(o => o.value === value).label}</span>
+                        <span>{selectedOption ? selectedOption.label : value}</span>
                         <svg className={`w-4 h-4 transition-transform ${isOpen ? 'transform rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path></svg>
                     </button>
                     {isOpen && (
