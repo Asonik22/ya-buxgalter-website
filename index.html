@@ -26,30 +26,24 @@
         body { font-family: 'Inter', sans-serif; -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; transition: background-color 0.3s, color 0.3s; }
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;900&display=swap');
         
-        :root {
+        /* --- THEMES --- */
+        :root, body.asonik-dark {
             --bg-primary: #111827; --bg-secondary: #1f2937; --bg-tertiary: #374151;
             --text-primary: #f9fafb; --text-secondary: #d1d5db;
             --accent-primary: #8b5cf6; --accent-secondary: #a78bfa;
             --border-color: #374151;
         }
-        body.light {
-            --bg-primary: #f9fafb; --bg-secondary: #ffffff; --bg-tertiary: #f3f4f6;
-            --text-primary: #111827; --text-secondary: #4b5563;
-            --border-color: #e5e7eb;
-        }
-        body.asonik {
-            background: var(--bg-primary, linear-gradient(to bottom right, #f3e8ff, #ffffff));
-            --bg-secondary: #ffffff; --bg-tertiary: #f3f4f6;
+        body.asonik-light {
+            --bg-primary: #f3e8ff; --bg-secondary: #ffffff; --bg-tertiary: #f3f4f6;
             --text-primary: #4c1d95; --text-secondary: #6d28d9;
             --accent-primary: #8b5cf6; --accent-secondary: #a78bfa; --border-color: #e5e7eb;
         }
-        .asonik .accent-text { color: var(--accent-primary); }
-        .asonik .text-primary { color: var(--text-primary); }
-        .asonik .text-secondary { color: var(--text-secondary); }
-        .asonik .bg-secondary { box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.05), 0 2px 4px -2px rgb(0 0 0 / 0.05); }
-        .asonik .border-color { border-color: var(--border-color); }
-        .asonik .header-text { color: #4c1d95; }
-        .asonik .header-text:hover { color: #6d28d9; }
+        
+        /* --- Additional Styles --- */
+        .asonik-light .bg-secondary { box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.05), 0 2px 4px -2px rgb(0 0 0 / 0.05); }
+        .asonik-light .header-text { color: #4c1d95; }
+        .asonik-light .header-text:hover { color: #6d28d9; }
+        .accent-text { color: var(--accent-primary); }
 
         .mobile-menu-container {
             position: fixed; top: 0; left: 0; right: 0; bottom: 0; background-color: var(--bg-primary); z-index: 50;
@@ -165,7 +159,7 @@
         const generatePurchaseCode = () => 'A' + Math.random().toString(36).substr(2, 8).toUpperCase();
         const Logo = ({t}) => ( <Link to="#/" className="flex items-center space-x-2 cursor-pointer"> <img src={logoBase64} alt="Asonik Store Logo" className="h-12 w-12 object-contain"/> <span className="text-2xl md:text-3xl font-bold header-text tracking-wider"> Asonik <span className="accent-text">Store</span> </span> </Link> );
         const LoadingSpinner = () => ( <div className="bg-primary min-h-screen flex items-center justify-center"><div className="animate-spin rounded-full h-32 w-32 border-t-4 border-b-4 border-purple-500"></div></div> );
-        const Modal = ({ children, onClose, size = 'max-w-md' }) => ( <div className="fixed inset-0 bg-black bg-opacity-75 z-50 flex justify-center items-center p-4 transition-opacity duration-300"> <div className={`bg-secondary rounded-2xl shadow-2xl p-6 md:p-8 w-full ${size} relative border-color transform transition-transform duration-300 scale-95 animate-scale-in`}> <button onClick={onClose} className="absolute top-4 right-4 text-secondary hover:text-primary transition-colors z-10"> <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg> </button> {children} </div> <style>{` @keyframes scale-in { from { transform: scale(0.9); opacity: 0; } to { transform: scale(1); opacity: 1; } } .animate-scale-in { animation: scale-in 0.3s ease-out forwards; } `}</style> </div> );
+        const Modal = ({ children, onClose, size = 'max-w-md' }) => ( <div className="fixed inset-0 bg-gray-900 bg-opacity-80 z-50 flex justify-center items-center p-4 transition-opacity duration-300"> <div className={`bg-secondary rounded-2xl shadow-2xl p-6 md:p-8 w-full ${size} relative border-color transform transition-transform duration-300 scale-95 animate-scale-in`}> <button onClick={onClose} className="absolute top-4 right-4 text-secondary hover:text-primary transition-colors z-10"> <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg> </button> {children} </div> <style>{` @keyframes scale-in { from { transform: scale(0.95); opacity: 0; } to { transform: scale(1); opacity: 1; } } .animate-scale-in { animation: scale-in 0.2s ease-out forwards; } `}</style> </div> );
         const AlertModal = ({ message, onConfirm, onCancel, t }) => ( <Modal onClose={onCancel}> <div className="text-center"> <h2 className="text-2xl font-bold text-primary mb-4">{t.confirmation}</h2> <p className="text-secondary mb-6 whitespace-pre-wrap">{message}</p> <div className={`flex ${onConfirm ? 'justify-between' : 'justify-center'} space-x-4`}> <button onClick={onCancel} className="bg-tertiary hover:bg-gray-700 text-primary font-bold py-2 px-6 rounded-lg transition-colors">{onConfirm ? t.cancel : t.ok}</button> {onConfirm && ( <button onClick={onConfirm} className="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-6 rounded-lg transition-colors">{t.confirm}</button> )} </div> </div> </Modal> );
         const PinModal = ({ onSubmit, onClose, error, t }) => {
             const [pin, setPin] = useState('');
@@ -184,7 +178,6 @@
         };
         const ProfileModal = ({ user, onClose, t, setAlertInfo, onLogout }) => {
             const [isUploading, setIsUploading] = useState(false);
-            const [color, setColor] = useState('#8b5cf6');
             const fileInputRef = useRef(null);
             const [firstName, setFirstName] = useState('');
             const [lastName, setLastName] = useState('');
@@ -418,6 +411,10 @@
             const { path } = useHashRouter();
             const [userDropdownOpen, setUserDropdownOpen] = useState(false);
             const userDropdownRef = useRef(null);
+            
+            const langOptions = [{value: 'ru', label: t.russian}, {value: 'en', label: t.english}, {value: 'uz', label: t.uzbek}];
+            const currencyOptions = [{value: 'USD', label: t.dollar}, {value: 'UZS', label: t.sum}];
+            const themeOptions = [{value: 'asonik-dark', label: t.darkTheme}, {value: 'asonik-light', label: t.lightTheme}];
 
             useEffect(() => {
                 function handleClickOutside(event) {
@@ -438,6 +435,10 @@
                             {isAdmin && <Link to="#/admin/dashboard" className="text-red-500 hover:text-red-400 font-medium transition-colors">{t.adminPanelTitle}</Link>}
                         </nav>
                         <div className="flex items-center space-x-2 sm:space-x-4">
+                            <div className="hidden md:block w-32"><CustomSelector value={theme} onChange={e => setTheme(e.target.value)} options={themeOptions} /></div>
+                            <div className="hidden md:block w-28"><CustomSelector value={currency} onChange={e => setCurrency(e.target.value)} options={currencyOptions} /></div>
+                            <div className="hidden md:block w-28"><CustomSelector value={language} onChange={e => setLanguage(e.target.value)} options={langOptions} /></div>
+
                             <button onClick={onCartClick} className="relative p-2 rounded-full text-primary hover:bg-tertiary transition-colors">
                                 <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" /></svg>
                                 {cartItems.length > 0 && <span className="absolute -top-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-red-600 text-xs font-bold text-white">{cartItems.reduce((acc, item) => acc + item.quantity, 0)}</span>}
@@ -729,8 +730,8 @@
                 name: '', description: '', category: 'games', imageUrls: [''], pinned: false, isOnSale: true,
                 variants: [{ nominal: '', price: 0, stockQuantity: 0 }],
                 ...product,
-                imageUrls: product.imageUrls || [''],
-                variants: product.variants || [{ nominal: '', price: 0, stockQuantity: 0 }],
+                imageUrls: product.imageUrls && product.imageUrls.length > 0 ? product.imageUrls : [''],
+                variants: product.variants && product.variants.length > 0 ? product.variants : [{ nominal: '', price: 0, stockQuantity: 0 }],
             });
             const [isUploading, setIsUploading] = useState(false);
 
@@ -751,6 +752,7 @@
             };
             
             const removeVariant = (index) => {
+                if (formData.variants.length <= 1) return;
                 const newVariants = formData.variants.filter((_, i) => i !== index);
                 setFormData(prev => ({ ...prev, variants: newVariants }));
             };
@@ -766,6 +768,7 @@
             };
 
             const removeImageUrl = (index) => {
+                if (formData.imageUrls.length <= 1) return;
                 const newImageUrls = formData.imageUrls.filter((_, i) => i !== index);
                 setFormData(prev => ({ ...prev, imageUrls: newImageUrls }));
             };
@@ -794,8 +797,8 @@
                 <Modal onClose={onClose} size="max-w-3xl">
                     <h2 className="text-2xl font-bold mb-4">{product.id ? t.editProduct : t.addProduct}</h2>
                     <form onSubmit={handleSubmit} className="space-y-4 max-h-[80vh] overflow-y-auto p-2">
-                        <input name="name" value={formData.name} onChange={handleChange} placeholder={t.productName} className="w-full p-2 bg-tertiary rounded" />
-                        <textarea name="description" value={formData.description} onChange={handleChange} placeholder={t.description} className="w-full p-2 bg-tertiary rounded h-24" />
+                        <input name="name" value={formData.name} onChange={handleChange} placeholder={t.productName} className="w-full p-2 bg-tertiary rounded" required />
+                        <textarea name="description" value={formData.description} onChange={handleChange} placeholder={t.description} className="w-full p-2 bg-tertiary rounded h-24" required />
                         <select name="category" value={formData.category} onChange={handleChange} className="w-full p-2 bg-tertiary rounded">
                             <option value="games">{t.games}</option>
                             <option value="apps">{t.apps}</option>
@@ -805,8 +808,8 @@
                             <h3 className="font-bold mb-2">{t.productImages}</h3>
                             {formData.imageUrls.map((url, index) => (
                                 <div key={index} className="flex items-center space-x-2 mb-2">
-                                    <input value={url} onChange={(e) => handleImageUrlChange(index, e.target.value)} placeholder={t.imageUrl} className="w-full p-2 bg-tertiary rounded" />
-                                    <button type="button" onClick={() => removeImageUrl(index)} className="bg-red-600 text-white px-3 py-1 rounded">-</button>
+                                    <input value={url} onChange={(e) => handleImageUrlChange(index, e.target.value)} placeholder={t.imageUrl} className="w-full p-2 bg-tertiary rounded" required />
+                                    {formData.imageUrls.length > 1 && <button type="button" onClick={() => removeImageUrl(index)} className="bg-red-600 text-white px-3 py-1 rounded">-</button>}
                                 </div>
                             ))}
                             <button type="button" onClick={addImageUrl} className="bg-blue-600 text-white px-3 py-1 rounded">{t.addImage}</button>
@@ -816,10 +819,10 @@
                             <h3 className="font-bold mb-2">{t.variants || 'Варианты'}</h3>
                             {formData.variants.map((variant, index) => (
                                 <div key={index} className="grid grid-cols-1 md:grid-cols-4 gap-2 mb-2 p-2 border border-color rounded">
-                                    <input name="nominal" value={variant.nominal} onChange={(e) => handleVariantChange(index, e)} placeholder={t.productNominal} className="w-full p-2 bg-tertiary rounded" />
-                                    <input type="number" name="price" value={variant.price} onChange={(e) => handleVariantChange(index, e)} placeholder={t.priceInRub} className="w-full p-2 bg-tertiary rounded" />
-                                    <input type="number" name="stockQuantity" value={variant.stockQuantity} onChange={(e) => handleVariantChange(index, e)} placeholder={t.stock} className="w-full p-2 bg-tertiary rounded" />
-                                    <button type="button" onClick={() => removeVariant(index)} className="bg-red-600 text-white px-3 py-1 rounded">{t.delete}</button>
+                                    <input name="nominal" value={variant.nominal} onChange={(e) => handleVariantChange(index, e)} placeholder={t.productNominal} className="w-full p-2 bg-tertiary rounded" required />
+                                    <input type="number" name="price" value={variant.price} onChange={(e) => handleVariantChange(index, e)} placeholder={t.priceInRub} className="w-full p-2 bg-tertiary rounded" required />
+                                    <input type="number" name="stockQuantity" value={variant.stockQuantity} onChange={(e) => handleVariantChange(index, e)} placeholder={t.stock} className="w-full p-2 bg-tertiary rounded" required />
+                                    {formData.variants.length > 1 && <button type="button" onClick={() => removeVariant(index)} className="bg-red-600 text-white px-3 py-1 rounded">{t.delete}</button>}
                                 </div>
                             ))}
                             <button type="button" onClick={addVariant} className="bg-blue-600 text-white px-3 py-1 rounded">{t.addVariant || 'Добавить вариант'}</button>
@@ -865,7 +868,7 @@
                         <button onClick={() => setEditingProduct({})} className="accent-bg hover:accent-bg-secondary text-white font-bold py-2 px-4 rounded-lg">{t.addProduct}</button>
                     </div>
 
-                    <div className="bg-secondary rounded-lg overflow-hidden">
+                    <div className="bg-secondary rounded-lg overflow-x-auto">
                         <table className="w-full text-left">
                            <thead className="bg-tertiary">
                                 <tr>
@@ -1051,9 +1054,11 @@
             const [faqs, setFaqs] = useState([]);
             const [promoCodes, setPromoCodes] = useState([]);
             const [alertInfo, setAlertInfo] = useState(null);
-            const [language, setLanguage] = useState('ru');
-            const [currency, setCurrency] = useState('UZS');
-            const [theme, setTheme] = useState('asonik');
+            
+            const [language, setLanguage] = useState(() => localStorage.getItem('asonikLang') || 'ru');
+            const [currency, setCurrency] = useState(() => localStorage.getItem('asonikCurrency') || 'UZS');
+            const [theme, setTheme] = useState(() => localStorage.getItem('asonikTheme') || 'asonik-dark');
+
             const [profileVisible, setProfileVisible] = useState(false);
             const [selectedProduct, setSelectedProduct] = useState(null);
             const [isCartVisible, setIsCartVisible] = useState(false);
@@ -1067,7 +1072,14 @@
             const isAdmin = user && user.uid === ADMIN_UID;
             const t = translations[language] || translations.ru;
             
-            useEffect(() => { document.body.className = theme; }, [theme]);
+            useEffect(() => { 
+                document.body.className = theme;
+                localStorage.setItem('asonikTheme', theme);
+            }, [theme]);
+            
+            useEffect(() => { localStorage.setItem('asonikLang', language); }, [language]);
+            useEffect(() => { localStorage.setItem('asonikCurrency', currency); }, [currency]);
+
             useEffect(() => { onAuthStateChanged(auth, setUser); }, []);
             useEffect(() => {
                 const unsubProducts = onSnapshot(query(collection(db, "products"), orderBy('createdAt', 'desc')), (snapshot) => setProducts(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }))));
@@ -1188,42 +1200,32 @@
         
         const translations = {
             ru: {
-                home: 'Главная', support: 'Поддержка', faq: 'FAQ', adminPanelTitle: 'Админ-панель', profile: 'Профиль', logout: 'Выйти', login: 'Войти',
-                buy: 'Купить', confirmation: 'Подтверждение', cancel: 'Отмена', ok: 'OK', confirm: 'Подтвердить',
+                home: 'Главная', faq: 'FAQ', adminPanelTitle: 'Админ-панель', profile: 'Профиль', logout: 'Выйти', login: 'Войти',
+                confirmation: 'Подтверждение', cancel: 'Отмена', ok: 'OK', confirm: 'Подтвердить',
                 loginToView: 'Пожалуйста, войдите, чтобы просмотреть.',
                 loginToBuy: 'Пожалуйста, войдите, чтобы совершить покупку.',
                 imageNotFound: 'Изображение не найдено',
                 catalogTitle: 'КАТАЛОГ ТОВАРОВ', catalogSubtitle: 'Лучшие предложения только для вас',
                 addProduct: 'Добавить товар', editProduct: 'Редактировать товар', edit: 'Ред.', delete: 'Удал.',
                 productName: 'Название товара', productNominal: 'Номинал (н-р: 100 гемов)', description: 'Описание', priceInRub: 'Цена (в RUB)', imageUrl: 'URL изображения', productImages: 'URL изображений товара', addImage: 'Добавить фото',
-                addProductBtn: 'Добавить товар', updateProduct: 'Обновить товар', fillAllFields: 'Пожалуйста, заполните все поля.', productList: 'Список товаров',
+                addProductBtn: 'Добавить товар', updateProduct: 'Обновить товар',
                 productAdded: 'Товар успешно добавлен!', productUpdated: 'Товар успешно обновлен!', errorOccurred: 'Произошла ошибка.',
                 confirmDelete: 'Вы уверены, что хотите удалить этот товар?', productDeleted: 'Товар удален.',
-                supportTickets: 'Тикеты поддержки', user: 'Пользователь',
-                noTickets: 'У вас пока нет обращений.',
-                loginForSupport: 'Пожалуйста, войдите в аккаунт, чтобы написать в поддержку.',
-                avatarUpdated: 'Аватар успешно обновлен!', uploadingAvatar: 'Загрузка аватара', revertAvatar: 'Вернуть исходный аватар', avatarReverted: 'Аватар возвращен.',
-                enterMessagePlaceholder: 'Введите ваше сообщение...',
-                checkout: 'Оформление заказа', youAreBuying: 'Вы покупаете', choosePayment: 'Выберите способ оплаты',
-                contactSeller: 'Связаться с продавцом (Telegram)',
+                avatarUpdated: 'Аватар успешно обновлен!',
+                checkout: 'Оформление заказа', youAreBuying: 'Вы покупаете',
                 rightsReserved: 'Все права защищены.', developedWithLove: 'Дизайн и разработка с ❤️',
                 russian: 'Русский', english: 'English', uzbek: 'O\'zbekcha',
-                ruble: 'Рубль', dollar: 'Доллар', sum: "So'm",
-                all: 'Все', today: 'За сегодня', last3days: 'За 3 дня', product: 'Товар', date: 'Дата',
+                dollar: 'Доллар', sum: "So'm",
+                all: 'Все',
                 searchPlaceholder: 'Поиск по названию...', category: 'Категория', games: 'Игры', apps: 'Приложения', sortBy: 'Сортировка', newSort: 'Новые', popularSort: 'Популярные', productsNotFound: 'Товары не найдены',
-                pinProduct: 'Закрепить товар', pinned: 'Закреплено', loading: 'Загрузка...',
+                pinProduct: 'Закрепить товар', pinned: 'Закреплено',
                 noApiKey: 'Ключ API для ImgBB не установлен!',
-                linkCopied: 'Ссылка скопирована!',
-                manageProducts: 'Управление товарами', backToPanel: 'Назад в панель', uploadAvatar: 'Загрузить аватар',
-                chatWithAdmin: 'Чат с администрацией', chatWith: 'Чат с', supportSubtitle: 'Если у вас есть вопросы, нажмите кнопку ниже, чтобы начать чат.',
-                darkTheme: 'Темная', lightTheme: 'Светлая', asonikTheme: 'Фирменная', setColorAvatar: 'Установить цвет',
+                darkTheme: 'Asonik Dark', lightTheme: 'Asonik Light',
                 manageFaq: 'Управление FAQ', faqTitle: 'Часто задаваемые вопросы',
                 managePromoCodes: 'Промокоды', promoCode: 'Промокод', discount: 'Скидка', addPromoCode: 'Добавить промокод',
-                promoCodeName: 'Название промокода', discountPercentage: 'Размер скидки', existingPromoCodes: 'Существующие промокоды',
-                promoAdded: 'Промокод добавлен!', promoDeleted: 'Промокод удален!', confirmDeletePromo: 'Вы уверены, что хотите удалить этот промокод?',
+                promoCodeName: 'Название промокода', discountPercentage: 'Размер скидки',
                 payWithPromo: 'Применить промокод', apply: 'Применить', promoNotFound: 'Промокод не найден или недействителен.', promoApplied: 'Промокод применен',
-                usageLimit: 'Лимит использований', used: 'Использовано', promoLimitReached: 'Лимит использования этого промокода исчерпан.',
-                verifiedByStore: 'Подтверждено магазином',
+                usageLimit: 'Лимит использований', promoLimitReached: 'Лимит использования этого промокода исчерпан.',
                 myPurchases: 'Мои покупки',
                 noPurchasesYet: 'У вас еще нет покупок.',
                 statusPending: 'На проверке', statusApproved: 'Одобрена', statusRejected: 'Отклонена', statusContacted: 'Ожидает связи', statusCancelled: 'Отменен',
@@ -1245,7 +1247,7 @@
             uz: { /* ... Uzbek translations ... */ }
         };
         const currencyRates = { RUB: 1, USD: 0.011, UZS: 140 };
-        const currencySymbols = { RUB: '₽', USD: '$', UZS: "so'm" };
+        const currencySymbols = { USD: '$', UZS: "so'm" };
         const convertPrice = (priceInRub, targetCurrency) => {
             const rate = currencyRates[targetCurrency];
             const symbol = currencySymbols[targetCurrency];
