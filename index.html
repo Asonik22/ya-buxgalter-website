@@ -27,23 +27,27 @@
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;900&display=swap');
         
         /* --- THEMES --- */
-        :root, body.asonik-dark {
+        :root, body.firm-dark {
             --bg-primary: #111827; --bg-secondary: #1f2937; --bg-tertiary: #374151;
             --text-primary: #f9fafb; --text-secondary: #d1d5db;
             --accent-primary: #8b5cf6; --accent-secondary: #a78bfa;
             --border-color: #374151;
+            --modal-overlay: rgba(17, 24, 39, 0.8);
         }
-        body.asonik-light {
+        body.firm-light {
             --bg-primary: #f3e8ff; --bg-secondary: #ffffff; --bg-tertiary: #f3f4f6;
             --text-primary: #4c1d95; --text-secondary: #6d28d9;
             --accent-primary: #8b5cf6; --accent-secondary: #a78bfa; --border-color: #e5e7eb;
+            --modal-overlay: rgba(243, 232, 255, 0.8);
         }
         
         /* --- Additional Styles --- */
-        .asonik-light .bg-secondary { box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.05), 0 2px 4px -2px rgb(0 0 0 / 0.05); }
-        .asonik-light .header-text { color: #4c1d95; }
-        .asonik-light .header-text:hover { color: #6d28d9; }
+        .firm-light .bg-secondary { box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.05), 0 2px 4px -2px rgb(0 0 0 / 0.05); }
+        .firm-light .header-text { color: #4c1d95; }
+        .firm-light .header-text:hover { color: #6d28d9; }
         .accent-text { color: var(--accent-primary); }
+        .accent-bg { background-color: var(--accent-primary); }
+        .accent-bg-secondary { background-color: var(--accent-secondary); }
 
         .mobile-menu-container {
             position: fixed; top: 0; left: 0; right: 0; bottom: 0; background-color: var(--bg-primary); z-index: 50;
@@ -58,7 +62,7 @@
         .admin-sidebar a.active { background-color: var(--accent-primary); color: white; }
     </style>
 </head>
-<body class="bg-primary text-primary">
+<body>
     <div id="root"></div>
 
     <script type="text/babel">
@@ -159,7 +163,7 @@
         const generatePurchaseCode = () => 'A' + Math.random().toString(36).substr(2, 8).toUpperCase();
         const Logo = ({t}) => ( <Link to="#/" className="flex items-center space-x-2 cursor-pointer"> <img src={logoBase64} alt="Asonik Store Logo" className="h-12 w-12 object-contain"/> <span className="text-2xl md:text-3xl font-bold header-text tracking-wider"> Asonik <span className="accent-text">Store</span> </span> </Link> );
         const LoadingSpinner = () => ( <div className="bg-primary min-h-screen flex items-center justify-center"><div className="animate-spin rounded-full h-32 w-32 border-t-4 border-b-4 border-purple-500"></div></div> );
-        const Modal = ({ children, onClose, size = 'max-w-md' }) => ( <div className="fixed inset-0 bg-gray-900 bg-opacity-80 z-50 flex justify-center items-center p-4 transition-opacity duration-300"> <div className={`bg-secondary rounded-2xl shadow-2xl p-6 md:p-8 w-full ${size} relative border-color transform transition-transform duration-300 scale-95 animate-scale-in`}> <button onClick={onClose} className="absolute top-4 right-4 text-secondary hover:text-primary transition-colors z-10"> <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg> </button> {children} </div> <style>{` @keyframes scale-in { from { transform: scale(0.95); opacity: 0; } to { transform: scale(1); opacity: 1; } } .animate-scale-in { animation: scale-in 0.2s ease-out forwards; } `}</style> </div> );
+        const Modal = ({ children, onClose, size = 'max-w-md' }) => ( <div className="fixed inset-0 z-50 flex justify-center items-center p-4 transition-opacity duration-300" style={{backgroundColor: 'var(--modal-overlay)'}}> <div className={`bg-secondary rounded-2xl shadow-2xl p-6 md:p-8 w-full ${size} relative border-color transform transition-transform duration-300 scale-95 animate-scale-in`}> <button onClick={onClose} className="absolute top-4 right-4 text-secondary hover:text-primary transition-colors z-10"> <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg> </button> {children} </div> <style>{` @keyframes scale-in { from { transform: scale(0.95); opacity: 0; } to { transform: scale(1); opacity: 1; } } .animate-scale-in { animation: scale-in 0.2s ease-out forwards; } `}</style> </div> );
         const AlertModal = ({ message, onConfirm, onCancel, t }) => ( <Modal onClose={onCancel}> <div className="text-center"> <h2 className="text-2xl font-bold text-primary mb-4">{t.confirmation}</h2> <p className="text-secondary mb-6 whitespace-pre-wrap">{message}</p> <div className={`flex ${onConfirm ? 'justify-between' : 'justify-center'} space-x-4`}> <button onClick={onCancel} className="bg-tertiary hover:bg-gray-700 text-primary font-bold py-2 px-6 rounded-lg transition-colors">{onConfirm ? t.cancel : t.ok}</button> {onConfirm && ( <button onClick={onConfirm} className="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-6 rounded-lg transition-colors">{t.confirm}</button> )} </div> </div> </Modal> );
         const PinModal = ({ onSubmit, onClose, error, t }) => {
             const [pin, setPin] = useState('');
@@ -412,9 +416,9 @@
             const [userDropdownOpen, setUserDropdownOpen] = useState(false);
             const userDropdownRef = useRef(null);
             
-            const langOptions = [{value: 'ru', label: t.russian}, {value: 'en', label: t.english}, {value: 'uz', label: t.uzbek}];
+            const langOptions = [{value: 'ru', label: t.russian}, {value: 'uz', label: t.uzbek}];
             const currencyOptions = [{value: 'USD', label: t.dollar}, {value: 'UZS', label: t.sum}];
-            const themeOptions = [{value: 'asonik-dark', label: t.darkTheme}, {value: 'asonik-light', label: t.lightTheme}];
+            const themeOptions = [{value: 'firm-dark', label: t.darkTheme}, {value: 'firm-light', label: t.lightTheme}];
 
             useEffect(() => {
                 function handleClickOutside(event) {
@@ -435,9 +439,9 @@
                             {isAdmin && <Link to="#/admin/dashboard" className="text-red-500 hover:text-red-400 font-medium transition-colors">{t.adminPanelTitle}</Link>}
                         </nav>
                         <div className="flex items-center space-x-2 sm:space-x-4">
-                            <div className="hidden md:block w-32"><CustomSelector value={theme} onChange={e => setTheme(e.target.value)} options={themeOptions} /></div>
-                            <div className="hidden md:block w-28"><CustomSelector value={currency} onChange={e => setCurrency(e.target.value)} options={currencyOptions} /></div>
-                            <div className="hidden md:block w-28"><CustomSelector value={language} onChange={e => setLanguage(e.target.value)} options={langOptions} /></div>
+                            <div className="hidden md:block w-40 min-w-max"><CustomSelector value={theme} onChange={e => setTheme(e.target.value)} options={themeOptions} /></div>
+                            <div className="hidden md:block w-28 min-w-max"><CustomSelector value={currency} onChange={e => setCurrency(e.target.value)} options={currencyOptions} /></div>
+                            <div className="hidden md:block w-28 min-w-max"><CustomSelector value={language} onChange={e => setLanguage(e.target.value)} options={langOptions} /></div>
 
                             <button onClick={onCartClick} className="relative p-2 rounded-full text-primary hover:bg-tertiary transition-colors">
                                 <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" /></svg>
@@ -479,7 +483,8 @@
                         if (a.pinned && !b.pinned) return -1;
                         if (!a.pinned && b.pinned) return 1;
                         if (sortBy === 'popular') return (b.popularity || 0) - (a.popularity || 0);
-                        return (b.createdAt?.toMillis() || 0) - (a.createdAt?.toMillis() || 0);
+                        if (a.createdAt && b.createdAt) return b.createdAt.toMillis() - a.createdAt.toMillis();
+                        return 0;
                     });
             }, [products, searchTerm, filterCategory, sortBy]);
 
@@ -623,9 +628,11 @@
 
             useEffect(() => {
                 if (!user) { setLoading(false); return; }
-                const q = query(collection(db, "purchases"), where("userId", "==", user.uid), orderBy("timestamp", "desc"));
+                const q = query(collection(db, "purchases"), where("userId", "==", user.uid));
                 const unsubscribe = onSnapshot(q, (snapshot) => {
-                    setMyPurchases(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+                    const purchasesData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                    purchasesData.sort((a, b) => (b.timestamp?.toMillis() || 0) - (a.timestamp?.toMillis() || 0));
+                    setMyPurchases(purchasesData);
                     setLoading(false);
                 });
                 return () => unsubscribe();
@@ -1057,7 +1064,7 @@
             
             const [language, setLanguage] = useState(() => localStorage.getItem('asonikLang') || 'ru');
             const [currency, setCurrency] = useState(() => localStorage.getItem('asonikCurrency') || 'UZS');
-            const [theme, setTheme] = useState(() => localStorage.getItem('asonikTheme') || 'asonik-dark');
+            const [theme, setTheme] = useState(() => localStorage.getItem('asonikTheme') || 'firm-light');
 
             const [profileVisible, setProfileVisible] = useState(false);
             const [selectedProduct, setSelectedProduct] = useState(null);
@@ -1066,6 +1073,7 @@
             const [isAdminAuthenticated, setIsAdminAuthenticated] = useState(false);
             const [isPinModalVisible, setIsPinModalVisible] = useState(false);
             const [pinError, setPinError] = useState('');
+            const [authReady, setAuthReady] = useState(false);
 
             const { path, navigate } = useHashRouter();
             const { cartItems, clearCart } = useCart();
@@ -1080,14 +1088,65 @@
             useEffect(() => { localStorage.setItem('asonikLang', language); }, [language]);
             useEffect(() => { localStorage.setItem('asonikCurrency', currency); }, [currency]);
 
-            useEffect(() => { onAuthStateChanged(auth, setUser); }, []);
             useEffect(() => {
-                const unsubProducts = onSnapshot(query(collection(db, "products"), orderBy('createdAt', 'desc')), (snapshot) => setProducts(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }))));
-                const unsubFaqs = onSnapshot(query(collection(db, "faq"), orderBy('question')), (snapshot) => setFaqs(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }))));
-                const unsubPurchases = onSnapshot(query(collection(db, "purchases"), orderBy('timestamp', 'desc')), (snapshot) => setPurchases(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }))));
-                const unsubPromo = onSnapshot(collection(db, "promoCodes"), (snapshot) => setPromoCodes(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }))));
-                return () => { unsubProducts(); unsubFaqs(); unsubPurchases(); unsubPromo(); };
+                const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
+                    setUser(currentUser);
+                    setAuthReady(true);
+                });
+                return () => unsubscribe();
             }, []);
+
+            useEffect(() => {
+                if (!authReady) return; // Wait for auth to be ready
+
+                // Public listeners
+                const unsubProducts = onSnapshot(query(collection(db, "products")), 
+                    (snapshot) => {
+                        const productsData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                        productsData.sort((a,b) => (b.createdAt?.toMillis() || 0) - (a.createdAt?.toMillis() || 0));
+                        setProducts(productsData);
+                    },
+                    (error) => console.error("Firebase product listener error:", error)
+                );
+                const unsubFaqs = onSnapshot(query(collection(db, "faq")), 
+                    (snapshot) => {
+                        const faqsData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                        faqsData.sort((a,b) => a.question.localeCompare(b.question));
+                        setFaqs(faqsData);
+                    },
+                    (error) => console.error("Firebase FAQ listener error:", error)
+                );
+
+                let unsubPurchases = () => {};
+                let unsubPromo = () => {};
+
+                // Admin-only listeners
+                if (isAdmin) {
+                    unsubPurchases = onSnapshot(query(collection(db, "purchases")), 
+                        (snapshot) => {
+                            const purchasesData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                            purchasesData.sort((a,b) => (b.timestamp?.toMillis() || 0) - (a.timestamp?.toMillis() || 0));
+                            setPurchases(purchasesData);
+                        },
+                        (error) => console.error("Firebase admin purchases listener error:", error)
+                    );
+                    unsubPromo = onSnapshot(collection(db, "promoCodes"), 
+                        (snapshot) => setPromoCodes(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }))),
+                        (error) => console.error("Firebase admin promo listener error:", error)
+                    );
+                } else {
+                    // If user is not admin, clear any potential leftover admin data
+                    setPurchases([]);
+                    setPromoCodes([]);
+                }
+
+                return () => { 
+                    unsubProducts(); 
+                    unsubFaqs(); 
+                    unsubPurchases(); 
+                    unsubPromo(); 
+                };
+            }, [authReady, isAdmin]);
 
             const handleLogin = async () => { await signInWithPopup(auth, provider); };
             const handleLogout = async () => { await signOut(auth); setIsAdminAuthenticated(false); navigate('#/'); };
@@ -1177,7 +1236,7 @@
                 }
             };
             
-            if (user === undefined) return <LoadingSpinner />;
+            if (!authReady) return <LoadingSpinner />;
             
             return (
                 <div className="bg-primary min-h-screen font-sans flex flex-col">
@@ -1214,13 +1273,13 @@
                 avatarUpdated: 'Аватар успешно обновлен!',
                 checkout: 'Оформление заказа', youAreBuying: 'Вы покупаете',
                 rightsReserved: 'Все права защищены.', developedWithLove: 'Дизайн и разработка с ❤️',
-                russian: 'Русский', english: 'English', uzbek: 'O\'zbekcha',
+                russian: 'Русский', uzbek: 'O\'zbekcha',
                 dollar: 'Доллар', sum: "So'm",
                 all: 'Все',
                 searchPlaceholder: 'Поиск по названию...', category: 'Категория', games: 'Игры', apps: 'Приложения', sortBy: 'Сортировка', newSort: 'Новые', popularSort: 'Популярные', productsNotFound: 'Товары не найдены',
                 pinProduct: 'Закрепить товар', pinned: 'Закреплено',
                 noApiKey: 'Ключ API для ImgBB не установлен!',
-                darkTheme: 'Asonik Dark', lightTheme: 'Asonik Light',
+                darkTheme: 'Фирменная (темная)', lightTheme: 'Фирменная (светлая)',
                 manageFaq: 'Управление FAQ', faqTitle: 'Часто задаваемые вопросы',
                 managePromoCodes: 'Промокоды', promoCode: 'Промокод', discount: 'Скидка', addPromoCode: 'Добавить промокод',
                 promoCodeName: 'Название промокода', discountPercentage: 'Размер скидки',
@@ -1243,8 +1302,50 @@
                 wrongPin: 'Неверный ПИН-код',
                 firstName: 'Имя', lastName: 'Фамилия', updateProfile: 'Обновить профиль', profileUpdated: 'Профиль обновлен', sending: 'Отправка...'
             },
-            en: { /* ... English translations ... */ },
-            uz: { /* ... Uzbek translations ... */ }
+            uz: {
+                home: 'Bosh sahifa', faq: 'FAQ', adminPanelTitle: 'Admin Paneli', profile: 'Profil', logout: 'Chiqish', login: 'Kirish',
+                confirmation: 'Tasdiqlash', cancel: 'Bekor qilish', ok: 'OK', confirm: 'Tasdiqlash',
+                loginToView: 'Ko\'rish uchun tizimga kiring.',
+                loginToBuy: 'Xarid qilish uchun tizimga kiring.',
+                imageNotFound: 'Rasm topilmadi',
+                catalogTitle: 'MAHSULOTLAR KATALOGI', catalogSubtitle: 'Faqat siz uchun eng yaxshi takliflar',
+                addProduct: 'Mahsulot qo\'shish', editProduct: 'Mahsulotni tahrirlash', edit: 'Tahr.', delete: 'O\'chirish',
+                productName: 'Mahsulot nomi', productNominal: 'Nominal (masalan: 100 gem)', description: 'Tavsif', priceInRub: 'Narx (RUBda)', imageUrl: 'Rasm URL', productImages: 'Mahsulot rasmlari URL', addImage: 'Rasm qo\'shish',
+                addProductBtn: 'Mahsulot qo\'shish', updateProduct: 'Mahsulotni yangilash',
+                productAdded: 'Mahsulot muvaffaqiyatli qo\'shildi!', productUpdated: 'Mahsulot muvaffaqiyatli yangilandi!', errorOccurred: 'Xatolik yuz berdi.',
+                confirmDelete: 'Haqiqatan ham bu mahsulotni oʻchirib tashlamoqchimisiz?', productDeleted: 'Mahsulot oʻchirildi.',
+                avatarUpdated: 'Avatar muvaffaqiyatli yangilandi!',
+                checkout: 'Buyurtmani rasmiylashtirish', youAreBuying: 'Siz sotib olyapsiz',
+                rightsReserved: 'Barcha huquqlar himoyalangan.', developedWithLove: '❤️ bilan ishlab chiqilgan',
+                russian: 'Русский', uzbek: 'O\'zbekcha',
+                dollar: 'Dollar', sum: "So'm",
+                all: 'Barchasi',
+                searchPlaceholder: 'Nom bo\'yicha qidirish...', category: 'Kategoriya', games: 'O\'yinlar', apps: 'Ilovalar', sortBy: 'Saralash', newSort: 'Yangilari', popularSort: 'Ommaboplari', productsNotFound: 'Mahsulotlar topilmadi',
+                pinProduct: 'Mahsulotni mahkamlash', pinned: 'Mahkamlangan',
+                noApiKey: 'ImgBB uchun API kaliti o\'rnatilmagan!',
+                darkTheme: 'Firmali (qorong\'u)', lightTheme: 'Firmali (yorug\')',
+                manageFaq: 'FAQ boshqaruvi', faqTitle: 'Tez-tez so\'raladigan savollar',
+                managePromoCodes: 'Promokodlar', promoCode: 'Promokod', discount: 'Chegirma', addPromoCode: 'Promokod qo\'shish',
+                promoCodeName: 'Promokod nomi', discountPercentage: 'Chegirma foizi',
+                payWithPromo: 'Promokodni qo\'llash', apply: 'Qo\'llash', promoNotFound: 'Promokod topilmadi yoki yaroqsiz.', promoApplied: 'Promokod qo\'llanildi',
+                usageLimit: 'Foydalanish chegarasi', promoLimitReached: 'Ushbu promokodning foydalanish chegarasi tugadi.',
+                myPurchases: 'Mening xaridlarim',
+                noPurchasesYet: 'Sizda hali xaridlar yo\'q.',
+                statusPending: 'Tekshirilmoqda', statusApproved: 'Tasdiqlandi', statusRejected: 'Rad etildi', statusContacted: 'Aloqani kutmoqda', statusCancelled: 'Bekor qilingan',
+                adminComment: 'Administrator izohi',
+                amount: 'Summa',
+                adminAccess: 'Admin Kirish', enterPin: 'PIN-kodni kiriting', enter: 'Kirish',
+                productAddedToCart: 'Mahsulot savatga qo\'shildi!', addToCart: 'Savatga qo\'shish', cart: 'Savat', cartIsEmpty: 'Sizning savatingiz bo\'sh', total: 'Jami', proceedToCheckout: 'Rasmiylashtirishga o\'tish',
+                productsCount: 'mahsulot', confirmAndPay: 'Tasdiqlash va to\'lash', purchaseSuccessful: 'Buyurtma muvaffaqiyatli rasmiylashtirildi! Sizning kodingiz:',
+                notEnoughStock: 'Uchun omborda mahsulot yetarli emas',
+                adminMenu: 'Menyu', dashboard: 'Ko\'rib chiqish', managePurchases: 'Buyurtmalar',
+                totalProducts: 'Jami mahsulotlar', totalPurchases: 'Jami buyurtmalar', totalRevenue: 'Jami daromad',
+                items: 'Mahsulotlar', status: 'Holat', actions: 'Harakatlar',
+                price: 'Narx', stock: 'Qoldiq', variants: 'Variantlar', addVariant: 'Variant qo\'shish', onSale: 'Sotuvda',
+                statusUpdated: 'Holat yangilandi', searchByCodeOrEmail: 'Kod yoki Email bo\'yicha qidirish...',
+                wrongPin: 'Noto\'g\'ri PIN-kod',
+                firstName: 'Ism', lastName: 'Familiya', updateProfile: 'Profilni yangilash', profileUpdated: 'Profil yangilandi', sending: 'Yuborilmoqda...'
+            }
         };
         const currencyRates = { RUB: 1, USD: 0.011, UZS: 140 };
         const currencySymbols = { USD: '$', UZS: "so'm" };
