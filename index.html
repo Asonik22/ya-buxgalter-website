@@ -26,15 +26,25 @@
         body { font-family: 'Inter', sans-serif; -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; transition: background-color 0.3s, color 0.3s; }
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;900&display=swap');
         
-        /* --- THEME --- */
-        :root, body {
+        /* --- THEMES --- */
+        :root, body.firm-dark {
             --bg-primary: #111827; --bg-secondary: #1f2937; --bg-tertiary: #374151;
             --text-primary: #f9fafb; --text-secondary: #d1d5db;
             --accent-primary: #8b5cf6; --accent-secondary: #a78bfa;
             --border-color: #374151;
             --modal-overlay: rgba(17, 24, 39, 0.8);
         }
+        body.firm-light {
+            --bg-primary: #f3e8ff; --bg-secondary: #ffffff; --bg-tertiary: #f3f4f6;
+            --text-primary: #4c1d95; --text-secondary: #6d28d9;
+            --accent-primary: #8b5cf6; --accent-secondary: #a78bfa; --border-color: #e5e7eb;
+            --modal-overlay: rgba(243, 232, 255, 0.8);
+        }
         
+        /* --- Additional Styles --- */
+        .firm-light .bg-secondary { box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.05), 0 2px 4px -2px rgb(0 0 0 / 0.05); }
+        .firm-light .header-text { color: #4c1d95; }
+        .firm-light .header-text:hover { color: #6d28d9; }
         .accent-text { color: var(--accent-primary); }
         .accent-bg { background-color: var(--accent-primary); }
         .accent-bg-secondary { background-color: var(--accent-secondary); }
@@ -44,10 +54,15 @@
             display: flex; flex-direction: column; padding: 1rem; transform: translateX(100%); transition: transform 0.3s ease-out;
         }
         .mobile-menu-container.open { transform: translateX(0%); }
+        .mobile-menu-item {
+            padding: 0.75rem 1rem; margin-bottom: 0.5rem; font-size: 1.25rem; font-weight: 600;
+            color: var(--text-primary); cursor: pointer; border-radius: 0.5rem; transition: background-color 0.2s;
+        }
+        .mobile-menu-item:hover { background-color: var(--bg-secondary); }
         .admin-sidebar a.active { background-color: var(--accent-primary); color: white; }
     </style>
 </head>
-<body class="bg-primary text-primary">
+<body>
     <div id="root"></div>
 
     <script type="text/babel">
@@ -1093,7 +1108,7 @@
             
             const [language, setLanguage] = useState(() => localStorage.getItem('asonikLang') || 'ru');
             const [currency, setCurrency] = useState(() => localStorage.getItem('asonikCurrency') || 'UZS');
-            const [theme, setTheme] = useState(() => localStorage.getItem('asonikTheme') || 'firm-dark');
+            const [theme, setTheme] = useState('firm-dark'); // Always start with dark theme
 
             const [profileVisible, setProfileVisible] = useState(false);
             const [selectedProduct, setSelectedProduct] = useState(null);
