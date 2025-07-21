@@ -154,33 +154,45 @@
             });
         }
 
-        function safeRun(fn) {
-            try { fn(); } catch (error) { console.error("Initialization failed:", error); document.body.innerHTML = `<div class="p-8 text-center text-red-500"><h1>Критическая ошибка</h1><p>Приложение не удалось загрузить. См. консоль для деталей.</p></div>`; }
-        }
-
-        document.addEventListener('DOMContentLoaded', () => safeRun(() => {
-            initTheme();
-            initSwitchers();
-            handleRouting();
-            window.addEventListener('hashchange', handleRouting);
-            setupEventListeners();
-            updateCartCount();
-            onAuthStateChanged(auth, user => {
-                currentUser = user;
-                isAdmin = user ? user.uid === ADMIN_UID : false;
-                if (user) {
-                    const userRef = doc(db, "users", user.uid);
-                    setDoc(userRef, { displayName: user.displayName, email: user.email, photoURL: user.photoURL }, { merge: true });
-                }
-                updateAuthUI();
-                if (window.location.hash.startsWith('#admin') && !isAdmin) window.location.hash = '#main';
+        document.addEventListener('DOMContentLoaded', () => {
+            try {
+                initTheme();
+                initSwitchers();
                 handleRouting();
-            }));
+                window.addEventListener('hashchange', handleRouting);
+                setupEventListeners();
+                updateCartCount();
+                onAuthStateChanged(auth, user => {
+                    currentUser = user;
+                    isAdmin = user ? user.uid === ADMIN_UID : false;
+                    if (user) {
+                        const userRef = doc(db, "users", user.uid);
+                        setDoc(userRef, { displayName: user.displayName, email: user.email, photoURL: user.photoURL }, { merge: true });
+                    }
+                    updateAuthUI();
+                    if (window.location.hash.startsWith('#admin') && !isAdmin) window.location.hash = '#main';
+                    handleRouting();
+                });
+            } catch (error) {
+                console.error("Initialization failed:", error);
+                document.body.innerHTML = `<div class="p-8 text-center text-red-500"><h1>Критическая ошибка</h1><p>Приложение не удалось загрузить. См. консоль для деталей.</p></div>`;
+            }
+        });
         
         function formatPrice(price) {
             const convertedPrice = price * appState.rates[appState.currency];
             return new Intl.NumberFormat('ru-RU', { style: 'currency', currency: appState.currency, minimumFractionDigits: 2 }).format(convertedPrice);
         }
+        
+        function generateUniqueCode() {
+            const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+            const nums = '0123456789';
+            let code = '';
+            for (let i = 0; i < 4; i++) code += chars.charAt(Math.floor(Math.random() * chars.length));
+            for (let i = 0; i < 4; i++) code += nums.charAt(Math.floor(Math.random() * nums.length));
+            return code;
+        }
+
 
         function handleRouting() {
             const hash = window.location.hash || '#main';
