@@ -9,13 +9,10 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;900&display=swap" rel="stylesheet">
     <style>
-        /* --- Base Styles & New Dark Theme --- */
         :root {
             --font-sans: 'Inter', sans-serif;
-            /* Light Theme */
             --bg-light: #f4f4f5; --text-light: #18181b; --card-bg-light: #ffffff;
             --border-light: #e4e4e7; --primary-light: #7c3aed; --primary-hover-light: #6d28d9;
-            /* New Dark Theme */
             --bg-dark: #09090b; --text-dark: #e4e4e7; --card-bg-dark: #18181b;
             --border-dark: #27272a; --primary-dark: #8b5cf6; --primary-hover-dark: #7c3aed;
         }
@@ -26,35 +23,24 @@
             color: var(--text-light);
         }
         .dark body { background-color: var(--bg-dark); color: var(--text-dark); }
-
-        /* Component Styles */
         .bg-primary { background-color: var(--primary-light); }
         .dark .bg-primary { background-color: var(--primary-dark); }
         .hover\:bg-primary-hover:hover { background-color: var(--primary-hover-light); }
         .dark .hover\:bg-primary-hover:hover { background-color: var(--primary-hover-dark); }
-        
         .text-primary { color: var(--primary-light); }
         .dark .text-primary { color: var(--primary-dark); }
-
         .border-custom { border-color: var(--border-light); }
         .dark .border-custom { border-color: var(--border-dark); }
-
         .card-bg { background-color: var(--card-bg-light); }
         .dark .card-bg { background-color: var(--card-bg-dark); }
-
         .input-bg { background-color: #ffffff; }
         .dark .input-bg { background-color: var(--card-bg-dark); border-color: var(--border-dark); }
         .dark .input-bg:focus { --tw-ring-color: var(--primary-dark); }
-        
         .header-bg { background-color: rgba(255, 255, 255, 0.8); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); }
         .dark .header-bg { background-color: rgba(9, 9, 11, 0.8); }
-
         .modal-backdrop { background-color: rgba(9, 9, 11, 0.5); }
-        
         [data-page] { display: none; }
         [data-page].active { display: block; }
-
-        /* --- Redesigned Badges --- */
         .status-badge {
             display: inline-flex; align-items: center; gap: 0.5rem;
             padding: 0.25rem 0.75rem; border-radius: 9999px; font-weight: 600; font-size: 0.75rem;
@@ -82,10 +68,10 @@
                 <div class="flex items-center space-x-8">
                     <a href="#main" class="text-2xl font-black text-primary">Asonik</a>
                     <nav id="main-nav" class="hidden md:flex items-center space-x-6">
-                        <a href="#main" class="nav-link text-gray-600 dark:text-gray-300 hover:text-primary font-medium" data-lang-key="nav_main"></a>
-                        <a href="#chats" id="nav-chats-link" class="nav-link text-gray-600 dark:text-gray-300 hover:text-primary font-medium" data-lang-key="nav_chats"></a>
-                        <a href="#faq" class="nav-link text-gray-600 dark:text-gray-300 hover:text-primary font-medium" data-lang-key="nav_faq"></a>
-                        <a href="#purchases" class="nav-link text-gray-600 dark:text-gray-300 hover:text-primary font-medium" data-lang-key="nav_purchases"></a>
+                        <a href="#main" class="nav-link text-gray-600 dark:text-gray-300 hover:text-primary font-medium" data-lang-key="nav_main">Главная</a>
+                        <a href="#chats" id="nav-chats-link" class="nav-link text-gray-600 dark:text-gray-300 hover:text-primary font-medium" data-lang-key="nav_chats">Чаты</a>
+                        <a href="#faq" class="nav-link text-gray-600 dark:text-gray-300 hover:text-primary font-medium" data-lang-key="nav_faq">FAQ</a>
+                        <a href="#purchases" class="nav-link text-gray-600 dark:text-gray-300 hover:text-primary font-medium" data-lang-key="nav_purchases">Мои покупки</a>
                     </nav>
                 </div>
                 <div class="flex items-center space-x-2 md:space-x-4">
@@ -139,8 +125,7 @@
         let listeners = [];
         
         const appState = {
-            currency: 'UZS',
-            lang: 'RU',
+            currency: 'UZS', lang: 'RU',
             rates: { UZS: 1, RUB: 0.0073, USD: 0.000078 }
         };
 
@@ -153,74 +138,39 @@
                 faq_title: 'Часто задаваемые вопросы', purchases_title: 'Мои покупки', cart_title: 'Корзина', profile_title: 'Профиль',
                 buy_button: 'Купить в один клик',
             },
-            EN: { /* ... */ },
-            UZ: { /* ... */ }
+            EN: { nav_main: 'Home', nav_chats: 'Chats', nav_faq: 'FAQ', nav_purchases: 'My Purchases', catalog_title: 'Product Catalog', search_placeholder: 'Search by name...', all_categories: 'All Categories', category_games: 'Games', category_apps: 'Apps', sort_new: 'Newest first', sort_popular: 'Popular first', faq_title: 'Frequently Asked Questions', purchases_title: 'My Purchases', cart_title: 'Cart', profile_title: 'Profile', buy_button: 'One-click Buy', },
+            UZ: { nav_main: 'Asosiy', nav_chats: 'Chatlar', nav_faq: 'FAQ', nav_purchases: 'Xaridlarim', catalog_title: 'Mahsulotlar katalogi', search_placeholder: 'Nomi bo\'yicha qidirish...', all_categories: 'Barcha kategoriyalar', category_games: 'O\'yinlar', category_apps: 'Ilovalar', sort_new: 'Avval yangilari', sort_popular: 'Avval ommaboplari', faq_title: 'Ko\'p so\'raladigan savollar', purchases_title: 'Mening xaridlarim', cart_title: 'Savatcha', profile_title: 'Profil', buy_button: 'Bir bosishda sotib olish', }
         };
 
-        function t(key) { return translations[appState.lang][key] || key; }
-
-        function translatePage() {
-            document.querySelectorAll('[data-lang-key]').forEach(el => {
-                const key = el.dataset.langKey;
-                const translation = t(key);
-                if (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA') {
-                    if (el.placeholder !== translation) el.placeholder = translation;
-                } else {
-                    if (el.textContent !== translation) el.textContent = translation;
-                }
-            });
-
-            // Manually translate select options
-            const categoryFilter = document.getElementById('category-filter');
-            if (categoryFilter) {
-                const currentVal = categoryFilter.value;
-                categoryFilter.innerHTML = `<option value="all">${t('all_categories')}</option><option value="games">${t('category_games')}</option><option value="apps">${t('category_apps')}</option>`;
-                categoryFilter.value = currentVal;
-            }
-            const sortFilter = document.getElementById('sort-filter');
-            if (sortFilter) {
-                const currentVal = sortFilter.value;
-                sortFilter.innerHTML = `<option value="new">${t('sort_new')}</option><option value="popular">${t('sort_popular')}</option>`;
-                sortFilter.value = currentVal;
-            }
-        }
+        const t = (key) => translations[appState.lang][key] || key;
         
-        function clearListeners() {
+        const clearListeners = () => {
             listeners.forEach(unsubscribe => unsubscribe());
             listeners = [];
-        }
+        };
 
         document.addEventListener('DOMContentLoaded', () => {
-            initApp();
+            onAuthStateChanged(auth, async (user) => {
+                currentUser = user;
+                isAdmin = user ? user.uid === ADMIN_UID : false;
+                if (user) {
+                    await setDoc(doc(db, "users", user.uid), { displayName: user.displayName, email: user.email, photoURL: user.photoURL }, { merge: true });
+                }
+                initApp();
+            });
         });
 
-        async function initApp() {
-            try {
-                initTheme();
-                initSwitchers();
-                
-                onAuthStateChanged(auth, async (user) => {
-                    currentUser = user;
-                    isAdmin = user ? user.uid === ADMIN_UID : false;
-                    if (user) {
-                        const userRef = doc(db, "users", user.uid);
-                        await setDoc(userRef, { displayName: user.displayName, email: user.email, photoURL: user.photoURL }, { merge: true });
-                    }
-                    updateAuthUI();
-                    if (window.location.hash.startsWith('#admin') && !isAdmin) window.location.hash = '#main';
-                    handleRouting();
-                });
-                
-                setupEventListeners();
-                updateCartCount();
-            } catch (error) {
-                console.error("Initialization failed:", error);
-                document.body.innerHTML = `<div class="p-8 text-center text-red-500"><h1>Критическая ошибка</h1><p>Приложение не удалось загрузить. См. консоль для деталей.</p></div>`;
-            }
+        function initApp() {
+            initTheme();
+            initSwitchers();
+            updateAuthUI();
+            updateCartCount();
+            setupEventListeners();
+            handleRouting();
         }
-        
-        function formatPrice(price) { /* ... */ }
-        function generateUniqueCode() { /* ... */ }
+
+        const formatPrice = (price) => new Intl.NumberFormat('ru-RU', { style: 'currency', currency: appState.currency, minimumFractionDigits: 2 }).format(price * appState.rates[appState.currency]);
+        const generateUniqueCode = () => (Math.random().toString(36).substring(2, 6) + Math.random().toString(36).substring(2, 6)).toUpperCase();
 
         window.addEventListener('hashchange', handleRouting);
         
@@ -228,13 +178,18 @@
             clearListeners();
             const hash = window.location.hash || '#main';
             const [page, subpage] = (hash.substring(1) || 'main').split('/');
+            if (page === 'admin' && !isAdmin) {
+                window.location.hash = '#main';
+                return;
+            }
             document.querySelectorAll('[data-page]').forEach(p => p.classList.toggle('active', p.dataset.page === page));
             loadPageContent(page, subpage);
             translatePage();
         }
 
         function loadPageContent(page, subpage) {
-            const container = document.getElementById(`${page}-content`);
+            const containerId = `${page}-content`;
+            const container = document.getElementById(containerId);
             if (!container) return;
 
             switch(page) {
@@ -275,111 +230,113 @@
             listeners.push(unsubscribe);
         }
         
-        function applyFiltersAndSort() { /* ... */ }
-        function renderProducts(productsToRender) { /* ... */ }
-        
-        function loadFaq() {
-            const unsubscribe = onSnapshot(collection(db, "faq"), (snapshot) => { /* ... */ });
-            listeners.push(unsubscribe);
-        }
-        
-        // --- REDESIGNED ADMIN PANEL ---
-        function loadAdminPanel(subpage = 'products') { /* ... (same as before) ... */ }
-        function loadAdminTab(tab) { /* ... (same as before) ... */ }
-        function renderAdminProductItem(id, data) { /* ... (same as before) ... */ }
-        function renderAdminFaqItem(id, data) { /* ... (same as before) ... */ }
-        function renderAdminPromoItem(id, data) { /* ... (same as before) ... */ }
-        
-        function updateCartCount() { /* ... */ }
-        function renderCartPage() { /* ... */ }
-        
-        // --- REDESIGNED CHATS PAGE ---
-        function loadChatsPage() {
-            const contentEl = document.getElementById('chats-content');
-            if (!currentUser) { 
-                contentEl.innerHTML = `<div class="text-center py-10"><h2 class="text-2xl font-bold">Доступ запрещен</h2><p class="mt-2 text-gray-500">Пожалуйста, <a href="#" id="login-for-chat" class="text-primary underline font-semibold">войдите в аккаунт</a>, чтобы получить доступ к чату.</p></div>`;
-                return;
-            }
-            contentEl.innerHTML = `<div class="max-w-2xl mx-auto text-center py-10"><h2 class="text-3xl font-extrabold">Поддержка</h2><p class="mt-4 text-lg text-gray-500 dark:text-gray-400">Если у вас возникли вопросы по заказам или другие проблемы, свяжитесь с нами.</p><button id="start-chat-btn" class="mt-8 w-full md:w-auto inline-flex justify-center items-center px-8 py-3 border border-transparent text-base font-medium rounded-md shadow-sm text-white bg-primary hover:bg-primary-hover">Начать чат с администратором</button></div>`;
+        function applyFiltersAndSort() {
+            const searchInput = document.getElementById('search-input');
+            const categoryFilter = document.getElementById('category-filter');
+            const sortFilter = document.getElementById('sort-filter');
+            if(!searchInput || !categoryFilter || !sortFilter) return;
+
+            let filtered = allProducts.filter(p => p.name.toLowerCase().includes(searchInput.value.toLowerCase()));
+            if (categoryFilter.value !== 'all') filtered = filtered.filter(p => p.category === categoryFilter.value);
+            if (sortFilter.value === 'popular') filtered.sort((a, b) => (b.popularity || 0) - (a.popularity || 0));
+            else filtered.sort((a, b) => (b.createdAt?.toMillis() || 0) - (a.createdAt?.toMillis() || 0));
+            
+            renderProducts(filtered);
         }
 
+        function renderProducts(productsToRender) {
+            const productsGrid = document.getElementById('products-grid');
+            if (!productsGrid) return;
+            productsGrid.innerHTML = productsToRender.length === 0 ? `<p class="text-center col-span-full">Товары не найдены.</p>` : productsToRender.map(product => {
+                const verifiedBadge = product.isVerified ? `<div class="status-badge badge-verified"><svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M6.267 3.455a3.066 3.066 0 001.745-.723 3.066 3.066 0 013.976 0 3.066 3.066 0 001.745.723 3.066 3.066 0 012.812 2.812c.051.643.304 1.254.723 1.745a3.066 3.066 0 010 3.976 3.066 3.066 0 00-.723 1.745 3.066 3.066 0 01-2.812 2.812 3.066 3.066 0 00-1.745.723 3.066 3.066 0 01-3.976 0 3.066 3.066 0 00-1.745-.723 3.066 3.066 0 01-2.812-2.812 3.066 3.066 0 00-.723-1.745 3.066 3.066 0 010-3.976 3.066 3.066 0 00.723-1.745 3.066 3.066 0 012.812-2.812zm7.44 5.252a.75.75 0 00-1.06-1.06L9 10.94l-1.72-1.72a.75.75 0 00-1.06 1.06l2.25 2.25a.75.75 0 001.06 0l4.25-4.25z" clip-rule="evenodd" /></svg><span>Подтверждено</span></div>` : '';
+                const pinnedBadge = product.isPinned ? `<div class="status-badge badge-pinned"><svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" /></svg><span>Закреплено</span></div>` : '';
+                return `<div class="card-bg rounded-xl shadow-lg flex flex-col justify-between border border-custom overflow-hidden transition-all duration-300 hover:shadow-xl hover:-translate-y-1">
+                    <div class="relative"><img src="${product.imageUrl || 'https://placehold.co/600x400'}" class="w-full h-48 object-cover"><div class="absolute top-3 left-3 flex flex-col gap-2">${pinnedBadge}${verifiedBadge}</div></div>
+                    <div class="p-4 flex-grow flex flex-col"><h3 class="text-lg font-bold truncate">${product.name}</h3><p class="text-gray-500 dark:text-gray-400 mt-1 text-sm h-10 overflow-hidden flex-grow">${product.description}</p><p class="text-3xl font-extrabold text-primary mt-4">${formatPrice(product.price || 0)}</p></div>
+                    <div class="p-4 pt-2 border-t border-custom flex items-center gap-2"><button class="add-to-cart-btn p-3 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors" data-product-id='${product.id}' title="В корзину"><svg class="w-6 h-6 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"></path></svg></button><button class="buy-now-btn flex-grow bg-primary text-white py-3 px-4 rounded-lg hover:bg-primary-hover font-semibold transition-colors" data-product-id="${product.id}" data-lang-key="buy_button"></button></div>
+                </div>`;
+            }).join('');
+            translatePage();
+        }
+        
+        function loadFaq() { /* ... */ }
+        function loadAdminPanel(subpage) { /* ... */ }
+        function loadAdminTab(tab) { /* ... */ }
+        
+        function updateCartCount() {
+            const cartCount = document.getElementById('cart-count');
+            if(cart.length > 0) {
+                cartCount.textContent = cart.length;
+                cartCount.classList.remove('hidden');
+            } else {
+                cartCount.classList.add('hidden');
+            }
+        }
+
+        function renderCartPage() { /* ... */ }
+        function loadChatsPage() { /* ... */ }
         function renderChatInterface(container, chatId, title, currentUserId) { /* ... */ }
         async function sendChatMessage(chatId, senderId, text) { /* ... */ }
-        
-        function loadPurchasesPage() {
-            if (!currentUser) return;
-            const container = document.getElementById('purchases-container');
-            if (!container) return;
-            const unsubscribe = onSnapshot(query(collection(db, "purchases"), where("userId", "==", currentUser.uid), orderBy("createdAt", "desc")), (snapshot) => { /* ... */ });
-            listeners.push(unsubscribe);
-        }
-
+        function loadPurchasesPage() { /* ... */ }
         function loadAdminPurchases() { /* ... */ }
         function loadAdminChatsList(activeChatUserId) { /* ... */ }
-        
         function loadProfilePage() { /* ... */ }
-        
         function showModal(title, content, onSave, saveButtonText, cancelButtonText) { /* ... */ }
-        
         function showPurchaseFlow(productId, isAddToCart) { /* ... */ }
-        
         function showUniqueCodeModal(uniqueCode) { /* ... */ }
-
-        async function processPayment(items, fromCart) {
-            if (!currentUser) { alert("Пожалуйста, войдите для совершения покупки."); return; }
-            
-            const getProductDetails = (item) => {
-                const product = allProducts.find(p => p.id === item.productId);
-                if (!product) return null;
-                const variation = item.variationIndex > -1 ? product.variations[item.variationIndex] : null;
-                return {
-                    productId: product.id, productName: product.name,
-                    variationName: variation ? variation.name : null,
-                    price: variation ? variation.price : product.price,
-                };
-            };
-            const purchaseItems = items.map(getProductDetails).filter(Boolean);
-            if(purchaseItems.length === 0) {
-                alert('Ошибка: не удалось найти информацию о товаре.');
-                return;
-            }
-            
-            // ... (rest of the payment logic, now more stable) ...
-        }
-
+        async function processPayment(items, fromCart) { /* ... */ }
+        
         function setupEventListeners() {
-            document.body.addEventListener('click', async e => {
+            const body = document.body;
+            body.innerHTML += ''; // Force DOM refresh to attach new listeners
+            
+            const handler = async (e) => {
                 const target = e.target.closest('button, a');
                 if (!target) return;
-                
+
                 const confirmAction = (message, onConfirm) => showModal('Подтвердите действие', `<p>${message}</p>`, async () => { await onConfirm(); return true; }, 'Да', 'Нет');
                 
-                if (target.matches('.admin-tab-btn')) { e.preventDefault(); window.location.hash = target.getAttribute('href'); }
-                else if (target.matches('#add-product-btn')) { showProductForm(); }
-                else if (target.matches('.edit-product-btn')) { showProductForm(target.dataset.id); }
-                else if (target.matches('.delete-btn')) { confirmAction('Вы уверены, что хотите удалить?', () => deleteDoc(doc(db, target.dataset.collection, target.dataset.id))); }
-                else if (target.matches('#add-faq-btn')) { /* ... */ }
-                else if (target.matches('#add-promo-btn')) { showPromoForm(); }
-                else if (target.matches('.edit-promo-btn')) { showPromoForm(target.dataset.id); }
-                else if (target.matches('.faq-question')) { target.classList.toggle('open'); }
-                else if (target.matches('.add-to-cart-btn')) { showPurchaseFlow(target.dataset.productId, true); }
-                else if (target.matches('.remove-from-cart-btn')) { /* ... */ }
-                else if (target.matches('.buy-now-btn')) { showPurchaseFlow(target.dataset.productId, false); }
-                else if (target.matches('#checkout-cart-btn')) { processPayment(cart, true); }
-                else if (target.matches('#google-login-btn, #login-for-chat')) { signInWithGoogle(); }
-                else if (target.matches('#logout-btn, #logout-btn-profile')) { signOut(auth); }
-                else if (target.matches('#start-chat-btn')) { const chatId = `${currentUser.uid}_${ADMIN_UID}`; renderChatInterface(document.getElementById('chats-content'), chatId, "Чат с администрацией", currentUser.uid); }
-                else if (target.matches('#send-chat-message')) { /* ... */ }
-                else if (target.matches('#profile-btn')) { /* ... */ }
-                else if (target.matches('#change-avatar-btn')) { document.getElementById('avatar-upload').click(); }
-                else if (target.matches('.cancel-order-btn')) { /* ... */ }
-                else if (target.matches('.contact-seller-btn')) { showUniqueCodeModal(target.dataset.code); }
-                else if (target.matches('#save-profile-btn')) {
-                    /* ... (Profile save logic with handleRouting() at the end to refresh) ... */
-                    handleRouting();
+                let action = target.id || '';
+                if (!action) {
+                    const classList = Array.from(target.classList);
+                    action = classList.find(c => c.endsWith('-btn'));
                 }
-            });
-            // ... other listeners ...
+
+                switch(action) {
+                    case 'admin-tab-btn': e.preventDefault(); window.location.hash = target.getAttribute('href'); break;
+                    case 'add-product-btn': showProductForm(); break;
+                    case 'edit-product-btn': showProductForm(target.dataset.id); break;
+                    case 'delete-btn': confirmAction('Вы уверены?', () => deleteDoc(doc(db, target.dataset.collection, target.dataset.id))); break;
+                    case 'add-to-cart-btn': showPurchaseFlow(target.dataset.productId, true); break;
+                    case 'buy-now-btn': showPurchaseFlow(target.dataset.productId, false); break;
+                    case 'checkout-cart-btn': processPayment(cart, true); break;
+                    case 'google-login-btn': case 'login-for-chat': signInWithGoogle(); break;
+                    case 'logout-btn': case 'logout-btn-profile': signOut(auth); break;
+                    case 'start-chat-btn': renderChatInterface(document.getElementById('chats-content'), `${currentUser.uid}_${ADMIN_UID}`, "Чат с администрацией", currentUser.uid); break;
+                    case 'send-chat-message':
+                        const text = document.getElementById('chat-message-input').value.trim();
+                        if (text) sendChatMessage(target.dataset.chatId, target.dataset.senderId, text);
+                        document.getElementById('chat-message-input').value = '';
+                        break;
+                    case 'save-profile-btn':
+                        target.disabled = true; target.textContent = 'Сохранение...';
+                        const newName = document.getElementById('profile-name').value;
+                        const avatarFile = document.getElementById('avatar-upload').files[0];
+                        try {
+                            let newAvatarUrl = currentUser.photoURL;
+                            if (avatarFile) newAvatarUrl = await uploadImage(avatarFile);
+                            await updateProfile(currentUser, { displayName: newName, photoURL: newAvatarUrl });
+                            await setDoc(doc(db, "users", currentUser.uid), { displayName: newName, photoURL: newAvatarUrl }, { merge: true });
+                            alert('Профиль обновлен!');
+                        } catch (error) { alert('Ошибка: ' + error.message); }
+                        finally { handleRouting(); } // Force reload to prevent bugs
+                        break;
+                }
+            };
+            
+            document.body.removeEventListener('click', window.mainClickListener);
+            window.mainClickListener = handler;
+            document.body.addEventListener('click', window.mainClickListener);
         }
         
         function updateAuthUI() { /* ... */ }
