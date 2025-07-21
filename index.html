@@ -475,9 +475,9 @@
             const [sortBy, setSortBy] = useState('new');
 
             const filteredAndSortedProducts = useMemo(() => {
-                if (!products || products.length === 0) return [];
+                if (!products) return [];
                 return products
-                    .filter(p => p.isOnSale === undefined || p.isOnSale !== false)
+                    .filter(p => p && p.name && (p.isOnSale === undefined || p.isOnSale !== false))
                     .filter(p => (p.name[language] || p.name.ru).toLowerCase().includes(searchTerm.toLowerCase()))
                     .filter(p => filterCategory === 'all' || p.category === filterCategory)
                     .sort((a, b) => {
@@ -497,7 +497,7 @@
 
             const categories = useMemo(() => {
                 const cats = { all: t.all };
-                products.forEach(p => { if (p.category) cats[p.category] = p.category; });
+                products.forEach(p => { if (p && p.category) cats[p.category] = p.category; });
                 return Object.keys(cats).map(key => ({ value: key, label: t[key.toLowerCase()] || key }));
             }, [products, t]);
 
