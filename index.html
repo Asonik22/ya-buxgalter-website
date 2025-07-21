@@ -24,6 +24,8 @@
         [data-page] { display: none; }
         [data-page].active { display: block; }
         .faq-answer { max-height: 0; overflow: hidden; transition: max-height 0.3s ease-out; }
+        .faq-question svg { transition: transform 0.3s; }
+        .faq-question.open svg { transform: rotate(180deg); }
     </style>
 </head>
 <body class="bg-light dark:bg-dark text-light dark:text-dark">
@@ -42,7 +44,7 @@
                     </nav>
                 </div>
                 <div class="flex items-center space-x-4">
-                    <button id="theme-toggle" class="p-2 rounded-full text-gray-500 dark:text-gray-400"><svg id="theme-toggle-dark-icon" class="hidden h-5 w-5" fill="currentColor" viewBox="0 0 20 20"><path d="M17.293 13.293A8 8 0 016.707 2.707a8.001 8.001 0 1010.586 10.586z"></path></svg><svg id="theme-toggle-light-icon" class="hidden h-5 w-5" fill="currentColor" viewBox="0 0 20 20"><path d="M10 2a1 1 0 011 1v1a1 1 0 11-2 0V3a1 1 0 011-1zm4 8a4 4 0 11-8 0 4 4 0 018 0zm-.464 4.95l.707.707a1 1 0 001.414-1.414l-.707-.707a1 1 0 00-1.414 1.414zm2.121-3.536a1 1 0 010 1.414l-.707.707a1 1 0 11-1.414-1.414l.707-.707a1 1 0 011.414 0zM10 18a1 1 0 01-1-1v-1a1 1 0 112 0v1a1 1 0 01-1 1zM5.05 14.464l.707-.707a1 1 0 10-1.414-1.414l-.707.707a1 1 0 001.414 1.414zM1.464 6.536a1 1 0 010-1.414l.707-.707a1 1 0 111.414 1.414l-.707.707a1 1 0 01-1.414 0zM4 10a1 1 0 01-1-1H2a1 1 0 110-2h1a1 1 0 110 2z"></path></svg></button>
+                    <button id="theme-toggle" class="p-2 rounded-full text-gray-500 dark:text-gray-400"></button>
                     <a href="#cart" class="relative p-2 text-gray-500 dark:text-gray-400"><svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"></path></svg><span id="cart-count" class="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-4 w-4 flex items-center justify-center hidden">0</span></a>
                     <div id="auth-container" class="relative"></div>
                 </div>
@@ -83,7 +85,6 @@
         import { getAuth, onAuthStateChanged, GoogleAuthProvider, signInWithPopup, signOut } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
         import { getFirestore, doc, getDoc, setDoc, addDoc, collection, getDocs, onSnapshot, updateDoc, deleteDoc, query, where, serverTimestamp, orderBy } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-        // --- App Configuration ---
         const firebaseConfig = {
             apiKey: "AIzaSyC7smDYoy-LT58xCwjJsc9uZU9CgHQv5dM",
             authDomain: "ya-buxgalter.firebaseapp.com",
@@ -104,13 +105,21 @@
         let allProducts = [];
         let cart = JSON.parse(localStorage.getItem('asonik_cart')) || [];
 
-        document.addEventListener('DOMContentLoaded', () => {
+        function safeRun(fn) {
+            try {
+                fn();
+            } catch (error) {
+                console.error("Initialization failed:", error);
+                document.body.innerHTML = `<div class="p-8 text-center text-red-500"><h1>Критическая ошибка</h1><p>Приложение не удалось загрузить. См. консоль для деталей.</p></div>`;
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', () => safeRun(() => {
+            initTheme();
             handleRouting();
             window.addEventListener('hashchange', handleRouting);
             setupEventListeners();
-            initTheme();
             updateCartCount();
-
             onAuthStateChanged(auth, user => {
                 currentUser = user;
                 isAdmin = user ? user.uid === ADMIN_UID : false;
@@ -118,26 +127,25 @@
                 if (window.location.hash.startsWith('#admin') && !isAdmin) {
                     window.location.hash = '#main';
                 }
-                handleRouting(); 
+                handleRouting();
             });
-        });
+        }));
 
         function handleRouting() {
             const hash = window.location.hash || '#main';
-            const page = hash.substring(1).split('/')[0];
-            
+            const page = hash.substring(1).split('/')[0] || 'main';
             document.querySelectorAll('[data-page]').forEach(p => p.classList.remove('active'));
             const activePage = document.querySelector(`[data-page="${page}"]`);
             if (activePage) {
                 activePage.classList.add('active');
-                loadPageContent(page, hash);
+                loadPageContent(page);
             } else {
-                 document.querySelector(`[data-page="main"]`).classList.add('active');
-                 loadPageContent('main');
+                document.querySelector(`[data-page="main"]`).classList.add('active');
+                loadPageContent('main');
             }
         }
 
-        function loadPageContent(page, hash) {
+        function loadPageContent(page) {
             switch(page) {
                 case 'main': loadProducts(); break;
                 case 'faq': loadFaq(); break;
@@ -149,16 +157,35 @@
         
         function loadProducts() {
             const productsGrid = document.getElementById('products-grid');
+            if (!productsGrid) return;
             productsGrid.innerHTML = `<p>Загрузка товаров...</p>`;
-            onSnapshot(query(collection(db, "products"), orderBy("createdAt", "desc")), (snapshot) => {
+            onSnapshot(query(collection(db, "products")), (snapshot) => {
                 allProducts = [];
                 snapshot.forEach(doc => allProducts.push({ id: doc.id, ...doc.data() }));
-                renderProducts(allProducts);
+                applyFiltersAndSort();
             });
         }
         
+        function applyFiltersAndSort() {
+            let filtered = [...allProducts];
+            const searchTerm = document.getElementById('search-input').value.toLowerCase();
+            const category = document.getElementById('category-filter').value;
+            const sortBy = document.getElementById('sort-filter').value;
+
+            if (searchTerm) filtered = filtered.filter(p => p.name.toLowerCase().includes(searchTerm));
+            if (category !== 'all') filtered = filtered.filter(p => p.category === category);
+            
+            if (sortBy === 'popular') {
+                filtered.sort((a, b) => (b.popularity || 0) - (a.popularity || 0));
+            } else {
+                filtered.sort((a, b) => (b.createdAt?.toMillis() || 0) - (a.createdAt?.toMillis() || 0));
+            }
+            renderProducts(filtered);
+        }
+
         function renderProducts(productsToRender) {
             const productsGrid = document.getElementById('products-grid');
+            if (!productsGrid) return;
             productsGrid.innerHTML = '';
             if (!productsToRender.length) {
                 productsGrid.innerHTML = `<p>Товары не найдены.</p>`;
@@ -173,8 +200,7 @@
                 card.innerHTML = `
                     <div class="relative">
                         <img src="${product.imageUrl || 'https://placehold.co/600x400'}" class="w-full h-48 object-cover">
-                        ${verifiedBadge}
-                        ${pinnedBadge}
+                        ${verifiedBadge} ${pinnedBadge}
                     </div>
                     <div class="p-4 flex-grow">
                         <h3 class="text-lg font-semibold truncate">${product.name}</h3>
@@ -198,15 +224,7 @@
                     const item = doc.data();
                     const faqItem = document.createElement('div');
                     faqItem.className = 'card-bg rounded-lg shadow overflow-hidden';
-                    faqItem.innerHTML = `
-                        <button class="faq-question w-full text-left p-4 font-bold flex justify-between items-center">
-                            <span>${item.question}</span>
-                            <svg class="w-5 h-5 transform transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
-                        </button>
-                        <div class="faq-answer px-4 pb-4">
-                            <p>${item.answer}</p>
-                        </div>
-                    `;
+                    faqItem.innerHTML = `<button class="faq-question w-full text-left p-4 font-bold flex justify-between items-center"><span>${item.question}</span><svg class="w-5 h-5 transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg></button><div class="faq-answer px-4 pb-4"><p>${item.answer}</p></div>`;
                     faqContent.appendChild(faqItem);
                 });
             });
@@ -218,34 +236,18 @@
                 return;
             }
             const adminContent = document.getElementById('admin-content');
-            adminContent.innerHTML = `
-                <h1 class="text-4xl font-bold text-center mb-8">Админ-панель</h1>
-                <div class="flex flex-wrap justify-center gap-2 border-b border-custom mb-4">
-                    <button class="admin-tab-btn py-2 px-4 border-b-2 border-primary" data-tab="products">Товары</button>
-                    <button class="admin-tab-btn py-2 px-4" data-tab="faq">FAQ</button>
-                    <button class="admin-tab-btn py-2 px-4" data-tab="promocodes">Промокоды</button>
-                    <button class="admin-tab-btn py-2 px-4" data-tab="purchases">Проверка покупок</button>
-                    <button class="admin-tab-btn py-2 px-4" data-tab="chats">Чаты</button>
-                </div>
-                <div id="admin-tab-content"></div>
-            `;
+            adminContent.innerHTML = `<h1 class="text-4xl font-bold text-center mb-8">Админ-панель</h1><div class="flex flex-wrap justify-center gap-2 border-b border-custom mb-4"><button class="admin-tab-btn py-2 px-4 border-b-2 border-primary" data-tab="products">Товары</button><button class="admin-tab-btn py-2 px-4" data-tab="faq">FAQ</button><button class="admin-tab-btn py-2 px-4" data-tab="promocodes">Промокоды</button><button class="admin-tab-btn py-2 px-4" data-tab="purchases">Проверка покупок</button><button class="admin-tab-btn py-2 px-4" data-tab="chats">Чаты</button></div><div id="admin-tab-content"></div>`;
             loadAdminTab('products');
         }
 
         function loadAdminTab(tab) {
             const contentEl = document.getElementById('admin-tab-content');
             const tabs = {
-                products: `
-                    <button id="add-product-btn" class="bg-green-500 text-white px-4 py-2 rounded-lg mb-4 hover:bg-green-600">Добавить товар</button>
-                    <div id="admin-products-list"></div>`,
-                faq: `
-                    <button id="add-faq-btn" class="bg-green-500 text-white px-4 py-2 rounded-lg mb-4 hover:bg-green-600">Добавить FAQ</button>
-                    <div id="admin-faq-list"></div>`,
-                promocodes: `
-                    <button id="add-promo-btn" class="bg-green-500 text-white px-4 py-2 rounded-lg mb-4 hover:bg-green-600">Создать промокод</button>
-                    <div id="admin-promo-list"></div>`,
-                purchases: `<div id="admin-purchases-list"></div>`,
-                chats: `<div id="admin-chats-list"></div>`
+                products: `<button id="add-product-btn" class="bg-green-500 text-white px-4 py-2 rounded-lg mb-4 hover:bg-green-600">Добавить товар</button><div id="admin-products-list"></div>`,
+                faq: `<button id="add-faq-btn" class="bg-green-500 text-white px-4 py-2 rounded-lg mb-4 hover:bg-green-600">Добавить FAQ</button><div id="admin-faq-list"></div>`,
+                promocodes: `<button id="add-promo-btn" class="bg-green-500 text-white px-4 py-2 rounded-lg mb-4 hover:bg-green-600">Создать промокод</button><div id="admin-promo-list"></div>`,
+                purchases: `<div id="admin-purchases-list"><p>Раздел в разработке</p></div>`,
+                chats: `<div id="admin-chats-list"><p>Раздел в разработке</p></div>`
             };
             contentEl.innerHTML = tabs[tab];
             
@@ -277,11 +279,10 @@
         function renderAdminPromoItem(id, data) {
             const item = document.createElement('div');
             item.className = 'card-bg p-4 rounded-lg shadow mb-2';
-            item.innerHTML = `<p>Код: <span class="font-bold">${data.code}</span></p><p>Скидка: ${data.discount}%</p><p>Использований: ${data.uses}/${data.limit}</p>`;
+            item.innerHTML = `<p>Код: <span class="font-bold">${data.code}</span></p><p>Скидка: ${data.discount}%</p><p>Использований: ${data.uses || 0}/${data.limit}</p><button class="delete-btn text-red-500 mt-2" data-collection="promocodes" data-id="${id}">Удл.</button>`;
             return item;
         }
         
-        // Cart Logic
         function addToCart(productId) {
             const product = allProducts.find(p => p.id === productId);
             if(product) {
@@ -293,6 +294,7 @@
         }
         function updateCartCount() {
             const countEl = document.getElementById('cart-count');
+            if (!countEl) return;
             if (cart.length > 0) {
                 countEl.textContent = cart.length;
                 countEl.classList.remove('hidden');
@@ -306,33 +308,21 @@
                 contentEl.innerHTML = '<p class="text-center">Ваша корзина пуста.</p>';
                 return;
             }
-            let total = 0;
-            contentEl.innerHTML = cart.map((item, index) => {
-                total += item.price;
-                return `<div class="card-bg p-4 rounded-lg shadow flex justify-between items-center mb-2"><span>${item.name} - ${item.price.toLocaleString()} UZS</span><button class="remove-from-cart-btn text-red-500" data-index="${index}">Удалить</button></div>`;
-            }).join('') + `<div class="text-right font-bold text-2xl mt-4">Итого: ${total.toLocaleString()} UZS</div>`;
+            let total = cart.reduce((sum, item) => sum + (item.price || 0), 0);
+            contentEl.innerHTML = cart.map((item, index) => `<div class="card-bg p-4 rounded-lg shadow flex justify-between items-center mb-2"><span>${item.name} - ${(item.price || 0).toLocaleString()} UZS</span><button class="remove-from-cart-btn text-red-500" data-index="${index}">Удалить</button></div>`).join('') + `<div class="text-right font-bold text-2xl mt-4">Итого: ${total.toLocaleString()} UZS</div>`;
         }
         
-        // Chat Logic
         function loadChatsPage() {
              const contentEl = document.getElementById('chats-content');
              if (!currentUser) {
                  contentEl.innerHTML = '<p class="text-center">Пожалуйста, <a href="#" id="login-for-chat" class="text-primary underline">войдите</a>, чтобы начать чат.</p>';
                  return;
              }
-            contentEl.innerHTML = `
-                <div class="max-w-4xl mx-auto card-bg border border-custom rounded-lg shadow">
-                    <div class="p-4 font-bold border-b border-custom">Чат с администрацией</div>
-                    <div id="messages-container" class="p-4 h-96 overflow-y-auto flex flex-col-reverse"></div>
-                    <div class="p-4 border-t border-custom flex gap-2">
-                        <input id="chat-message-input" class="flex-grow p-2 border rounded input-bg" placeholder="Введите сообщение...">
-                        <button id="send-chat-message" class="bg-primary text-white px-6 py-2 rounded-lg">Отправить</button>
-                    </div>
-                </div>
-            `;
+            contentEl.innerHTML = `<div class="max-w-4xl mx-auto card-bg border border-custom rounded-lg shadow"><div class="p-4 font-bold border-b border-custom">Чат с администрацией</div><div id="messages-container" class="p-4 h-96 overflow-y-auto flex flex-col-reverse"></div><div class="p-4 border-t border-custom flex gap-2"><input id="chat-message-input" class="flex-grow p-2 border rounded input-bg" placeholder="Введите сообщение..."><button id="send-chat-message" class="bg-primary text-white px-6 py-2 rounded-lg">Отправить</button></div></div>`;
             const chatId = `${currentUser.uid}_${ADMIN_UID}`;
-            const messagesContainer = document.getElementById('messages-container');
             onSnapshot(query(collection(db, `chats/${chatId}/messages`), orderBy("createdAt", "desc")), snapshot => {
+                const messagesContainer = document.getElementById('messages-container');
+                if (!messagesContainer) return;
                 messagesContainer.innerHTML = '';
                 snapshot.forEach(doc => {
                     const msg = doc.data();
@@ -349,17 +339,11 @@
             const input = document.getElementById('chat-message-input');
             const text = input.value.trim();
             if (!text || !currentUser) return;
-            
             const chatId = `${currentUser.uid}_${ADMIN_UID}`;
-            await addDoc(collection(db, `chats/${chatId}/messages`), {
-                text: text,
-                senderId: currentUser.uid,
-                createdAt: serverTimestamp()
-            });
+            await addDoc(collection(db, `chats/${chatId}/messages`), { text, senderId: currentUser.uid, createdAt: serverTimestamp() });
             input.value = '';
         }
 
-        // --- Modals & Forms ---
         function showModal(title, content, onSave) {
             const modal = document.createElement('div');
             modal.className = 'fixed inset-0 z-50 flex items-center justify-center modal-backdrop';
@@ -371,7 +355,7 @@
         }
 
         async function showProductForm(productId) {
-            let p = { name: '', description: '', price: 0, imageUrl: '', isPinned: false, isVerified: false, variations: [] };
+            let p = { name: '', description: '', price: 0, imageUrl: '', isPinned: false, isVerified: false, variations: [], category: 'games' };
             if (productId) {
                 const docSnap = await getDoc(doc(db, 'products', productId));
                 if (docSnap.exists()) p = { id: docSnap.id, ...docSnap.data() };
@@ -380,31 +364,33 @@
             const modal = showModal(productId ? 'Редактировать товар' : 'Добавить товар', `
                 <div class="space-y-4">
                     <input id="p-name" class="w-full p-2 border rounded input-bg" placeholder="Название" value="${p.name}">
+                    <select id="p-category" class="w-full p-2 border rounded input-bg"><option value="games" ${p.category === 'games' ? 'selected' : ''}>Игра</option><option value="apps" ${p.category === 'apps' ? 'selected' : ''}>Приложение</option></select>
                     <textarea id="p-desc" class="w-full p-2 border rounded input-bg" placeholder="Описание">${p.description}</textarea>
                     <input id="p-price" type="number" class="w-full p-2 border rounded input-bg" placeholder="Основная цена (UZS)" value="${p.price}">
-                    <input type="file" id="p-image-file" class="w-full p-2 border rounded input-bg">
+                    <label>Изображение:</label><input type="file" id="p-image-file" class="w-full p-2 border rounded input-bg">
                     <img id="p-image-preview" src="${p.imageUrl}" class="w-32 h-32 object-cover ${p.imageUrl ? '' : 'hidden'}">
                     <div class="flex items-center gap-4"><label><input type="checkbox" id="p-pinned" ${p.isPinned ? 'checked' : ''}> Закрепить</label><label><input type="checkbox" id="p-verified" ${p.isVerified ? 'checked' : ''}> Подтвердить</label></div>
                     <hr><h4 class="font-bold">Вариации</h4><div id="variations-container"></div><button id="add-variation-btn" type="button" class="text-sm text-blue-500">+ Добавить вариацию</button>
                 </div>
             `, async (m) => {
-                const name = m.querySelector('#p-name').value;
+                const saveBtn = m.querySelector('.save-modal-btn');
+                saveBtn.textContent = 'Сохранение...';
+                saveBtn.disabled = true;
                 const imageFile = m.querySelector('#p-image-file').files[0];
                 let imageUrl = p.imageUrl;
-                if(imageFile) {
-                    m.querySelector('.save-modal-btn').textContent = 'Загрузка...';
-                    m.querySelector('.save-modal-btn').disabled = true;
-                    imageUrl = await uploadImage(imageFile);
-                }
+                if(imageFile) imageUrl = await uploadImage(imageFile);
+                if(imageFile && !imageUrl) { saveBtn.textContent = 'Сохранить'; saveBtn.disabled = false; return false; }
                 const data = {
-                    name,
+                    name: m.querySelector('#p-name').value,
+                    category: m.querySelector('#p-category').value,
                     description: m.querySelector('#p-desc').value,
                     price: parseFloat(m.querySelector('#p-price').value) || 0,
                     imageUrl,
                     isPinned: m.querySelector('#p-pinned').checked,
                     isVerified: m.querySelector('#p-verified').checked,
                     variations: Array.from(m.querySelectorAll('.variation-item')).map(v => ({ name: v.querySelector('.v-name').value, price: parseFloat(v.querySelector('.v-price').value) || 0 })),
-                    createdAt: p.createdAt || serverTimestamp()
+                    createdAt: p.createdAt || serverTimestamp(),
+                    popularity: p.popularity || 0
                 };
                 await (productId ? setDoc(doc(db, 'products', productId), data) : addDoc(collection(db, 'products'), data));
                 return true;
@@ -414,7 +400,7 @@
             const renderVariation = (v = {name: '', price: 0}) => {
                 const el = document.createElement('div');
                 el.className = 'variation-item flex gap-2 items-center mb-2';
-                el.innerHTML = `<input class="v-name w-1/2 p-2 border rounded input-bg" placeholder="Название вариации" value="${v.name}"><input type="number" class="v-price w-1/2 p-2 border rounded input-bg" placeholder="Цена вариации" value="${v.price}"><button type="button" class="remove-variation-btn text-red-500">&times;</button>`;
+                el.innerHTML = `<input class="v-name w-1/2 p-2 border rounded input-bg" placeholder="Название (напр. 100 гемов)" value="${v.name}"><input type="number" class="v-price w-1/2 p-2 border rounded input-bg" placeholder="Цена" value="${v.price}"><button type="button" class="remove-variation-btn text-red-500 text-2xl">&times;</button>`;
                 variationsContainer.appendChild(el);
             };
             (p.variations || []).forEach(renderVariation);
@@ -437,7 +423,7 @@
         }
         
         function showPromoForm() {
-            showModal('Создать промокод', `
+            const modal = showModal('Создать промокод', `
                 <div class="space-y-4">
                     <input id="promo-code" class="w-full p-2 border rounded input-bg" placeholder="Промокод (напр. SALE20)">
                     <label>Скидка: <span id="promo-discount-val">20</span>%</label>
@@ -455,58 +441,76 @@
                 await setDoc(doc(db, 'promocodes', data.code), data);
                 return true;
             });
-            document.getElementById('promo-discount').oninput = e => document.getElementById('promo-discount-val').textContent = e.target.value;
+            modal.querySelector('#promo-discount').oninput = e => modal.querySelector('#promo-discount-val').textContent = e.target.value;
         }
 
-        // --- Event Listeners & Auth ---
         function setupEventListeners() {
             document.body.addEventListener('click', e => {
-                if (e.target.closest('.admin-tab-btn')) loadAdminTab(e.target.closest('.admin-tab-btn').dataset.tab);
-                if (e.target.id === 'add-product-btn') showProductForm();
-                if (e.target.closest('.edit-product-btn')) showProductForm(e.target.closest('.edit-product-btn').dataset.id);
-                if (e.target.closest('.delete-btn')) {
-                    if (confirm('Вы уверены?')) deleteDoc(doc(db, e.target.dataset.collection, e.target.dataset.id));
-                }
-                if (e.target.id === 'add-faq-btn') showFaqForm();
-                if (e.target.id === 'add-promo-btn') showPromoForm();
-                if (e.target.closest('.faq-question')) {
-                    const answer = e.target.closest('.faq-question').nextElementSibling;
+                const target = e.target;
+                if (target.closest('.admin-tab-btn')) loadAdminTab(target.closest('.admin-tab-btn').dataset.tab);
+                if (target.id === 'add-product-btn') showProductForm();
+                if (target.closest('.edit-product-btn')) showProductForm(target.closest('.edit-product-btn').dataset.id);
+                if (target.closest('.delete-btn')) if (confirm('Вы уверены?')) deleteDoc(doc(db, target.dataset.collection, target.dataset.id));
+                if (target.id === 'add-faq-btn') { const q = prompt("Вопрос:"); const a = prompt("Ответ:"); if (q && a) addDoc(collection(db, 'faq'), { question: q, answer: a }); }
+                if (target.id === 'add-promo-btn') showPromoForm();
+                if (target.closest('.faq-question')) {
+                    const questionBtn = target.closest('.faq-question');
+                    const answer = questionBtn.nextElementSibling;
+                    questionBtn.classList.toggle('open');
                     answer.style.maxHeight = answer.style.maxHeight ? null : answer.scrollHeight + "px";
-                    e.target.closest('.faq-question').querySelector('svg').classList.toggle('rotate-180');
                 }
-                if (e.target.closest('.add-to-cart-btn')) addToCart(e.target.closest('.add-to-cart-btn').dataset.productId);
-                if (e.target.closest('.remove-from-cart-btn')) {
-                    cart.splice(e.target.dataset.index, 1);
-                    localStorage.setItem('asonik_cart', JSON.stringify(cart));
-                    renderCartPage();
-                    updateCartCount();
-                }
-                if (e.target.closest('.share-btn')) navigator.clipboard.writeText(`Посмотри товар "${e.target.closest('.share-btn').dataset.productName}" в Asonik Store!`);
-                if (e.target.id === 'google-login-btn') signInWithGoogle();
-                if (e.target.id === 'logout-btn') signOut(auth);
-                if (e.target.id === 'login-for-chat') signInWithGoogle();
-                if (e.target.id === 'send-chat-message') sendChatMessage();
+                if (target.closest('.add-to-cart-btn')) addToCart(target.closest('.add-to-cart-btn').dataset.productId);
+                if (target.closest('.remove-from-cart-btn')) { cart.splice(target.dataset.index, 1); localStorage.setItem('asonik_cart', JSON.stringify(cart)); renderCartPage(); updateCartCount(); }
+                if (target.closest('.share-btn')) navigator.clipboard.writeText(`Посмотри товар "${target.closest('.share-btn').dataset.productName}" в Asonik Store!`).then(() => alert('Ссылка скопирована!'));
+                if (target.id === 'google-login-btn') signInWithGoogle();
+                if (target.id === 'logout-btn') signOut(auth);
+                if (target.id === 'login-for-chat') signInWithGoogle();
+                if (target.id === 'send-chat-message') sendChatMessage();
+                if (target.closest('#profile-btn')) { e.stopPropagation(); document.getElementById('profile-menu')?.classList.toggle('hidden'); }
             });
+            document.addEventListener('click', (e) => { const menu = document.getElementById('profile-menu'); if (menu && !menu.classList.contains('hidden') && !e.target.closest('#profile-btn')) menu.classList.add('hidden'); });
+            document.getElementById('search-input')?.addEventListener('input', applyFiltersAndSort);
+            document.getElementById('category-filter')?.addEventListener('change', applyFiltersAndSort);
+            document.getElementById('sort-filter')?.addEventListener('change', applyFiltersAndSort);
         }
         
-        function updateAuthUI() { /* ... same as before ... */ }
-        function signInWithGoogle() { /* ... same as before ... */ }
-        function initTheme() { /* ... same as before ... */ }
-        
-        // --- Auth UI & Theme (unchanged, collapsed for brevity) ---
         function updateAuthUI() {
             const container = document.getElementById('auth-container');
+            if(!container) return;
             if (currentUser) {
                 container.innerHTML = `<div class="relative"><button id="profile-btn" class="flex items-center"><img src="${currentUser.photoURL || 'https://placehold.co/32x32'}" alt="Профиль" class="w-8 h-8 rounded-full"></button><div id="profile-menu" class="hidden absolute right-0 mt-2 w-52 card-bg rounded-md shadow-lg border border-custom z-10"><div class="px-4 py-2 border-b border-custom"><p class="font-semibold truncate">${currentUser.displayName}</p><p class="text-sm text-gray-500 truncate">${currentUser.email}</p></div><a href="#profile" class="block px-4 py-2 text-sm hover:bg-gray-100 dark:hover:bg-gray-700">Профиль</a>${isAdmin ? `<a href="#admin" class="nav-link block px-4 py-2 text-sm hover:bg-gray-100 dark:hover:bg-gray-700">Админ-панель</a>` : ''}<div class="border-t border-custom"></div><a href="#" id="logout-btn" class="block px-4 py-2 text-sm text-red-500 hover:bg-gray-100 dark:hover:bg-gray-700">Выйти</a></div></div>`;
-                document.getElementById('profile-btn').onclick = (e) => { e.stopPropagation(); document.getElementById('profile-menu').classList.toggle('hidden'); };
-                document.addEventListener('click', (e) => { const menu = document.getElementById('profile-menu'), btn = document.getElementById('profile-btn'); if (menu && !menu.contains(e.target) && btn && !btn.contains(e.target)) menu.classList.add('hidden'); })
             } else {
                 container.innerHTML = `<button id="google-login-btn" class="px-4 py-2 bg-primary text-white rounded-md hover:bg-primary-hover font-semibold flex items-center gap-2"><svg class="w-5 h-5" viewBox="0 0 48 48"><path fill="#FFC107" d="M43.611 20.083H42V20H24v8h11.303c-1.649 4.657-6.08 8-11.303 8c-6.627 0-12-5.373-12-12s5.373-12 12-12c3.059 0 5.842 1.154 7.961 3.039l5.657-5.657C34.046 6.053 29.268 4 24 4C12.955 4 4 12.955 4 24s8.955 20 20 20s20-8.955 20-20c0-1.341-.138-2.65-.389-3.917z"></path><path fill="#FF3D00" d="M6.306 14.691l6.571 4.819C14.655 15.108 18.961 12 24 12c3.059 0 5.842 1.154 7.961 3.039l5.657-5.657C34.046 6.053 29.268 4 24 4C16.318 4 9.656 8.337 6.306 14.691z"></path><path fill="#4CAF50" d="M24 44c5.166 0 9.86-1.977 13.409-5.192l-6.19-5.238C29.211 35.091 26.715 36 24 36c-5.202 0-9.619-3.317-11.283-7.946l-6.522 5.025C9.505 39.556 16.227 44 24 44z"></path><path fill="#1976D2" d="M43.611 20.083H42V20H24v8h11.303c-.792 2.237-2.231 4.166-4.087 5.571l6.19 5.238C44.572 34.043 46 29.392 46 24c0-1.341-.138-2.65-.389-3.917z"></path></svg>Войти</button>`;
             }
         }
         function signInWithGoogle() { const provider = new GoogleAuthProvider(); signInWithPopup(auth, provider).catch((error) => { console.error("Google Sign-In Error: ", error); alert("Google Sign-In Failed: " + error.message); }); }
-        function initTheme() { const btn=document.getElementById('theme-toggle'),dark=document.getElementById('theme-toggle-dark-icon'),light=document.getElementById('theme-toggle-light-icon'),doc=document.documentElement; const apply=(t)=>{if(t==='dark'){doc.classList.add('dark');document.body.classList.add('dark');light.classList.remove('hidden');dark.classList.add('hidden')}else{doc.classList.remove('dark');document.body.classList.remove('dark');dark.classList.remove('hidden');light.classList.add('hidden')}}; const saved=localStorage.getItem('color-theme'),prefersDark=window.matchMedia('(prefers-color-scheme: dark)').matches; apply(saved||(prefersDark?'dark':'light')); btn.onclick=()=>{const n=doc.classList.contains('dark')?'light':'dark';localStorage.setItem('color-theme',n);apply(n)}};
-
+        function initTheme() {
+            const themeToggleBtn = document.getElementById('theme-toggle');
+            if (!themeToggleBtn) return;
+            themeToggleBtn.innerHTML = `<svg id="theme-toggle-dark-icon" class="hidden h-5 w-5" fill="currentColor" viewBox="0 0 20 20"><path d="M17.293 13.293A8 8 0 016.707 2.707a8.001 8.001 0 1010.586 10.586z"></path></svg><svg id="theme-toggle-light-icon" class="hidden h-5 w-5" fill="currentColor" viewBox="0 0 20 20"><path d="M10 2a1 1 0 011 1v1a1 1 0 11-2 0V3a1 1 0 011-1zm4 8a4 4 0 11-8 0 4 4 0 018 0zm-.464 4.95l.707.707a1 1 0 001.414-1.414l-.707-.707a1 1 0 00-1.414 1.414zm2.121-3.536a1 1 0 010 1.414l-.707.707a1 1 0 11-1.414-1.414l.707-.707a1 1 0 011.414 0zM10 18a1 1 0 01-1-1v-1a1 1 0 112 0v1a1 1 0 01-1 1zM5.05 14.464l.707-.707a1 1 0 10-1.414-1.414l-.707.707a1 1 0 001.414 1.414zM1.464 6.536a1 1 0 010-1.414l.707-.707a1 1 0 111.414 1.414l-.707.707a1 1 0 01-1.414 0zM4 10a1 1 0 01-1-1H2a1 1 0 110-2h1a1 1 0 110 2z"></path></svg>`;
+            const darkIcon = document.getElementById('theme-toggle-dark-icon');
+            const lightIcon = document.getElementById('theme-toggle-light-icon');
+            const docElement = document.documentElement;
+            const applyTheme = (theme) => {
+                if (theme === 'dark') {
+                    docElement.classList.add('dark');
+                    lightIcon.classList.remove('hidden');
+                    darkIcon.classList.add('hidden');
+                } else {
+                    docElement.classList.remove('dark');
+                    darkIcon.classList.remove('hidden');
+                    lightIcon.classList.add('hidden');
+                }
+            };
+            const savedTheme = localStorage.getItem('color-theme');
+            const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+            applyTheme(savedTheme || (prefersDark ? 'dark' : 'light'));
+            themeToggleBtn.onclick = () => {
+                const newTheme = docElement.classList.contains('dark') ? 'light' : 'dark';
+                localStorage.setItem('color-theme', newTheme);
+                applyTheme(newTheme);
+            };
+        }
     </script>
 </body>
 </html>
