@@ -98,6 +98,7 @@
         };
         const IMGBB_API_KEY = '96bf3f29606f1989bb5a450ad3770cce';
         const ADMIN_UID = 'vhmtXZxkZnOWviNQ39R1W3GE8mw2';
+        const TELEGRAM_USERNAME = 'asonik_22'; // CHANGE THIS TO YOUR TELEGRAM USERNAME
 
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
@@ -111,7 +112,7 @@
         const appState = {
             currency: 'UZS',
             lang: 'RU',
-            rates: { UZS: 1, RUB: 0.0073, USD: 0.000078 } // Corrected RUB rate
+            rates: { UZS: 1, RUB: 0.0073, USD: 0.000078 }
         };
 
         const translations = {
@@ -398,14 +399,13 @@
         async function sendChatMessage(chatId, senderId, text) {
             if (!text || !senderId) return;
             const [user1, user2] = chatId.split('_');
-            const chatMetaRefUser = doc(db, 'chats', user1);
-            const chatMetaRefAdmin = doc(db, 'chats', user2);
-            await setDoc(chatMetaRefUser, { lastActivity: serverTimestamp() }, { merge: true });
-            await setDoc(chatMetaRefAdmin, { lastActivity: serverTimestamp() }, { merge: true });
+            const chatMetaRefUser = doc(db, 'users_chats', user1); // Use a different collection for chat metadata
+            const chatMetaRefAdmin = doc(db, 'users_chats', user2);
+            await setDoc(chatMetaRefUser, { lastActivity: serverTimestamp(), otherUser: user2 }, { merge: true });
+            await setDoc(chatMetaRefAdmin, { lastActivity: serverTimestamp(), otherUser: user1 }, { merge: true });
             await addDoc(collection(db, `chats/${chatId}/messages`), { text, senderId, createdAt: serverTimestamp() });
         }
         
-        // MODIFIED: loadPurchasesPage
         function loadPurchasesPage() {
             const contentEl = document.getElementById('purchases-content');
             if (!currentUser) { contentEl.innerHTML = '<p class="text-center">Войдите, чтобы увидеть свои покупки.</p>'; return; }
@@ -415,18 +415,23 @@
                 contentEl.innerHTML = '';
                 snapshot.forEach(doc => {
                     const purchase = doc.data();
+                    const itemsList = Array.isArray(purchase.items) 
+                        ? purchase.items.map(item => `<li>${item.name} ${item.variationName ? `(${item.variationName})` : ''}</li>`).join('')
+                        : `<li>${purchase.productName} ${purchase.variationName ? `(${purchase.variationName})` : ''}</li>`;
+
                     const item = document.createElement('div');
                     item.className = 'card-bg p-4 rounded-lg shadow mb-2';
                     item.innerHTML = `
                         <div class="flex justify-between items-start">
                             <div>
-                                <p>Товар: <span class="font-bold">${purchase.productName} ${purchase.variationName ? `(${purchase.variationName})` : ''}</span></p>
+                                <p class="font-bold">Заказ:</p>
+                                <ul class="list-disc list-inside mb-2">${itemsList}</ul>
                                 <p>Статус: <span class="font-bold text-yellow-500">${purchase.status}</span></p>
                                 <p>Дата: ${new Date(purchase.createdAt.seconds * 1000).toLocaleString()}</p>
                                 ${purchase.uniqueCode ? `<p>Ваш уникальный код: <span class="font-mono bg-gray-200 dark:bg-gray-700 px-2 py-1 rounded">${purchase.uniqueCode}</span></p>` : ''}
                             </div>
                             <div class="flex flex-col items-end gap-2">
-                                <button class="contact-seller-btn text-primary underline" data-purchase-id="${doc.id}">Связаться с продавцом</button>
+                                <button class="contact-seller-btn text-primary underline" data-code="${purchase.uniqueCode}">Связаться с продавцом</button>
                                 ${purchase.status !== 'Отменен' ? `<button class="cancel-order-btn text-red-500 underline" data-purchase-id="${doc.id}">Отменить заказ</button>` : ''}
                             </div>
                         </div>
@@ -436,7 +441,6 @@
             });
         }
 
-        // MODIFIED: loadAdminPurchases
         function loadAdminPurchases() {
             onSnapshot(query(collection(db, "purchases"), orderBy("createdAt", "desc")), (snapshot) => {
                 const listEl = document.getElementById('admin-purchases-list');
@@ -445,15 +449,20 @@
                 listEl.innerHTML = '';
                 snapshot.forEach(doc => {
                     const p = doc.data();
+                    const itemsList = Array.isArray(p.items) 
+                        ? p.items.map(item => `<li>${item.name} ${item.variationName ? `(${item.variationName})` : ''}</li>`).join('')
+                        : `<li>${p.productName} ${p.variationName ? `(${p.variationName})` : ''}</li>`;
+
                     const item = document.createElement('div');
                     item.className = 'card-bg p-4 rounded-lg shadow mb-2';
                     item.innerHTML = `
                         <p>Пользователь: ${p.userEmail}</p>
-                        <p>Товар: ${p.productName} ${p.variationName ? `(${p.variationName})` : ''}</p>
+                        <p class="font-bold">Заказ:</p>
+                        <ul class="list-disc list-inside mb-2">${itemsList}</ul>
                         <p>Статус: ${p.status}</p>
                         <p>Заказан: ${new Date(p.createdAt.seconds * 1000).toLocaleString()}</p>
                         ${p.uniqueCode ? `<p>Уникальный код: <span class="font-mono bg-gray-200 dark:bg-gray-700 px-2 py-1 rounded">${p.uniqueCode}</span></p>` : ''}
-                        <a href="#admin/chats/${p.userId}" class="text-primary underline mt-2 inline-block">Перейти к чату</a>
+                        <a href="https://t.me/${TELEGRAM_USERNAME}" target="_blank" class="text-blue-500 underline mt-2 inline-block">Перейти в Telegram</a>
                     `;
                     listEl.appendChild(item);
                 });
@@ -462,30 +471,42 @@
 
 
         function loadAdminChatsList(activeChatUserId) {
-            const listEl = document.getElementById('admin-chats-list');
-            if(!listEl) return;
-            listEl.innerHTML = `<div class="flex gap-4 h-[70vh]"><div id="chat-list-sidebar" class="w-1/3 border-r border-custom overflow-y-auto"></div><div id="chat-view" class="w-2/3"></div></div>`;
-            onSnapshot(query(collection(db, "chats"), orderBy("lastActivity", "desc")), async (snapshot) => {
+            const container = document.getElementById('admin-chats-list');
+            if(!container) return;
+            container.innerHTML = `<div class="flex gap-4 h-[70vh]"><div id="chat-list-sidebar" class="w-1/3 border-r border-custom overflow-y-auto"><p class="p-2">Загрузка чатов...</p></div><div id="chat-view" class="w-2/3"></div></div>`;
+            
+            // Listen for chats
+            onSnapshot(query(collection(db, "users_chats"), orderBy("lastActivity", "desc")), async (snapshot) => {
                 const sidebar = document.getElementById('chat-list-sidebar');
                 if(!sidebar) return;
                 sidebar.innerHTML = '';
+                
+                if(snapshot.empty) {
+                    sidebar.innerHTML = '<p class="p-2 text-gray-500">Нет активных чатов.</p>';
+                    return;
+                }
+
                 for (const chatDoc of snapshot.docs) {
-                    if(chatDoc.id === ADMIN_UID) continue;
-                    const userDoc = await getDoc(doc(db, "users", chatDoc.id));
+                    const userId = chatDoc.id;
+                    if(userId === ADMIN_UID) continue; // Skip admin's own metadata
+
+                    const userDoc = await getDoc(doc(db, "users", userId));
                     const userName = userDoc.exists() ? userDoc.data().displayName : 'Неизвестный';
+                    
                     const item = document.createElement('a');
-                    item.href = `#admin/chats/${chatDoc.id}`;
-                    item.className = `block p-2 hover:bg-gray-200 dark:hover:bg-gray-700 rounded ${activeChatUserId === chatDoc.id ? 'bg-gray-200 dark:bg-gray-700' : ''}`;
+                    item.href = `#admin/chats/${userId}`;
+                    item.className = `block p-2 hover:bg-gray-200 dark:hover:bg-gray-700 rounded ${activeChatUserId === userId ? 'bg-gray-200 dark:bg-gray-700' : ''}`;
                     item.textContent = userName;
                     sidebar.appendChild(item);
                 }
             });
 
+            const chatView = document.getElementById('chat-view');
             if(activeChatUserId) {
                 const chatId = `${activeChatUserId}_${ADMIN_UID}`;
-                renderChatInterface(document.getElementById('chat-view'), chatId, `Чат с пользователем`, ADMIN_UID);
+                renderChatInterface(chatView, chatId, `Чат с пользователем`, ADMIN_UID);
             } else {
-                document.getElementById('chat-view').innerHTML = '<p>Выберите чат для просмотра.</p>';
+                chatView.innerHTML = '<p class="p-4">Выберите чат для просмотра.</p>';
             }
         }
         
@@ -498,7 +519,7 @@
                     <input type="file" id="avatar-upload" class="hidden" accept="image/*">
                     <button id="change-avatar-btn" class="text-sm text-primary underline mx-auto block mb-4">Сменить аватар</button>
                     <div class="space-y-4">
-                        <div><label class="font-bold">Имя</label><input id="profile-name" class="w-full p-2 border rounded input-bg mt-1" value="${currentUser.displayName}"></div>
+                        <div><label class="font-bold">Имя</label><input id="profile-name" class="w-full p-2 border rounded input-bg mt-1" value="${currentUser.displayName || ''}"></div>
                         <div><label class="font-bold">Email</label><input class="w-full p-2 border rounded input-bg mt-1 bg-gray-100 dark:bg-gray-800" value="${currentUser.email}" disabled></div>
                     </div>
                     <button id="save-profile-btn" class="mt-6 w-full bg-primary text-white px-6 py-2 rounded-lg">Сохранить</button>
@@ -507,17 +528,41 @@
             `;
         }
         
-        function showModal(title, content, onSave, saveButtonText = 'Подтвердить') {
+        function showModal(title, content, onSave, saveButtonText = 'Подтвердить', cancelButtonText = 'Отмена') {
              const modal = document.createElement('div');
+             modal.id = `modal-${Date.now()}`;
              modal.className = 'fixed inset-0 z-50 flex items-center justify-center modal-backdrop';
-             modal.innerHTML = `<div class="card-bg rounded-lg shadow-xl w-11/12 md:w-2/3 lg:w-1/2 p-6 max-h-[90vh] overflow-y-auto"><div class="flex justify-between items-center mb-4"><h2 class="text-2xl font-bold">${title}</h2><button class="close-modal-btn text-2xl">&times;</button></div><div>${content}</div>${onSave ? `<div class="mt-6 flex justify-end"><button class="save-modal-btn bg-primary text-white px-6 py-2 rounded-lg">${saveButtonText}</button></div>` : ''}</div>`;
+             
+             let buttonsHtml = '';
+             if (onSave) {
+                 buttonsHtml = `<div class="mt-6 flex justify-end gap-3">
+                    <button class="cancel-modal-btn bg-gray-300 dark:bg-gray-600 text-black dark:text-white px-4 py-2 rounded-lg">${cancelButtonText}</button>
+                    <button class="save-modal-btn bg-primary text-white px-6 py-2 rounded-lg">${saveButtonText}</button>
+                 </div>`;
+             }
+
+             modal.innerHTML = `<div class="card-bg rounded-lg shadow-xl w-11/12 md:w-2/3 lg:w-1/2 p-6 max-h-[90vh] overflow-y-auto">
+                <div class="flex justify-between items-center mb-4">
+                    <h2 class="text-2xl font-bold">${title}</h2>
+                    <button class="close-modal-btn text-2xl">&times;</button>
+                </div>
+                <div>${content}</div>
+                ${buttonsHtml}
+            </div>`;
+
              document.getElementById('modals-container').appendChild(modal);
-             modal.querySelector('.close-modal-btn').onclick = () => modal.remove();
+             
+             const closeModal = () => modal.remove();
+             modal.querySelector('.close-modal-btn').onclick = closeModal;
+             if (modal.querySelector('.cancel-modal-btn')) {
+                modal.querySelector('.cancel-modal-btn').onclick = closeModal;
+             }
+
              if (onSave) {
                  const saveBtn = modal.querySelector('.save-modal-btn');
                  saveBtn.onclick = async () => {
                      const shouldClose = await onSave(modal);
-                     if (shouldClose) modal.remove();
+                     if (shouldClose) closeModal();
                  };
              }
              return modal;
@@ -526,62 +571,89 @@
         async function showPurchaseFlow(productId, isAddToCart = false) {
             const product = allProducts.find(p => p.id === productId);
             if (!product) return;
+
+            // Simplify: if adding to cart, just add it without modals.
+            if(isAddToCart) {
+                 addToCart(productId);
+                 return;
+            }
+
             if (product.variations && product.variations.length > 0) {
                 let variationsHTML = product.variations.map((v, index) => `<label class="block p-4 border rounded-lg cursor-pointer hover:border-primary"><input type="radio" name="variation" value="${index}" class="mr-2"><span>${v.name}</span> - <span class="font-bold">${formatPrice(v.price)}</span></label>`).join('');
-                showModal(`Выберите вариант для "${product.name}"`, `<div class="space-y-2">${variationsHTML}</div>`, (m) => {
+                showModal(`Выберите вариант для "${product.name}"`, `<div class="space-y-2">${variationsHTML}</div>`, async (m) => {
                     const selectedVariation = m.querySelector('input[name="variation"]:checked');
                     if (!selectedVariation) { alert("Пожалуйста, выберите вариант."); return false; }
                     const variationIndex = parseInt(selectedVariation.value);
-                    if (isAddToCart) {
-                        addToCart(productId, variationIndex);
-                    } else {
-                        showPaymentModal(product, variationIndex);
-                    }
+                    await processPayment([{...product, variationIndex}], false);
                     return true;
-                });
+                }, 'Продолжить');
             } else {
-                if(isAddToCart) {
-                    addToCart(productId);
-                } else {
-                    showPaymentModal(product, -1);
-                }
+                await processPayment([product], false);
             }
         }
         
-        // NEW: showUniqueCodeModal
         function showUniqueCodeModal(uniqueCode) {
+            const content = `<div class="text-center">
+                    <p class="mb-2">Скопируйте этот код и отправьте его продавцу в Telegram.</p>
+                    <p class="text-3xl font-mono bg-gray-200 dark:bg-gray-700 inline-block px-4 py-2 rounded-lg mb-4">${uniqueCode}</p>
+                 </div>`;
             showModal(
-                'Ваш уникальный код',
-                `<div class="text-center">
-                    <p class="mb-4">Пожалуйста, используйте этот код при общении с продавцом.</p>
-                    <p class="text-3xl font-mono bg-gray-200 dark:bg-gray-700 inline-block px-4 py-2 rounded-lg">${uniqueCode}</p>
-                 </div>`,
+                'Ваш заказ принят!', content,
                 () => {
-                    // This should redirect to Telegram. Add your Telegram link here.
-                    window.open('https://t.me/your_telegram_username', '_blank');
-                    return true; // Close the modal after clicking
-                },
-                'Связаться с продавцом через Telegram'
+                    window.open(`https://t.me/${TELEGRAM_USERNAME}`, '_blank');
+                    return true;
+                }, 'Перейти в Telegram'
             );
         }
 
-        // MODIFIED: showPaymentModal
-        async function showPaymentModal(product, variationIndex) {
-            const item = variationIndex > -1 ? product.variations[variationIndex] : product;
-            let currentPrice = item.price;
+        async function processPayment(items, fromCart) {
+            if (!currentUser) {
+                alert("Пожалуйста, войдите для совершения покупки.");
+                return;
+            }
+
+            const totalInitialPrice = items.reduce((sum, item) => {
+                const product = allProducts.find(p => p.id === item.productId);
+                if(item.variationIndex > -1) {
+                    return sum + product.variations[item.variationIndex].price;
+                }
+                return sum + (product.price || 0);
+            }, 0);
+
+            let currentPrice = totalInitialPrice;
             let appliedPromo = null;
-            const modal = showModal(`Оформление: ${product.name} ${item.name ? `(${item.name})` : ''}`, `
+
+            const purchaseTitle = items.length > 1 ? 'Оформление заказа' : `Оформление: ${items[0].name}`;
+            
+            const modal = showModal(purchaseTitle, `
                 <div class="space-y-6">
                     <div><label class="font-bold text-lg">Промокод</label><div class="flex gap-2 mt-1"><input id="promo-input" class="w-full p-2 border rounded input-bg" placeholder="Введите промокод"><button id="apply-promo" class="px-4 py-2 bg-gray-200 dark:bg-gray-600 rounded">Применить</button></div><p id="promo-status" class="text-sm mt-1 h-4"></p></div>
                     <div><label class="font-bold text-lg">Способ оплаты</label><select id="payment-method" class="w-full p-2 border rounded input-bg mt-1"><option value="contact">Связаться с продавцом</option><option value="card" disabled>Оплата картой (недоступно)</option><option value="yoomoney" disabled>ЮMoney (недоступно)</option></select></div>
                     <div class="text-right font-bold text-2xl border-t pt-4 mt-4">Итого: <span id="final-price">${formatPrice(currentPrice)}</span></div>
                 </div>
             `, async(m) => {
-                if (!currentUser) { alert("Пожалуйста, войдите для совершения покупки."); return false; }
-                
                 const uniqueCode = generateUniqueCode();
                 
-                const purchase = { userId: currentUser.uid, userEmail: currentUser.email, productId: product.id, productName: product.name, variationName: item.name || null, status: 'Ожидает связи', finalPrice: currentPrice, createdAt: serverTimestamp(), uniqueCode: uniqueCode };
+                const purchaseItems = items.map(item => {
+                    const product = allProducts.find(p => p.id === item.productId);
+                    const variation = item.variationIndex > -1 ? product.variations[item.variationIndex] : null;
+                    return {
+                        productId: product.id,
+                        productName: product.name,
+                        variationName: variation ? variation.name : null,
+                        price: variation ? variation.price : product.price
+                    };
+                });
+                
+                const purchase = { 
+                    userId: currentUser.uid, 
+                    userEmail: currentUser.email, 
+                    items: purchaseItems,
+                    status: 'Ожидает связи', 
+                    finalPrice: currentPrice, 
+                    createdAt: serverTimestamp(), 
+                    uniqueCode: uniqueCode 
+                };
                 await addDoc(collection(db, "purchases"), purchase);
                 
                 if (appliedPromo) {
@@ -589,21 +661,30 @@
                     await updateDoc(promoRef, { uses: increment(1) });
                 }
 
+                const itemNames = purchaseItems.map(i => `${i.productName} ${i.variationName || ''}`).join(', ');
                 const chatId = `${currentUser.uid}_${ADMIN_UID}`;
-                await sendChatMessage(chatId, currentUser.uid, `Здравствуйте, я хочу приобрести товар: ${product.name} ${item.name ? `(${item.name})` : ''}. Мой уникальный код: ${uniqueCode}`);
+                await sendChatMessage(chatId, currentUser.uid, `Здравствуйте, я хочу приобрести: ${itemNames}. Мой уникальный код: ${uniqueCode}`);
                 await sendChatMessage(chatId, ADMIN_UID, `Здравствуйте! Ваша заявка принята. Администрация ответит в течение 72 часов.`);
                 
+                if (fromCart) {
+                    cart = [];
+                    localStorage.setItem('asonik_cart', JSON.stringify(cart));
+                    updateCartCount();
+                }
+
                 showUniqueCodeModal(uniqueCode);
                 window.location.hash = '#purchases';
                 
-                return true; // Close payment modal
-            });
+                return true;
+            }, 'Подтвердить заказ');
 
             modal.querySelector('#apply-promo').onclick = async () => {
                 const code = modal.querySelector('#promo-input').value.toUpperCase();
                 const statusEl = modal.querySelector('#promo-status');
                 const priceEl = modal.querySelector('#final-price');
                 appliedPromo = null;
+                currentPrice = totalInitialPrice; // Reset price before applying new promo
+
                 if (!code) { statusEl.textContent = 'Введите код.'; return; }
                 const promoDoc = await getDoc(doc(db, "promocodes", code));
                 if (promoDoc.exists()) {
@@ -611,80 +692,39 @@
                      if((promo.uses || 0) >= promo.limit) {
                          statusEl.textContent = 'Лимит промокода исчерпан.';
                          statusEl.className = 'text-sm mt-1 h-4 text-red-500';
-                         return;
+                     } else {
+                         const discount = promo.discount;
+                         currentPrice = totalInitialPrice * (1 - discount / 100);
+                         statusEl.textContent = `Скидка ${discount}% применена!`;
+                         statusEl.className = 'text-sm mt-1 h-4 text-green-500';
+                         appliedPromo = {code, ...promo};
                      }
-                     const discount = promo.discount;
-                     currentPrice = item.price * (1 - discount / 100);
-                     priceEl.textContent = formatPrice(currentPrice);
-                     statusEl.textContent = `Скидка ${discount}% применена!`;
-                     statusEl.className = 'text-sm mt-1 h-4 text-green-500';
-                     appliedPromo = {code, ...promo};
                 } else {
                     statusEl.textContent = 'Промокод не найден.';
                     statusEl.className = 'text-sm mt-1 h-4 text-red-500';
-                    currentPrice = item.price;
-                    priceEl.textContent = formatPrice(currentPrice);
                 }
+                priceEl.textContent = formatPrice(currentPrice);
             };
         }
 
-        async function showProductForm(productId) { let p = { name: '', description: '', price: 0, imageUrl: '', isPinned: false, isVerified: false, variations: [], category: 'games' }; if (productId) { const docSnap = await getDoc(doc(db, 'products', productId)); if (docSnap.exists()) p = { id: docSnap.id, ...docSnap.data() }; } const modal = showModal(productId ? 'Редактировать товар' : 'Добавить товар', `<div class="space-y-4"><input id="p-name" class="w-full p-2 border rounded input-bg" placeholder="Название" value="${p.name}"><select id="p-category" class="w-full p-2 border rounded input-bg"><option value="games" ${p.category === 'games' ? 'selected' : ''}>Игра</option><option value="apps" ${p.category === 'apps' ? 'selected' : ''}>Приложение</option></select><textarea id="p-desc" class="w-full p-2 border rounded input-bg" placeholder="Описание">${p.description}</textarea><input id="p-price" type="number" class="w-full p-2 border rounded input-bg" placeholder="Основная цена (UZS)" value="${p.price}"><label>Изображение:</label><input type="file" id="p-image-file" class="w-full p-2 border rounded input-bg"><img id="p-image-preview" src="${p.imageUrl}" class="w-32 h-32 object-cover ${p.imageUrl ? '' : 'hidden'}"><div class="flex items-center gap-4"><label><input type="checkbox" id="p-pinned" ${p.isPinned ? 'checked' : ''}> Закрепить</label><label><input type="checkbox" id="p-verified" ${p.isVerified ? 'checked' : ''}> Подтвердить</label></div><hr><h4 class="font-bold">Вариации</h4><div id="variations-container"></div><button id="add-variation-btn" type="button" class="text-sm text-blue-500">+ Добавить вариацию</button></div>`, async (m) => { const saveBtn = m.querySelector('.save-modal-btn'); saveBtn.textContent = 'Сохранение...'; saveBtn.disabled = true; const imageFile = m.querySelector('#p-image-file').files[0]; let imageUrl = p.imageUrl; if(imageFile) imageUrl = await uploadImage(imageFile); if(imageFile && !imageUrl) { saveBtn.textContent = 'Сохранить'; saveBtn.disabled = false; return false; } const data = { name: m.querySelector('#p-name').value, category: m.querySelector('#p-category').value, description: m.querySelector('#p-desc').value, price: parseFloat(m.querySelector('#p-price').value) || 0, imageUrl, isPinned: m.querySelector('#p-pinned').checked, isVerified: m.querySelector('#p-verified').checked, variations: Array.from(m.querySelectorAll('.variation-item')).map(v => ({ name: v.querySelector('.v-name').value, price: parseFloat(v.querySelector('.v-price').value) || 0, description: v.querySelector('.v-desc').value })), createdAt: p.createdAt || serverTimestamp(), popularity: p.popularity || 0 }; await (productId ? setDoc(doc(db, 'products', productId), data) : addDoc(collection(db, 'products'), data)); return true; }); const variationsContainer = modal.querySelector('#variations-container'); const renderVariation = (v = {name: '', price: 0, description: ''}) => { const el = document.createElement('div'); el.className = 'variation-item grid grid-cols-[1fr_auto] gap-2 items-start mb-2'; el.innerHTML = `<div class="grid grid-cols-2 gap-2"><input class="v-name p-2 border rounded input-bg" placeholder="Название (напр. 100 гемов)" value="${v.name}"><input type="number" class="v-price p-2 border rounded input-bg" placeholder="Цена" value="${v.price}"></div><button type="button" class="remove-variation-btn text-red-500 text-2xl h-full flex items-center">&times;</button><textarea class="v-desc col-span-2 p-2 border rounded input-bg" placeholder="Описание вариации">${v.description}</textarea>`; variationsContainer.appendChild(el); }; (p.variations || []).forEach(renderVariation); modal.querySelector('#add-variation-btn').onclick = () => renderVariation(); modal.addEventListener('click', e => { if (e.target.classList.contains('remove-variation-btn')) e.target.closest('.variation-item').remove(); }); }
+        async function showProductForm(productId) { let p = { name: '', description: '', price: 0, imageUrl: '', isPinned: false, isVerified: false, variations: [], category: 'games' }; if (productId) { const docSnap = await getDoc(doc(db, 'products', productId)); if (docSnap.exists()) p = { id: docSnap.id, ...docSnap.data() }; } const modal = showModal(productId ? 'Редактировать товар' : 'Добавить товар', `<div class="space-y-4"><input id="p-name" class="w-full p-2 border rounded input-bg" placeholder="Название" value="${p.name}"><select id="p-category" class="w-full p-2 border rounded input-bg"><option value="games" ${p.category === 'games' ? 'selected' : ''}>Игра</option><option value="apps" ${p.category === 'apps' ? 'selected' : ''}>Приложение</option></select><textarea id="p-desc" class="w-full p-2 border rounded input-bg" placeholder="Описание">${p.description}</textarea><input id="p-price" type="number" class="w-full p-2 border rounded input-bg" placeholder="Основная цена (UZS)" value="${p.price}"><label>Изображение:</label><input type="file" id="p-image-file" class="w-full p-2 border rounded input-bg"><img id="p-image-preview" src="${p.imageUrl}" class="w-32 h-32 object-cover ${p.imageUrl ? '' : 'hidden'}"><div class="flex items-center gap-4"><label><input type="checkbox" id="p-pinned" ${p.isPinned ? 'checked' : ''}> Закрепить</label><label><input type="checkbox" id="p-verified" ${p.isVerified ? 'checked' : ''}> Подтвердить</label></div><hr><h4 class="font-bold">Вариации</h4><div id="variations-container"></div><button id="add-variation-btn" type="button" class="text-sm text-blue-500">+ Добавить вариацию</button></div>`, async (m) => { const saveBtn = m.querySelector('.save-modal-btn'); saveBtn.textContent = 'Сохранение...'; saveBtn.disabled = true; const imageFile = m.querySelector('#p-image-file').files[0]; let imageUrl = p.imageUrl; if(imageFile) imageUrl = await uploadImage(imageFile); if(imageFile && !imageUrl) { saveBtn.textContent = 'Сохранить'; saveBtn.disabled = false; return false; } const data = { name: m.querySelector('#p-name').value, category: m.querySelector('#p-category').value, description: m.querySelector('#p-desc').value, price: parseFloat(m.querySelector('#p-price').value) || 0, imageUrl, isPinned: m.querySelector('#p-pinned').checked, isVerified: m.querySelector('#p-verified').checked, variations: Array.from(m.querySelectorAll('.variation-item')).map(v => ({ name: v.querySelector('.v-name').value, price: parseFloat(v.querySelector('.v-price').value) || 0, description: v.querySelector('.v-desc').value })), createdAt: p.createdAt || serverTimestamp(), popularity: p.popularity || 0 }; await (productId ? setDoc(doc(db, 'products', productId), data) : addDoc(collection(db, 'products'), data)); return true; }, 'Сохранить'); const variationsContainer = modal.querySelector('#variations-container'); const renderVariation = (v = {name: '', price: 0, description: ''}) => { const el = document.createElement('div'); el.className = 'variation-item grid grid-cols-[1fr_auto] gap-2 items-start mb-2'; el.innerHTML = `<div class="grid grid-cols-2 gap-2"><input class="v-name p-2 border rounded input-bg" placeholder="Название (напр. 100 гемов)" value="${v.name}"><input type="number" class="v-price p-2 border rounded input-bg" placeholder="Цена" value="${v.price}"></div><button type="button" class="remove-variation-btn text-red-500 text-2xl h-full flex items-center">&times;</button><textarea class="v-desc col-span-2 p-2 border rounded input-bg" placeholder="Описание вариации">${v.description || ''}</textarea>`; variationsContainer.appendChild(el); }; (p.variations || []).forEach(renderVariation); modal.querySelector('#add-variation-btn').onclick = () => renderVariation(); modal.addEventListener('click', e => { if (e.target.classList.contains('remove-variation-btn')) e.target.closest('.variation-item').remove(); }); }
         async function uploadImage(file) { const formData = new FormData(); formData.append('image', file); try { const response = await fetch(`https://api.imgbb.com/1/upload?key=${IMGBB_API_KEY}`, { method: 'POST', body: formData }); const result = await response.json(); if (result.success) return result.data.url; else throw new Error(result.error.message); } catch (error) { alert('Ошибка загрузки изображения: ' + error.message); return null; } }
-        async function showPromoForm(promoId) { let p = { code: '', discount: 20, limit: 100, uses: 0 }; if (promoId) { const docSnap = await getDoc(doc(db, 'promocodes', promoId)); if (docSnap.exists()) p = {id: docSnap.id, ...docSnap.data()}; } const modal = showModal(promoId ? 'Редактировать промокод' : 'Создать промокод', `<div class="space-y-4"><input id="promo-code" class="w-full p-2 border rounded input-bg" placeholder="Промокод (напр. SALE20)" value="${p.code}" ${promoId ? 'disabled' : ''}><label>Скидка: <span id="promo-discount-val">${p.discount}</span>%</label><input id="promo-discount" type="range" min="1" max="100" value="${p.discount}" class="w-full"><input id="promo-limit" type="number" class="w-full p-2 border rounded input-bg" placeholder="Лимит использований" value="${p.limit}"></div>`, async (m) => { const data = { code: m.querySelector('#promo-code').value.toUpperCase(), discount: parseInt(m.querySelector('#promo-discount').value), limit: parseInt(m.querySelector('#promo-limit').value), uses: p.uses }; if (!data.code) { alert('Введите код'); return false; } await setDoc(doc(db, 'promocodes', data.code), data); return true; }); modal.querySelector('#promo-discount').oninput = e => modal.querySelector('#promo-discount-val').textContent = e.target.value; }
+        async function showPromoForm(promoId) { let p = { code: '', discount: 20, limit: 100, uses: 0 }; if (promoId) { const docSnap = await getDoc(doc(db, 'promocodes', promoId)); if (docSnap.exists()) p = {id: docSnap.id, ...docSnap.data()}; } const modal = showModal(promoId ? 'Редактировать промокод' : 'Создать промокод', `<div class="space-y-4"><input id="promo-code" class="w-full p-2 border rounded input-bg" placeholder="Промокод (напр. SALE20)" value="${p.code}" ${promoId ? 'disabled' : ''}><label>Скидка: <span id="promo-discount-val">${p.discount}</span>%</label><input id="promo-discount" type="range" min="1" max="100" value="${p.discount}" class="w-full"><input id="promo-limit" type="number" class="w-full p-2 border rounded input-bg" placeholder="Лимит использований" value="${p.limit}"></div>`, async (m) => { const data = { code: m.querySelector('#promo-code').value.toUpperCase(), discount: parseInt(m.querySelector('#promo-discount').value), limit: parseInt(m.querySelector('#promo-limit').value), uses: p.uses }; if (!data.code) { alert('Введите код'); return false; } await setDoc(doc(db, 'promocodes', data.code), data); return true; }, 'Сохранить'); modal.querySelector('#promo-discount').oninput = e => modal.querySelector('#promo-discount-val').textContent = e.target.value; }
         
-        // NEW: showOrderFormModal
-        function showOrderFormModal() {
-            if (!currentUser) {
-                alert("Пожалуйста, войдите, чтобы оформить заказ.");
-                return;
-            }
-            showModal(
-                'Оформление заказа',
-                `<div class="space-y-4">
-                    <input id="order-name" class="w-full p-2 border rounded input-bg" placeholder="Ваше имя" value="${currentUser.displayName || ''}">
-                    <input id="order-phone" type="tel" class="w-full p-2 border rounded input-bg" placeholder="Ваш номер телефона">
-                    <textarea id="order-address" class="w-full p-2 border rounded input-bg" placeholder="Адрес доставки"></textarea>
-                 </div>`,
-                async (modal) => {
-                    const name = modal.querySelector('#order-name').value;
-                    const phone = modal.querySelector('#order-phone').value;
-                    const address = modal.querySelector('#order-address').value;
-
-                    if (!name || !phone || !address) {
-                        alert("Пожалуйста, заполните все поля.");
-                        return false; // Prevent modal from closing
-                    }
-
-                    // Here you can process the order, for example, send it to your backend or Firestore
-                    alert("Заказ успешно оформлен!");
-                    console.log({ name, phone, address, cart });
-
-                    // Clear cart after order
-                    cart = [];
-                    localStorage.setItem('asonik_cart', JSON.stringify(cart));
-                    updateCartCount();
-                    window.location.hash = '#main';
-                    
-                    return true; // Close the modal
-                },
-                'Подтвердить заказ'
-            );
-        }
-
-        // MODIFIED: setupEventListeners
         function setupEventListeners() {
             document.body.addEventListener('click', async e => {
                 const target = e.target;
                 
-                // --- Helper function for confirmation ---
                 const confirmAction = (message, onConfirm) => {
-                    showModal('Подтвердите действие', `<p>${message}</p>`, () => { onConfirm(); return true; }, 'Да');
+                    showModal('Подтвердите действие', `<p>${message}</p>`, async () => { 
+                        await onConfirm(); 
+                        return true; 
+                    }, 'Да', 'Нет');
                 };
                 
                 if (target.closest('.admin-tab-btn')) { e.preventDefault(); window.location.hash = `#admin/${target.dataset.tab}`; return; }
                 if (target.id === 'add-product-btn') showProductForm();
                 if (target.closest('.edit-product-btn')) showProductForm(target.closest('.edit-product-btn').dataset.id);
-                // MODIFIED: Replaced confirm() with showModal
                 if (target.closest('.delete-btn')) {
                     confirmAction('Вы уверены, что хотите удалить этот элемент?', () => {
                         deleteDoc(doc(db, target.dataset.collection, target.dataset.id));
@@ -697,16 +737,14 @@
                 if (target.closest('.add-to-cart-btn')) showPurchaseFlow(target.closest('.add-to-cart-btn').dataset.productId, true);
                 if (target.closest('.remove-from-cart-btn')) { cart.splice(target.dataset.index, 1); localStorage.setItem('asonik_cart', JSON.stringify(cart)); renderCartPage(); updateCartCount(); }
                 if (target.closest('.share-btn')) { e.preventDefault(); navigator.clipboard.writeText(`Посмотри товар "${target.closest('.share-btn').dataset.productName}" в Asonik Store!`).then(() => alert('Ссылка скопирована!')); }
-                // MODIFIED: Button click responsiveness
                 if (target.matches('.buy-now-btn')) showPurchaseFlow(target.dataset.productId);
+                if (target.id === 'checkout-cart-btn') processPayment(cart, true);
                 if (target.id === 'google-login-btn') signInWithGoogle();
                 if (target.id === 'logout-btn' || target.id === 'logout-btn-profile') signOut(auth);
                 if (target.id === 'login-for-chat') signInWithGoogle();
                 if (target.id === 'send-chat-message') { const chatId = target.dataset.chatId; const text = document.getElementById('chat-message-input').value.trim(); const senderId = target.dataset.senderId; sendChatMessage(chatId, senderId, text); document.getElementById('chat-message-input').value = ''; }
                 if (target.closest('#profile-btn')) { e.stopPropagation(); document.getElementById('profile-menu')?.classList.toggle('hidden'); }
                 if (target.id === 'change-avatar-btn') document.getElementById('avatar-upload').click();
-                // MODIFIED: Cart checkout
-                if (target.id === 'checkout-cart-btn') showOrderFormModal();
                 if (target.closest('.cancel-order-btn')) {
                     const purchaseId = target.dataset.purchaseId;
                     confirmAction('Вы уверены, что хотите отменить этот заказ?', async () => {
@@ -714,7 +752,8 @@
                     });
                 }
                 if (target.closest('.contact-seller-btn')) {
-                    window.location.hash = '#chats';
+                    const code = target.dataset.code;
+                    showUniqueCodeModal(code);
                 }
                 if (target.id === 'save-profile-btn') {
                     const newName = document.getElementById('profile-name').value;
@@ -753,7 +792,7 @@
             navChatsLink.href = '#chats';
 
             if (currentUser) { 
-                container.innerHTML = `<div class="relative"><button id="profile-btn" class="flex items-center gap-2"><img src="${currentUser.photoURL || 'https://placehold.co/32x32'}" alt="Профиль" class="w-8 h-8 rounded-full"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg></button><div id="profile-menu" class="hidden absolute right-0 mt-2 w-52 card-bg rounded-md shadow-lg border border-custom z-10"><div class="px-4 py-2 border-b border-custom"><p class="font-semibold truncate">${currentUser.displayName}</p><p class="text-sm text-gray-500 truncate">${currentUser.email}</p></div><a href="#profile" class="block px-4 py-2 text-sm hover:bg-gray-100 dark:hover:bg-gray-700">Профиль</a>${isAdmin ? `<a href="#admin/products" class="nav-link block px-4 py-2 text-sm hover:bg-gray-100 dark:hover:bg-gray-700">Админ-панель</a>` : ''}<div class="border-t border-custom"></div><a href="#" id="logout-btn" class="block px-4 py-2 text-sm text-red-500 hover:bg-gray-100 dark:hover:bg-gray-700">Выйти</a></div></div>`; 
+                container.innerHTML = `<div class="relative"><button id="profile-btn" class="flex items-center gap-2"><img src="${currentUser.photoURL || 'https://placehold.co/32x32'}" alt="Профиль" class="w-8 h-8 rounded-full"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg></button><div id="profile-menu" class="hidden absolute right-0 mt-2 w-52 card-bg rounded-md shadow-lg border border-custom z-10"><div class="px-4 py-2 border-b border-custom"><p class="font-semibold truncate">${currentUser.displayName || 'User'}</p><p class="text-sm text-gray-500 truncate">${currentUser.email}</p></div><a href="#profile" class="block px-4 py-2 text-sm hover:bg-gray-100 dark:hover:bg-gray-700">Профиль</a>${isAdmin ? `<a href="#admin/products" class="nav-link block px-4 py-2 text-sm hover:bg-gray-100 dark:hover:bg-gray-700">Админ-панель</a>` : ''}<div class="border-t border-custom"></div><a href="#" id="logout-btn" class="block px-4 py-2 text-sm text-red-500 hover:bg-gray-100 dark:hover:bg-gray-700">Выйти</a></div></div>`; 
             } else { 
                 container.innerHTML = `<button id="google-login-btn" class="px-4 py-2 bg-primary text-white rounded-md hover:bg-primary-hover font-semibold flex items-center gap-2"><svg class="w-5 h-5" viewBox="0 0 48 48"><path fill="#FFC107" d="M43.611 20.083H42V20H24v8h11.303c-1.649 4.657-6.08 8-11.303 8c-6.627 0-12-5.373-12-12s5.373-12 12-12c3.059 0 5.842 1.154 7.961 3.039l5.657-5.657C34.046 6.053 29.268 4 24 4C12.955 4 4 12.955 4 24s8.955 20 20 20s20-8.955 20-20c0-1.341-.138-2.65-.389-3.917z"></path><path fill="#FF3D00" d="M6.306 14.691l6.571 4.819C14.655 15.108 18.961 12 24 12c3.059 0 5.842 1.154 7.961 3.039l5.657-5.657C34.046 6.053 29.268 4 24 4C16.318 4 9.656 8.337 6.306 14.691z"></path><path fill="#4CAF50" d="M24 44c5.166 0 9.86-1.977 13.409-5.192l-6.19-5.238C29.211 35.091 26.715 36 24 36c-5.202 0-9.619-3.317-11.283-7.946l-6.522 5.025C9.505 39.556 16.227 44 24 44z"></path><path fill="#1976D2" d="M43.611 20.083H42V20H24v8h11.303c-.792 2.237-2.231 4.166-4.087 5.571l6.19 5.238C44.572 34.043 46 29.392 46 24c0-1.341-.138-2.65-.389-3.917z"></path></svg>Войти</button>`; 
             } 
@@ -767,7 +806,7 @@
                 currencySwitcher.innerHTML = `<select id="currency-select" class="p-2 border border-custom rounded-lg focus:outline-none focus:ring-2 focus:ring-primary input-bg text-sm"><option>UZS</option><option>RUB</option><option>USD</option></select>`;
                 document.getElementById('currency-select').addEventListener('change', (e) => {
                     appState.currency = e.target.value;
-                    handleRouting(); // Re-render current page with new currency
+                    handleRouting();
                 });
             }
             if(langSwitcher) {
