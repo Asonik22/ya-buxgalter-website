@@ -175,8 +175,7 @@
                 updateAuthUI();
                 if (window.location.hash.startsWith('#admin') && !isAdmin) window.location.hash = '#main';
                 handleRouting();
-            });
-        }));
+            }));
         
         function formatPrice(price) {
             const convertedPrice = price * appState.rates[appState.currency];
