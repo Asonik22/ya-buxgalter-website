@@ -113,7 +113,7 @@
         const appState = {
             currency: 'UZS',
             lang: 'RU',
-            rates: { UZS: 1, RUB: 9, USD: 0.000078 } // Updated rates
+            rates: { UZS: 1, RUB: 0.14, USD: 0.000078 } // Example rates
         };
 
         const translations = {
@@ -180,7 +180,7 @@
         
         function formatPrice(price) {
             const convertedPrice = price * appState.rates[appState.currency];
-            return new Intl.NumberFormat('ru-RU', { style: 'currency', currency: appState.currency, minimumFractionDigits: 0 }).format(convertedPrice);
+            return new Intl.NumberFormat('ru-RU', { style: 'currency', currency: appState.currency, minimumFractionDigits: 2 }).format(convertedPrice);
         }
 
         function handleRouting() {
@@ -482,7 +482,7 @@
         
         function showModal(title, content, onSave) { const modal = document.createElement('div'); modal.className = 'fixed inset-0 z-50 flex items-center justify-center modal-backdrop'; modal.innerHTML = `<div class="card-bg rounded-lg shadow-xl w-11/12 md:w-2/3 lg:w-1/2 p-6 max-h-[90vh] overflow-y-auto"><div class="flex justify-between items-center mb-4"><h2 class="text-2xl font-bold">${title}</h2><button class="close-modal-btn text-2xl">&times;</button></div><div>${content}</div>${onSave ? `<div class="mt-6 flex justify-end"><button class="save-modal-btn bg-primary text-white px-6 py-2 rounded-lg">Подтвердить</button></div>` : ''}</div>`; document.getElementById('modals-container').appendChild(modal); modal.querySelector('.close-modal-btn').onclick = () => modal.remove(); if (onSave) modal.querySelector('.save-modal-btn').onclick = async () => { if (await onSave(modal)) modal.remove(); }; return modal; }
 
-        async function showPurchaseFlow(productId) {
+        async function showPurchaseFlow(productId, isAddToCart = false) {
             const product = allProducts.find(p => p.id === productId);
             if (!product) return;
             if (product.variations && product.variations.length > 0) {
@@ -490,11 +490,20 @@
                 showModal(`Выберите вариант для "${product.name}"`, `<div class="space-y-2">${variationsHTML}</div>`, (m) => {
                     const selectedVariation = m.querySelector('input[name="variation"]:checked');
                     if (!selectedVariation) { alert("Пожалуйста, выберите вариант."); return false; }
-                    showPaymentModal(product, parseInt(selectedVariation.value));
+                    const variationIndex = parseInt(selectedVariation.value);
+                    if (isAddToCart) {
+                        addToCart(productId, variationIndex);
+                    } else {
+                        showPaymentModal(product, variationIndex);
+                    }
                     return true;
                 });
             } else {
-                showPaymentModal(product, -1);
+                if(isAddToCart) {
+                    addToCart(productId);
+                } else {
+                    showPaymentModal(product, -1);
+                }
             }
         }
 
@@ -543,7 +552,7 @@
                      priceEl.textContent = formatPrice(currentPrice);
                      statusEl.textContent = `Скидка ${discount}% применена!`;
                      statusEl.className = 'text-sm mt-1 h-4 text-green-500';
-                     appliedPromo = promo;
+                     appliedPromo = {code, ...promo};
                 } else {
                     statusEl.textContent = 'Промокод не найден.';
                     statusEl.className = 'text-sm mt-1 h-4 text-red-500';
@@ -568,7 +577,7 @@
                 if (target.id === 'add-promo-btn') showPromoForm();
                 if (target.closest('.edit-promo-btn')) showPromoForm(target.closest('.edit-promo-btn').dataset.id);
                 if (target.closest('.faq-question')) { const q = target.closest('.faq-question'); q.classList.toggle('open'); }
-                if (target.closest('.add-to-cart-btn')) addToCart(target.closest('.add-to-cart-btn').dataset.productId);
+                if (target.closest('.add-to-cart-btn')) showPurchaseFlow(target.closest('.add-to-cart-btn').dataset.productId, true);
                 if (target.closest('.remove-from-cart-btn')) { cart.splice(target.dataset.index, 1); localStorage.setItem('asonik_cart', JSON.stringify(cart)); renderCartPage(); updateCartCount(); }
                 if (target.closest('.share-btn')) { e.preventDefault(); navigator.clipboard.writeText(`Посмотри товар "${target.closest('.share-btn').dataset.productName}" в Asonik Store!`).then(() => alert('Ссылка скопирована!')); }
                 if (target.closest('.buy-now-btn')) showPurchaseFlow(target.closest('.buy-now-btn').dataset.productId);
@@ -644,4 +653,3 @@
     </script>
 </body>
 </html>
-" in the docume
