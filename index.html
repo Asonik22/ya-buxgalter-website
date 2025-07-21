@@ -7,311 +7,492 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
-        /* Custom styles for the project */
-        body {
-            font-family: 'Inter', sans-serif;
-        }
-        /* Basic theme variables */
+        body { font-family: 'Inter', sans-serif; }
         :root {
-            --bg-light: #ffffff;
-            --text-light: #111827;
-            --primary-light: #8b5cf6; /* violet-500 */
-            --primary-hover-light: #7c3aed; /* violet-600 */
-            --border-light: #e5e7eb; /* gray-200 */
-
-            --bg-dark: #111827; /* gray-900 */
-            --text-dark: #f9fafb; /* gray-50 */
-            --primary-dark: #a78bfa; /* violet-400 */
-            --primary-hover-dark: #8b5cf6; /* violet-500 */
-            --border-dark: #374151; /* gray-700 */
+            --bg-light: #f9fafb; --text-light: #111827; --card-bg-light: #ffffff; --primary-light: #8b5cf6; --primary-hover-light: #7c3aed; --border-light: #e5e7eb;
+            --bg-dark: #111827; --text-dark: #f9fafb; --card-bg-dark: #1f2937; --primary-dark: #a78bfa; --primary-hover-dark: #8b5cf6; --border-dark: #374151;
         }
-        /* Applying light theme by default */
-        body {
-            background-color: var(--bg-light);
-            color: var(--text-light);
-        }
-        .dark body {
-            background-color: var(--bg-dark);
-            color: var(--text-dark);
-        }
-        .bg-primary { background-color: var(--primary-light); }
-        .dark .bg-primary { background-color: var(--primary-dark); }
-        .hover\:bg-primary-hover:hover { background-color: var(--primary-hover-light); }
-        .dark .hover\:bg-primary-hover:hover { background-color: var(--primary-hover-dark); }
-        .text-primary { color: var(--primary-light); }
-        .dark .text-primary { color: var(--primary-dark); }
-        .border-custom { border-color: var(--border-light); }
-        .dark .border-custom { border-color: var(--border-dark); }
-        .bg-secondary { background-color: #f3f4f6; }
-        .dark .bg-secondary { background-color: #1f2937; }
-        .card-bg { background-color: var(--bg-light); }
-        .dark .card-bg { background-color: var(--bg-dark); }
-
-        /* For the product card hover effect */
-        .product-card .actions {
-            opacity: 0;
-            transition: opacity 0.3s ease;
-        }
-        .product-card:hover .actions {
-            opacity: 1;
-        }
+        .dark body { background-color: var(--bg-dark); color: var(--text-dark); }
+        .bg-primary { background-color: var(--primary-light); } .dark .bg-primary { background-color: var(--primary-dark); }
+        .hover\:bg-primary-hover:hover { background-color: var(--primary-hover-light); } .dark .hover\:bg-primary-hover:hover { background-color: var(--primary-hover-dark); }
+        .text-primary { color: var(--primary-light); } .dark .text-primary { color: var(--primary-dark); }
+        .border-custom { border-color: var(--border-light); } .dark .border-custom { border-color: var(--border-dark); }
+        .card-bg { background-color: var(--card-bg-light); } .dark .card-bg { background-color: var(--card-bg-dark); }
+        .header-bg { background-color: #ffffff; } .dark .header-bg { background-color: #1f2937; }
+        .input-bg { background-color: transparent; } .dark .input-bg { background-color: #374151; }
+        .modal-backdrop { background-color: rgba(0, 0, 0, 0.5); }
+        [data-page] { display: none; }
+        [data-page].active { display: block; }
     </style>
 </head>
-<body class="bg-secondary">
+<body class="bg-light dark:bg-dark text-light dark:text-dark">
 
     <!-- Header -->
-    <header class="bg-white dark:bg-gray-800 shadow-md sticky top-0 z-50 border-b border-custom">
+    <header class="header-bg shadow-md sticky top-0 z-40 border-b border-custom">
         <div class="container mx-auto px-4">
             <div class="flex justify-between items-center h-16">
-                <!-- Left Side: Logo and Navigation -->
                 <div class="flex items-center space-x-8">
-                    <a href="#" class="text-2xl font-bold text-primary">Asonik Store</a>
+                    <a href="#main" class="text-2xl font-bold text-primary">Asonik Store</a>
                     <nav class="hidden md:flex items-center space-x-6">
-                        <a href="#" class="text-gray-600 dark:text-gray-300 hover:text-primary dark:hover:text-primary-dark font-medium">Главная</a>
-                        <a href="#" class="text-gray-600 dark:text-gray-300 hover:text-primary dark:hover:text-primary-dark font-medium">Чаты</a>
-                        <a href="#" class="text-gray-600 dark:text-gray-300 hover:text-primary dark:hover:text-primary-dark font-medium">FAQ</a>
-                        <a href="#" class="text-gray-600 dark:text-gray-300 hover:text-primary dark:hover:text-primary-dark font-medium">Мои покупки</a>
+                        <a href="#main" class="nav-link text-gray-600 dark:text-gray-300 hover:text-primary dark:hover:text-primary-dark font-medium">Главная</a>
+                        <a href="#chats" class="nav-link text-gray-600 dark:text-gray-300 hover:text-primary dark:hover:text-primary-dark font-medium">Чаты</a>
+                        <a href="#faq" class="nav-link text-gray-600 dark:text-gray-300 hover:text-primary dark:hover:text-primary-dark font-medium">FAQ</a>
+                        <a href="#purchases" class="nav-link text-gray-600 dark:text-gray-300 hover:text-primary dark:hover:text-primary-dark font-medium">Мои покупки</a>
                     </nav>
                 </div>
-
-                <!-- Right Side: Controls and Profile -->
                 <div class="flex items-center space-x-4">
-                    <!-- Theme Toggle -->
-                    <button id="theme-toggle" class="p-2 rounded-full text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700">
-                        <svg id="theme-toggle-dark-icon" class="hidden h-5 w-5" fill="currentColor" viewBox="0 0 20 20"><path d="M17.293 13.293A8 8 0 016.707 2.707a8.001 8.001 0 1010.586 10.586z"></path></svg>
-                        <svg id="theme-toggle-light-icon" class="hidden h-5 w-5" fill="currentColor" viewBox="0 0 20 20"><path d="M10 2a1 1 0 011 1v1a1 1 0 11-2 0V3a1 1 0 011-1zm4 8a4 4 0 11-8 0 4 4 0 018 0zm-.464 4.95l.707.707a1 1 0 001.414-1.414l-.707-.707a1 1 0 00-1.414 1.414zm2.121-3.536a1 1 0 010 1.414l-.707.707a1 1 0 11-1.414-1.414l.707-.707a1 1 0 011.414 0zM10 18a1 1 0 01-1-1v-1a1 1 0 112 0v1a1 1 0 01-1 1zM5.05 14.464l.707-.707a1 1 0 10-1.414-1.414l-.707.707a1 1 0 001.414 1.414zM1.464 6.536a1 1 0 010-1.414l.707-.707a1 1 0 111.414 1.414l-.707.707a1 1 0 01-1.414 0zM4 10a1 1 0 01-1-1H2a1 1 0 110-2h1a1 1 0 110 2z"></path></svg>
-                    </button>
-                    
-                    <!-- Language Selector -->
-                    <div class="relative hidden sm:block" id="lang-dropdown-menu">
-                        <button class="flex items-center space-x-1 text-gray-600 dark:text-gray-300 hover:text-primary dark:hover:text-primary-dark font-medium">
-                            <span>RU</span>
-                            <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
-                        </button>
-                        <div id="lang-options" class="hidden absolute right-0 mt-2 w-28 bg-white dark:bg-gray-800 rounded-md shadow-lg border border-custom">
-                            <a href="#" class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700">Русский</a>
-                            <a href="#" class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700">English</a>
-                            <a href="#" class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700">O'zbekcha</a>
-                        </div>
-                    </div>
-
-                    <!-- Currency Selector -->
-                    <div class="relative hidden sm:block" id="currency-dropdown-menu">
-                        <button class="flex items-center space-x-1 text-gray-600 dark:text-gray-300 hover:text-primary dark:hover:text-primary-dark font-medium">
-                            <span>UZS</span>
-                            <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
-                        </button>
-                        <div id="currency-options" class="hidden absolute right-0 mt-2 w-28 bg-white dark:bg-gray-800 rounded-md shadow-lg border border-custom">
-                            <a href="#" class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700">UZS</a>
-                            <a href="#" class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700">RUB</a>
-                            <a href="#" class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700">USD</a>
-                        </div>
-                    </div>
-
-                    <!-- Cart -->
-                    <a href="#" class="p-2 rounded-full text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700">
-                        <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"></path></svg>
-                    </a>
-
-                    <!-- Profile / Login -->
-                    <div class="relative" id="profile-dropdown-menu">
-                        <!-- Logged In User View -->
-                        <button class="flex items-center space-x-2">
-                             <div class="w-9 h-9 bg-primary rounded-full flex items-center justify-center text-white font-bold">A</div>
-                             <svg class="h-4 w-4 text-gray-600 dark:text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
-                        </button>
-                        
-                        <!-- Guest User View (uncomment to see) -->
-                        <!-- 
-                        <button class="px-4 py-2 bg-primary text-white rounded-md hover:bg-primary-hover font-semibold">
-                            Войти
-                        </button>
-                        -->
-
-                        <div id="profile-options" class="hidden absolute right-0 mt-2 w-48 bg-white dark:bg-gray-800 rounded-md shadow-lg border border-custom">
-                            <a href="#" class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700">Профиль</a>
-                            <a href="#" class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700">Админ-панель</a>
-                            <div class="border-t border-custom"></div>
-                            <a href="#" class="block px-4 py-2 text-sm text-red-500 hover:bg-gray-100 dark:hover:bg-gray-700">Выйти</a>
-                        </div>
-                    </div>
-                </div>
-                
-                <!-- Mobile Menu Button -->
-                <div class="md:hidden">
-                    <button id="mobile-menu-button" class="p-2 rounded-md text-gray-500 dark:text-gray-400">
-                        <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16m-7 6h7"></path></svg>
-                    </button>
+                    <button id="theme-toggle" class="p-2 rounded-full"><svg id="theme-toggle-dark-icon" class="hidden h-5 w-5" fill="currentColor" viewBox="0 0 20 20"><path d="M17.293 13.293A8 8 0 016.707 2.707a8.001 8.001 0 1010.586 10.586z"></path></svg><svg id="theme-toggle-light-icon" class="hidden h-5 w-5" fill="currentColor" viewBox="0 0 20 20"><path d="M10 2a1 1 0 011 1v1a1 1 0 11-2 0V3a1 1 0 011-1zm4 8a4 4 0 11-8 0 4 4 0 018 0zm-.464 4.95l.707.707a1 1 0 001.414-1.414l-.707-.707a1 1 0 00-1.414 1.414zm2.121-3.536a1 1 0 010 1.414l-.707.707a1 1 0 11-1.414-1.414l.707-.707a1 1 0 011.414 0zM10 18a1 1 0 01-1-1v-1a1 1 0 112 0v1a1 1 0 01-1 1zM5.05 14.464l.707-.707a1 1 0 10-1.414-1.414l-.707.707a1 1 0 001.414 1.414zM1.464 6.536a1 1 0 010-1.414l.707-.707a1 1 0 111.414 1.414l-.707.707a1 1 0 01-1.414 0zM4 10a1 1 0 01-1-1H2a1 1 0 110-2h1a1 1 0 110 2z"></path></svg></button>
+                    <a href="#cart" class="relative p-2"><svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"></path></svg><span id="cart-count" class="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-4 w-4 flex items-center justify-center hidden">0</span></a>
+                    <div id="auth-container" class="relative"></div>
                 </div>
             </div>
-        </div>
-        <!-- Mobile Menu -->
-        <div id="mobile-menu" class="hidden md:hidden">
-            <a href="#" class="block py-2 px-4 text-sm hover:bg-gray-200 dark:hover:bg-gray-700">Главная</a>
-            <a href="#" class="block py-2 px-4 text-sm hover:bg-gray-200 dark:hover:bg-gray-700">Чаты</a>
-            <a href="#" class="block py-2 px-4 text-sm hover:bg-gray-200 dark:hover:bg-gray-700">FAQ</a>
-            <a href="#" class="block py-2 px-4 text-sm hover:bg-gray-200 dark:hover:bg-gray-700">Мои покупки</a>
         </div>
     </header>
 
-    <!-- Main Content -->
+    <!-- Main Content Area -->
     <main class="container mx-auto px-4 py-8">
-        <h1 class="text-4xl font-bold text-center mb-8 text-gray-800 dark:text-white">Каталог товаров</h1>
-
-        <!-- Filters and Search -->
-        <div class="mb-8 p-4 bg-white dark:bg-gray-800 rounded-lg shadow-md flex flex-col md:flex-row gap-4 items-center">
-            <!-- Search Input -->
-            <div class="relative flex-grow w-full">
-                <input type="text" placeholder="Поиск по названию..." class="w-full pl-10 pr-4 py-2 border border-custom rounded-lg bg-transparent focus:outline-none focus:ring-2 focus:ring-primary">
-                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                    <svg class="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
-                </div>
+        <!-- Main Page: Catalog -->
+        <div data-page="main" class="active">
+            <h1 class="text-4xl font-bold text-center mb-8">Каталог товаров</h1>
+            <div class="mb-8 p-4 card-bg rounded-lg shadow-md flex flex-col md:flex-row gap-4 items-center border border-custom">
+                <input id="search-input" type="text" placeholder="Поиск по названию..." class="w-full pl-4 pr-4 py-2 border border-custom rounded-lg focus:outline-none focus:ring-2 focus:ring-primary input-bg">
             </div>
-            <!-- Category Filter -->
-            <div class="flex-shrink-0">
-                <select class="w-full md:w-auto p-2 border border-custom rounded-lg bg-transparent focus:outline-none focus:ring-2 focus:ring-primary">
-                    <option>Все категории</option>
-                    <option>Игры</option>
-                    <option>Приложения</option>
-                </select>
-            </div>
-            <!-- Sort Filter -->
-            <div class="flex-shrink-0">
-                 <select class="w-full md:w-auto p-2 border border-custom rounded-lg bg-transparent focus:outline-none focus:ring-2 focus:ring-primary">
-                    <option>Сортировка: Новые</option>
-                    <option>Сортировка: Популярные</option>
-                </select>
-            </div>
+            <div id="products-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6"></div>
         </div>
 
-        <!-- Products Grid -->
-        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-            <!-- Example Product Card 1 (Pinned and Verified) -->
-            <div class="product-card card-bg rounded-lg shadow-lg overflow-hidden border border-custom transform hover:-translate-y-1 transition-transform duration-300">
-                <div class="relative">
-                    <img src="https://placehold.co/600x400/8b5cf6/ffffff?text=Brawl+Stars" alt="Изображение товара" class="w-full h-48 object-cover">
-                    <div class="absolute top-2 left-2 flex flex-col gap-2">
-                        <span class="bg-yellow-400 text-yellow-800 text-xs font-bold px-2 py-1 rounded-full flex items-center gap-1">
-                            <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path d="M10.868 2.884c.321-.772 1.305-.772 1.626 0l1.393 3.363a1 1 0 00.95.69h3.53a1 1 0 01.586 1.814l-2.853 2.07a1 1 0 00-.364 1.118l1.083 3.91a1 1 0 01-1.529 1.118L10 13.347l-3.135 2.27a1 1 0 01-1.53-1.118l1.084-3.91a1 1 0 00-.364-1.118L2.32 8.751a1 1 0 01.586-1.814h3.53a1 1 0 00.95-.69L8.78 2.884z"></path></svg>
-                            Закреплено
-                        </span>
-                        <span class="bg-green-100 text-green-800 text-xs font-bold px-2 py-1 rounded-full flex items-center gap-1">
-                            <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path></svg>
-                            Подтверждено
-                        </span>
-                    </div>
-                    <!-- Hover Actions -->
-                    <div class="actions absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center space-x-3">
-                        <button class="bg-white text-gray-800 p-3 rounded-full hover:bg-gray-200 transition-colors"><svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12s-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6.002l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.367 2.684 3 3 0 00-5.367-2.684z"></path></svg></button>
-                        <button class="bg-white text-gray-800 p-3 rounded-full hover:bg-gray-200 transition-colors"><svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"></path></svg></button>
-                        <button class="bg-primary text-white py-2 px-4 rounded-lg hover:bg-primary-hover transition-colors font-semibold">Купить</button>
-                    </div>
-                </div>
-                <div class="p-4">
-                    <h3 class="text-lg font-semibold text-gray-800 dark:text-white">Brawl Stars Гемы</h3>
-                    <p class="text-gray-500 dark:text-gray-400 mt-1">170 гемов</p>
-                    <p class="text-2xl font-bold text-primary mt-2">120,000 UZS</p>
-                </div>
-            </div>
-
-            <!-- Example Product Card 2 -->
-            <div class="product-card card-bg rounded-lg shadow-lg overflow-hidden border border-custom transform hover:-translate-y-1 transition-transform duration-300">
-                <div class="relative">
-                    <img src="https://placehold.co/600x400/10b981/ffffff?text=Telegram" alt="Изображение товара" class="w-full h-48 object-cover">
-                    <!-- Hover Actions -->
-                    <div class="actions absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center space-x-3">
-                        <button class="bg-white text-gray-800 p-3 rounded-full hover:bg-gray-200 transition-colors"><svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12s-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6.002l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.367 2.684 3 3 0 00-5.367-2.684z"></path></svg></button>
-                        <button class="bg-white text-gray-800 p-3 rounded-full hover:bg-gray-200 transition-colors"><svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"></path></svg></button>
-                        <button class="bg-primary text-white py-2 px-4 rounded-lg hover:bg-primary-hover transition-colors font-semibold">Купить</button>
-                    </div>
-                </div>
-                <div class="p-4">
-                    <h3 class="text-lg font-semibold text-gray-800 dark:text-white">Telegram Premium</h3>
-                    <p class="text-gray-500 dark:text-gray-400 mt-1">Подписка на 1 год</p>
-                    <p class="text-2xl font-bold text-primary mt-2">350,000 UZS</p>
-                </div>
-            </div>
-            
-            <!-- Add more product cards as needed -->
-
-        </div>
+        <!-- Other Pages -->
+        <div data-page="chats"><h1 class="text-4xl font-bold text-center mb-8">Чаты</h1><div id="chats-content"></div></div>
+        <div data-page="faq"><h1 class="text-4xl font-bold text-center mb-8">FAQ</h1><div id="faq-content" class="space-y-4"></div></div>
+        <div data-page="purchases"><h1 class="text-4xl font-bold text-center mb-8">Мои покупки</h1><div id="purchases-content"></div></div>
+        <div data-page="admin"><h1 class="text-4xl font-bold text-center mb-8">Админ-панель</h1><div id="admin-content"></div></div>
+        <div data-page="product-detail"><div id="product-detail-content"></div></div>
+        <div data-page="cart"><h1 class="text-4xl font-bold text-center mb-8">Корзина</h1><div id="cart-content"></div></div>
     </main>
 
-    <script>
-        // --- UI Interaction Script ---
+    <!-- Modals Container -->
+    <div id="modals-container"></div>
 
-        // Dropdown toggle logic
-        function setupDropdown(menuId, optionsId) {
-            const menu = document.getElementById(menuId);
-            const options = document.getElementById(optionsId);
-            if(menu && options) {
-                menu.addEventListener('click', (event) => {
-                    event.stopPropagation();
-                    options.classList.toggle('hidden');
-                });
+    <!-- Firebase and App Logic -->
+    <script type="module">
+        // --- Firebase SDK Imports ---
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, onAuthStateChanged, GoogleAuthProvider, signInWithPopup, signOut } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, doc, getDoc, setDoc, addDoc, collection, getDocs, onSnapshot, updateDoc, deleteDoc, query, where, serverTimestamp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        // --- App Configuration ---
+        const firebaseConfig = {
+            apiKey: "AIzaSyC7smDYoy-LT58xCwjJsc9uZU9CgHQv5dM",
+            authDomain: "ya-buxgalter.firebaseapp.com",
+            projectId: "ya-buxgalter",
+            storageBucket: "ya-buxgalter.appspot.com",
+            messagingSenderId: "640345805387",
+            appId: "1:640345805387:web:a1adade77f809af84cb3ce"
+        };
+        const IMGBB_API_KEY = '96bf3f29606f1989bb5a450ad3770cce';
+        const ADMIN_UID = 'vhmtXZxkZnOWviNQ39R1W3GE8mw2';
+
+        // --- Firebase Initialization ---
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+
+        // --- Global State ---
+        let currentUser = null;
+        let isAdmin = false;
+        let allProducts = [];
+
+        // --- App Entry Point ---
+        document.addEventListener('DOMContentLoaded', () => {
+            handleRouting();
+            window.addEventListener('hashchange', handleRouting);
+            setupEventListeners();
+            initTheme();
+
+            onAuthStateChanged(auth, user => {
+                currentUser = user;
+                isAdmin = user ? user.uid === ADMIN_UID : false;
+                updateAuthUI();
+                if (window.location.hash.startsWith('#admin') && !isAdmin) {
+                    window.location.hash = '#main';
+                }
+                handleRouting(); 
+            });
+        });
+
+        // --- Routing ---
+        function handleRouting() {
+            const hash = window.location.hash || '#main';
+            const page = hash.substring(1).split('/')[0];
+            
+            document.querySelectorAll('[data-page]').forEach(p => p.classList.remove('active'));
+            const activePage = document.querySelector(`[data-page="${page}"]`);
+            if (activePage) {
+                activePage.classList.add('active');
+                loadPageContent(page);
+            } else {
+                 document.querySelector(`[data-page="main"]`).classList.add('active');
+                 loadPageContent('main');
+            }
+        }
+
+        function loadPageContent(page) {
+            switch(page) {
+                case 'main': loadProducts(); break;
+                case 'faq': loadFaq(); break;
+                case 'admin': loadAdminPanel(); break;
             }
         }
         
-        setupDropdown('lang-dropdown-menu', 'lang-options');
-        setupDropdown('currency-dropdown-menu', 'currency-options');
-        setupDropdown('profile-dropdown-menu', 'profile-options');
+        // --- UI Rendering & Logic ---
 
-        // Close dropdowns when clicking outside
-        window.addEventListener('click', () => {
-            document.getElementById('lang-options')?.classList.add('hidden');
-            document.getElementById('currency-options')?.classList.add('hidden');
-            document.getElementById('profile-options')?.classList.add('hidden');
+        // Products
+        function loadProducts() {
+            const productsGrid = document.getElementById('products-grid');
+            productsGrid.innerHTML = `<p>Загрузка товаров...</p>`;
+            onSnapshot(collection(db, "products"), (snapshot) => {
+                productsGrid.innerHTML = '';
+                allProducts = [];
+                if (snapshot.empty) {
+                    productsGrid.innerHTML = `<p>Товары не найдены.</p>`;
+                    return;
+                }
+                snapshot.forEach(doc => {
+                    allProducts.push({ id: doc.id, ...doc.data() });
+                });
+                renderProducts(allProducts);
+            });
+        }
+        
+        function renderProducts(productsToRender) {
+            const productsGrid = document.getElementById('products-grid');
+            productsGrid.innerHTML = '';
+            productsToRender.forEach(product => {
+                const card = document.createElement('div');
+                card.className = "card-bg rounded-lg shadow-lg flex flex-col justify-between border border-custom overflow-hidden";
+                card.innerHTML = `
+                    <div>
+                        <img src="${product.imageUrl || 'https://placehold.co/600x400'}" class="w-full h-48 object-cover cursor-pointer" data-product-id="${product.id}">
+                        <div class="p-4">
+                            <h3 class="text-lg font-semibold truncate">${product.name}</h3>
+                            <p class="text-gray-500 dark:text-gray-400 mt-1 text-sm">${product.description}</p>
+                            <p class="text-2xl font-bold text-primary mt-2">${(product.price || 0).toLocaleString('ru-RU')} UZS</p>
+                        </div>
+                    </div>
+                    <div class="p-4 pt-0 border-t border-custom mt-2 flex items-center justify-between gap-2">
+                        <button class="flex-grow bg-primary text-white py-2 px-4 rounded-lg hover:bg-primary-hover font-semibold" data-product-id="${product.id}">Купить</button>
+                    </div>`;
+                productsGrid.appendChild(card);
+            });
+        }
+        
+        // Search
+        document.getElementById('search-input').addEventListener('input', (e) => {
+            const searchTerm = e.target.value.toLowerCase();
+            const filteredProducts = allProducts.filter(p => p.name.toLowerCase().includes(searchTerm));
+            renderProducts(filteredProducts);
         });
 
-        // Mobile menu toggle
-        const mobileMenuButton = document.getElementById('mobile-menu-button');
-        const mobileMenu = document.getElementById('mobile-menu');
-        if(mobileMenuButton && mobileMenu) {
-            mobileMenuButton.addEventListener('click', () => {
-                mobileMenu.classList.toggle('hidden');
+        // FAQ
+        function loadFaq() {
+            const faqContent = document.getElementById('faq-content');
+            faqContent.innerHTML = '';
+             onSnapshot(collection(db, "faq"), (snapshot) => {
+                faqContent.innerHTML = '';
+                snapshot.forEach(doc => {
+                    const item = doc.data();
+                    const faqItem = document.createElement('div');
+                    faqItem.className = 'card-bg p-4 rounded-lg shadow';
+                    faqItem.innerHTML = `
+                        <h3 class="font-bold text-lg">${item.question}</h3>
+                        <p class="mt-2">${item.answer}</p>
+                    `;
+                    faqContent.appendChild(faqItem);
+                });
+            });
+        }
+        
+        // Admin Panel
+        function loadAdminPanel() {
+            if (!isAdmin) {
+                document.getElementById('admin-content').innerHTML = '<p class="text-center text-red-500">Доступ запрещен. Эта страница только для администратора.</p>';
+                return;
+            }
+            
+            const adminContent = document.getElementById('admin-content');
+            adminContent.innerHTML = `
+                <div class="flex space-x-4 border-b border-custom mb-4">
+                    <button class="admin-tab-btn py-2 px-4 border-b-2 border-primary" data-tab="products">Товары</button>
+                    <button class="admin-tab-btn py-2 px-4" data-tab="faq">FAQ</button>
+                </div>
+                <div id="admin-tab-content"></div>
+            `;
+            loadAdminTab('products'); // Load default tab
+        }
+
+        function loadAdminTab(tab) {
+            const contentEl = document.getElementById('admin-tab-content');
+            if (tab === 'products') {
+                contentEl.innerHTML = `
+                    <button id="add-product-btn" class="bg-green-500 text-white px-4 py-2 rounded-lg mb-4 hover:bg-green-600">Добавить товар</button>
+                    <div id="admin-products-list"></div>
+                `;
+                loadAdminProducts();
+            } else if (tab === 'faq') {
+                contentEl.innerHTML = `
+                    <button id="add-faq-btn" class="bg-green-500 text-white px-4 py-2 rounded-lg mb-4 hover:bg-green-600">Добавить FAQ</button>
+                    <div id="admin-faq-list"></div>
+                `;
+                loadAdminFaq();
+            }
+        }
+        
+        function loadAdminProducts() {
+            const listEl = document.getElementById('admin-products-list');
+            listEl.innerHTML = '';
+            onSnapshot(query(collection(db, "products")), (snapshot) => {
+                listEl.innerHTML = '';
+                snapshot.forEach(doc => {
+                    const p = doc.data();
+                    const item = document.createElement('div');
+                    item.className = 'card-bg p-4 rounded-lg shadow flex justify-between items-center mb-2';
+                    item.innerHTML = `
+                        <span>${p.name}</span>
+                        <div>
+                            <button class="edit-product-btn text-blue-500 mr-2" data-id="${doc.id}">Ред.</button>
+                            <button class="delete-product-btn text-red-500" data-id="${doc.id}">Удл.</button>
+                        </div>
+                    `;
+                    listEl.appendChild(item);
+                });
+            });
+        }
+        
+        function loadAdminFaq() {
+            const listEl = document.getElementById('admin-faq-list');
+            listEl.innerHTML = '';
+            onSnapshot(query(collection(db, "faq")), (snapshot) => {
+                listEl.innerHTML = '';
+                snapshot.forEach(doc => {
+                    const f = doc.data();
+                    const item = document.createElement('div');
+                    item.className = 'card-bg p-4 rounded-lg shadow flex justify-between items-center mb-2';
+                    item.innerHTML = `
+                        <span>${f.question}</span>
+                        <div>
+                            <button class="delete-faq-btn text-red-500" data-id="${doc.id}">Удл.</button>
+                        </div>
+                    `;
+                    listEl.appendChild(item);
+                });
             });
         }
 
-        // --- Theme Toggle ---
-        const themeToggleBtn = document.getElementById('theme-toggle');
-        const themeToggleDarkIcon = document.getElementById('theme-toggle-dark-icon');
-        const themeToggleLightIcon = document.getElementById('theme-toggle-light-icon');
 
-        // Check for saved theme in localStorage or use system preference
-        if (localStorage.getItem('color-theme') === 'dark' || (!('color-theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
-            themeToggleLightIcon.classList.remove('hidden');
-            document.documentElement.classList.add('dark');
-        } else {
-            themeToggleDarkIcon.classList.remove('hidden');
-            document.documentElement.classList.remove('dark');
+        // --- Modals ---
+        function showModal(title, content, onSave) {
+            const modalId = `modal-${Date.now()}`;
+            const modal = document.createElement('div');
+            modal.id = modalId;
+            modal.className = 'fixed inset-0 z-50 flex items-center justify-center modal-backdrop';
+            modal.innerHTML = `
+                <div class="card-bg rounded-lg shadow-xl w-11/12 md:w-1/2 p-6 max-h-[90vh] overflow-y-auto">
+                    <div class="flex justify-between items-center mb-4">
+                        <h2 class="text-2xl font-bold">${title}</h2>
+                        <button class="close-modal-btn text-2xl">&times;</button>
+                    </div>
+                    <div>${content}</div>
+                    ${onSave ? `<div class="mt-6 flex justify-end">
+                        <button class="save-modal-btn bg-primary text-white px-6 py-2 rounded-lg hover:bg-primary-hover">Сохранить</button>
+                    </div>` : ''}
+                </div>
+            `;
+            document.getElementById('modals-container').appendChild(modal);
+            
+            modal.querySelector('.close-modal-btn').onclick = () => modal.remove();
+            if (onSave) {
+                modal.querySelector('.save-modal-btn').onclick = async () => {
+                    const success = await onSave(modal);
+                    if (success) {
+                        modal.remove();
+                    }
+                };
+            }
+            return modal;
         }
 
-        themeToggleBtn.addEventListener('click', function() {
-            // toggle icons
-            themeToggleDarkIcon.classList.toggle('hidden');
-            themeToggleLightIcon.classList.toggle('hidden');
-
-            // if set via local storage previously
-            if (localStorage.getItem('color-theme')) {
-                if (localStorage.getItem('color-theme') === 'light') {
-                    document.documentElement.classList.add('dark');
-                    localStorage.setItem('color-theme', 'dark');
-                } else {
-                    document.documentElement.classList.remove('dark');
-                    localStorage.setItem('color-theme', 'light');
+        // --- Event Listeners Setup ---
+        function setupEventListeners() {
+            document.body.addEventListener('click', e => {
+                // Admin panel tabs
+                if (e.target.classList.contains('admin-tab-btn')) {
+                    document.querySelectorAll('.admin-tab-btn').forEach(btn => btn.classList.remove('border-b-2', 'border-primary'));
+                    e.target.classList.add('border-b-2', 'border-primary');
+                    loadAdminTab(e.target.dataset.tab);
                 }
-            // if NOT set via local storage previously
-            } else {
-                if (document.documentElement.classList.contains('dark')) {
-                    document.documentElement.classList.remove('dark');
-                    localStorage.setItem('color-theme', 'light');
-                } else {
-                    document.documentElement.classList.add('dark');
-                    localStorage.setItem('color-theme', 'dark');
+                // Add product
+                if (e.target.id === 'add-product-btn') showProductForm();
+                // Edit product
+                if (e.target.classList.contains('edit-product-btn')) showProductForm(e.target.dataset.id);
+                // Delete product
+                if (e.target.classList.contains('delete-product-btn')) {
+                    if (confirm('Вы уверены, что хотите удалить этот товар?')) {
+                        deleteDoc(doc(db, 'products', e.target.dataset.id));
+                    }
+                }
+                // Add FAQ
+                if (e.target.id === 'add-faq-btn') showFaqForm();
+                // Delete FAQ
+                if (e.target.classList.contains('delete-faq-btn')) {
+                     if (confirm('Вы уверены?')) {
+                        deleteDoc(doc(db, 'faq', e.target.dataset.id));
+                    }
+                }
+                // Auth buttons
+                if (e.target.id === 'google-login-btn') signInWithGoogle();
+                if (e.target.id === 'logout-btn') signOut(auth);
+            });
+        }
+        
+        // --- Forms ---
+        async function showProductForm(productId) {
+            let product = { name: '', description: '', price: 0, imageUrl: '', variations: [] };
+            if (productId) {
+                const docSnap = await getDoc(doc(db, 'products', productId));
+                if (docSnap.exists()) {
+                    product = { id: docSnap.id, ...docSnap.data() };
                 }
             }
-        });
-    </script>
+            
+            const content = `
+                <div class="space-y-4">
+                    <input id="product-name" class="w-full p-2 border rounded input-bg" placeholder="Название товара" value="${product.name}">
+                    <textarea id="product-desc" class="w-full p-2 border rounded input-bg" placeholder="Описание">${product.description}</textarea>
+                    <input id="product-price" type="number" class="w-full p-2 border rounded input-bg" placeholder="Цена (UZS)" value="${product.price}">
+                    <input id="product-image-url" class="w-full p-2 border rounded input-bg" placeholder="URL изображения" value="${product.imageUrl}">
+                </div>
+            `;
+            showModal(productId ? 'Редактировать товар' : 'Добавить товар', content, async (modal) => {
+                const newProductData = {
+                    name: modal.querySelector('#product-name').value,
+                    description: modal.querySelector('#product-desc').value,
+                    price: parseFloat(modal.querySelector('#product-price').value) || 0,
+                    imageUrl: modal.querySelector('#product-image-url').value,
+                };
+                
+                try {
+                    if (productId) {
+                        await setDoc(doc(db, 'products', productId), newProductData, { merge: true });
+                    } else {
+                        await addDoc(collection(db, 'products'), newProductData);
+                    }
+                    return true; // Close modal on success
+                } catch (error) {
+                    console.error("Error saving product:", error);
+                    alert("Ошибка сохранения товара: " + error.message);
+                    return false; // Keep modal open on error
+                }
+            });
+        }
+        
+        function showFaqForm() {
+            const content = `
+                <input id="faq-question" class="w-full p-2 border rounded input-bg mb-2" placeholder="Вопрос">
+                <textarea id="faq-answer" class="w-full p-2 border rounded input-bg" placeholder="Ответ"></textarea>
+            `;
+            showModal('Добавить FAQ', content, async (modal) => {
+                const newFaq = {
+                    question: modal.querySelector('#faq-question').value,
+                    answer: modal.querySelector('#faq-answer').value,
+                };
+                if (!newFaq.question || !newFaq.answer) {
+                    alert('Пожалуйста, заполните все поля.');
+                    return false;
+                }
+                await addDoc(collection(db, 'faq'), newFaq);
+                return true;
+            });
+        }
 
+        // --- Auth Logic ---
+        function updateAuthUI() {
+            const container = document.getElementById('auth-container');
+            if (currentUser) {
+                container.innerHTML = `
+                    <div class="relative">
+                        <button id="profile-btn" class="flex items-center">
+                            <img src="${currentUser.photoURL || 'https://placehold.co/32x32'}" alt="Профиль" class="w-8 h-8 rounded-full">
+                        </button>
+                        <div id="profile-menu" class="hidden absolute right-0 mt-2 w-48 card-bg rounded-md shadow-lg border border-custom">
+                            <div class="px-4 py-2 border-b border-custom">
+                                <p class="font-semibold truncate">${currentUser.displayName}</p>
+                                <p class="text-sm text-gray-500 truncate">${currentUser.email}</p>
+                            </div>
+                            <a href="#profile" class="block px-4 py-2 text-sm hover:bg-gray-100 dark:hover:bg-gray-700">Профиль</a>
+                            ${isAdmin ? `<a href="#admin" class="nav-link block px-4 py-2 text-sm hover:bg-gray-100 dark:hover:bg-gray-700">Админ-панель</a>` : ''}
+                            <div class="border-t border-custom"></div>
+                            <a href="#" id="logout-btn" class="block px-4 py-2 text-sm text-red-500 hover:bg-gray-100 dark:hover:bg-gray-700">Выйти</a>
+                        </div>
+                    </div>
+                `;
+                document.getElementById('profile-btn').onclick = (e) => {
+                    e.stopPropagation();
+                    document.getElementById('profile-menu').classList.toggle('hidden');
+                };
+                document.addEventListener('click', (e) => {
+                    const menu = document.getElementById('profile-menu');
+                    const btn = document.getElementById('profile-btn');
+                    if (menu && !menu.contains(e.target) && !btn.contains(e.target)) {
+                        menu.classList.add('hidden');
+                    }
+                })
+            } else {
+                container.innerHTML = `<button id="google-login-btn" class="px-4 py-2 bg-primary text-white rounded-md hover:bg-primary-hover font-semibold flex items-center gap-2">
+                    <svg class="w-5 h-5" viewBox="0 0 48 48"><path fill="#FFC107" d="M43.611 20.083H42V20H24v8h11.303c-1.649 4.657-6.08 8-11.303 8c-6.627 0-12-5.373-12-12s5.373-12 12-12c3.059 0 5.842 1.154 7.961 3.039l5.657-5.657C34.046 6.053 29.268 4 24 4C12.955 4 4 12.955 4 24s8.955 20 20 20s20-8.955 20-20c0-1.341-.138-2.65-.389-3.917z"></path><path fill="#FF3D00" d="M6.306 14.691l6.571 4.819C14.655 15.108 18.961 12 24 12c3.059 0 5.842 1.154 7.961 3.039l5.657-5.657C34.046 6.053 29.268 4 24 4C16.318 4 9.656 8.337 6.306 14.691z"></path><path fill="#4CAF50" d="M24 44c5.166 0 9.86-1.977 13.409-5.192l-6.19-5.238C29.211 35.091 26.715 36 24 36c-5.202 0-9.619-3.317-11.283-7.946l-6.522 5.025C9.505 39.556 16.227 44 24 44z"></path><path fill="#1976D2" d="M43.611 20.083H42V20H24v8h11.303c-.792 2.237-2.231 4.166-4.087 5.571l6.19 5.238C44.572 34.043 46 29.392 46 24c0-1.341-.138-2.65-.389-3.917z"></path></svg>
+                    Войти
+                </button>`;
+            }
+        }
+        
+        function signInWithGoogle() {
+            const provider = new GoogleAuthProvider();
+            signInWithPopup(auth, provider)
+                .catch((error) => {
+                    console.error("Ошибка входа через Google: ", error);
+                    alert("Не удалось войти через Google. " + error.message);
+                });
+        }
+
+        // --- Theme ---
+        function initTheme() {
+            const themeToggleBtn = document.getElementById('theme-toggle');
+            const darkIcon = document.getElementById('theme-toggle-dark-icon');
+            const lightIcon = document.getElementById('theme-toggle-light-icon');
+            const docElement = document.documentElement;
+
+            const applyTheme = (theme) => {
+                if (theme === 'dark') {
+                    docElement.classList.add('dark');
+                    document.body.classList.add('dark');
+                    lightIcon.classList.remove('hidden');
+                    darkIcon.classList.add('hidden');
+                } else {
+                    docElement.classList.remove('dark');
+                    document.body.classList.remove('dark');
+                    darkIcon.classList.remove('hidden');
+                    lightIcon.classList.add('hidden');
+                }
+            };
+
+            const savedTheme = localStorage.getItem('color-theme');
+            const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+            applyTheme(savedTheme || (prefersDark ? 'dark' : 'light'));
+
+            themeToggleBtn.addEventListener('click', () => {
+                const newTheme = docElement.classList.contains('dark') ? 'light' : 'dark';
+                localStorage.setItem('color-theme', newTheme);
+                applyTheme(newTheme);
+            });
+        }
+    </script>
 </body>
 </html>
