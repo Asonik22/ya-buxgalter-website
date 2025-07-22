@@ -117,7 +117,7 @@
         // --- STATE ---
         let currentUser = null;
         let isAdmin = false;
-        let authReady = false;
+        let appReady = false;
         let allProducts = [];
         let paymentMethods = [];
         let cart = JSON.parse(localStorage.getItem('asonik_cart')) || [];
@@ -170,21 +170,21 @@
             initSwitchers();
             setupEventListeners();
             updateCartCount();
-            loadPaymentMethods();
             
-            onAuthStateChanged(auth, user => {
-                initializeAppState(user);
+            onAuthStateChanged(auth, async (user) => {
+                await loadPaymentMethods();
+                await initializeAppState(user);
             });
         });
 
-        function initializeAppState(user) {
+        async function initializeAppState(user) {
             currentUser = user;
             isAdmin = user ? user.uid === ADMIN_UID : false;
             if (user) {
                 const userRef = doc(db, "users", user.uid);
-                setDoc(userRef, { displayName: user.displayName, email: user.email, photoURL: user.photoURL, lastSeen: serverTimestamp() }, { merge: true });
+                await setDoc(userRef, { displayName: user.displayName, email: user.email, photoURL: user.photoURL, lastSeen: serverTimestamp() }, { merge: true });
             }
-            authReady = true;
+            appReady = true;
             updateAuthUI();
             handleRouting();
         }
@@ -215,16 +215,18 @@
 
         // --- DATA FETCHING ---
         function loadPaymentMethods() {
-            const q = query(collection(db, "paymentMethods"), orderBy("order", "asc"));
-            onSnapshot(q, (snapshot) => {
-                paymentMethods = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+            return new Promise(resolve => {
+                const q = query(collection(db, "paymentMethods"), orderBy("order", "asc"));
+                onSnapshot(q, (snapshot) => {
+                    paymentMethods = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                    resolve();
+                });
             });
         }
 
-
         // --- ROUTING ---
         function handleRouting() {
-            if (!authReady) return;
+            if (!appReady) return;
 
             const hash = window.location.hash || '#main';
             let [page, subpage] = (hash.substring(1) || 'main').split('/');
@@ -303,8 +305,8 @@
             productsToRender.forEach(product => {
                 const card = document.createElement('div');
                 card.className = "card-bg rounded-lg shadow-lg flex flex-col justify-between border border-custom overflow-hidden";
-                const verifiedBadge = product.isVerified ? `<span class="bg-green-100 text-green-800 text-xs font-bold px-2 py-1 rounded-full">✔ Подтверждено</span>` : '';
-                const pinnedBadge = product.isPinned ? `<span class="bg-blue-100 text-blue-800 text-xs font-bold px-2 py-1 rounded-full">★ Закреплено</span>` : '';
+                const verifiedBadge = product.isVerified ? `<span class="bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200 text-xs font-bold px-2 py-1 rounded-full">✔ Подтверждено</span>` : '';
+                const pinnedBadge = product.isPinned ? `<span class="bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200 text-xs font-bold px-2 py-1 rounded-full">★ Закреплено</span>` : '';
 
                 card.innerHTML = `
                     <div class="relative">
@@ -485,7 +487,7 @@
         }
         async function loadPurchasesPage() {
             const contentEl = document.getElementById('purchases-content');
-            if (!contentEl || !currentUser) return;
+            if (!currentUser) return; 
             
             contentEl.innerHTML = `<h1 class="text-4xl font-bold text-center mb-8" data-lang-key="purchases_title">Мои покупки</h1><div id="purchases-list" class="space-y-6"></div>`;
             const listEl = document.getElementById('purchases-list');
@@ -505,10 +507,10 @@
                     
                     let statusColor, statusText;
                     switch(purchase.status) {
-                        case 'Выполнен': statusColor = 'bg-green-100 text-green-800'; statusText = 'Выполнен'; break;
+                        case 'Выполнен': statusColor = 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200'; statusText = 'Выполнен'; break;
                         case 'Отменен':
-                        case 'Отклонен': statusColor = 'bg-red-100 text-red-800'; statusText = purchase.status; break;
-                        default: statusColor = 'bg-yellow-100 text-yellow-800'; statusText = purchase.status;
+                        case 'Отклонен': statusColor = 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200'; statusText = purchase.status; break;
+                        default: statusColor = 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200'; statusText = purchase.status;
                     }
 
                     const productImageUrl = purchase.items && purchase.items[0] ? purchase.items[0].imageUrl : 'https://placehold.co/128x128';
@@ -526,6 +528,7 @@
                                 <p><strong>Дата:</strong> ${new Date(purchase.createdAt.seconds * 1000).toLocaleString()}</p>
                                 <p><strong>Код заказа:</strong> <span class="font-mono bg-gray-200 dark:bg-gray-700 px-2 py-1 rounded">${purchase.orderId}</span></p>
                                 ${paymentMethod ? `<p class="flex items-center gap-2"><strong>Способ оплаты:</strong> <img src="${paymentMethod.logoUrl}" class="h-5"> ${paymentMethod.name}</p>` : ''}
+                                ${purchase.rejectionReason ? `<p class="text-red-500"><strong>Причина отклонения:</strong> ${purchase.rejectionReason}</p>` : ''}
                             </div>
                         </div>
                         <div class="flex flex-col justify-center items-center gap-2 sm:w-40 flex-shrink-0 border-t sm:border-t-0 sm:border-l border-custom pt-4 sm:pt-0 sm:pl-6 mt-4 sm:mt-0">
@@ -815,9 +818,9 @@
         function showModal(title, content, onSave, saveButtonText = 'Подтвердить') {
              const modal = document.createElement('div');
              modal.className = 'fixed inset-0 z-50 flex items-center justify-center modal-backdrop';
-             modal.innerHTML = `<div class="card-bg rounded-lg shadow-xl w-11/12 md:w-2/3 lg:w-1/2 p-6 max-h-[90vh] overflow-y-auto"><div class="flex justify-between items-center mb-4"><h2 class="text-2xl font-bold">${title}</h2><button class="close-modal-btn text-2xl">&times;</button></div><div>${content}</div>${onSave ? `<div class="mt-6 flex justify-end"><button class="save-modal-btn bg-primary text-white px-6 py-2 rounded-lg">${saveButtonText}</button></div>` : ''}</div>`;
+             modal.innerHTML = `<div class="card-bg rounded-lg shadow-xl w-11/12 md:w-2/3 lg:w-1/2 p-6 max-h-[90vh] overflow-y-auto"><div class="flex justify-between items-center mb-4"><h2 class="text-2xl font-bold">${title}</h2><button class="close-modal-btn text-2xl">&times;</button></div><div>${content}</div>${onSave ? `<div class="mt-6 flex justify-end gap-4"><button class="close-modal-btn px-6 py-2 rounded-lg">Отмена</button><button class="save-modal-btn bg-primary text-white px-6 py-2 rounded-lg">${saveButtonText}</button></div>` : ''}</div>`;
              document.getElementById('modals-container').appendChild(modal);
-             modal.querySelector('.close-modal-btn').onclick = () => modal.remove();
+             modal.querySelectorAll('.close-modal-btn').forEach(btn => btn.onclick = () => modal.remove());
              if (onSave) {
                  const saveBtn = modal.querySelector('.save-modal-btn');
                  saveBtn.onclick = async () => {
@@ -892,6 +895,7 @@
             
             const purchasesSnapshot = await getDocs(query(collection(db, "purchases")));
             const productsSnapshot = await getDocs(query(collection(db, "products")));
+            const usersSnapshot = await getDocs(query(collection(db, "users"), orderBy("lastSeen", "desc")));
 
             const allPurchases = purchasesSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
             const completedPurchases = allPurchases.filter(p => p.status === 'Выполнен');
@@ -921,16 +925,30 @@
                         <div><p class="text-sm text-gray-500 dark:text-gray-400">Товаров</p><p class="text-2xl font-bold">${totalProducts}</p></div>
                     </div>
                 </div>
-                <h3 class="text-2xl font-bold mb-4">Недавние заказы</h3>
-                <div id="recent-purchases-list" class="space-y-3"></div>
+                <div id="users-section"></div>
             `;
             
-            const recentPurchases = allPurchases.sort((a,b) => b.createdAt.seconds - a.createdAt.seconds).slice(0, 5);
-            const recentListEl = document.getElementById('recent-purchases-list');
-            if (recentPurchases.length === 0) {
-                recentListEl.innerHTML = '<p>Пока нет заказов.</p>';
-            } else {
-                recentPurchases.forEach(p => recentListEl.appendChild(renderAdminPurchaseItem(p.id, p)));
+            const usersContainer = document.getElementById('users-section');
+            if(usersContainer) {
+                const users = usersSnapshot.docs.map(doc => doc.data());
+                usersContainer.innerHTML = `
+                    <h3 class="text-2xl font-bold mb-4">Пользователи</h3>
+                    <div class="space-y-3">
+                        ${users.map(user => `
+                           <div class="card-bg p-4 rounded-lg shadow flex items-center gap-4 border border-custom">
+                               <img src="${user.photoURL || 'https://placehold.co/48x48'}" class="w-12 h-12 rounded-full object-cover">
+                               <div class="flex-grow">
+                                   <p class="font-semibold">${user.displayName || 'Без имени'}</p>
+                                   <p class="text-sm text-gray-500 dark:text-gray-400">${user.email}</p>
+                               </div>
+                               <div class="text-sm text-gray-500 dark:text-gray-400 text-right">
+                                   <p>Последний визит:</p>
+                                   <p>${user.lastSeen ? new Date(user.lastSeen.seconds * 1000).toLocaleString() : 'Недавно'}</p>
+                               </div>
+                           </div>
+                        `).join('')}
+                    </div>
+                `;
             }
         }
         function renderAdminProductItem(id, data) {
@@ -986,6 +1004,7 @@
                         <p><strong>Статус:</strong> <span class="font-semibold ${statusColor}">${p.status}</span></p>
                         <p class="text-sm text-gray-500 dark:text-gray-400"><strong>Заказан:</strong> ${new Date(p.createdAt.seconds * 1000).toLocaleString()}</p>
                         ${p.orderId ? `<p><strong>Код заказа:</strong> <span class="font-mono bg-gray-200 dark:bg-gray-700 px-2 py-1 rounded">${p.orderId}</span></p>` : ''}
+                        ${p.rejectionReason ? `<p class="text-red-500 mt-2"><strong>Причина отклонения:</strong> ${p.rejectionReason}</p>` : ''}
                     </div>
                     <div class="flex flex-col gap-2 items-start justify-center">
                         ${p.paymentProofUrl ? `<a href="${p.paymentProofUrl}" target="_blank" class="w-full text-center px-4 py-2 text-sm font-semibold bg-blue-500 text-white rounded-md hover:bg-blue-600">Посмотреть чек</a>` : '<span class="text-sm text-gray-500">Чек не загружен</span>'}
@@ -1230,7 +1249,15 @@
                 if (target.id === 'change-avatar-btn') document.getElementById('avatar-upload').click();
                 if (target.closest('.cancel-order-btn')) { const purchaseId = target.dataset.purchaseId; confirmAction('Вы уверены, что хотите отменить этот заказ?', () => updateDoc(doc(db, "purchases", purchaseId), { status: 'Отменен' })); }
                 if (target.closest('.approve-purchase-btn')) { await updateDoc(doc(db, "purchases", target.dataset.id), { status: 'Выполнен' }); }
-                if (target.closest('.reject-purchase-btn')) { await updateDoc(doc(db, "purchases", target.dataset.id), { status: 'Отклонен' }); }
+                if (target.closest('.reject-purchase-btn')) {
+                    const purchaseId = target.dataset.id;
+                    showModal('Отклонить заказ', `<textarea id="rejection-reason" class="w-full p-2 border rounded input-bg" placeholder="Укажите причину отклонения (необязательно)"></textarea>`, 
+                    async (m) => {
+                        const reason = m.querySelector('#rejection-reason').value.trim();
+                        await updateDoc(doc(db, "purchases", purchaseId), { status: 'Отклонен', rejectionReason: reason || null });
+                        return true;
+                    }, 'Отклонить');
+                }
                 if (target.id === 'save-profile-btn') {
                     const newName = document.getElementById('profile-name').value;
                     const avatarFile = document.getElementById('avatar-upload').files[0];
