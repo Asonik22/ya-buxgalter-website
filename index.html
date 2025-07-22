@@ -110,6 +110,7 @@
         // --- STATE ---
         let currentUser = null;
         let isAdmin = false;
+        let authReady = false; // Auth state flag
         let allProducts = [];
         let cart = JSON.parse(localStorage.getItem('asonik_cart')) || [];
         const appState = {
@@ -170,9 +171,10 @@
                     const userRef = doc(db, "users", user.uid);
                     setDoc(userRef, { displayName: user.displayName, email: user.email, photoURL: user.photoURL, lastSeen: serverTimestamp() }, { merge: true });
                 }
+                authReady = true; // Set auth state to ready
                 updateAuthUI();
                 if (window.location.hash.startsWith('#admin') && !isAdmin) window.location.hash = '#main';
-                handleRouting();
+                handleRouting(); // Re-run routing to load content that depends on auth
             });
         });
 
@@ -191,7 +193,7 @@
         }
         function showToast(message) {
             const toast = document.createElement('div');
-            toast.className = 'fixed bottom-5 right-5 bg-green-500 text-white py-2 px-4 rounded-lg shadow-lg z-50 animate-pulse';
+            toast.className = 'fixed bottom-5 right-5 bg-green-500 text-white py-2 px-4 rounded-lg shadow-lg z-50';
             toast.textContent = message;
             document.body.appendChild(toast);
             setTimeout(() => {
@@ -215,6 +217,20 @@
             translatePage();
         }
         function loadPageContent(page, subpage) {
+            // Auth Guard for protected pages
+            const protectedPages = ['purchases', 'chats', 'profile', 'admin'];
+            if (protectedPages.includes(page)) {
+                const contentEl = document.querySelector(`[data-page="${page}"] > div`);
+                if (!authReady) {
+                    if (contentEl) contentEl.innerHTML = '<p class="text-center">Загрузка...</p>';
+                    return; // Wait for auth state to be ready
+                }
+                if (!currentUser) {
+                    if (contentEl) contentEl.innerHTML = `<p class="text-center">Пожалуйста, <a href="#" id="login-redirect" class="text-primary underline">войдите</a>, чтобы просмотреть эту страницу.</p>`;
+                    return;
+                }
+            }
+
             switch(page) {
                 case 'main': loadProducts(); break;
                 case 'faq': loadFaq(); break;
@@ -298,7 +314,7 @@
         }
         function loadProfilePage() {
             const contentEl = document.getElementById('profile-content');
-            if (!currentUser) { contentEl.innerHTML = '<p>Пожалуйста, войдите в систему.</p>'; return; }
+            if (!currentUser) return; // Guarded by loadPageContent
             contentEl.innerHTML = `
                 <div class="max-w-3xl mx-auto card-bg p-8 rounded-2xl shadow-lg border border-custom">
                     <div class="flex flex-col md:flex-row items-center md:items-start gap-8">
@@ -332,10 +348,7 @@
         // --- CHAT SYSTEM ---
         function loadChatsPage() {
              const contentEl = document.getElementById('chats-content');
-             if (!currentUser) {
-                 contentEl.innerHTML = '<div class="text-center"><p class="mb-4">Пожалуйста, войдите, чтобы связаться с администрацией.</p><button id="login-for-chat" class="px-6 py-2 bg-primary text-white rounded-md hover:bg-primary-hover font-semibold">Войти</button></div>';
-                 return;
-             }
+             if (!currentUser) return; // Guarded by loadPageContent
              contentEl.innerHTML = `
                 <div class="text-center max-w-lg mx-auto card-bg p-8 rounded-lg shadow-lg">
                     <h2 class="text-2xl font-bold mb-4">Поддержка клиентов</h2>
@@ -398,7 +411,7 @@
                 cart.push(cartItem); 
                 localStorage.setItem('asonik_cart', JSON.stringify(cart)); 
                 updateCartCount(); 
-                showToast(`${cartItem.name} добавлен в корзину!`);
+                showToast('Ваш товар добавлен в корзину');
             } 
         }
         function updateCartCount() { 
@@ -443,7 +456,7 @@
         }
         function loadPurchasesPage() {
             const contentEl = document.getElementById('purchases-content');
-            if (!currentUser) { contentEl.innerHTML = '<p class="text-center">Войдите, чтобы увидеть свои покупки.</p>'; return; }
+            if (!currentUser) return; // Guarded by loadPageContent
             onSnapshot(query(collection(db, "purchases"), where("userId", "==", currentUser.uid), orderBy("createdAt", "desc")), (snapshot) => {
                 if(!contentEl) return;
                 if (snapshot.empty) { contentEl.innerHTML = '<div class="text-center card-bg p-8 rounded-lg shadow-md"><p>У вас еще нет покупок.</p></div>'; return; }
@@ -456,7 +469,7 @@
                     item.innerHTML = `
                         <div class="flex flex-col md:flex-row justify-between items-start md:items-center">
                             <div>
-                                <p class="text-lg">Товар: <span class="font-bold">${purchase.productName || purchase.items?.map(i => i.name).join(', ')}</span></p>
+                                <p class="text-lg">Заказ: <span class="font-bold">${purchase.productName || purchase.items?.map(i => i.name).join(', ')}</span></p>
                                 <p>Статус: <span class="font-semibold ${purchase.status === 'Отменен' ? 'text-red-500' : 'text-yellow-500'}">${purchase.status}</span></p>
                                 <p class="text-sm text-gray-500 dark:text-gray-400">Дата: ${new Date(purchase.createdAt.seconds * 1000).toLocaleString()}</p>
                                 <p class="mt-2">Код заказа: <span class="font-mono bg-gray-200 dark:bg-gray-700 px-2 py-1 rounded">${purchase.orderId}</span></p>
@@ -473,44 +486,86 @@
         }
 
         // --- PURCHASE FLOW & MODALS ---
-        async function checkoutCart() {
-            if (!currentUser) {
-                showModal('Требуется вход', '<p>Для оформления заказа необходимо войти в свой аккаунт.</p>', () => { signInWithGoogle(); return true; }, 'Войти через Google');
-                return;
-            }
-            if (cart.length === 0) {
-                alert("Ваша корзина пуста.");
-                return;
-            }
+        async function showCartCheckoutModal() {
+            if (cart.length === 0) { alert("Ваша корзина пуста."); return; }
+            
+            let total = cart.reduce((sum, item) => sum + (item.price || 0), 0);
+            let currentPrice = total;
+            let appliedPromo = null;
 
-            const orderId = generateUniqueCode();
-            const batch = writeBatch(db);
-            const total = cart.reduce((sum, item) => sum + (item.price || 0), 0);
+            const modalContent = `
+                <div class="space-y-6">
+                    <div><label class="font-bold text-lg">Промокод</label><div class="flex gap-2 mt-1"><input id="promo-input" class="w-full p-2 border rounded input-bg" placeholder="Введите промокод"><button id="apply-promo" class="px-4 py-2 bg-gray-200 dark:bg-gray-600 rounded">Применить</button></div><p id="promo-status" class="text-sm mt-1 h-4"></p></div>
+                    <div><label class="font-bold text-lg">Способ оплаты</label><select id="payment-method" class="w-full p-2 border rounded input-bg mt-1"><option value="contact">Связаться с продавцом</option><option value="card" disabled>Оплата картой (недоступно)</option></select></div>
+                    <div class="text-right font-bold text-2xl border-t pt-4 mt-4">Итого: <span id="final-price">${formatPrice(currentPrice)}</span></div>
+                </div>
+            `;
 
-            const purchaseRef = doc(collection(db, "purchases"));
-            batch.set(purchaseRef, {
-                userId: currentUser.uid,
-                userEmail: currentUser.email,
-                orderId: orderId,
-                items: cart,
-                productName: `${cart.length} товар(ов)`, // For display purposes
-                status: 'Ожидает связи',
-                finalPrice: total,
-                createdAt: serverTimestamp()
-            });
+            const onSave = async() => {
+                const orderId = generateUniqueCode();
+                const batch = writeBatch(db);
+                const purchaseRef = doc(collection(db, "purchases"));
+                
+                const purchaseData = {
+                    userId: currentUser.uid, userEmail: currentUser.email, orderId: orderId, items: cart,
+                    productName: `${cart.length} товар(ов)`, status: 'Ожидает связи',
+                    finalPrice: currentPrice, createdAt: serverTimestamp()
+                };
 
-            try {
-                await batch.commit();
-                cart = [];
-                localStorage.setItem('asonik_cart', JSON.stringify(cart));
-                updateCartCount();
-                handleRouting(); // Refresh cart page
-                showContactModal(orderId, "Ваш заказ, состоящий из нескольких товаров, успешно создан.");
-            } catch (e) {
-                console.error("Error writing batch: ", e);
-                alert("Произошла ошибка при оформлении заказа.");
-            }
+                if (appliedPromo) {
+                    purchaseData.promoCode = appliedPromo.code;
+                    const promoRef = doc(db, "promocodes", appliedPromo.code);
+                    batch.update(promoRef, { uses: increment(1) });
+                }
+
+                batch.set(purchaseRef, purchaseData);
+
+                try {
+                    await batch.commit();
+                    cart = [];
+                    localStorage.setItem('asonik_cart', JSON.stringify(cart));
+                    updateCartCount();
+                    window.location.hash = '#purchases';
+                    showContactModal(orderId, "Ваш заказ, состоящий из нескольких товаров, успешно создан.");
+                } catch (e) {
+                    console.error("Error writing batch: ", e);
+                    alert("Произошла ошибка при оформлении заказа.");
+                }
+                return true;
+            };
+
+            const modal = showModal(`Оформление заказа`, modalContent, onSave, 'Подтвердить заказ');
+
+            modal.querySelector('#apply-promo').onclick = async () => {
+                const code = modal.querySelector('#promo-input').value.toUpperCase();
+                const statusEl = modal.querySelector('#promo-status');
+                const priceEl = modal.querySelector('#final-price');
+                appliedPromo = null;
+                currentPrice = total; // Reset to original total before applying new promo
+
+                if (!code) { statusEl.textContent = 'Введите код.'; priceEl.textContent = formatPrice(currentPrice); return; }
+                
+                const promoDoc = await getDoc(doc(db, "promocodes", code));
+                if (promoDoc.exists()) {
+                     const promo = promoDoc.data();
+                     if((promo.uses || 0) >= promo.limit) {
+                         statusEl.textContent = 'Лимит промокода исчерпан.';
+                         statusEl.className = 'text-sm mt-1 h-4 text-red-500';
+                     } else {
+                         const discount = promo.discount;
+                         currentPrice = total * (1 - discount / 100);
+                         statusEl.textContent = `Скидка ${discount}% применена!`;
+                         statusEl.className = 'text-sm mt-1 h-4 text-green-500';
+                         appliedPromo = {code, ...promo};
+                     }
+                } else {
+                    statusEl.textContent = 'Промокод не найден.';
+                    statusEl.className = 'text-sm mt-1 h-4 text-red-500';
+                }
+                priceEl.textContent = formatPrice(currentPrice);
+            };
         }
+
 
         async function showPurchaseFlow(productId, isAddToCart = false) {
             if (!isAddToCart && !currentUser) {
@@ -646,7 +701,7 @@
 
         // --- ADMIN PANEL ---
         function loadAdminPanel(subpage = 'products') {
-            if (!isAdmin) { document.getElementById('admin-content').innerHTML = '<p class="text-center text-red-500">Доступ запрещен.</p>'; return; }
+            if (!isAdmin) return; // Guarded by loadPageContent
             const adminContent = document.getElementById('admin-content');
             adminContent.innerHTML = `
                 <div class="flex flex-col md:flex-row gap-8">
@@ -735,7 +790,7 @@
                                 <p>Пользователь: <span class="font-semibold">${p.userEmail}</span></p>
                                 <p>Товар(ы): ${p.productName}</p>
                                 <p>Статус: <span class="font-semibold ${p.status === 'Отменен' ? 'text-red-500' : 'text-yellow-500'}">${p.status}</span></p>
-                                <p class="text-sm text-gray-500">Заказан: ${new Date(p.createdAt.seconds * 1000).toLocaleString()}</p>
+                                <p class="text-sm text-gray-500 dark:text-gray-400">Заказан: ${new Date(p.createdAt.seconds * 1000).toLocaleString()}</p>
                                 ${p.orderId ? `<p>Код заказа: <span class="font-mono bg-gray-200 dark:bg-gray-700 px-2 py-1 rounded">${p.orderId}</span></p>` : ''}
                             </div>
                             <div>
@@ -792,6 +847,7 @@
                     showModal('Подтвердите действие', `<p>${message}</p>`, () => { onConfirm(); return true; }, 'Да, уверен');
                 };
                 
+                if (target.id === 'login-redirect' || target.id === 'login-for-chat') { signInWithGoogle(); }
                 if (target.closest('.admin-tab-btn')) { e.preventDefault(); window.location.hash = target.closest('.admin-tab-btn').getAttribute('href'); return; }
                 if (target.id === 'start-chat-btn') { openChat(); return; }
                 if (target.closest('.contact-seller-btn')) { const code = target.dataset.code; showContactModal(code); return; }
@@ -806,8 +862,8 @@
                 if (target.closest('.remove-from-cart-btn')) { cart.splice(target.dataset.index, 1); localStorage.setItem('asonik_cart', JSON.stringify(cart)); renderCartPage(); updateCartCount(); }
                 if (target.closest('.share-btn')) { e.preventDefault(); navigator.clipboard.writeText(`Посмотри товар "${target.closest('.share-btn').dataset.productName}" в Asonik Store!`).then(() => alert('Ссылка скопирована!')); }
                 if (target.matches('.buy-now-btn')) showPurchaseFlow(target.dataset.productId);
-                if (target.id === 'checkout-cart-btn') checkoutCart();
-                if (target.id === 'google-login-btn' || target.id === 'login-for-chat') signInWithGoogle();
+                if (target.id === 'checkout-cart-btn') showCartCheckoutModal();
+                if (target.id === 'google-login-btn') signInWithGoogle();
                 if (target.id === 'logout-btn' || target.id === 'logout-btn-profile') signOut(auth);
                 if (target.id === 'send-chat-message') { const chatId = target.dataset.chatId; const text = document.getElementById('chat-message-input').value.trim(); const senderId = target.dataset.senderId; sendChatMessage(chatId, senderId, text); document.getElementById('chat-message-input').value = ''; }
                 if (target.closest('#profile-btn')) { e.stopPropagation(); document.getElementById('profile-menu')?.classList.toggle('hidden'); }
@@ -883,7 +939,7 @@
             navChatsLink.href = '#chats';
 
             if (currentUser) { 
-                container.innerHTML = `<div class="relative"><button id="profile-btn" class="flex items-center gap-2"><img src="${currentUser.photoURL || 'https://placehold.co/32x32'}" alt="Профиль" class="w-8 h-8 rounded-full"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg></button><div id="profile-menu" class="hidden absolute right-0 mt-2 w-52 card-bg rounded-md shadow-lg border border-custom z-10"><div class="px-4 py-2 border-b border-custom"><p class="font-semibold truncate">${currentUser.displayName}</p><p class="text-sm text-gray-500 truncate">${currentUser.email}</p></div><a href="#profile" class="block px-4 py-2 text-sm hover:bg-gray-100 dark:hover:bg-gray-700">Профиль</a>${isAdmin ? `<a href="#admin/products" class="nav-link block px-4 py-2 text-sm hover:bg-gray-100 dark:hover:bg-gray-700">Админ-панель</a>` : ''}<div class="border-t border-custom"></div><a href="#" id="logout-btn" class="block px-4 py-2 text-sm text-red-500 hover:bg-gray-100 dark:hover:bg-gray-700">Выйти</a></div></div>`; 
+                container.innerHTML = `<div class="relative"><button id="profile-btn" class="flex items-center gap-2"><img src="${currentUser.photoURL || 'https://placehold.co/32x32'}" alt="Профиль" class="w-8 h-8 rounded-full"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg></button><div id="profile-menu" class="hidden absolute right-0 mt-2 w-52 card-bg rounded-md shadow-lg border border-custom z-10"><div class="px-4 py-2 border-b border-custom"><p class="font-semibold truncate">${currentUser.displayName}</p><p class="text-sm text-gray-500 dark:text-gray-400 truncate">${currentUser.email}</p></div><a href="#profile" class="block px-4 py-2 text-sm hover:bg-gray-100 dark:hover:bg-gray-700">Профиль</a>${isAdmin ? `<a href="#admin/products" class="nav-link block px-4 py-2 text-sm hover:bg-gray-100 dark:hover:bg-gray-700">Админ-панель</a>` : ''}<div class="border-t border-custom"></div><a href="#" id="logout-btn" class="block px-4 py-2 text-sm text-red-500 hover:bg-gray-100 dark:hover:bg-gray-700">Выйти</a></div></div>`; 
             } else { 
                 container.innerHTML = `<button id="google-login-btn" class="px-4 py-2 bg-primary text-white rounded-md hover:bg-primary-hover font-semibold flex items-center gap-2"><svg class="w-5 h-5" viewBox="0 0 48 48"><path fill="#FFC107" d="M43.611 20.083H42V20H24v8h11.303c-1.649 4.657-6.08 8-11.303 8c-6.627 0-12-5.373-12-12s5.373-12 12-12c3.059 0 5.842 1.154 7.961 3.039l5.657-5.657C34.046 6.053 29.268 4 24 4C12.955 4 4 12.955 4 24s8.955 20 20 20s20-8.955 20-20c0-1.341-.138-2.65-.389-3.917z"></path><path fill="#FF3D00" d="M6.306 14.691l6.571 4.819C14.655 15.108 18.961 12 24 12c3.059 0 5.842 1.154 7.961 3.039l5.657-5.657C34.046 6.053 29.268 4 24 4C16.318 4 9.656 8.337 6.306 14.691z"></path><path fill="#4CAF50" d="M24 44c5.166 0 9.86-1.977 13.409-5.192l-6.19-5.238C29.211 35.091 26.715 36 24 36c-5.202 0-9.619-3.317-11.283-7.946l-6.522 5.025C9.505 39.556 16.227 44 24 44z"></path><path fill="#1976D2" d="M43.611 20.083H42V20H24v8h11.303c-.792 2.237-2.231 4.166-4.087 5.571l6.19 5.238C44.572 34.043 46 29.392 46 24c0-1.341-.138-2.65-.389-3.917z"></path></svg>Войти</button>`; 
             } 
