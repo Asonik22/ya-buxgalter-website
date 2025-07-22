@@ -8,10 +8,10 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
         body { font-family: 'Inter', sans-serif; transition: background-color 0.3s, color 0.3s; }
-        /* Улучшенная цветовая схема для темной темы */
+        /* Новая, переработанная цветовая схема для темной темы */
         :root {
             --bg-light: #f9fafb; --text-light: #111827; --card-bg-light: #ffffff; --primary-light: #8b5cf6; --primary-hover-light: #7c3aed; --border-light: #e5e7eb;
-            --bg-dark: #111827; --text-dark: #f9fafb; --card-bg-dark: #1f2937; --primary-dark: #a78bfa; --primary-hover-dark: #8b5cf6; --border-dark: #374151;
+            --bg-dark: #121212; --text-dark: #e5e5e5; --card-bg-dark: #1e1e1e; --primary-dark: #a78bfa; --primary-hover-dark: #8b5cf6; --border-dark: #2d2d2d;
         }
         html.dark { background-color: var(--bg-dark); }
         body.dark { background-color: var(--bg-dark); color: var(--text-dark); }
@@ -100,7 +100,7 @@
         };
         const IMGBB_API_KEY = '96bf3f29606f1989bb5a450ad3770cce';
         const ADMIN_UID = 'vhmtXZxkZnOWviNQ39R1W3GE8mw2';
-        const TELEGRAM_USERNAME = 'asonik22'; // ВАЖНО: Замените на ваш username в Telegram
+        const TELEGRAM_USERNAME = 'asonikofficial'; // Обновленный username
 
         // --- INITIALIZATION ---
         const app = initializeApp(firebaseConfig);
@@ -495,8 +495,23 @@
 
             const modalContent = `
                 <div class="space-y-6">
-                    <div><label class="font-bold text-lg">Промокод</label><div class="flex gap-2 mt-1"><input id="promo-input" class="w-full p-2 border rounded input-bg" placeholder="Введите промокод"><button id="apply-promo" class="px-4 py-2 bg-gray-200 dark:bg-gray-600 rounded">Применить</button></div><p id="promo-status" class="text-sm mt-1 h-4"></p></div>
-                    <div><label class="font-bold text-lg">Способ оплаты</label><select id="payment-method" class="w-full p-2 border rounded input-bg mt-1"><option value="contact">Связаться с продавцом</option><option value="card" disabled>Оплата картой (недоступно)</option></select></div>
+                    <div>
+                        <label class="font-bold text-lg">Способ оплаты</label>
+                        <select id="payment-method" class="w-full p-2 border rounded input-bg mt-1">
+                            <option value="contact">Связаться с продавцом</option>
+                            <option value="card_transfer">Оплата переводом (карты)</option>
+                            <option value="yoomoney">ЮMoney</option>
+                        </select>
+                    </div>
+                    <div id="payment-details" class="hidden mt-4 p-4 rounded-lg bg-gray-100 dark:bg-gray-800"></div>
+                    <div>
+                        <label class="font-bold text-lg">Промокод</label>
+                        <div class="flex gap-2 mt-1">
+                            <input id="promo-input" class="w-full p-2 border rounded input-bg" placeholder="Введите промокод">
+                            <button id="apply-promo" class="px-4 py-2 bg-gray-200 dark:bg-gray-600 rounded">Применить</button>
+                        </div>
+                        <p id="promo-status" class="text-sm mt-1 h-4"></p>
+                    </div>
                     <div class="text-right font-bold text-2xl border-t pt-4 mt-4">Итого: <span id="final-price">${formatPrice(currentPrice)}</span></div>
                 </div>
             `;
@@ -509,6 +524,7 @@
                 const purchaseData = {
                     userId: currentUser.uid, userEmail: currentUser.email, orderId: orderId, items: cart,
                     productName: `${cart.length} товар(ов)`, status: 'Ожидает связи',
+                    paymentMethod: document.getElementById('payment-method').value,
                     finalPrice: currentPrice, createdAt: serverTimestamp()
                 };
 
@@ -535,6 +551,35 @@
             };
 
             const modal = showModal(`Оформление заказа`, modalContent, onSave, 'Подтвердить заказ');
+
+            modal.querySelector('#payment-method').onchange = (e) => {
+                const detailsEl = modal.querySelector('#payment-details');
+                const method = e.target.value;
+                let detailsHTML = '';
+
+                if (method === 'card_transfer') {
+                    detailsHTML = `
+                        <p class="font-semibold mb-2">Выберите карту для перевода:</p>
+                        <div class="grid grid-cols-2 sm:grid-cols-3 gap-2 text-center">
+                            <div class="p-2 border rounded-md border-custom">Mastercard</div>
+                            <div class="p-2 border rounded-md border-custom">Visa</div>
+                            <div class="p-2 border rounded-md border-custom">Мир</div>
+                            <div class="p-2 border rounded-md border-custom">Uzcard</div>
+                            <div class="p-2 border rounded-md border-custom">Humo</div>
+                        </div>
+                        <p class="text-xs mt-2">Реквизиты будут показаны после подтверждения заказа.</p>
+                    `;
+                } else if (method === 'yoomoney') {
+                    detailsHTML = `<p class="font-semibold">Реквизиты для оплаты через ЮMoney будут показаны после подтверждения заказа.</p>`;
+                }
+
+                if (detailsHTML) {
+                    detailsEl.innerHTML = detailsHTML;
+                    detailsEl.classList.remove('hidden');
+                } else {
+                    detailsEl.classList.add('hidden');
+                }
+            };
 
             modal.querySelector('#apply-promo').onclick = async () => {
                 const code = modal.querySelector('#promo-input').value.toUpperCase();
@@ -603,8 +648,16 @@
             let appliedPromo = null;
             const modalContent = `
                 <div class="space-y-6">
+                     <div>
+                        <label class="font-bold text-lg">Способ оплаты</label>
+                        <select id="payment-method" class="w-full p-2 border rounded input-bg mt-1">
+                            <option value="contact">Связаться с продавцом</option>
+                            <option value="card_transfer">Оплата переводом (карты)</option>
+                            <option value="yoomoney">ЮMoney</option>
+                        </select>
+                    </div>
+                    <div id="payment-details" class="hidden mt-4 p-4 rounded-lg bg-gray-100 dark:bg-gray-800"></div>
                     <div><label class="font-bold text-lg">Промокод</label><div class="flex gap-2 mt-1"><input id="promo-input" class="w-full p-2 border rounded input-bg" placeholder="Введите промокод"><button id="apply-promo" class="px-4 py-2 bg-gray-200 dark:bg-gray-600 rounded">Применить</button></div><p id="promo-status" class="text-sm mt-1 h-4"></p></div>
-                    <div><label class="font-bold text-lg">Способ оплаты</label><select id="payment-method" class="w-full p-2 border rounded input-bg mt-1"><option value="contact">Связаться с продавцом</option><option value="card" disabled>Оплата картой (недоступно)</option></select></div>
                     <div class="text-right font-bold text-2xl border-t pt-4 mt-4">Итого: <span id="final-price">${formatPrice(currentPrice)}</span></div>
                 </div>
             `;
@@ -622,6 +675,7 @@
                     }],
                     productName: product.name, // For display
                     status: 'Ожидает связи', 
+                    paymentMethod: m.querySelector('#payment-method').value,
                     finalPrice: currentPrice, 
                     createdAt: serverTimestamp()
                 };
@@ -637,6 +691,35 @@
             };
 
             const modal = showModal(`Оформление: ${product.name} ${item.name ? `(${item.name})` : ''}`, modalContent, onSave);
+            
+            modal.querySelector('#payment-method').onchange = (e) => {
+                const detailsEl = modal.querySelector('#payment-details');
+                const method = e.target.value;
+                let detailsHTML = '';
+
+                if (method === 'card_transfer') {
+                    detailsHTML = `
+                        <p class="font-semibold mb-2">Выберите карту для перевода:</p>
+                        <div class="grid grid-cols-2 sm:grid-cols-3 gap-2 text-center">
+                            <div class="p-2 border rounded-md border-custom">Mastercard</div>
+                            <div class="p-2 border rounded-md border-custom">Visa</div>
+                            <div class="p-2 border rounded-md border-custom">Мир</div>
+                            <div class="p-2 border rounded-md border-custom">Uzcard</div>
+                            <div class="p-2 border rounded-md border-custom">Humo</div>
+                        </div>
+                        <p class="text-xs mt-2">Реквизиты будут показаны после подтверждения заказа.</p>
+                    `;
+                } else if (method === 'yoomoney') {
+                    detailsHTML = `<p class="font-semibold">Реквизиты для оплаты через ЮMoney будут показаны после подтверждения заказа.</p>`;
+                }
+
+                if (detailsHTML) {
+                    detailsEl.innerHTML = detailsHTML;
+                    detailsEl.classList.remove('hidden');
+                } else {
+                    detailsEl.classList.add('hidden');
+                }
+            };
 
             modal.querySelector('#apply-promo').onclick = async () => {
                 const code = modal.querySelector('#promo-input').value.toUpperCase();
@@ -784,6 +867,8 @@
                 purchases.forEach(p => {
                     const item = document.createElement('div');
                     item.className = 'card-bg p-4 rounded-lg shadow border border-custom';
+                    const message = `Здравствуйте, по поводу заказа ${p.orderId} от пользователя ${p.userEmail}.`;
+                    const telegramLink = `https://t.me/${TELEGRAM_USERNAME}?text=${encodeURIComponent(message)}`;
                     item.innerHTML = `
                         <div class="flex justify-between items-start">
                             <div>
@@ -794,7 +879,7 @@
                                 ${p.orderId ? `<p>Код заказа: <span class="font-mono bg-gray-200 dark:bg-gray-700 px-2 py-1 rounded">${p.orderId}</span></p>` : ''}
                             </div>
                             <div>
-                                <a href="#admin/chats/${p.userId}" class="inline-block px-4 py-2 text-sm font-semibold bg-primary text-white rounded-md hover:bg-primary-hover">Перейти к чату</a>
+                                <a href="${telegramLink}" target="_blank" class="inline-block px-4 py-2 text-sm font-semibold bg-blue-500 text-white rounded-md hover:bg-blue-600">Открыть Telegram</a>
                             </div>
                         </div>
                     `;
