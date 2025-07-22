@@ -11,7 +11,7 @@
         /* Новая, переработанная цветовая схема для темной темы */
         :root {
             --bg-light: #f9fafb; --text-light: #111827; --card-bg-light: #ffffff; --primary-light: #8b5cf6; --primary-hover-light: #7c3aed; --border-light: #e5e7eb;
-            --bg-dark: #121212; --text-dark: #e5e5e5; --card-bg-dark: #1e1e1e; --primary-dark: #a78bfa; --primary-hover-dark: #8b5cf6; --border-dark: #2d2d2d;
+            --bg-dark: #1a202c; --text-dark: #e2e8f0; --card-bg-dark: #2d3748; --primary-dark: #a78bfa; --primary-hover-dark: #8b5cf6; --border-dark: #4a5568;
         }
         html.dark { background-color: var(--bg-dark); }
         body.dark { background-color: var(--bg-dark); color: var(--text-dark); }
@@ -21,7 +21,7 @@
         .border-custom { border-color: var(--border-light); } .dark .border-custom { border-color: var(--border-dark); }
         .card-bg { background-color: var(--card-bg-light); color: var(--text-light); } .dark .card-bg { background-color: var(--card-bg-dark); color: var(--text-dark); }
         .header-bg { background-color: #ffffff; } .dark .header-bg { background-color: var(--card-bg-dark); }
-        .input-bg { background-color: #f9fafb; } .dark .input-bg { background-color: #374151; }
+        .input-bg { background-color: #f9fafb; } .dark .input-bg { background-color: #4a5568; }
         .modal-backdrop { background-color: rgba(0, 0, 0, 0.6); }
         [data-page] { display: none; }
         [data-page].active { display: block; }
@@ -877,7 +877,7 @@
                                 <p><strong>Пользователь:</strong> ${p.userEmail} (<a href="${telegramLink}" target="_blank" class="text-primary">${p.contactTelegram}</a>)</p>
                                 <p><strong>Товар(ы):</strong> ${p.productName}</p>
                                 <p><strong>Статус:</strong> <span class="font-semibold ${statusColor}">${p.status}</span></p>
-                                <p class="text-sm text-gray-500 dark:text-gray-400"><strong>Заказан:</strong> ${new Date(p.createdAt.seconds * 1000).toLocaleString()}</p>
+                                <p class="text-sm text-gray-500 dark:text-gray-400"><stчrong>Заказан:</strong> ${new Date(p.createdAt.seconds * 1000).toLocaleString()}</p>
                                 ${p.orderId ? `<p><strong>Код заказа:</strong> <span class="font-mono bg-gray-200 dark:bg-gray-700 px-2 py-1 rounded">${p.orderId}</span></p>` : ''}
                             </div>
                             <div class="flex flex-col gap-2 items-start">
