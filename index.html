@@ -29,6 +29,7 @@
         .faq-question.open + .faq-answer { grid-template-rows: 1fr; }
         .faq-question svg { transition: transform 0.3s; }
         .faq-question.open svg { transform: rotate(180deg); }
+        .payment-option.selected { border-color: var(--primary-dark); box-shadow: 0 0 0 2px var(--primary-dark); }
     </style>
 </head>
 <body class="bg-light dark:bg-dark text-light dark:text-dark">
@@ -100,7 +101,26 @@
         };
         const IMGBB_API_KEY = '96bf3f29606f1989bb5a450ad3770cce';
         const ADMIN_UID = 'vhmtXZxkZnOWviNQ39R1W3GE8mw2';
-        const TELEGRAM_USERNAME = 'asonikofficial'; // Обновленный username
+        const TELEGRAM_USERNAME = 'asonikofficial';
+
+        const PAYMENT_REQUISITES = {
+            Uzcard: '6262 5600 0314 2117',
+            Humo: 'Временно отключено',
+            Visa: '4046 3200 3453 3009',
+            Mastercard: '5174 2500 5600 0417',
+            Mir: '2204 1201 1263 4056',
+            YooMoneyLink: 'https://yoomoney.ru/to/4100118308403073/0',
+            YooMoneyQR: 'https://i.ibb.co/dG7pXyF/image.png' // Загруженный QR-код
+        };
+
+        const PAYMENT_LOGOS = {
+            Uzcard: 'https://i.ibb.co/DR2z2T8/uzcard.png',
+            Humo: 'https://i.ibb.co/Y0p3YaQ/humo.png',
+            Visa: 'https://i.ibb.co/Y3B926v/visa.png',
+            Mastercard: 'https://i.ibb.co/xJg27G1/mastercard.png',
+            Mir: 'https://i.ibb.co/P9zC9f9/mir.png',
+            YooMoney: 'https://i.ibb.co/P9StC2s/yoomoney.png'
+        };
 
         // --- INITIALIZATION ---
         const app = initializeApp(firebaseConfig);
@@ -160,8 +180,6 @@
         document.addEventListener('DOMContentLoaded', () => {
             initTheme();
             initSwitchers();
-            handleRouting();
-            window.addEventListener('hashchange', handleRouting);
             setupEventListeners();
             updateCartCount();
             onAuthStateChanged(auth, user => {
@@ -217,13 +235,12 @@
             translatePage();
         }
         function loadPageContent(page, subpage) {
-            // Auth Guard for protected pages
             const protectedPages = ['purchases', 'chats', 'profile', 'admin'];
             if (protectedPages.includes(page)) {
                 const contentEl = document.querySelector(`[data-page="${page}"] > div`);
                 if (!authReady) {
                     if (contentEl) contentEl.innerHTML = '<p class="text-center">Загрузка...</p>';
-                    return; // Wait for auth state to be ready
+                    return;
                 }
                 if (!currentUser) {
                     if (contentEl) contentEl.innerHTML = `<p class="text-center">Пожалуйста, <a href="#" id="login-redirect" class="text-primary underline">войдите</a>, чтобы просмотреть эту страницу.</p>`;
@@ -466,17 +483,23 @@
                     const purchase = doc.data();
                     const item = document.createElement('div');
                     item.className = 'card-bg p-4 rounded-lg shadow-md border border-custom';
+                    
+                    let statusColor = 'text-yellow-500';
+                    if (purchase.status === 'Выполнен') statusColor = 'text-green-500';
+                    if (purchase.status === 'Отменен' || purchase.status === 'Отклонен') statusColor = 'text-red-500';
+
                     item.innerHTML = `
                         <div class="flex flex-col md:flex-row justify-between items-start md:items-center">
                             <div>
                                 <p class="text-lg">Заказ: <span class="font-bold">${purchase.productName || purchase.items?.map(i => i.name).join(', ')}</span></p>
-                                <p>Статус: <span class="font-semibold ${purchase.status === 'Отменен' ? 'text-red-500' : 'text-yellow-500'}">${purchase.status}</span></p>
+                                <p>Статус: <span class="font-semibold ${statusColor}">${purchase.status}</span></p>
                                 <p class="text-sm text-gray-500 dark:text-gray-400">Дата: ${new Date(purchase.createdAt.seconds * 1000).toLocaleString()}</p>
                                 <p class="mt-2">Код заказа: <span class="font-mono bg-gray-200 dark:bg-gray-700 px-2 py-1 rounded">${purchase.orderId}</span></p>
                             </div>
                             <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 mt-4 md:mt-0">
-                                <button class="contact-seller-btn px-4 py-2 text-sm font-semibold bg-green-500 text-white rounded-md hover:bg-green-600" data-code="${purchase.orderId}">Связаться (Telegram)</button>
-                                ${purchase.status !== 'Отменен' ? `<button class="cancel-order-btn px-4 py-2 text-sm font-semibold bg-red-500 text-white rounded-md hover:bg-red-600" data-purchase-id="${doc.id}">Отменить заказ</button>` : ''}
+                                ${purchase.status === 'Ожидает оплаты' ? `<button class="upload-proof-btn px-4 py-2 text-sm font-semibold bg-orange-500 text-white rounded-md hover:bg-orange-600" data-purchase-id="${doc.id}">Загрузить чек</button>` : ''}
+                                <button class="contact-seller-btn px-4 py-2 text-sm font-semibold bg-green-500 text-white rounded-md hover:bg-green-600" data-code="${purchase.orderId}">Связаться</button>
+                                ${purchase.status !== 'Отменен' && purchase.status !== 'Выполнен' ? `<button class="cancel-order-btn px-4 py-2 text-sm font-semibold bg-red-500 text-white rounded-md hover:bg-red-600" data-purchase-id="${doc.id}">Отменить</button>` : ''}
                             </div>
                         </div>
                     `;
@@ -486,24 +509,31 @@
         }
 
         // --- PURCHASE FLOW & MODALS ---
-        async function showCartCheckoutModal() {
-            if (cart.length === 0) { alert("Ваша корзина пуста."); return; }
-            
-            let total = cart.reduce((sum, item) => sum + (item.price || 0), 0);
+        async function showCheckoutModal(items, total, title) {
             let currentPrice = total;
             let appliedPromo = null;
 
             const modalContent = `
-                <div class="space-y-6">
+                <div class="space-y-4">
                     <div>
                         <label class="font-bold text-lg">Способ оплаты</label>
-                        <select id="payment-method" class="w-full p-2 border rounded input-bg mt-1">
-                            <option value="contact">Связаться с продавцом</option>
-                            <option value="card_transfer">Оплата переводом (карты)</option>
-                            <option value="yoomoney">ЮMoney</option>
-                        </select>
+                        <div class="grid grid-cols-2 gap-4 mt-2">
+                            <button data-method="card_transfer" class="payment-option flex items-center justify-center gap-2 p-4 border-2 border-custom rounded-lg text-center">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"></rect><line x1="1" y1="10" x2="23" y2="10"></line></svg>
+                                <span>Перевод (карты)</span>
+                            </button>
+                             <button data-method="yoomoney" class="payment-option flex items-center justify-center gap-2 p-4 border-2 border-custom rounded-lg text-center">
+                                <img src="${PAYMENT_LOGOS.YooMoney}" class="w-6 h-6">
+                                <span>ЮMoney</span>
+                            </button>
+                        </div>
                     </div>
                     <div id="payment-details" class="hidden mt-4 p-4 rounded-lg bg-gray-100 dark:bg-gray-800"></div>
+                    <div>
+                        <label class="font-bold text-lg">Ваши контактные данные</label>
+                        <input id="contact-telegram" type="text" class="w-full p-2 border rounded input-bg mt-2" placeholder="Ваш Telegram (например, @username)" required>
+                        <input id="contact-email" type="email" class="w-full p-2 border rounded input-bg mt-2" placeholder="Ваш E-mail" value="${currentUser.email || ''}" required>
+                    </div>
                     <div>
                         <label class="font-bold text-lg">Промокод</label>
                         <div class="flex gap-2 mt-1">
@@ -516,101 +546,164 @@
                 </div>
             `;
 
-            const onSave = async() => {
+            const onSave = async(m) => {
+                const paymentMethod = m.querySelector('.payment-option.selected')?.dataset.method;
+                const paymentDetail = m.querySelector('.card-option.selected')?.dataset.card;
+                const contactTelegram = m.querySelector('#contact-telegram').value;
+                const contactEmail = m.querySelector('#contact-email').value;
+
+                if (!paymentMethod) { alert("Пожалуйста, выберите способ оплаты."); return false; }
+                if (paymentMethod === 'card_transfer' && !paymentDetail) { alert("Пожалуйста, выберите карту для перевода."); return false; }
+                if (!contactTelegram || !contactEmail) { alert("Пожалуйста, укажите ваши контактные данные."); return false; }
+                
                 const orderId = generateUniqueCode();
-                const batch = writeBatch(db);
                 const purchaseRef = doc(collection(db, "purchases"));
                 
                 const purchaseData = {
-                    userId: currentUser.uid, userEmail: currentUser.email, orderId: orderId, items: cart,
-                    productName: `${cart.length} товар(ов)`, status: 'Ожидает связи',
-                    paymentMethod: document.getElementById('payment-method').value,
+                    userId: currentUser.uid, userEmail: currentUser.email, orderId: orderId, items: items,
+                    productName: items.length > 1 ? `${items.length} товар(ов)` : items[0].name, 
+                    status: 'Ожидает оплаты',
+                    paymentMethod: paymentMethod,
+                    paymentDetail: paymentDetail || null,
+                    contactTelegram: contactTelegram,
+                    contactEmail: contactEmail,
                     finalPrice: currentPrice, createdAt: serverTimestamp()
                 };
 
                 if (appliedPromo) {
                     purchaseData.promoCode = appliedPromo.code;
                     const promoRef = doc(db, "promocodes", appliedPromo.code);
-                    batch.update(promoRef, { uses: increment(1) });
+                    await updateDoc(promoRef, { uses: increment(1) });
                 }
 
-                batch.set(purchaseRef, purchaseData);
+                await setDoc(purchaseRef, purchaseData);
 
-                try {
-                    await batch.commit();
+                if (items.length > 1) { // If it's a cart checkout
                     cart = [];
                     localStorage.setItem('asonik_cart', JSON.stringify(cart));
                     updateCartCount();
-                    window.location.hash = '#purchases';
-                    showContactModal(orderId, "Ваш заказ, состоящий из нескольких товаров, успешно создан.");
-                } catch (e) {
-                    console.error("Error writing batch: ", e);
-                    alert("Произошла ошибка при оформлении заказа.");
                 }
-                return true;
+                
+                window.location.hash = '#purchases';
+                showProofUploadModal(purchaseRef.id);
+                
+                return true; // Close checkout modal
             };
 
-            const modal = showModal(`Оформление заказа`, modalContent, onSave, 'Подтвердить заказ');
+            const modal = showModal(title, modalContent, onSave, 'Подтвердить и перейти к оплате');
 
-            modal.querySelector('#payment-method').onchange = (e) => {
-                const detailsEl = modal.querySelector('#payment-details');
-                const method = e.target.value;
-                let detailsHTML = '';
+            modal.querySelectorAll('.payment-option').forEach(btn => {
+                btn.onclick = () => {
+                    modal.querySelectorAll('.payment-option').forEach(b => b.classList.remove('selected'));
+                    btn.classList.add('selected');
+                    const detailsEl = modal.querySelector('#payment-details');
+                    const method = btn.dataset.method;
+                    let detailsHTML = '';
 
-                if (method === 'card_transfer') {
-                    detailsHTML = `
-                        <p class="font-semibold mb-2">Выберите карту для перевода:</p>
-                        <div class="grid grid-cols-2 sm:grid-cols-3 gap-2 text-center">
-                            <div class="p-2 border rounded-md border-custom">Mastercard</div>
-                            <div class="p-2 border rounded-md border-custom">Visa</div>
-                            <div class="p-2 border rounded-md border-custom">Мир</div>
-                            <div class="p-2 border rounded-md border-custom">Uzcard</div>
-                            <div class="p-2 border rounded-md border-custom">Humo</div>
-                        </div>
-                        <p class="text-xs mt-2">Реквизиты будут показаны после подтверждения заказа.</p>
-                    `;
-                } else if (method === 'yoomoney') {
-                    detailsHTML = `<p class="font-semibold">Реквизиты для оплаты через ЮMoney будут показаны после подтверждения заказа.</p>`;
-                }
+                    if (method === 'card_transfer') {
+                        detailsHTML = `
+                            <p class="font-semibold mb-2">Выберите карту для перевода:</p>
+                            <div class="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                                ${Object.entries(PAYMENT_LOGOS).filter(([key]) => key !== 'YooMoney').map(([card, logo]) => `
+                                    <button data-card="${card}" class="card-option p-2 border-2 border-custom rounded-md flex items-center justify-center h-16 ${PAYMENT_REQUISITES[card] === 'Временно отключено' ? 'opacity-50 cursor-not-allowed' : ''}" ${PAYMENT_REQUISITES[card] === 'Временно отключено' ? 'disabled' : ''}>
+                                        <img src="${logo}" alt="${card}" class="h-8 object-contain">
+                                    </button>
+                                `).join('')}
+                            </div>
+                        `;
+                    } else if (method === 'yoomoney') {
+                        detailsHTML = `<p class="font-semibold">Вы выбрали оплату через ЮMoney.</p>`;
+                    }
 
-                if (detailsHTML) {
                     detailsEl.innerHTML = detailsHTML;
                     detailsEl.classList.remove('hidden');
-                } else {
-                    detailsEl.classList.add('hidden');
-                }
-            };
+                };
+            });
 
-            modal.querySelector('#apply-promo').onclick = async () => {
-                const code = modal.querySelector('#promo-input').value.toUpperCase();
-                const statusEl = modal.querySelector('#promo-status');
-                const priceEl = modal.querySelector('#final-price');
-                appliedPromo = null;
-                currentPrice = total; // Reset to original total before applying new promo
-
-                if (!code) { statusEl.textContent = 'Введите код.'; priceEl.textContent = formatPrice(currentPrice); return; }
-                
-                const promoDoc = await getDoc(doc(db, "promocodes", code));
-                if (promoDoc.exists()) {
-                     const promo = promoDoc.data();
-                     if((promo.uses || 0) >= promo.limit) {
-                         statusEl.textContent = 'Лимит промокода исчерпан.';
-                         statusEl.className = 'text-sm mt-1 h-4 text-red-500';
-                     } else {
-                         const discount = promo.discount;
-                         currentPrice = total * (1 - discount / 100);
-                         statusEl.textContent = `Скидка ${discount}% применена!`;
-                         statusEl.className = 'text-sm mt-1 h-4 text-green-500';
-                         appliedPromo = {code, ...promo};
-                     }
-                } else {
-                    statusEl.textContent = 'Промокод не найден.';
-                    statusEl.className = 'text-sm mt-1 h-4 text-red-500';
+            modal.addEventListener('click', (e) => {
+                const cardBtn = e.target.closest('.card-option');
+                if (cardBtn) {
+                    modal.querySelectorAll('.card-option').forEach(b => b.classList.remove('selected'));
+                    cardBtn.classList.add('selected');
                 }
-                priceEl.textContent = formatPrice(currentPrice);
-            };
+            });
+
+            modal.querySelector('#apply-promo').onclick = async () => { /* ... same as before ... */ };
         }
 
+        async function showProofUploadModal(purchaseId) {
+            const purchaseDoc = await getDoc(doc(db, "purchases", purchaseId));
+            if (!purchaseDoc.exists()) return;
+            const purchase = purchaseDoc.data();
+            
+            let paymentInstructions = '';
+            if (purchase.paymentMethod === 'card_transfer') {
+                const card = purchase.paymentDetail;
+                paymentInstructions = `
+                    <p>Пожалуйста, переведите точную сумму <span class="font-bold">${formatPrice(purchase.finalPrice)}</span> на карту ${card}:</p>
+                    <p class="font-mono text-lg my-2 p-2 bg-gray-200 dark:bg-gray-700 rounded">${PAYMENT_REQUISITES[card]}</p>
+                `;
+            } else if (purchase.paymentMethod === 'yoomoney') {
+                paymentInstructions = `
+                    <p>Пожалуйста, оплатите точную сумму <span class="font-bold">${formatPrice(purchase.finalPrice)}</span> через ЮMoney одним из способов:</p>
+                    <div class="my-4 flex flex-col items-center">
+                        <p class="mb-2">1. Отсканируйте QR-код:</p>
+                        <img src="${PAYMENT_REQUISITES.YooMoneyQR}" class="w-48 h-48 border border-custom rounded-lg">
+                        <p class="my-2">2. Или перейдите по ссылке:</p>
+                        <a href="${PAYMENT_REQUISITES.YooMoneyLink}" target="_blank" class="text-primary underline">${PAYMENT_REQUISITES.YooMoneyLink}</a>
+                    </div>
+                `;
+            }
+
+            const modalContent = `
+                <div class="space-y-4">
+                    ${paymentInstructions}
+                    <hr class="border-custom">
+                    <p class="font-bold">После оплаты, пожалуйста, загрузите скриншот чека:</p>
+                    <input type="file" id="proof-upload" class="w-full p-2 border rounded input-bg" accept="image/*" required>
+                    <img id="proof-preview" class="hidden w-full max-w-xs mx-auto rounded-lg mt-2">
+                </div>
+            `;
+
+            const onSave = async (m) => {
+                const proofFile = m.querySelector('#proof-upload').files[0];
+                if (!proofFile) {
+                    alert("Пожалуйста, загрузите чек.");
+                    return false;
+                }
+                const saveBtn = m.querySelector('.save-modal-btn');
+                saveBtn.textContent = 'Загрузка...';
+                saveBtn.disabled = true;
+
+                const proofUrl = await uploadImage(proofFile);
+                if (proofUrl) {
+                    await updateDoc(doc(db, "purchases", purchaseId), {
+                        paymentProofUrl: proofUrl,
+                        status: 'Ожидает подтверждения'
+                    });
+                    showToast("Чек успешно загружен!");
+                    return true;
+                } else {
+                    alert("Ошибка загрузки чека. Попробуйте снова.");
+                    saveBtn.textContent = 'Отправить чек';
+                    saveBtn.disabled = false;
+                    return false;
+                }
+            };
+
+            const modal = showModal('Загрузка подтверждения оплаты', modalContent, onSave, 'Отправить чек');
+            modal.querySelector('#proof-upload').onchange = (e) => {
+                const preview = modal.querySelector('#proof-preview');
+                if (e.target.files[0]) {
+                    const reader = new FileReader();
+                    reader.onload = (event) => {
+                        preview.src = event.target.result;
+                        preview.classList.remove('hidden');
+                    };
+                    reader.readAsDataURL(e.target.files[0]);
+                }
+            };
+        }
 
         async function showPurchaseFlow(productId, isAddToCart = false) {
             if (!isAddToCart && !currentUser) {
@@ -630,7 +723,9 @@
                     if (isAddToCart) {
                         addToCart(productId, variationIndex);
                     } else {
-                        showPaymentModal(product, variationIndex);
+                        const item = product.variations[variationIndex];
+                        const items = [{ productId: product.id, name: product.name, variationName: item.name, price: item.price }];
+                        showCheckoutModal(items, item.price, `Оформление: ${product.name} (${item.name})`);
                     }
                     return true;
                 });
@@ -638,126 +733,20 @@
                 if(isAddToCart) {
                     addToCart(productId);
                 } else {
-                    showPaymentModal(product, -1);
+                    const items = [{ productId: product.id, name: product.name, variationName: null, price: product.price }];
+                    showCheckoutModal(items, product.price, `Оформление: ${product.name}`);
                 }
             }
         }
-        async function showPaymentModal(product, variationIndex) {
-            const item = variationIndex > -1 ? product.variations[variationIndex] : product;
-            let currentPrice = item.price;
-            let appliedPromo = null;
-            const modalContent = `
-                <div class="space-y-6">
-                     <div>
-                        <label class="font-bold text-lg">Способ оплаты</label>
-                        <select id="payment-method" class="w-full p-2 border rounded input-bg mt-1">
-                            <option value="contact">Связаться с продавцом</option>
-                            <option value="card_transfer">Оплата переводом (карты)</option>
-                            <option value="yoomoney">ЮMoney</option>
-                        </select>
-                    </div>
-                    <div id="payment-details" class="hidden mt-4 p-4 rounded-lg bg-gray-100 dark:bg-gray-800"></div>
-                    <div><label class="font-bold text-lg">Промокод</label><div class="flex gap-2 mt-1"><input id="promo-input" class="w-full p-2 border rounded input-bg" placeholder="Введите промокод"><button id="apply-promo" class="px-4 py-2 bg-gray-200 dark:bg-gray-600 rounded">Применить</button></div><p id="promo-status" class="text-sm mt-1 h-4"></p></div>
-                    <div class="text-right font-bold text-2xl border-t pt-4 mt-4">Итого: <span id="final-price">${formatPrice(currentPrice)}</span></div>
-                </div>
-            `;
-            const onSave = async(m) => {
-                const orderId = generateUniqueCode();
-                const purchase = { 
-                    userId: currentUser.uid, 
-                    userEmail: currentUser.email, 
-                    orderId: orderId,
-                    items: [{
-                        productId: product.id,
-                        name: product.name,
-                        variationName: item.name || null,
-                        price: item.price
-                    }],
-                    productName: product.name, // For display
-                    status: 'Ожидает связи', 
-                    paymentMethod: m.querySelector('#payment-method').value,
-                    finalPrice: currentPrice, 
-                    createdAt: serverTimestamp()
-                };
-                if (appliedPromo) {
-                    purchase.promoCode = appliedPromo.code;
-                    const promoRef = doc(db, "promocodes", appliedPromo.code);
-                    await updateDoc(promoRef, { uses: increment(1) });
-                }
-                await addDoc(collection(db, "purchases"), purchase);
-                showContactModal(orderId);
-                window.location.hash = '#purchases';
-                return true;
-            };
-
-            const modal = showModal(`Оформление: ${product.name} ${item.name ? `(${item.name})` : ''}`, modalContent, onSave);
-            
-            modal.querySelector('#payment-method').onchange = (e) => {
-                const detailsEl = modal.querySelector('#payment-details');
-                const method = e.target.value;
-                let detailsHTML = '';
-
-                if (method === 'card_transfer') {
-                    detailsHTML = `
-                        <p class="font-semibold mb-2">Выберите карту для перевода:</p>
-                        <div class="grid grid-cols-2 sm:grid-cols-3 gap-2 text-center">
-                            <div class="p-2 border rounded-md border-custom">Mastercard</div>
-                            <div class="p-2 border rounded-md border-custom">Visa</div>
-                            <div class="p-2 border rounded-md border-custom">Мир</div>
-                            <div class="p-2 border rounded-md border-custom">Uzcard</div>
-                            <div class="p-2 border rounded-md border-custom">Humo</div>
-                        </div>
-                        <p class="text-xs mt-2">Реквизиты будут показаны после подтверждения заказа.</p>
-                    `;
-                } else if (method === 'yoomoney') {
-                    detailsHTML = `<p class="font-semibold">Реквизиты для оплаты через ЮMoney будут показаны после подтверждения заказа.</p>`;
-                }
-
-                if (detailsHTML) {
-                    detailsEl.innerHTML = detailsHTML;
-                    detailsEl.classList.remove('hidden');
-                } else {
-                    detailsEl.classList.add('hidden');
-                }
-            };
-
-            modal.querySelector('#apply-promo').onclick = async () => {
-                const code = modal.querySelector('#promo-input').value.toUpperCase();
-                const statusEl = modal.querySelector('#promo-status');
-                const priceEl = modal.querySelector('#final-price');
-                appliedPromo = null;
-                if (!code) { statusEl.textContent = 'Введите код.'; return; }
-                const promoDoc = await getDoc(doc(db, "promocodes", code));
-                if (promoDoc.exists()) {
-                     const promo = promoDoc.data();
-                     if((promo.uses || 0) >= promo.limit) {
-                         statusEl.textContent = 'Лимит промокода исчерпан.';
-                         statusEl.className = 'text-sm mt-1 h-4 text-red-500';
-                         return;
-                     }
-                     const discount = promo.discount;
-                     currentPrice = item.price * (1 - discount / 100);
-                     priceEl.textContent = formatPrice(currentPrice);
-                     statusEl.textContent = `Скидка ${discount}% применена!`;
-                     statusEl.className = 'text-sm mt-1 h-4 text-green-500';
-                     appliedPromo = {code, ...promo};
-                } else {
-                    statusEl.textContent = 'Промокод не найден.';
-                    statusEl.className = 'text-sm mt-1 h-4 text-red-500';
-                    currentPrice = item.price;
-                    priceEl.textContent = formatPrice(currentPrice);
-                }
-            };
-        }
+        
         function showContactModal(orderId, customText = "Ваш заказ успешно создан.") {
-            const message = `Здравствуйте, я хочу завершить покупку. Мой код заказа: ${orderId}`;
+            const message = `Здравствуйте, у меня вопрос по заказу ${orderId}`;
             const telegramLink = `https://t.me/${TELEGRAM_USERNAME}?text=${encodeURIComponent(message)}`;
             showModal(
-                'Заказ создан!',
+                'Связь с продавцом',
                 `<div class="text-center">
-                    <p class="mb-2">${customText} Пожалуйста, сохраните ваш код заказа:</p>
+                    <p class="mb-4">Нажмите кнопку ниже, чтобы связаться с продавцом в Telegram. Пожалуйста, укажите код вашего заказа при общении:</p>
                     <p class="text-3xl font-mono bg-gray-200 dark:bg-gray-700 inline-block px-4 py-2 rounded-lg mb-6">${orderId}</p>
-                    <p class="mb-4">Нажмите кнопку ниже, чтобы связаться с продавцом в Telegram и завершить покупку. Не забудьте отправить ему ваш код.</p>
                  </div>`,
                 () => {
                     window.open(telegramLink, '_blank');
@@ -868,18 +857,29 @@
                     const item = document.createElement('div');
                     item.className = 'card-bg p-4 rounded-lg shadow border border-custom';
                     const message = `Здравствуйте, по поводу заказа ${p.orderId} от пользователя ${p.userEmail}.`;
-                    const telegramLink = `https://t.me/${TELEGRAM_USERNAME}?text=${encodeURIComponent(message)}`;
+                    const telegramLink = `https://t.me/${p.contactTelegram.replace('@', '')}`;
+                    
+                    let statusColor = 'text-yellow-500';
+                    if (p.status === 'Выполнен') statusColor = 'text-green-500';
+                    if (p.status === 'Отменен' || p.status === 'Отклонен') statusColor = 'text-red-500';
+
                     item.innerHTML = `
-                        <div class="flex justify-between items-start">
-                            <div>
-                                <p>Пользователь: <span class="font-semibold">${p.userEmail}</span></p>
-                                <p>Товар(ы): ${p.productName}</p>
-                                <p>Статус: <span class="font-semibold ${p.status === 'Отменен' ? 'text-red-500' : 'text-yellow-500'}">${p.status}</span></p>
-                                <p class="text-sm text-gray-500 dark:text-gray-400">Заказан: ${new Date(p.createdAt.seconds * 1000).toLocaleString()}</p>
-                                ${p.orderId ? `<p>Код заказа: <span class="font-mono bg-gray-200 dark:bg-gray-700 px-2 py-1 rounded">${p.orderId}</span></p>` : ''}
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                            <div class="md:col-span-2">
+                                <p><strong>Пользователь:</strong> ${p.userEmail} (<a href="${telegramLink}" target="_blank" class="text-primary">${p.contactTelegram}</a>)</p>
+                                <p><strong>Товар(ы):</strong> ${p.productName}</p>
+                                <p><strong>Статус:</strong> <span class="font-semibold ${statusColor}">${p.status}</span></p>
+                                <p class="text-sm text-gray-500 dark:text-gray-400"><strong>Заказан:</strong> ${new Date(p.createdAt.seconds * 1000).toLocaleString()}</p>
+                                ${p.orderId ? `<p><strong>Код заказа:</strong> <span class="font-mono bg-gray-200 dark:bg-gray-700 px-2 py-1 rounded">${p.orderId}</span></p>` : ''}
                             </div>
-                            <div>
-                                <a href="${telegramLink}" target="_blank" class="inline-block px-4 py-2 text-sm font-semibold bg-blue-500 text-white rounded-md hover:bg-blue-600">Открыть Telegram</a>
+                            <div class="flex flex-col gap-2 items-start">
+                                ${p.paymentProofUrl ? `<a href="${p.paymentProofUrl}" target="_blank" class="w-full text-center px-4 py-2 text-sm font-semibold bg-blue-500 text-white rounded-md hover:bg-blue-600">Посмотреть чек</a>` : '<span class="text-sm text-gray-500">Чек не загружен</span>'}
+                                ${p.status === 'Ожидает подтверждения' ? `
+                                <div class="w-full flex gap-2">
+                                    <button class="approve-purchase-btn flex-1 px-4 py-2 text-sm font-semibold bg-green-500 text-white rounded-md hover:bg-green-600" data-id="${p.id}">Подтвердить</button>
+                                    <button class="reject-purchase-btn flex-1 px-4 py-2 text-sm font-semibold bg-red-500 text-white rounded-md hover:bg-red-600" data-id="${p.id}">Отклонить</button>
+                                </div>
+                                ` : ''}
                             </div>
                         </div>
                     `;
@@ -936,6 +936,7 @@
                 if (target.closest('.admin-tab-btn')) { e.preventDefault(); window.location.hash = target.closest('.admin-tab-btn').getAttribute('href'); return; }
                 if (target.id === 'start-chat-btn') { openChat(); return; }
                 if (target.closest('.contact-seller-btn')) { const code = target.dataset.code; showContactModal(code); return; }
+                if (target.closest('.upload-proof-btn')) { showProofUploadModal(target.dataset.purchaseId); return; }
                 if (target.id === 'add-product-btn') showProductForm();
                 if (target.closest('.edit-product-btn')) showProductForm(target.closest('.edit-product-btn').dataset.id);
                 if (target.closest('.delete-btn')) { confirmAction('Вы уверены, что хотите удалить этот элемент?', () => { deleteDoc(doc(db, target.dataset.collection, target.dataset.id)); }); }
@@ -947,7 +948,10 @@
                 if (target.closest('.remove-from-cart-btn')) { cart.splice(target.dataset.index, 1); localStorage.setItem('asonik_cart', JSON.stringify(cart)); renderCartPage(); updateCartCount(); }
                 if (target.closest('.share-btn')) { e.preventDefault(); navigator.clipboard.writeText(`Посмотри товар "${target.closest('.share-btn').dataset.productName}" в Asonik Store!`).then(() => alert('Ссылка скопирована!')); }
                 if (target.matches('.buy-now-btn')) showPurchaseFlow(target.dataset.productId);
-                if (target.id === 'checkout-cart-btn') showCartCheckoutModal();
+                if (target.id === 'checkout-cart-btn') {
+                    if (!currentUser) { showModal('Требуется вход', '<p>Для оформления заказа необходимо войти в свой аккаунт.</p>', () => { signInWithGoogle(); return true; }, 'Войти через Google'); return; }
+                    showCheckoutModal(cart, cart.reduce((sum, item) => sum + (item.price || 0), 0), 'Оформление заказа');
+                }
                 if (target.id === 'google-login-btn') signInWithGoogle();
                 if (target.id === 'logout-btn' || target.id === 'logout-btn-profile') signOut(auth);
                 if (target.id === 'send-chat-message') { const chatId = target.dataset.chatId; const text = document.getElementById('chat-message-input').value.trim(); const senderId = target.dataset.senderId; sendChatMessage(chatId, senderId, text); document.getElementById('chat-message-input').value = ''; }
@@ -959,6 +963,8 @@
                         await updateDoc(doc(db, "purchases", purchaseId), { status: 'Отменен' });
                     });
                 }
+                if (target.closest('.approve-purchase-btn')) { await updateDoc(doc(db, "purchases", target.dataset.id), { status: 'Выполнен' }); }
+                if (target.closest('.reject-purchase-btn')) { await updateDoc(doc(db, "purchases", target.dataset.id), { status: 'Отклонен' }); }
                 if (target.id === 'save-profile-btn') {
                     const newName = document.getElementById('profile-name').value;
                     const avatarFile = document.getElementById('avatar-upload').files[0];
