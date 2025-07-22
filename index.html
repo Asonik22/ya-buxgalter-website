@@ -117,16 +117,16 @@
             Mastercard: '5174 2500 5600 0417',
             Mir: '2204 1201 1263 4056',
             YooMoneyLink: 'https://yoomoney.ru/to/4100118308403073/0',
-            YooMoneyQR: 'https://i.ibb.co/dG7pXyF/image.png' // Загруженный QR-код
+            YooMoneyQR: 'https://i.ibb.co/dG7pXyF/image.png'
         };
 
         const PAYMENT_LOGOS = {
-            Uzcard: 'https://i.ibb.co/DR2z2T8/uzcard.png',
-            Humo: 'https://i.ibb.co/Y0p3YaQ/humo.png',
-            Visa: 'https://i.ibb.co/Y3B926v/visa.png',
-            Mastercard: 'https://i.ibb.co/xJg27G1/mastercard.png',
-            Mir: 'https://i.ibb.co/P9zC9f9/mir.png',
-            YooMoney: 'https://i.ibb.co/P9StC2s/yoomoney.png'
+            Uzcard: 'https://i.ibb.co/NV7Mh1s/uzcard.png',
+            Humo: 'https://i.ibb.co/fH4C062/humo.png',
+            Visa: 'https://i.ibb.co/L9bC5P4/visa.png',
+            Mastercard: 'https://i.ibb.co/s5f2v2p/mastercard.png',
+            Mir: 'https://i.ibb.co/qjC9s3L/mir.png',
+            YooMoney: 'https://i.ibb.co/yQfQ1x8/yoomoney.png'
         };
 
         // --- INITIALIZATION ---
@@ -189,6 +189,8 @@
             initSwitchers();
             setupEventListeners();
             updateCartCount();
+            
+            // The main change is here: we only call handleRouting ONCE auth state is known.
             onAuthStateChanged(auth, user => {
                 currentUser = user;
                 isAdmin = user ? user.uid === ADMIN_UID : false;
@@ -199,7 +201,7 @@
                 authReady = true; // Set auth state to ready
                 updateAuthUI();
                 if (window.location.hash.startsWith('#admin') && !isAdmin) window.location.hash = '#main';
-                handleRouting(); // Re-run routing to load content that depends on auth
+                handleRouting(); // Initial routing call after auth is resolved
             });
         });
 
@@ -228,6 +230,8 @@
 
         // --- ROUTING ---
         function handleRouting() {
+            if (!authReady) return; // Prevent routing before auth state is known
+
             const hash = window.location.hash || '#main';
             const [page, subpage] = (hash.substring(1) || 'main').split('/');
             document.querySelectorAll('[data-page]').forEach(p => p.classList.remove('active'));
@@ -243,16 +247,10 @@
         }
         function loadPageContent(page, subpage) {
             const protectedPages = ['purchases', 'chats', 'profile', 'admin'];
-            if (protectedPages.includes(page)) {
+            if (protectedPages.includes(page) && !currentUser) {
                 const contentEl = document.querySelector(`[data-page="${page}"] > div`);
-                if (!authReady) {
-                    if (contentEl) contentEl.innerHTML = '<p class="text-center">Загрузка...</p>';
-                    return;
-                }
-                if (!currentUser) {
-                    if (contentEl) contentEl.innerHTML = `<p class="text-center">Пожалуйста, <a href="#" id="login-redirect" class="text-primary underline">войдите</a>, чтобы просмотреть эту страницу.</p>`;
-                    return;
-                }
+                if (contentEl) contentEl.innerHTML = `<p class="text-center">Пожалуйста, <a href="#" id="login-redirect" class="text-primary underline">войдите</a>, чтобы просмотреть эту страницу.</p>`;
+                return;
             }
 
             switch(page) {
@@ -932,6 +930,9 @@
         
         // --- EVENT LISTENERS ---
         function setupEventListeners() {
+            // Add hashchange listener here to ensure it's set up on initial load
+            window.addEventListener('hashchange', handleRouting);
+
             document.body.addEventListener('click', async e => {
                 const target = e.target;
                 
