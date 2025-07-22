@@ -211,6 +211,13 @@
             }, 3000);
         }
 
+        // --- DATA FETCHING ---
+        async function loadPaymentMethods() {
+            onSnapshot(query(collection(db, "paymentMethods"), orderBy("order", "asc")), (snapshot) => {
+                paymentMethods = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+            });
+        }
+
         // --- ROUTING ---
         function handleRouting() {
             if (!authReady) return; 
