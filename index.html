@@ -112,6 +112,7 @@
                 <div class="flex items-center space-x-2 md:space-x-4">
                     <div id="currency-switcher" class="hidden md:block"></div>
                     <div id="lang-switcher" class="hidden md:block"></div>
+                    <div id="notifications-container" class="relative"></div>
                     <a href="#cart" class="relative p-2 text-gray-400 nav-link"><svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"></path></svg><span id="cart-count" class="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-4 w-4 flex items-center justify-center hidden">0</span></a>
                     <div id="auth-container" class="relative"></div>
                 </div>
@@ -121,6 +122,7 @@
 
     <main class="container mx-auto px-4 py-8">
         <div data-page="main" class="active">
+            <div id="featured-products-container" class="mb-12"></div>
             <h1 class="text-4xl font-bold text-center mb-8" data-lang-key="catalog_title">Каталог товаров</h1>
             <div class="mb-8 p-4 card-bg rounded-lg shadow-md flex flex-col md:flex-row gap-4 items-center border border-custom">
                 <input id="search-input" type="text" placeholder="Поиск по названию..." class="w-full md:flex-grow pl-4 pr-4 py-2 border border-custom rounded-lg focus:outline-none focus:ring-2 focus:ring-primary input-bg text-white">
@@ -238,6 +240,7 @@
             if (user) {
                 const userRef = doc(db, "users", user.uid);
                 await setDoc(userRef, { displayName: user.displayName, email: user.email, photoURL: user.photoURL, lastSeen: serverTimestamp() }, { merge: true });
+                setupNotificationsListener();
             }
             appReady = true;
             updateAuthUI();
@@ -272,7 +275,7 @@
         function loadPaymentMethods() {
             return new Promise(resolve => {
                 const q = query(collection(db, "paymentMethods"), orderBy("order", "asc"));
-                const unsubscribe = onSnapshot(q, (snapshot) => {
+                onSnapshot(q, (snapshot) => {
                     paymentMethods = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
                     resolve();
                 });
@@ -315,7 +318,7 @@
             }
 
             switch(page) {
-                case 'main': loadProducts(); break;
+                case 'main': loadMainPage(); break;
                 case 'faq': loadFaq(); break;
                 case 'admin': loadAdminPanel(subpage); break;
                 case 'cart': renderCartPage(); break;
@@ -326,6 +329,27 @@
         }
 
         // --- PAGE LOADERS ---
+        function loadMainPage() {
+            loadFeaturedProducts();
+            loadProducts();
+        }
+        function loadFeaturedProducts() {
+            const container = document.getElementById('featured-products-container');
+            if (!container) return;
+            
+            const q = query(collection(db, "products"), where("isFeatured", "==", true));
+            onSnapshot(q, (snapshot) => {
+                if (snapshot.empty) {
+                    container.innerHTML = '';
+                    return;
+                }
+                container.innerHTML = `<h2 class="text-3xl font-bold mb-6 text-center">Рекомендуемые товары</h2><div id="featured-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6"></div>`;
+                const grid = document.getElementById('featured-grid');
+                snapshot.forEach(doc => {
+                    grid.appendChild(renderProductCard(doc.data()));
+                });
+            });
+        }
         function loadProducts() {
             const q = query(collection(db, "products"));
             onSnapshot(q, (snapshot) => {
@@ -346,41 +370,43 @@
 
             if (searchTerm) filtered = filtered.filter(p => p.name.toLowerCase().includes(searchTerm));
             if (category !== 'all') filtered = filtered.filter(p => p.category === category);
-
             if (sortBy === 'popular') filtered.sort((a, b) => (b.popularity || 0) - (a.popularity || 0));
             else filtered.sort((a, b) => (b.createdAt?.toMillis() || 0) - (a.createdAt?.toMillis() || 0));
 
-            renderProducts(filtered);
-        }
-        function renderProducts(productsToRender) {
             const productsGrid = document.getElementById('products-grid');
             if (!productsGrid) return;
             productsGrid.innerHTML = '';
-            if (!productsToRender.length) { productsGrid.innerHTML = `<p>Товары не найдены.</p>`; return; }
-            productsToRender.forEach(product => {
-                const card = document.createElement('div');
-                card.className = "card-bg rounded-lg shadow-lg flex flex-col justify-between border border-custom overflow-hidden";
-                const verifiedBadge = product.isVerified ? `<span class="bg-green-900 text-green-200 text-xs font-bold px-2 py-1 rounded-full">✔ Подтверждено</span>` : '';
-                const pinnedBadge = product.isPinned ? `<span class="bg-blue-900 text-blue-200 text-xs font-bold px-2 py-1 rounded-full">★ Закреплено</span>` : '';
-
-                card.innerHTML = `
-                    <div class="relative">
-                        <img src="${product.imageUrl || 'https://placehold.co/600x400'}" class="w-full h-48 object-cover">
-                        <div class="absolute bottom-2 left-2 flex gap-1">${pinnedBadge}${verifiedBadge}</div>
-                    </div>
-                    <div class="p-4 flex-grow">
-                        <h3 class="text-lg font-semibold truncate">${product.name}</h3>
-                        <p class="text-gray-400 mt-1 text-sm h-10 overflow-hidden">${product.description}</p>
-                        <p class="text-2xl font-bold text-primary mt-2">${formatPrice(product.price || 0)}</p>
-                    </div>
-                    <div class="p-4 pt-2 border-t border-custom flex items-center gap-2">
-                        <button class="add-to-cart-btn p-2 rounded-md hover:bg-gray-700" data-product-id='${product.id}' title="В корзину"><svg class="w-6 h-6 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"></path></svg></button>
-                        <button class="share-btn p-2 rounded-md hover:bg-gray-700" data-product-name="${product.name}" title="Поделиться"><svg class="w-6 h-6 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12s-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6.002l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.367 2.684 3 3 0 00-5.367-2.684z"></path></svg></button>
-                        <button class="buy-now-btn flex-grow bg-primary text-white py-2 px-4 rounded-lg hover:bg-primary-hover font-semibold" data-product-id="${product.id}" data-lang-key="buy_button">Купить</button>
-                    </div>`;
-                productsGrid.appendChild(card);
+            if (filtered.length === 0) { 
+                productsGrid.innerHTML = `<p class="col-span-full text-center">Товары не найдены.</p>`; 
+                return; 
+            }
+            filtered.forEach(product => {
+                productsGrid.appendChild(renderProductCard(product));
             });
             translatePage();
+        }
+        function renderProductCard(product) {
+            const card = document.createElement('div');
+            card.className = "card-bg rounded-lg shadow-lg flex flex-col justify-between border border-custom overflow-hidden";
+            const verifiedBadge = product.isVerified ? `<span class="bg-green-900 text-green-200 text-xs font-bold px-2 py-1 rounded-full">✔ Подтверждено</span>` : '';
+            const pinnedBadge = product.isPinned ? `<span class="bg-blue-900 text-blue-200 text-xs font-bold px-2 py-1 rounded-full">★ Закреплено</span>` : '';
+
+            card.innerHTML = `
+                <div class="relative">
+                    <img src="${product.imageUrl || 'https://placehold.co/600x400'}" class="w-full h-48 object-cover">
+                    <div class="absolute bottom-2 left-2 flex gap-1">${pinnedBadge}${verifiedBadge}</div>
+                </div>
+                <div class="p-4 flex-grow">
+                    <h3 class="text-lg font-semibold truncate">${product.name}</h3>
+                    <p class="text-gray-400 mt-1 text-sm h-10 overflow-hidden">${product.description}</p>
+                    <p class="text-2xl font-bold text-primary mt-2">${formatPrice(product.price || 0)}</p>
+                </div>
+                <div class="p-4 pt-2 border-t border-custom flex items-center gap-2">
+                    <button class="add-to-cart-btn p-2 rounded-md hover:bg-gray-700" data-product-id='${product.id}' title="В корзину"><svg class="w-6 h-6 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"></path></svg></button>
+                    <button class="share-btn p-2 rounded-md hover:bg-gray-700" data-product-name="${product.name}" title="Поделиться"><svg class="w-6 h-6 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12s-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6.002l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.367 2.684 3 3 0 00-5.367-2.684z"></path></svg></button>
+                    <button class="buy-now-btn flex-grow bg-primary text-white py-2 px-4 rounded-lg hover:bg-primary-hover font-semibold" data-product-id="${product.id}" data-lang-key="buy_button">Купить</button>
+                </div>`;
+            return card;
         }
         function loadFaq() {
             const contentEl = document.getElementById('faq-content');
@@ -746,6 +772,8 @@
                 const promoInput = modal.querySelector('#promo-input');
                 const promoStatus = modal.querySelector('#promo-status');
                 const code = promoInput.value.toUpperCase().trim();
+                const finalPriceEl = modal.querySelector('#final-price');
+
                 if (!code) {
                     promoStatus.textContent = 'Введите код.';
                     promoStatus.className = 'text-sm mt-1 h-4 text-red-500';
@@ -755,17 +783,29 @@
                 const promoDoc = await getDoc(doc(db, "promocodes", code));
                 if (promoDoc.exists()) {
                     const promoData = promoDoc.data();
-                    if ((promoData.uses || 0) < promoData.limit) {
-                        const discount = promoData.discount / 100;
-                        currentPrice = total * (1 - discount);
-                        appliedPromo = promoData;
-                        appliedPromo.code = promoDoc.id;
+                    const isForSingleProduct = promoData.productId && promoData.productId !== 'all';
 
-                        modal.querySelector('#final-price').textContent = formatPrice(currentPrice);
-                        promoStatus.textContent = `Скидка ${promoData.discount}% применена!`;
-                        promoStatus.className = 'text-sm mt-1 h-4 text-green-500';
-                        promoInput.disabled = true;
-                        modal.querySelector('#apply-promo').disabled = true;
+                    if ((promoData.uses || 0) < promoData.limit) {
+                        let discountApplicable = true;
+                        if (isForSingleProduct) {
+                            discountApplicable = items.some(item => item.productId === promoData.productId);
+                        }
+
+                        if(discountApplicable) {
+                            const discount = promoData.discount / 100;
+                            currentPrice = total * (1 - discount);
+                            appliedPromo = promoData;
+                            appliedPromo.code = promoDoc.id;
+
+                            finalPriceEl.textContent = formatPrice(currentPrice);
+                            promoStatus.textContent = `Скидка ${promoData.discount}% применена!`;
+                            promoStatus.className = 'text-sm mt-1 h-4 text-green-500';
+                            promoInput.disabled = true;
+                            modal.querySelector('#apply-promo').disabled = true;
+                        } else {
+                            promoStatus.textContent = 'Промокод не подходит для этих товаров.';
+                            promoStatus.className = 'text-sm mt-1 h-4 text-red-500';
+                        }
                     } else {
                         promoStatus.textContent = 'Промокод больше не действителен.';
                         promoStatus.className = 'text-sm mt-1 h-4 text-red-500';
@@ -986,34 +1026,53 @@
             const usersSnapshot = await getDocs(query(collection(db, "users"), orderBy("lastSeen", "desc")));
 
             const allPurchases = purchasesSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-            const completedPurchases = allPurchases.filter(p => p.status === 'Выполнен');
-            const pendingPurchases = allPurchases.filter(p => p.status === 'Ожидает подтверждения');
             
+            const today = new Date();
+            const yesterday = new Date(today);
+            yesterday.setDate(yesterday.getDate() - 1);
+
+            const todaysPurchases = allPurchases.filter(p => p.createdAt.toDate() > yesterday && p.status === 'Выполнен');
+            const todaysRevenue = todaysPurchases.reduce((sum, p) => sum + p.finalPrice, 0);
+
+            const completedPurchases = allPurchases.filter(p => p.status === 'Выполнен');
             const totalRevenue = completedPurchases.reduce((sum, p) => sum + p.finalPrice, 0);
-            const totalOrders = allPurchases.length;
-            const totalProducts = productsSnapshot.size;
+            
+            const productSales = {};
+            completedPurchases.forEach(p => {
+                p.items.forEach(item => {
+                    productSales[item.name] = (productSales[item.name] || 0) + 1;
+                });
+            });
+            const topProducts = Object.entries(productSales).sort((a, b) => b[1] - a[1]).slice(0, 5);
 
             contentEl.innerHTML = `
                 <h3 class="text-2xl font-bold mb-6">Статистика</h3>
-                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-                    <div class="card-bg p-6 rounded-lg shadow-md flex items-center gap-4 border border-custom">
-                        <div class="bg-blue-900/50 p-3 rounded-full"><svg class="w-6 h-6 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 6V5m0 14v-1m-7-7H4m16 0h-1m-1.636-5.636L16.83 5.17m-11.314 0l1.414 1.414m0 9.9l-1.414 1.414M16.828 18.83l-1.414-1.414"></path></svg></div>
-                        <div><p class="text-sm text-gray-400">Общий доход</p><p class="text-2xl font-bold">${formatPrice(totalRevenue, 'UZS')}</p></div>
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-6 mb-8">
+                    <div class="card-bg p-6 rounded-lg shadow-md border border-custom">
+                        <h4 class="font-bold text-lg mb-2">Общая статистика</h4>
+                        <p><strong>Общий доход:</strong> ${formatPrice(totalRevenue, 'UZS')}</p>
+                        <p><strong>Всего заказов:</strong> ${allPurchases.length}</p>
                     </div>
-                    <div class="card-bg p-6 rounded-lg shadow-md flex items-center gap-4 border border-custom">
-                        <div class="bg-green-900/50 p-3 rounded-full"><svg class="w-6 h-6 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"></path></svg></div>
-                        <div><p class="text-sm text-gray-400">Всего заказов</p><p class="text-2xl font-bold">${totalOrders}</p></div>
-                    </div>
-                    <div class="card-bg p-6 rounded-lg shadow-md flex items-center gap-4 border border-custom">
-                        <div class="bg-yellow-900/50 p-3 rounded-full"><svg class="w-6 h-6 text-yellow-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg></div>
-                        <div><p class="text-sm text-gray-400">В обработке</p><p class="text-2xl font-bold">${pendingPurchases.length}</p></div>
-                    </div>
-                     <div class="card-bg p-6 rounded-lg shadow-md flex items-center gap-4 border border-custom">
-                        <div class="bg-purple-900/50 p-3 rounded-full"><svg class="w-6 h-6 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"></path></svg></div>
-                        <div><p class="text-sm text-gray-400">Товаров</p><p class="text-2xl font-bold">${totalProducts}</p></div>
+                    <div class="card-bg p-6 rounded-lg shadow-md border border-custom">
+                         <h4 class="font-bold text-lg mb-2">За сегодня</h4>
+                        <p><strong>Доход:</strong> ${formatPrice(todaysRevenue, 'UZS')}</p>
+                        <p><strong>Выполнено заказов:</strong> ${todaysPurchases.length}</p>
                     </div>
                 </div>
-                <div id="users-section"></div>
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                    <div id="top-products-section">
+                        <h3 class="text-2xl font-bold mb-4">Топ-5 товаров</h3>
+                        <div class="space-y-3">
+                            ${topProducts.length > 0 ? topProducts.map(([name, count]) => `
+                               <div class="card-bg p-4 rounded-lg flex justify-between items-center border border-custom">
+                                   <span>${name}</span>
+                                   <span class="font-bold">${count} продаж</span>
+                               </div>
+                            `).join('') : '<p>Пока нет проданных товаров.</p>'}
+                        </div>
+                    </div>
+                    <div id="users-section"></div>
+                </div>
             `;
             
             const usersContainer = document.getElementById('users-section');
@@ -1021,7 +1080,7 @@
                 const users = usersSnapshot.docs.map(doc => doc.data());
                 usersContainer.innerHTML = `
                     <h3 class="text-2xl font-bold mb-4">Пользователи</h3>
-                    <div class="space-y-3">
+                    <div class="space-y-3 max-h-96 overflow-y-auto">
                         ${users.map(user => `
                            <div class="card-bg p-4 rounded-lg shadow flex items-center gap-4 border border-custom">
                                <img src="${user.photoURL || 'https://placehold.co/48x48'}" class="w-12 h-12 rounded-full object-cover">
@@ -1057,7 +1116,21 @@
             return item;
         }
         function renderAdminFaqItem(id, data) { const item = document.createElement('div'); item.className = 'card-bg p-4 rounded-lg shadow flex justify-between items-center border-custom'; item.innerHTML = `<span>${data.question}</span><button class="delete-btn text-red-500" data-collection="faq" data-id="${id}">Удл.</button>`; return item; }
-        function renderAdminPromoItem(id, data) { const item = document.createElement('div'); item.className = 'card-bg p-4 rounded-lg shadow border-custom'; item.innerHTML = `<p>Код: <span class="font-bold">${data.code}</span></p><p>Скидка: ${data.discount}%</p><p>Использований: ${data.uses || 0}/${data.limit}</p><div><button class="edit-btn text-blue-400 mr-2" data-id="${id}" data-type="promo">Ред.</button><button class="delete-btn text-red-500" data-collection="promocodes" data-id="${id}">Удл.</button></div>`; return item; }
+        function renderAdminPromoItem(id, data) { 
+            const item = document.createElement('div');
+            item.className = 'card-bg p-4 rounded-lg shadow border-custom';
+            const product = data.productId && data.productId !== 'all' ? allProducts.find(p => p.id === data.productId) : null;
+            item.innerHTML = `
+                <p>Код: <span class="font-bold">${data.code}</span></p>
+                <p>Скидка: ${data.discount}%</p>
+                <p>Использований: ${data.uses || 0}/${data.limit}</p>
+                <p>Применен к: <span class="font-semibold">${product ? product.name : 'Всем товарам'}</span></p>
+                <div>
+                    <button class="edit-btn text-blue-400 mr-2" data-id="${id}" data-type="promo">Ред.</button>
+                    <button class="delete-btn text-red-500" data-collection="promocodes" data-id="${id}">Удл.</button>
+                </div>`;
+            return item;
+        }
         function renderAdminPaymentItem(id, data) {
             const item = document.createElement('div');
             item.className = 'card-bg p-4 rounded-lg shadow flex justify-between items-center border border-custom';
@@ -1156,18 +1229,24 @@
             contentEl.innerHTML = `<h3 class="text-2xl font-bold mb-6">Чаты с пользователями</h3><div class="flex flex-col md:flex-row gap-4 h-[70vh]"><div id="chat-list-sidebar" class="w-full md:w-1/3 border-r border-custom overflow-y-auto pr-2">Загрузка чатов...</div><div id="chat-view" class="w-full md:w-2/3"></div></div>`;
             const sidebar = document.getElementById('chat-list-sidebar');
 
-            onSnapshot(query(collection(db, "userChats"), orderBy("lastActivity", "desc")), async (snapshot) => {
+            const q = query(collection(db, "userChats"));
+            onSnapshot(q, async (snapshot) => {
                 if (!sidebar) return;
-                if (snapshot.empty) {
+                
+                let chatMetas = snapshot.docs.map(d => d.data());
+                
+                // Client-side sort and filter
+                chatMetas = chatMetas
+                    .filter(chat => chat.userId !== ADMIN_UID)
+                    .sort((a, b) => (b.lastActivity?.seconds || 0) - (a.lastActivity?.seconds || 0));
+
+                if (chatMetas.length === 0) {
                     sidebar.innerHTML = 'Чатов пока нет.';
                     return;
                 }
+
                 sidebar.innerHTML = '';
-                
-                for (const chatDoc of snapshot.docs) {
-                    const chatData = chatDoc.data();
-                    if(chatData.userId === ADMIN_UID) continue;
-                    
+                for (const chatData of chatMetas) {
                     const userDoc = await getDoc(doc(db, "users", chatData.userId));
                     const userName = userDoc.exists() ? userDoc.data().displayName : 'Неизвестный';
                     const item = document.createElement('a');
@@ -1185,11 +1264,90 @@
                 document.getElementById('chat-view').innerHTML = '<div class="flex items-center justify-center h-full card-bg rounded-lg"><p>Выберите чат для просмотра.</p></div>';
             }
         }
-        async function showProductForm(productId) { let p = { name: '', description: '', price: 0, imageUrl: '', isPinned: false, isVerified: false, variations: [], category: 'games' }; if (productId) { const docSnap = await getDoc(doc(db, 'products', productId)); if (docSnap.exists()) p = { id: docSnap.id, ...docSnap.data() }; } const modal = showModal(productId ? 'Редактировать товар' : 'Добавить товар', `<div class="space-y-4"><input id="p-name" class="w-full p-2 border rounded input-bg" placeholder="Название" value="${p.name}"><select id="p-category" class="w-full p-2 border rounded input-bg"><option value="games" ${p.category === 'games' ? 'selected' : ''}>Игра</option><option value="apps" ${p.category === 'apps' ? 'selected' : ''}>Приложение</option></select><textarea id="p-desc" class="w-full p-2 border rounded input-bg" placeholder="Описание">${p.description}</textarea><input id="p-price" type="number" class="w-full p-2 border rounded input-bg" placeholder="Основная цена (UZS)" value="${p.price}"><label>Изображение:</label><input type="file" id="p-image-file" class="w-full p-2 border rounded input-bg"><img id="p-image-preview" src="${p.imageUrl}" class="w-32 h-32 object-cover ${p.imageUrl ? '' : 'hidden'}"><div class="flex items-center gap-4"><label><input type="checkbox" id="p-pinned" ${p.isPinned ? 'checked' : ''}> Закрепить</label><label><input type="checkbox" id="p-verified" ${p.isVerified ? 'checked' : ''}> Подтвердить</label></div><hr><h4 class="font-bold">Вариации</h4><div id="variations-container"></div><button id="add-variation-btn" type="button" class="text-sm text-blue-500">+ Добавить вариацию</button></div>`, async (m) => { const saveBtn = m.querySelector('.save-modal-btn'); saveBtn.textContent = 'Сохранение...'; saveBtn.disabled = true; const imageFile = m.querySelector('#p-image-file').files[0]; let imageUrl = p.imageUrl; if(imageFile) imageUrl = await uploadImage(imageFile); if(imageFile && !imageUrl) { saveBtn.textContent = 'Сохранить'; saveBtn.disabled = false; return false; } const data = { name: m.querySelector('#p-name').value, category: m.querySelector('#p-category').value, description: m.querySelector('#p-desc').value, price: parseFloat(m.querySelector('#p-price').value) || 0, imageUrl, isPinned: m.querySelector('#p-pinned').checked, isVerified: m.querySelector('#p-verified').checked, variations: Array.from(m.querySelectorAll('.variation-item')).map(v => ({ name: v.querySelector('.v-name').value, price: parseFloat(v.querySelector('.v-price').value) || 0, description: v.querySelector('.v-desc').value })), createdAt: p.createdAt || serverTimestamp(), popularity: p.popularity || 0 }; await (productId ? setDoc(doc(db, 'products', productId), data) : addDoc(collection(db, 'products'), data)); return true; }); const variationsContainer = modal.querySelector('#variations-container'); const renderVariation = (v = {name: '', price: 0, description: ''}) => { const el = document.createElement('div'); el.className = 'variation-item grid grid-cols-[1fr_auto] gap-2 items-start mb-2'; el.innerHTML = `<div class="grid grid-cols-2 gap-2"><input class="v-name p-2 border rounded input-bg" placeholder="Название (напр. 100 гемов)" value="${v.name}"><input type="number" class="v-price p-2 border rounded input-bg" placeholder="Цена" value="${v.price}"></div><button type="button" class="remove-variation-btn text-red-500 text-2xl h-full flex items-center">&times;</button><textarea class="v-desc col-span-2 p-2 border rounded input-bg" placeholder="Описание вариации">${v.description}</textarea>`; variationsContainer.appendChild(el); }; (p.variations || []).forEach(renderVariation); modal.querySelector('#add-variation-btn').onclick = () => renderVariation(); modal.addEventListener('click', e => { if (e.target.classList.contains('remove-variation-btn')) e.target.closest('.variation-item').remove(); }); }
+        async function showProductForm(productId) { 
+            let p = { name: '', description: '', price: 0, imageUrl: '', isPinned: false, isVerified: false, isFeatured: false, variations: [], category: 'games' }; 
+            if (productId) { 
+                const docSnap = await getDoc(doc(db, 'products', productId)); 
+                if (docSnap.exists()) p = { id: docSnap.id, ...docSnap.data() }; 
+            } 
+            const modal = showModal(productId ? 'Редактировать товар' : 'Добавить товар', `
+                <div class="space-y-4">
+                    <input id="p-name" class="w-full p-2 border rounded input-bg" placeholder="Название" value="${p.name}">
+                    <select id="p-category" class="w-full p-2 border rounded input-bg"><option value="games" ${p.category === 'games' ? 'selected' : ''}>Игра</option><option value="apps" ${p.category === 'apps' ? 'selected' : ''}>Приложение</option></select>
+                    <textarea id="p-desc" class="w-full p-2 border rounded input-bg" placeholder="Описание">${p.description}</textarea>
+                    <input id="p-price" type="number" class="w-full p-2 border rounded input-bg" placeholder="Основная цена (UZS)" value="${p.price}">
+                    <label>Изображение:</label><input type="file" id="p-image-file" class="w-full p-2 border rounded input-bg">
+                    <img id="p-image-preview" src="${p.imageUrl}" class="w-32 h-32 object-cover ${p.imageUrl ? '' : 'hidden'}">
+                    <div class="flex items-center gap-4">
+                        <label><input type="checkbox" id="p-pinned" ${p.isPinned ? 'checked' : ''}> Закрепить</label>
+                        <label><input type="checkbox" id="p-verified" ${p.isVerified ? 'checked' : ''}> Подтвердить</label>
+                        <label><input type="checkbox" id="p-featured" ${p.isFeatured ? 'checked' : ''}> Рекомендовать</label>
+                    </div><hr>
+                    <h4 class="font-bold">Вариации</h4><div id="variations-container"></div>
+                    <button id="add-variation-btn" type="button" class="text-sm text-blue-500">+ Добавить вариацию</button>
+                </div>`, async (m) => { 
+                    const saveBtn = m.querySelector('.save-modal-btn'); saveBtn.textContent = 'Сохранение...'; saveBtn.disabled = true; 
+                    const imageFile = m.querySelector('#p-image-file').files[0]; let imageUrl = p.imageUrl; 
+                    if(imageFile) imageUrl = await uploadImage(imageFile); 
+                    if(imageFile && !imageUrl) { saveBtn.textContent = 'Сохранить'; saveBtn.disabled = false; return false; } 
+                    const data = { 
+                        name: m.querySelector('#p-name').value, 
+                        category: m.querySelector('#p-category').value, 
+                        description: m.querySelector('#p-desc').value, 
+                        price: parseFloat(m.querySelector('#p-price').value) || 0, 
+                        imageUrl, isPinned: m.querySelector('#p-pinned').checked, 
+                        isVerified: m.querySelector('#p-verified').checked, 
+                        isFeatured: m.querySelector('#p-featured').checked,
+                        variations: Array.from(m.querySelectorAll('.variation-item')).map(v => ({ name: v.querySelector('.v-name').value, price: parseFloat(v.querySelector('.v-price').value) || 0, description: v.querySelector('.v-desc').value })), 
+                        createdAt: p.createdAt || serverTimestamp(), 
+                        popularity: p.popularity || 0 
+                    }; 
+                    await (productId ? setDoc(doc(db, 'products', productId), data) : addDoc(collection(db, 'products'), data)); return true; 
+                }); 
+            const variationsContainer = modal.querySelector('#variations-container'); 
+            const renderVariation = (v = {name: '', price: 0, description: ''}) => { 
+                const el = document.createElement('div'); el.className = 'variation-item grid grid-cols-[1fr_auto] gap-2 items-start mb-2'; 
+                el.innerHTML = `<div class="grid grid-cols-2 gap-2"><input class="v-name p-2 border rounded input-bg" placeholder="Название (напр. 100 гемов)" value="${v.name}"><input type="number" class="v-price p-2 border rounded input-bg" placeholder="Цена" value="${v.price}"></div><button type="button" class="remove-variation-btn text-red-500 text-2xl h-full flex items-center">&times;</button><textarea class="v-desc col-span-2 p-2 border rounded input-bg" placeholder="Описание вариации">${v.description}</textarea>`; 
+                variationsContainer.appendChild(el); 
+            }; 
+            (p.variations || []).forEach(renderVariation); 
+            modal.querySelector('#add-variation-btn').onclick = () => renderVariation(); 
+            modal.addEventListener('click', e => { if (e.target.classList.contains('remove-variation-btn')) e.target.closest('.variation-item').remove(); }); 
+        }
         async function uploadImage(file) { const formData = new FormData(); formData.append('image', file); try { const response = await fetch(`https://api.imgbb.com/1/upload?key=${IMGBB_API_KEY}`, { method: 'POST', body: formData }); const result = await response.json(); if (result.success) return result.data.url; else throw new Error(result.error.message); } catch (error) { alert('Ошибка загрузки изображения: ' + error.message); return null; } }
-        async function showPromoForm(promoId) { let p = { code: '', discount: 20, limit: 100, uses: 0 }; if (promoId) { const docSnap = await getDoc(doc(db, 'promocodes', promoId)); if (docSnap.exists()) p = {id: docSnap.id, ...docSnap.data()}; } const modal = showModal(promoId ? 'Редактировать промокод' : 'Создать промокод', `<div class="space-y-4"><input id="promo-code" class="w-full p-2 border rounded input-bg" placeholder="Промокод (напр. SALE20)" value="${p.code}" ${promoId ? 'disabled' : ''}><label>Скидка: <span id="promo-discount-val">${p.discount}</span>%</label><input id="promo-discount" type="range" min="1" max="100" value="${p.discount}" class="w-full"><input id="promo-limit" type="number" class="w-full p-2 border rounded input-bg" placeholder="Лимит использований" value="${p.limit}"></div>`, async (m) => { const data = { code: m.querySelector('#promo-code').value.toUpperCase(), discount: parseInt(m.querySelector('#promo-discount').value), limit: parseInt(m.querySelector('#promo-limit').value), uses: p.uses }; if (!data.code) { alert('Введите код'); return false; } await setDoc(doc(db, 'promocodes', data.code), data); return true; }); modal.querySelector('#promo-discount').oninput = e => modal.querySelector('#promo-discount-val').textContent = e.target.value; }
+        async function showPromoForm(promoId) { 
+            let p = { code: '', discount: 20, limit: 100, uses: 0, productId: 'all' }; 
+            if (promoId) { 
+                const docSnap = await getDoc(doc(db, 'promocodes', promoId)); 
+                if (docSnap.exists()) p = {id: docSnap.id, ...docSnap.data()}; 
+            } 
+            const productOptions = allProducts.map(prod => `<option value="${prod.id}" ${p.productId === prod.id ? 'selected' : ''}>${prod.name}</option>`).join('');
+            const modal = showModal(promoId ? 'Редактировать промокод' : 'Создать промокод', `
+                <div class="space-y-4">
+                    <input id="promo-code" class="w-full p-2 border rounded input-bg" placeholder="Промокод (напр. SALE20)" value="${p.code}" ${promoId ? 'disabled' : ''}>
+                    <label>Скидка: <span id="promo-discount-val">${p.discount}</span>%</label><input id="promo-discount" type="range" min="1" max="100" value="${p.discount}" class="w-full">
+                    <input id="promo-limit" type="number" class="w-full p-2 border rounded input-bg" placeholder="Лимит использований" value="${p.limit}">
+                    <label>Применить к товару:</label>
+                    <select id="promo-product" class="w-full p-2 border rounded input-bg">
+                        <option value="all" ${p.productId === 'all' ? 'selected' : ''}>Все товары</option>
+                        ${productOptions}
+                    </select>
+                </div>`, async (m) => { 
+                    const data = { 
+                        code: m.querySelector('#promo-code').value.toUpperCase(), 
+                        discount: parseInt(m.querySelector('#promo-discount').value), 
+                        limit: parseInt(m.querySelector('#promo-limit').value), 
+                        productId: m.querySelector('#promo-product').value,
+                        uses: p.uses 
+                    }; 
+                    if (!data.code) { alert('Введите код'); return false; } 
+                    await setDoc(doc(db, 'promocodes', data.code), data, { merge: true }); 
+                    return true; 
+                }); 
+            modal.querySelector('#promo-discount').oninput = e => modal.querySelector('#promo-discount-val').textContent = e.target.value; 
+        }
         async function showPaymentMethodForm(methodId) {
-            let p = { name: '', type: 'card', requisites: '', logoUrl: '', qrCodeUrl: '', isEnabled: true, order: 0 };
+            let p = { name: '', type: 'card', requisites: '', logoUrl: '', qrCodeUrl: '', order: 0 };
             if (methodId) {
                 const docSnap = await getDoc(doc(db, 'paymentMethods', methodId));
                 if (docSnap.exists()) p = { id: docSnap.id, ...docSnap.data() };
@@ -1200,26 +1358,21 @@
             const modalContent = `
                 <div class="space-y-4">
                     <input id="p-name" class="w-full p-2 border rounded input-bg border-custom" placeholder="Название (напр. Uzum Bank, ЮMoney)" value="${p.name || ''}">
-
                     <select id="p-type" class="w-full p-2 border rounded input-bg border-custom">
                         <option value="card" ${p.type === 'card' ? 'selected' : ''}>Банковская карта (переводом)</option>
                         <option value="ewallet" ${p.type === 'ewallet' ? 'selected' : ''}>Электронный кошелёк (QR/ссылка)</option>
                     </select>
-
                     <textarea id="p-requisites" class="w-full p-2 border rounded input-bg border-custom" placeholder="Реквизиты (номер карты, ссылка на оплату)"></textarea>
-
                     <div>
                         <label class="block text-sm font-medium mb-1">Логотип</label>
                         <input type="file" id="p-logo-file" class="w-full text-sm file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-violet-900/50 file:text-primary hover:file:bg-violet-100"/>
                         <img id="p-logo-preview" src="${p.logoUrl || ''}" class="w-24 h-24 object-contain mt-2 p-2 border border-dashed border-custom rounded-lg ${p.logoUrl ? '' : 'hidden'}">
                     </div>
-
                     <div id="qr-code-section" class="${p.type === 'ewallet' ? '' : 'hidden'}">
                         <label class="block text-sm font-medium mb-1">QR-код для оплаты (необязательно)</label>
                         <input type="file" id="p-qr-file" class="w-full text-sm file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-violet-900/50 file:text-primary hover:file:bg-violet-100"/>
                         <img id="p-qr-preview" src="${p.qrCodeUrl || ''}" class="w-24 h-24 object-contain mt-2 p-2 border border-dashed border-custom rounded-lg ${p.qrCodeUrl ? '' : 'hidden'}">
                     </div>
-
                     <input id="p-order" type="number" class="w-full p-2 border rounded input-bg border-custom" placeholder="Порядок сортировки" value="${p.order || 0}">
                 </div>
             `;
@@ -1251,7 +1404,7 @@
                     logoUrl,
                     qrCodeUrl: (m.querySelector('#p-type').value === 'ewallet') ? qrCodeUrl : '',
                     order: parseInt(m.querySelector('#p-order').value) || 0,
-                    isEnabled: p.isEnabled,
+                    isEnabled: p.isEnabled !== undefined ? p.isEnabled : true,
                 };
 
                 await (methodId ? setDoc(doc(db, 'paymentMethods', methodId), data, { merge: true }) : addDoc(collection(db, 'paymentMethods'), data));
@@ -1322,15 +1475,9 @@
                     if (type === 'promo') showPromoForm(id);
                 }
                 
-                if (target.matches('.toggle-payment-btn')) {
-                    const id = target.dataset.id;
-                    const isEnabled = target.checked;
-                    await updateDoc(doc(db, "paymentMethods", id), { isEnabled });
-                }
-
                 if (target.closest('.delete-btn')) { confirmAction('Вы уверены, что хотите удалить этот элемент?', () => deleteDoc(doc(db, target.dataset.collection, target.dataset.id))); }
                 if (target.closest('.faq-question')) { const q = target.closest('.faq-question'); q.classList.toggle('open'); }
-                if (target.closest('.add-to-cart-btn')) showPurchaseFlow(target.closest('.add-to-cart-btn').dataset.productId, true);
+                if (target.closest('.add-to-cart-btn')) showPurchaseFlow(target.dataset.productId, true);
                 if (target.closest('.remove-from-cart-btn')) { cart.splice(target.dataset.index, 1); localStorage.setItem('asonik_cart', JSON.stringify(cart)); renderCartPage(); updateCartCount(); }
                 if (target.closest('.share-btn')) { e.preventDefault(); navigator.clipboard.writeText(`Посмотри товар "${target.closest('.share-btn').dataset.productName}" в Asonik Store!`).then(() => alert('Ссылка скопирована!')); }
                 if (target.matches('.buy-now-btn')) showPurchaseFlow(target.dataset.productId);
@@ -1344,13 +1491,20 @@
                 if (target.closest('#profile-btn')) { e.stopPropagation(); document.getElementById('profile-menu')?.classList.toggle('hidden'); }
                 if (target.id === 'change-avatar-btn') document.getElementById('avatar-upload').click();
                 if (target.closest('.cancel-order-btn')) { const purchaseId = target.dataset.purchaseId; confirmAction('Вы уверены, что хотите отменить этот заказ?', () => updateDoc(doc(db, "purchases", purchaseId), { status: 'Отменен' })); }
-                if (target.closest('.approve-purchase-btn')) { await updateDoc(doc(db, "purchases", target.dataset.id), { status: 'Выполнен' }); }
+                if (target.closest('.approve-purchase-btn')) { 
+                    const purchaseId = target.dataset.id;
+                    await updateDoc(doc(db, "purchases", purchaseId), { status: 'Выполнен' }); 
+                    const purchaseDoc = await getDoc(doc(db, "purchases", purchaseId));
+                    if(purchaseDoc.exists()) createNotification(purchaseDoc.data().userId, `Ваш заказ #${purchaseDoc.data().orderId} был выполнен!`);
+                }
                 if (target.closest('.reject-purchase-btn')) {
                     const purchaseId = target.dataset.id;
                     showModal('Отклонить заказ', `<textarea id="rejection-reason" class="w-full p-2 border rounded input-bg" placeholder="Укажите причину отклонения (необязательно)"></textarea>`, 
                     async (m) => {
                         const reason = m.querySelector('#rejection-reason').value.trim();
                         await updateDoc(doc(db, "purchases", purchaseId), { status: 'Отклонен', rejectionReason: reason || null });
+                        const purchaseDoc = await getDoc(doc(db, "purchases", purchaseId));
+                        if(purchaseDoc.exists()) createNotification(purchaseDoc.data().userId, `Ваш заказ #${purchaseDoc.data().orderId} был отклонен.`, reason);
                         return true;
                     }, 'Отклонить');
                 }
@@ -1367,9 +1521,22 @@
                     } catch (error) { alert('Ошибка обновления профиля: ' + error.message); } 
                     finally { target.textContent = 'Сохранить'; target.disabled = false; }
                 }
+                 if (target.matches('.toggle-payment-btn')) {
+                    const id = target.dataset.id;
+                    const isEnabled = target.checked;
+                    await updateDoc(doc(db, "paymentMethods", id), { isEnabled });
+                }
             });
             document.addEventListener('change', e => { if (e.target.id === 'avatar-upload' && e.target.files[0]) { const reader = new FileReader(); reader.onload = (e) => document.getElementById('profile-avatar').src = e.target.result; reader.readAsDataURL(e.target.files[0]); } });
-            document.addEventListener('click', (e) => { const menu = document.getElementById('profile-menu'); if (menu && !menu.classList.contains('hidden') && !e.target.closest('#profile-btn')) menu.classList.add('hidden'); });
+            document.addEventListener('click', (e) => { 
+                const menu = document.getElementById('profile-menu'); 
+                if (menu && !menu.classList.contains('hidden') && !e.target.closest('#profile-btn')) menu.classList.add('hidden');
+                
+                const notifications = document.getElementById('notifications-dropdown');
+                if (notifications && !notifications.classList.contains('hidden') && !e.target.closest('#notifications-container')) {
+                    notifications.classList.add('hidden');
+                }
+            });
             const searchInput = document.getElementById('search-input');
             const categoryFilter = document.getElementById('category-filter');
             const sortFilter = document.getElementById('sort-filter');
@@ -1378,7 +1545,7 @@
             if(sortFilter) sortFilter.addEventListener('change', applyFiltersAndSort);
         }
 
-        // --- THEME & AUTH ---
+        // --- AUTH & UI ---
         function updateAuthUI() {
             const container = document.getElementById('auth-container');
             if(!container) return;
@@ -1409,6 +1576,61 @@
             }
         }
 
+        // --- NOTIFICATIONS ---
+        async function createNotification(userId, title, body = '') {
+            if (!userId) return;
+            await addDoc(collection(db, "notifications"), {
+                userId,
+                title,
+                body,
+                isRead: false,
+                createdAt: serverTimestamp()
+            });
+        }
+        function setupNotificationsListener() {
+            const container = document.getElementById('notifications-container');
+            if (!currentUser || !container) return;
+            
+            const q = query(collection(db, "notifications"), where("userId", "==", currentUser.uid), orderBy("createdAt", "desc"));
+            
+            onSnapshot(q, (snapshot) => {
+                const notifications = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                const unreadCount = notifications.filter(n => !n.isRead).length;
+                renderNotifications(notifications, unreadCount);
+            });
+        }
+        function renderNotifications(notifications, unreadCount) {
+             const container = document.getElementById('notifications-container');
+             container.innerHTML = `
+                <button id="notifications-btn" class="relative p-2 text-gray-400">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"></path></svg>
+                    ${unreadCount > 0 ? `<span class="absolute top-0 right-0 bg-red-500 text-white text-xs rounded-full h-4 w-4 flex items-center justify-center">${unreadCount}</span>` : ''}
+                </button>
+                <div id="notifications-dropdown" class="hidden absolute right-0 mt-2 w-80 card-bg rounded-md shadow-lg border border-custom z-20">
+                    <div class="p-4 font-bold border-b border-custom">Уведомления</div>
+                    <div class="max-h-96 overflow-y-auto">
+                        ${notifications.length > 0 ? notifications.map(n => `
+                            <div class="p-4 border-b border-custom ${!n.isRead ? 'bg-primary/10' : ''}">
+                                <p class="font-semibold">${n.title}</p>
+                                ${n.body ? `<p class="text-sm text-gray-400">${n.body}</p>` : ''}
+                            </div>
+                        `).join('') : '<p class="p-4 text-center text-sm text-gray-400">У вас нет уведомлений.</p>'}
+                    </div>
+                </div>
+             `;
+
+             container.querySelector('#notifications-btn').addEventListener('click', async () => {
+                const dropdown = container.querySelector('#notifications-dropdown');
+                dropdown.classList.toggle('hidden');
+                if (!dropdown.classList.contains('hidden')) {
+                    const batch = writeBatch(db);
+                    notifications.filter(n => !n.isRead).forEach(n => {
+                        batch.update(doc(db, "notifications", n.id), { isRead: true });
+                    });
+                    await batch.commit();
+                }
+             });
+        }
     </script>
 </body>
 </html>
