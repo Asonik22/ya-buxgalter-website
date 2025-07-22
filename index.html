@@ -217,7 +217,7 @@
         function loadPaymentMethods() {
             return new Promise(resolve => {
                 const q = query(collection(db, "paymentMethods"), orderBy("order", "asc"));
-                onSnapshot(q, (snapshot) => {
+                const unsubscribe = onSnapshot(q, (snapshot) => {
                     paymentMethods = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
                     resolve();
                 });
@@ -533,6 +533,7 @@
                         </div>
                         <div class="flex flex-col justify-center items-center gap-2 sm:w-40 flex-shrink-0 border-t sm:border-t-0 sm:border-l border-custom pt-4 sm:pt-0 sm:pl-6 mt-4 sm:mt-0">
                              ${purchase.status === 'Ожидает оплаты' ? `<button class="upload-proof-btn w-full px-4 py-2 font-semibold bg-green-500 text-white rounded-md hover:bg-green-600" data-purchase-id="${doc.id}">Оплатить</button>` : ''}
+                             ${['Ожидает оплаты', 'Ожидает подтверждения'].includes(purchase.status) ? `<button class="cancel-order-btn w-full px-4 py-2 font-semibold border border-red-500 text-red-500 rounded-md hover:bg-red-500 hover:text-white" data-purchase-id="${doc.id}">Отменить заказ</button>` : ''}
                              <button class="contact-seller-btn w-full px-4 py-2 font-semibold bg-primary/20 text-primary rounded-md hover:bg-primary/30" data-code="${purchase.orderId}">Связаться</button>
                         </div>
                     `;
