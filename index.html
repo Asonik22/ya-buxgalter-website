@@ -21,7 +21,6 @@
             font-family: 'Inter', sans-serif;
             background-color: var(--bg);
             color: var(--text);
-            transition: background-color 0.3s, color 0.3s;
         }
         .bg-primary { background-color: var(--primary); }
         .hover\:bg-primary-hover:hover { background-color: var(--primary-hover); }
@@ -52,6 +51,48 @@
             border-color: var(--primary);
             box-shadow: 0 0 0 2px var(--primary);
         }
+        
+        /* Стили для переключателя */
+        .toggle-switch {
+            position: relative;
+            display: inline-block;
+            width: 44px;
+            height: 24px;
+        }
+        .toggle-switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+        .toggle-slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #4a5568;
+            transition: .4s;
+            border-radius: 24px;
+        }
+        .toggle-slider:before {
+            position: absolute;
+            content: "";
+            height: 16px;
+            width: 16px;
+            left: 4px;
+            bottom: 4px;
+            background-color: white;
+            transition: .4s;
+            border-radius: 50%;
+        }
+        input:checked + .toggle-slider {
+            background-color: var(--primary);
+        }
+        input:checked + .toggle-slider:before {
+            transform: translateX(20px);
+        }
+
     </style>
 </head>
 <body>
@@ -234,7 +275,6 @@
                 const unsubscribe = onSnapshot(q, (snapshot) => {
                     paymentMethods = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
                     resolve();
-                    // Keep the listener running, but we've resolved the promise
                 });
             });
         }
@@ -424,9 +464,19 @@
                     <button id="start-chat-btn" class="w-full px-6 py-3 bg-primary text-white rounded-md hover:bg-primary-hover font-semibold">Связаться с администрацией</button>
                 </div>`;
         }
-        function openChat() {
+        async function openChat() {
             const contentEl = document.getElementById('chats-content');
             const chatId = `${currentUser.uid}_${ADMIN_UID}`;
+            
+            const chatMetaRef = doc(db, 'userChats', currentUser.uid);
+            const chatDoc = await getDoc(chatMetaRef);
+            if (!chatDoc.exists()) {
+                await setDoc(chatMetaRef, {
+                    lastActivity: serverTimestamp(),
+                    userId: currentUser.uid
+                });
+            }
+
             renderChatInterface(contentEl, chatId, "Чат с администрацией", currentUser.uid);
         }
         function renderChatInterface(container, chatId, title, currentUserId) {
@@ -1012,15 +1062,19 @@
             const item = document.createElement('div');
             item.className = 'card-bg p-4 rounded-lg shadow flex justify-between items-center border border-custom';
             item.innerHTML = `
-                <div class="flex items-center gap-4">
+                <div class="flex items-center gap-4 flex-grow">
                     <img src="${data.logoUrl || 'https://placehold.co/64x64'}" class="w-12 h-12 rounded-md object-contain">
                     <div>
-                        <p class="font-semibold">${data.name} <span class="text-xs ${data.isEnabled ? 'text-green-500' : 'text-red-500'}">${data.isEnabled ? 'Включен' : 'Отключен'}</span></p>
+                        <p class="font-semibold">${data.name}</p>
                         <p class="text-sm text-gray-400">Тип: ${data.type === 'card' ? 'Карта' : 'Кошелек'} | Порядок: ${data.order || 0}</p>
                     </div>
                 </div>
-                <div>
-                    <button class="edit-btn text-blue-400 hover:text-blue-300 font-semibold mr-4" data-id="${id}" data-type="payment">Ред.</button>
+                <div class="flex items-center gap-4">
+                    <label class="toggle-switch">
+                        <input type="checkbox" class="toggle-payment-btn" data-id="${id}" ${data.isEnabled ? 'checked' : ''}>
+                        <span class="toggle-slider"></span>
+                    </label>
+                    <button class="edit-btn text-blue-400 hover:text-blue-300 font-semibold" data-id="${id}" data-type="payment">Ред.</button>
                     <button class="delete-btn text-red-500 hover:text-red-400 font-semibold" data-collection="paymentMethods" data-id="${id}">Удл.</button>
                 </div>`;
             return item;
@@ -1167,8 +1221,6 @@
                     </div>
 
                     <input id="p-order" type="number" class="w-full p-2 border rounded input-bg border-custom" placeholder="Порядок сортировки" value="${p.order || 0}">
-
-                    <label class="flex items-center gap-2"><input type="checkbox" id="p-enabled" ${p.isEnabled ? 'checked' : ''}> Включен</label>
                 </div>
             `;
 
@@ -1199,7 +1251,7 @@
                     logoUrl,
                     qrCodeUrl: (m.querySelector('#p-type').value === 'ewallet') ? qrCodeUrl : '',
                     order: parseInt(m.querySelector('#p-order').value) || 0,
-                    isEnabled: m.querySelector('#p-enabled').checked,
+                    isEnabled: p.isEnabled,
                 };
 
                 await (methodId ? setDoc(doc(db, 'paymentMethods', methodId), data, { merge: true }) : addDoc(collection(db, 'paymentMethods'), data));
@@ -1268,6 +1320,12 @@
                     if (type === 'product') showProductForm(id);
                     if (type === 'payment') showPaymentMethodForm(id);
                     if (type === 'promo') showPromoForm(id);
+                }
+                
+                if (target.matches('.toggle-payment-btn')) {
+                    const id = target.dataset.id;
+                    const isEnabled = target.checked;
+                    await updateDoc(doc(db, "paymentMethods", id), { isEnabled });
                 }
 
                 if (target.closest('.delete-btn')) { confirmAction('Вы уверены, что хотите удалить этот элемент?', () => deleteDoc(doc(db, target.dataset.collection, target.dataset.id))); }
@@ -1350,7 +1408,6 @@
                 });
             }
         }
-        function initTheme() { /* Theme is now fixed, no JS needed */ }
 
     </script>
 </body>
