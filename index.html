@@ -189,6 +189,15 @@
             for (let i = 0; i < 3; i++) code += nums.charAt(Math.floor(Math.random() * nums.length));
             return code;
         }
+        function showToast(message) {
+            const toast = document.createElement('div');
+            toast.className = 'fixed bottom-5 right-5 bg-green-500 text-white py-2 px-4 rounded-lg shadow-lg z-50 animate-pulse';
+            toast.textContent = message;
+            document.body.appendChild(toast);
+            setTimeout(() => {
+                toast.remove();
+            }, 3000);
+        }
 
         // --- ROUTING ---
         function handleRouting() {
@@ -287,8 +296,25 @@
                 });
             });
         }
+        function loadProfilePage() {
+            const contentEl = document.getElementById('profile-content');
+            if (!currentUser) { contentEl.innerHTML = '<p>Пожалуйста, войдите в систему.</p>'; return; }
+            contentEl.innerHTML = `
+                <div class="max-w-md mx-auto card-bg p-8 rounded-lg shadow">
+                    <img id="profile-avatar" src="${currentUser.photoURL || 'https://placehold.co/96x96'}" alt="avatar" class="w-24 h-24 rounded-full mx-auto mb-4 object-cover">
+                    <input type="file" id="avatar-upload" class="hidden" accept="image/*">
+                    <button id="change-avatar-btn" class="text-sm text-primary underline mx-auto block mb-4">Сменить аватар</button>
+                    <div class="space-y-4">
+                        <div><label class="font-bold">Имя</label><input id="profile-name" class="w-full p-2 border rounded input-bg mt-1" value="${currentUser.displayName || ''}"></div>
+                        <div><label class="font-bold">Email</label><input class="w-full p-2 border rounded input-bg mt-1 bg-gray-100 dark:bg-gray-800" value="${currentUser.email}" disabled></div>
+                    </div>
+                    <button id="save-profile-btn" class="mt-6 w-full bg-primary text-white px-6 py-2 rounded-lg">Сохранить</button>
+                    <button id="logout-btn-profile" class="mt-2 w-full bg-red-500 text-white px-6 py-2 rounded-lg">Выйти</button>
+                </div>
+            `;
+        }
 
-        // --- CHAT SYSTEM (REWORKED) ---
+        // --- CHAT SYSTEM ---
         function loadChatsPage() {
              const contentEl = document.getElementById('chats-content');
              if (!currentUser) {
@@ -343,7 +369,62 @@
             await addDoc(collection(db, `chats/${chatId}/messages`), { text, senderId, createdAt: serverTimestamp() });
         }
 
-        // --- PURCHASES (REWORKED) ---
+        // --- CART & PURCHASES ---
+        function addToCart(productId, variationIndex = -1) { 
+            const product = allProducts.find(p => p.id === productId); 
+            if(product) { 
+                const cartItem = { 
+                    productId: product.id, 
+                    name: product.name, 
+                    variation: variationIndex > -1 ? product.variations[variationIndex] : null, 
+                    price: variationIndex > -1 ? product.variations[variationIndex].price : product.price, 
+                    imageUrl: product.imageUrl 
+                };
+                cart.push(cartItem); 
+                localStorage.setItem('asonik_cart', JSON.stringify(cart)); 
+                updateCartCount(); 
+                showToast(`${cartItem.name} добавлен в корзину!`);
+            } 
+        }
+        function updateCartCount() { 
+            const countEl = document.getElementById('cart-count'); 
+            if (!countEl) return; 
+            if (cart.length > 0) { 
+                countEl.textContent = cart.length; 
+                countEl.classList.remove('hidden'); 
+            } else { 
+                countEl.classList.add('hidden'); 
+            } 
+        }
+        function renderCartPage() { 
+            const contentEl = document.getElementById('cart-content'); 
+            if (cart.length === 0) { 
+                contentEl.innerHTML = '<p class="text-center">Ваша корзина пуста.</p>'; 
+                return; 
+            } 
+            let total = cart.reduce((sum, item) => sum + (item.price || 0), 0); 
+            contentEl.innerHTML = `
+                <div class="space-y-4">
+                    ${cart.map((item, index) => `
+                        <div class="card-bg p-4 rounded-lg shadow flex justify-between items-center mb-2">
+                            <div class="flex items-center gap-4">
+                                <img src="${item.imageUrl || 'https://placehold.co/64x64'}" class="w-16 h-16 rounded-md object-cover">
+                                <div>
+                                    <p class="font-bold">${item.name}</p>
+                                    <p class="text-sm text-gray-500">${item.variation ? item.variation.name : 'Стандарт'}</p>
+                                </div>
+                            </div>
+                            <div class="flex items-center gap-4">
+                                <span class="font-bold">${formatPrice(item.price || 0)}</span>
+                                <button class="buy-now-btn px-4 py-2 bg-primary text-white text-sm rounded-lg" data-product-id="${item.productId}">Купить</button>
+                                <button class="remove-from-cart-btn text-red-500 text-2xl" data-index="${index}" title="Удалить">&times;</button>
+                            </div>
+                        </div>`).join('')}
+                </div>
+                <div class="text-right font-bold text-2xl mt-4">Итого: ${formatPrice(total)}</div>
+                <p class="text-right text-gray-500 mt-2">Пожалуйста, приобретайте товары по одному.</p>
+            `; 
+        }
         function loadPurchasesPage() {
             const contentEl = document.getElementById('purchases-content');
             if (!currentUser) { contentEl.innerHTML = '<p class="text-center">Войдите, чтобы увидеть свои покупки.</p>'; return; }
@@ -375,10 +456,24 @@
             });
         }
 
-        // --- PURCHASE FLOW & MODALS (REWORKED & COMPLETED) ---
+        // --- PURCHASE FLOW & MODALS ---
         async function showPurchaseFlow(productId, isAddToCart = false) {
+            if (!isAddToCart && !currentUser) {
+                showModal(
+                    'Требуется вход',
+                    '<p>Для совершения покупки необходимо войти в свой аккаунт. Пожалуйста, войдите и попробуйте снова.</p>',
+                    () => { 
+                        signInWithGoogle();
+                        return true;
+                    },
+                    'Войти через Google'
+                );
+                return;
+            }
+
             const product = allProducts.find(p => p.id === productId);
             if (!product) return;
+
             if (product.variations && product.variations.length > 0) {
                 let variationsHTML = product.variations.map((v, index) => `<label class="block p-4 border rounded-lg cursor-pointer hover:border-primary"><input type="radio" name="variation" value="${index}" class="mr-2"><span>${v.name}</span> - <span class="font-bold">${formatPrice(v.price)}</span></label>`).join('');
                 showModal(`Выберите вариант для "${product.name}"`, `<div class="space-y-2">${variationsHTML}</div>`, (m) => {
@@ -412,7 +507,6 @@
                 </div>
             `;
             const onSave = async(m) => {
-                if (!currentUser) { alert("Пожалуйста, войдите для совершения покупки."); return false; }
                 const uniqueCode = generateUniqueCode();
                 const purchase = { userId: currentUser.uid, userEmail: currentUser.email, productId: product.id, productName: product.name, variationName: item.name || null, status: 'Ожидает связи', finalPrice: currentPrice, createdAt: serverTimestamp(), uniqueCode: uniqueCode };
                 if (appliedPromo) {
@@ -489,7 +583,7 @@
              return modal;
         }
 
-        // --- ADMIN PANEL (REWORKED & COMPLETED) ---
+        // --- ADMIN PANEL ---
         function loadAdminPanel(subpage = 'products') {
             if (!isAdmin) { document.getElementById('admin-content').innerHTML = '<p class="text-center text-red-500">Доступ запрещен.</p>'; return; }
             const adminContent = document.getElementById('admin-content');
@@ -624,8 +718,11 @@
                 document.getElementById('chat-view').innerHTML = '<div class="flex items-center justify-center h-full card-bg rounded-lg"><p>Выберите чат для просмотра.</p></div>';
             }
         }
+        async function showProductForm(productId) { let p = { name: '', description: '', price: 0, imageUrl: '', isPinned: false, isVerified: false, variations: [], category: 'games' }; if (productId) { const docSnap = await getDoc(doc(db, 'products', productId)); if (docSnap.exists()) p = { id: docSnap.id, ...docSnap.data() }; } const modal = showModal(productId ? 'Редактировать товар' : 'Добавить товар', `<div class="space-y-4"><input id="p-name" class="w-full p-2 border rounded input-bg" placeholder="Название" value="${p.name}"><select id="p-category" class="w-full p-2 border rounded input-bg"><option value="games" ${p.category === 'games' ? 'selected' : ''}>Игра</option><option value="apps" ${p.category === 'apps' ? 'selected' : ''}>Приложение</option></select><textarea id="p-desc" class="w-full p-2 border rounded input-bg" placeholder="Описание">${p.description}</textarea><input id="p-price" type="number" class="w-full p-2 border rounded input-bg" placeholder="Основная цена (UZS)" value="${p.price}"><label>Изображение:</label><input type="file" id="p-image-file" class="w-full p-2 border rounded input-bg"><img id="p-image-preview" src="${p.imageUrl}" class="w-32 h-32 object-cover ${p.imageUrl ? '' : 'hidden'}"><div class="flex items-center gap-4"><label><input type="checkbox" id="p-pinned" ${p.isPinned ? 'checked' : ''}> Закрепить</label><label><input type="checkbox" id="p-verified" ${p.isVerified ? 'checked' : ''}> Подтвердить</label></div><hr><h4 class="font-bold">Вариации</h4><div id="variations-container"></div><button id="add-variation-btn" type="button" class="text-sm text-blue-500">+ Добавить вариацию</button></div>`, async (m) => { const saveBtn = m.querySelector('.save-modal-btn'); saveBtn.textContent = 'Сохранение...'; saveBtn.disabled = true; const imageFile = m.querySelector('#p-image-file').files[0]; let imageUrl = p.imageUrl; if(imageFile) imageUrl = await uploadImage(imageFile); if(imageFile && !imageUrl) { saveBtn.textContent = 'Сохранить'; saveBtn.disabled = false; return false; } const data = { name: m.querySelector('#p-name').value, category: m.querySelector('#p-category').value, description: m.querySelector('#p-desc').value, price: parseFloat(m.querySelector('#p-price').value) || 0, imageUrl, isPinned: m.querySelector('#p-pinned').checked, isVerified: m.querySelector('#p-verified').checked, variations: Array.from(m.querySelectorAll('.variation-item')).map(v => ({ name: v.querySelector('.v-name').value, price: parseFloat(v.querySelector('.v-price').value) || 0, description: v.querySelector('.v-desc').value })), createdAt: p.createdAt || serverTimestamp(), popularity: p.popularity || 0 }; await (productId ? setDoc(doc(db, 'products', productId), data) : addDoc(collection(db, 'products'), data)); return true; }); const variationsContainer = modal.querySelector('#variations-container'); const renderVariation = (v = {name: '', price: 0, description: ''}) => { const el = document.createElement('div'); el.className = 'variation-item grid grid-cols-[1fr_auto] gap-2 items-start mb-2'; el.innerHTML = `<div class="grid grid-cols-2 gap-2"><input class="v-name p-2 border rounded input-bg" placeholder="Название (напр. 100 гемов)" value="${v.name}"><input type="number" class="v-price p-2 border rounded input-bg" placeholder="Цена" value="${v.price}"></div><button type="button" class="remove-variation-btn text-red-500 text-2xl h-full flex items-center">&times;</button><textarea class="v-desc col-span-2 p-2 border rounded input-bg" placeholder="Описание вариации">${v.description}</textarea>`; variationsContainer.appendChild(el); }; (p.variations || []).forEach(renderVariation); modal.querySelector('#add-variation-btn').onclick = () => renderVariation(); modal.addEventListener('click', e => { if (e.target.classList.contains('remove-variation-btn')) e.target.closest('.variation-item').remove(); }); }
+        async function uploadImage(file) { const formData = new FormData(); formData.append('image', file); try { const response = await fetch(`https://api.imgbb.com/1/upload?key=${IMGBB_API_KEY}`, { method: 'POST', body: formData }); const result = await response.json(); if (result.success) return result.data.url; else throw new Error(result.error.message); } catch (error) { alert('Ошибка загрузки изображения: ' + error.message); return null; } }
+        async function showPromoForm(promoId) { let p = { code: '', discount: 20, limit: 100, uses: 0 }; if (promoId) { const docSnap = await getDoc(doc(db, 'promocodes', promoId)); if (docSnap.exists()) p = {id: docSnap.id, ...docSnap.data()}; } const modal = showModal(promoId ? 'Редактировать промокод' : 'Создать промокод', `<div class="space-y-4"><input id="promo-code" class="w-full p-2 border rounded input-bg" placeholder="Промокод (напр. SALE20)" value="${p.code}" ${promoId ? 'disabled' : ''}><label>Скидка: <span id="promo-discount-val">${p.discount}</span>%</label><input id="promo-discount" type="range" min="1" max="100" value="${p.discount}" class="w-full"><input id="promo-limit" type="number" class="w-full p-2 border rounded input-bg" placeholder="Лимит использований" value="${p.limit}"></div>`, async (m) => { const data = { code: m.querySelector('#promo-code').value.toUpperCase(), discount: parseInt(m.querySelector('#promo-discount').value), limit: parseInt(m.querySelector('#promo-limit').value), uses: p.uses }; if (!data.code) { alert('Введите код'); return false; } await setDoc(doc(db, 'promocodes', data.code), data); return true; }); modal.querySelector('#promo-discount').oninput = e => modal.querySelector('#promo-discount-val').textContent = e.target.value; }
         
-        // --- EVENT LISTENERS (REWORKED & COMPLETED) ---
+        // --- EVENT LISTENERS ---
         function setupEventListeners() {
             document.body.addEventListener('click', async e => {
                 const target = e.target;
@@ -653,7 +750,6 @@
                 if (target.id === 'send-chat-message') { const chatId = target.dataset.chatId; const text = document.getElementById('chat-message-input').value.trim(); const senderId = target.dataset.senderId; sendChatMessage(chatId, senderId, text); document.getElementById('chat-message-input').value = ''; }
                 if (target.closest('#profile-btn')) { e.stopPropagation(); document.getElementById('profile-menu')?.classList.toggle('hidden'); }
                 if (target.id === 'change-avatar-btn') document.getElementById('avatar-upload').click();
-                if (target.id === 'checkout-cart-btn') showOrderFormModal();
                 if (target.closest('.cancel-order-btn')) {
                     const purchaseId = target.dataset.purchaseId;
                     confirmAction('Вы уверены, что хотите отменить этот заказ?', async () => {
@@ -689,7 +785,7 @@
             if(sortFilter) sortFilter.addEventListener('change', applyFiltersAndSort);
         }
 
-        // --- THEME (REWORKED) ---
+        // --- THEME & AUTH ---
         function initTheme() {
             const themeToggleBtn = document.getElementById('theme-toggle');
             if (!themeToggleBtn) return;
@@ -717,8 +813,6 @@
                 applyTheme(newTheme);
             };
         }
-        
-        // --- OTHER FUNCTIONS (COMPLETED) ---
         function updateAuthUI() { 
             const container = document.getElementById('auth-container'); 
             const navChatsLink = document.getElementById('nav-chats-link');
@@ -751,7 +845,6 @@
                 });
             }
         }
-        // ... and so on for any other missing function bodies
         
     </script>
 </body>
