@@ -8,7 +8,6 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
         body { font-family: 'Inter', sans-serif; transition: background-color 0.3s, color 0.3s; }
-        /* Новая, переработанная цветовая схема для темной темы */
         :root {
             --bg-light: #f9fafb; --text-light: #111827; --card-bg-light: #ffffff; --primary-light: #8b5cf6; --primary-hover-light: #7c3aed; --border-light: #e5e7eb;
             --bg-dark: #1a202c; --text-dark: #e2e8f0; --card-bg-dark: #2d3748; --primary-dark: #a78bfa; --primary-hover-dark: #8b5cf6; --border-dark: #4a5568;
@@ -29,11 +28,11 @@
         .faq-question.open + .faq-answer { grid-template-rows: 1fr; }
         .faq-question svg { transition: transform 0.3s; }
         .faq-question.open svg { transform: rotate(180deg); }
-        .payment-option.selected, .card-option.selected {
+        .payment-option.selected {
             border-color: var(--primary-light);
             box-shadow: 0 0 0 2px var(--primary-light);
         }
-        .dark .payment-option.selected, .dark .card-option.selected {
+        .dark .payment-option.selected {
              border-color: var(--primary-dark);
              box-shadow: 0 0 0 2px var(--primary-dark);
         }
@@ -189,9 +188,9 @@
         });
 
         // --- UTILS ---
-        function formatPrice(price) {
-            const convertedPrice = price * appState.rates[appState.currency];
-            return new Intl.NumberFormat('ru-RU', { style: 'currency', currency: appState.currency, minimumFractionDigits: 2 }).format(convertedPrice);
+        function formatPrice(price, currency = appState.currency) {
+            const convertedPrice = price * (appState.rates[currency] || 1);
+            return new Intl.NumberFormat('ru-RU', { style: 'currency', currency: currency, minimumFractionDigits: 2 }).format(convertedPrice);
         }
         function generateUniqueCode() {
             const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
@@ -213,17 +212,27 @@
 
         // --- DATA FETCHING ---
         async function loadPaymentMethods() {
-            onSnapshot(query(collection(db, "paymentMethods"), orderBy("order", "asc")), (snapshot) => {
+            const q = query(collection(db, "paymentMethods"), orderBy("order", "asc"));
+            onSnapshot(q, (snapshot) => {
                 paymentMethods = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
             });
         }
+
 
         // --- ROUTING ---
         function handleRouting() {
             if (!authReady) return;
 
             const hash = window.location.hash || '#main';
-            const [page, subpage] = (hash.substring(1) || 'main').split('/');
+            let [page, subpage] = (hash.substring(1) || 'main').split('/');
+            
+            // Default to dashboard for admin
+            if (page === 'admin' && !subpage) {
+                subpage = 'dashboard';
+                window.location.hash = `admin/dashboard`;
+                return;
+            }
+
             document.querySelectorAll('[data-page]').forEach(p => p.classList.remove('active'));
             const activePage = document.querySelector(`[data-page="${page}"]`);
             if (activePage) {
@@ -256,7 +265,8 @@
 
         // --- PAGE LOADERS ---
         function loadProducts() {
-            onSnapshot(query(collection(db, "products")), (snapshot) => {
+            const q = query(collection(db, "products"));
+            onSnapshot(q, (snapshot) => {
                 allProducts = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
                 applyFiltersAndSort();
             });
@@ -508,25 +518,45 @@
             let currentPrice = total;
             let appliedPromo = null;
 
-            const modalContent = `
-                <div class="space-y-4">
-                    <div>
-                        <label class="font-bold text-lg">Способ оплаты</label>
-                        <div class="grid grid-cols-2 gap-4 mt-2">
-                            ${paymentMethods.filter(p => p.type === 'card_transfer' && p.isEnabled).length > 0 ? `
-                            <button data-method="card_transfer" class="payment-option flex items-center justify-center gap-2 p-4 border-2 border-custom rounded-lg text-center">
-                                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"></rect><line x1="1" y1="10" x2="23" y2="10"></line></svg>
-                                <span>Перевод (карты)</span>
-                            </button>` : ''}
-                             ${paymentMethods.filter(p => p.type === 'ewallet' && p.isEnabled).map(p => `
-                             <button data-method="${p.id}" class="payment-option flex items-center justify-center gap-2 p-4 border-2 border-custom rounded-lg text-center">
-                                <img src="${p.logoUrl}" class="w-6 h-6 object-contain">
+            const enabledCards = paymentMethods.filter(p => p.type === 'card' && p.isEnabled);
+            const enabledEwallets = paymentMethods.filter(p => p.type === 'ewallet' && p.isEnabled);
+
+            const cardsHtml = enabledCards.length > 0 ? `
+                <div>
+                    <label class="font-bold text-lg mb-2 block">Банковские карты</label>
+                    <div class="grid grid-cols-2 gap-4">
+                        ${enabledCards.map(p => `
+                            <button data-method-id="${p.id}" class="payment-option flex items-center justify-center gap-2 p-4 border-2 border-custom rounded-lg text-center">
+                                <img src="${p.logoUrl}" class="h-6 object-contain">
                                 <span>${p.name}</span>
                             </button>
-                            `).join('')}
-                        </div>
+                        `).join('')}
                     </div>
-                    <div id="payment-details" class="hidden mt-4 p-4 rounded-lg bg-gray-100 dark:bg-gray-800"></div>
+                </div>` : '';
+
+            const ewalletsHtml = enabledEwallets.length > 0 ? `
+                 <div>
+                    <label class="font-bold text-lg mb-2 block">Электронные кошельки</label>
+                    <div class="grid grid-cols-2 gap-4">
+                        ${enabledEwallets.map(p => `
+                            <button data-method-id="${p.id}" class="payment-option flex items-center justify-center gap-2 p-4 border-2 border-custom rounded-lg text-center">
+                                <img src="${p.logoUrl}" class="h-6 object-contain">
+                                <span>${p.name}</span>
+                            </button>
+                        `).join('')}
+                    </div>
+                </div>` : '';
+
+            if (enabledCards.length === 0 && enabledEwallets.length === 0) {
+                 showModal('Ошибка', '<p>Нет доступных способов оплаты. Пожалуйста, свяжитесь с администрацией.</p>');
+                 return;
+            }
+
+            const modalContent = `
+                <div class="space-y-6">
+                    ${cardsHtml}
+                    ${ewalletsHtml}
+                    
                     <div>
                         <label class="font-bold text-lg">Ваши контактные данные</label>
                         <input id="contact-telegram" type="text" class="w-full p-2 border rounded input-bg mt-2" placeholder="Ваш Telegram (например, @username)" required>
@@ -545,13 +575,13 @@
             `;
 
             const onSave = async(m) => {
-                const paymentMethod = m.querySelector('.payment-option.selected')?.dataset.method;
-                const paymentDetail = m.querySelector('.card-option.selected')?.dataset.card;
+                const selectedOption = m.querySelector('.payment-option.selected');
+                if (!selectedOption) { alert("Пожалуйста, выберите способ оплаты."); return false; }
+                
+                const paymentMethodId = selectedOption.dataset.methodId;
                 const contactTelegram = m.querySelector('#contact-telegram').value;
                 const contactEmail = m.querySelector('#contact-email').value;
 
-                if (!paymentMethod) { alert("Пожалуйста, выберите способ оплаты."); return false; }
-                if (paymentMethod === 'card_transfer' && !paymentDetail) { alert("Пожалуйста, выберите карту для перевода."); return false; }
                 if (!contactTelegram || !contactEmail) { alert("Пожалуйста, укажите ваши контактные данные."); return false; }
 
                 const orderId = generateUniqueCode();
@@ -561,11 +591,11 @@
                     userId: currentUser.uid, userEmail: currentUser.email, orderId: orderId, items: items,
                     productName: items.length > 1 ? `${items.length} товар(ов)` : items[0].name,
                     status: 'Ожидает оплаты',
-                    paymentMethodId: paymentMethod,
-                    paymentDetail: paymentDetail || null,
+                    paymentMethodId: paymentMethodId,
                     contactTelegram: contactTelegram,
                     contactEmail: contactEmail,
-                    finalPrice: currentPrice, createdAt: serverTimestamp()
+                    finalPrice: currentPrice,
+                    createdAt: serverTimestamp()
                 };
 
                 if (appliedPromo) {
@@ -576,7 +606,7 @@
 
                 await setDoc(purchaseRef, purchaseData);
 
-                if (items.length > 1) { // If it's a cart checkout
+                if (items.length > 1) {
                     cart = [];
                     localStorage.setItem('asonik_cart', JSON.stringify(cart));
                     updateCartCount();
@@ -585,7 +615,7 @@
                 window.location.hash = '#purchases';
                 showProofUploadModal(purchaseRef.id);
 
-                return true; // Close checkout modal
+                return true;
             };
 
             const modal = showModal(title, modalContent, onSave, 'Подтвердить и перейти к оплате');
@@ -594,39 +624,7 @@
                 btn.onclick = () => {
                     modal.querySelectorAll('.payment-option').forEach(b => b.classList.remove('selected'));
                     btn.classList.add('selected');
-                    const detailsEl = modal.querySelector('#payment-details');
-                    const methodId = btn.dataset.method;
-                    let detailsHTML = '';
-
-                    if (methodId === 'card_transfer') {
-                        detailsHTML = `
-                            <p class="font-semibold mb-2">Выберите карту для перевода:</p>
-                            <div class="grid grid-cols-2 sm:grid-cols-3 gap-2">
-                                ${paymentMethods.filter(p => p.type === 'card' && p.isEnabled).map(p => `
-                                    <button data-card="${p.name}" class="card-option p-2 border-2 border-custom rounded-md flex items-center justify-center h-16">
-                                        <img src="${p.logoUrl}" alt="${p.name}" class="h-8 object-contain">
-                                    </button>
-                                `).join('')}
-                            </div>
-                        `;
-                    } else {
-                        const method = paymentMethods.find(p => p.id === methodId);
-                        if(method) {
-                           detailsHTML = `<p class="font-semibold">Вы выбрали оплату через ${method.name}.</p>`;
-                        }
-                    }
-
-                    detailsEl.innerHTML = detailsHTML;
-                    detailsEl.classList.remove('hidden');
                 };
-            });
-
-            modal.addEventListener('click', (e) => {
-                const cardBtn = e.target.closest('.card-option');
-                if (cardBtn) {
-                    modal.querySelectorAll('.card-option').forEach(b => b.classList.remove('selected'));
-                    cardBtn.classList.add('selected');
-                }
             });
 
             modal.querySelector('#apply-promo').onclick = async () => {
@@ -646,7 +644,7 @@
                         const discount = promoData.discount / 100;
                         currentPrice = total * (1 - discount);
                         appliedPromo = promoData;
-                        appliedPromo.code = promoDoc.id; // Store code
+                        appliedPromo.code = promoDoc.id;
 
                         modal.querySelector('#final-price').textContent = formatPrice(currentPrice);
                         promoStatus.textContent = `Скидка ${promoData.discount}% применена!`;
@@ -670,7 +668,7 @@
             const purchase = purchaseDoc.data();
 
             let paymentInstructions = '';
-            const method = paymentMethods.find(p => p.id === purchase.paymentMethodId || p.name === purchase.paymentDetail);
+            const method = paymentMethods.find(p => p.id === purchase.paymentMethodId);
 
             if (method) {
                  if (method.type === 'card') {
@@ -681,11 +679,9 @@
                 } else if (method.type === 'ewallet') {
                     paymentInstructions = `
                         <p>Пожалуйста, оплатите точную сумму <span class="font-bold">${formatPrice(purchase.finalPrice)}</span> через ${method.name} одним из способов:</p>
-                        <div class="my-4 flex flex-col items-center">
-                            <p class="mb-2">1. Отсканируйте QR-код:</p>
-                            <img src="${method.qrCodeUrl}" class="w-48 h-48 border border-custom rounded-lg">
-                            <p class="my-2">2. Или перейдите по ссылке:</p>
-                            <a href="${method.requisites}" target="_blank" class="text-primary underline">${method.requisites}</a>
+                        <div class="my-4 flex flex-col items-center gap-4">
+                             ${method.qrCodeUrl ? `<div><p class="mb-2 text-center">1. Отсканируйте QR-код:</p><img src="${method.qrCodeUrl}" class="w-48 h-48 border border-custom rounded-lg"></div>` : ''}
+                             ${method.requisites ? `<div><p class="my-2 text-center">2. Или перейдите по ссылке:</p><a href="${method.requisites}" target="_blank" class="text-primary underline break-all">${method.requisites}</a></div>` : ''}
                         </div>
                     `;
                 }
@@ -761,7 +757,7 @@
                         addToCart(productId, variationIndex);
                     } else {
                         const item = product.variations[variationIndex];
-                        const items = [{ productId: product.id, name: product.name, variationName: item.name, price: item.price }];
+                        const items = [{ productId: product.id, name: product.name, variationName: item.name, price: item.price, imageUrl: product.imageUrl }];
                         showCheckoutModal(items, item.price, `Оформление: ${product.name} (${item.name})`);
                     }
                     return true;
@@ -770,13 +766,13 @@
                 if(isAddToCart) {
                     addToCart(productId);
                 } else {
-                    const items = [{ productId: product.id, name: product.name, variationName: null, price: product.price }];
+                    const items = [{ productId: product.id, name: product.name, variationName: null, price: product.price, imageUrl: product.imageUrl }];
                     showCheckoutModal(items, product.price, `Оформление: ${product.name}`);
                 }
             }
         }
 
-        function showContactModal(orderId, customText = "Ваш заказ успешно создан.") {
+        function showContactModal(orderId) {
             const message = `Здравствуйте, у меня вопрос по заказу ${orderId}`;
             const telegramLink = `https://t.me/${TELEGRAM_USERNAME}?text=${encodeURIComponent(message)}`;
             showModal(
@@ -809,22 +805,32 @@
         }
 
         // --- ADMIN PANEL ---
-        function loadAdminPanel(subpage = 'products') {
-            if (!isAdmin) return; // Guarded by loadPageContent
+        function loadAdminPanel(subpage = 'dashboard') {
+            if (!isAdmin) return;
             const adminContent = document.getElementById('admin-content');
+            const tabs = [
+                { id: 'dashboard', name: 'Статистика' },
+                { id: 'purchases', name: 'Покупки' },
+                { id: 'products', name: 'Товары' },
+                { id: 'payment', name: 'Оплата' },
+                { id: 'faq', name: 'FAQ' },
+                { id: 'promocodes', name: 'Промокоды' },
+                { id: 'chats', name: 'Чаты' },
+            ];
+
             adminContent.innerHTML = `
                 <div class="flex flex-col md:flex-row gap-8">
                     <aside class="md:w-1/4 lg:w-1/5">
                         <h2 class="text-2xl font-bold mb-4">Админ-панель</h2>
                         <nav class="space-y-2">
-                            ${['products', 'faq', 'promocodes', 'purchases', 'payment', 'chats'].map(tab => `
-                                <a href="#admin/${tab}" class="admin-tab-btn flex items-center gap-3 px-4 py-2 rounded-lg ${subpage === tab ? 'bg-primary text-white' : 'hover:bg-gray-100 dark:hover:bg-gray-700'}" data-tab="${tab}">
-                                    <span>${{'products':'Товары','faq':'FAQ','promocodes':'Промокоды','purchases':'Покупки', 'payment': 'Оплата', 'chats':'Чаты'}[tab]}</span>
+                            ${tabs.map(tab => `
+                                <a href="#admin/${tab.id}" class="admin-tab-btn flex items-center gap-3 px-4 py-2 rounded-lg ${subpage === tab.id ? 'bg-primary text-white' : 'hover:bg-gray-100 dark:hover:bg-gray-700'}" data-tab="${tab.id}">
+                                    <span>${tab.name}</span>
                                 </a>`).join('')}
                         </nav>
                     </aside>
                     <div class="flex-grow">
-                        <div id="admin-tab-content" class="card-bg p-6 rounded-lg shadow-lg border border-custom"></div>
+                        <div id="admin-tab-content" class="card-bg p-6 rounded-lg shadow-lg border border-custom min-h-[60vh]"></div>
                     </div>
                 </div>`;
             loadAdminTab(subpage);
@@ -832,40 +838,80 @@
         function loadAdminTab(tab) {
             const contentEl = document.getElementById('admin-tab-content');
             if(!contentEl) return;
-            const tabHeaders = {
-                products: 'Управление товарами', faq: 'Управление FAQ', promocodes: 'Управление промокодами', purchases: 'Проверка покупок', payment: 'Способы оплаты', chats: 'Чаты с пользователями'
-            };
-            const buttons = {
-                products: `<button id="add-product-btn" class="bg-green-500 text-white px-4 py-2 rounded-lg hover:bg-green-600">Добавить товар</button>`,
-                faq: `<button id="add-faq-btn" class="bg-green-500 text-white px-4 py-2 rounded-lg hover:bg-green-600">Добавить FAQ</button>`,
-                promocodes: `<button id="add-promo-btn" class="bg-green-500 text-white px-4 py-2 rounded-lg hover:bg-green-600">Создать промокод</button>`,
-                purchases: '',
-                payment: `<button id="add-payment-btn" class="bg-green-500 text-white px-4 py-2 rounded-lg hover:bg-green-600">Добавить способ</button>`,
-                chats: ''
-            };
-            contentEl.innerHTML = `<div class="flex justify-between items-center mb-6"><h3 class="text-2xl font-bold">${tabHeaders[tab]}</h3><div>${buttons[tab]}</div></div><div id="admin-list-container"></div>`;
-
-            if (tab === 'products') loadAdminList('products', 'admin-list-container', renderAdminProductItem);
-            if (tab === 'faq') loadAdminList('faq', 'admin-list-container', renderAdminFaqItem);
-            if (tab === 'promocodes') loadAdminList('promocodes', 'admin-list-container', renderAdminPromoItem);
+            
+            if (tab === 'dashboard') loadAdminDashboard();
+            if (tab === 'products') loadAdminList('products', 'Управление товарами', renderAdminProductItem, `<button id="add-product-btn" class="bg-green-500 text-white px-4 py-2 rounded-lg hover:bg-green-600">Добавить товар</button>`);
+            if (tab === 'faq') loadAdminList('faq', 'Управление FAQ', renderAdminFaqItem, `<button id="add-faq-btn" class="bg-green-500 text-white px-4 py-2 rounded-lg hover:bg-green-600">Добавить FAQ</button>`);
+            if (tab === 'promocodes') loadAdminList('promocodes', 'Управление промокодами', renderAdminPromoItem, `<button id="add-promo-btn" class="bg-green-500 text-white px-4 py-2 rounded-lg hover:bg-green-600">Создать промокод</button>`);
             if (tab === 'purchases') loadAdminPurchases();
-            if (tab === 'payment') loadAdminList('paymentMethods', 'admin-list-container', renderAdminPaymentItem);
+            if (tab === 'payment') loadAdminList('paymentMethods', 'Способы оплаты', renderAdminPaymentItem, `<button id="add-payment-btn" class="bg-green-500 text-white px-4 py-2 rounded-lg hover:bg-green-600">Добавить способ</button>`);
             if (tab === 'chats') {
                 const userId = window.location.hash.split('/')[2];
                 loadAdminChatsList(userId);
             }
         }
-        function loadAdminList(collectionName, elementId, renderFunction) {
+        function loadAdminList(collectionName, title, renderFunction, buttonHtml = '') {
+            const contentEl = document.getElementById('admin-tab-content');
+            contentEl.innerHTML = `<div class="flex justify-between items-center mb-6"><h3 class="text-2xl font-bold">${title}</h3><div>${buttonHtml}</div></div><div id="admin-list-container" class="space-y-3"></div>`;
+            const listEl = document.getElementById('admin-list-container');
+            
             onSnapshot(query(collection(db, collectionName)), (snapshot) => {
-                const listEl = document.getElementById(elementId);
                 if(!listEl) return;
-                listEl.innerHTML = '';
+                listEl.innerHTML = snapshot.empty ? '<p>Здесь пока пусто.</p>' : '';
                 snapshot.forEach(doc => listEl.appendChild(renderFunction(doc.id, doc.data())));
             });
         }
+        async function loadAdminDashboard() {
+            const contentEl = document.getElementById('admin-tab-content');
+            if (!contentEl) return;
+            contentEl.innerHTML = `<div class="text-center p-8">Загрузка статистики...</div>`;
+            
+            const purchasesSnapshot = await getDocs(query(collection(db, "purchases")));
+            const productsSnapshot = await getDocs(query(collection(db, "products")));
+
+            const allPurchases = purchasesSnapshot.docs.map(doc => doc.data());
+            const completedPurchases = allPurchases.filter(p => p.status === 'Выполнен');
+            const pendingPurchases = allPurchases.filter(p => p.status === 'Ожидает подтверждения');
+            
+            const totalRevenue = completedPurchases.reduce((sum, p) => sum + p.finalPrice, 0);
+            const totalOrders = allPurchases.length;
+            const totalProducts = productsSnapshot.size;
+
+            contentEl.innerHTML = `
+                <h3 class="text-2xl font-bold mb-6">Статистика</h3>
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+                    <div class="card-bg p-6 rounded-lg shadow-md flex items-center gap-4 border border-custom">
+                        <div class="bg-blue-100 dark:bg-blue-900/50 p-3 rounded-full"><svg class="w-6 h-6 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 6V5m0 14v-1m-7-7H4m16 0h-1m-1.636-5.636L16.83 5.17m-11.314 0l1.414 1.414m0 9.9l-1.414 1.414M16.828 18.83l-1.414-1.414"></path></svg></div>
+                        <div><p class="text-sm text-gray-500 dark:text-gray-400">Общий доход</p><p class="text-2xl font-bold">${formatPrice(totalRevenue, 'UZS')}</p></div>
+                    </div>
+                    <div class="card-bg p-6 rounded-lg shadow-md flex items-center gap-4 border border-custom">
+                        <div class="bg-green-100 dark:bg-green-900/50 p-3 rounded-full"><svg class="w-6 h-6 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"></path></svg></div>
+                        <div><p class="text-sm text-gray-500 dark:text-gray-400">Всего заказов</p><p class="text-2xl font-bold">${totalOrders}</p></div>
+                    </div>
+                    <div class="card-bg p-6 rounded-lg shadow-md flex items-center gap-4 border border-custom">
+                        <div class="bg-yellow-100 dark:bg-yellow-900/50 p-3 rounded-full"><svg class="w-6 h-6 text-yellow-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg></div>
+                        <div><p class="text-sm text-gray-500 dark:text-gray-400">В обработке</p><p class="text-2xl font-bold">${pendingPurchases.length}</p></div>
+                    </div>
+                     <div class="card-bg p-6 rounded-lg shadow-md flex items-center gap-4 border border-custom">
+                        <div class="bg-purple-100 dark:bg-purple-900/50 p-3 rounded-full"><svg class="w-6 h-6 text-purple-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"></path></svg></div>
+                        <div><p class="text-sm text-gray-500 dark:text-gray-400">Товаров</p><p class="text-2xl font-bold">${totalProducts}</p></div>
+                    </div>
+                </div>
+                <h3 class="text-2xl font-bold mb-4">Недавние заказы</h3>
+                <div id="recent-purchases-list" class="space-y-3"></div>
+            `;
+            
+            const recentPurchases = allPurchases.sort((a,b) => b.createdAt.seconds - a.createdAt.seconds).slice(0, 5);
+            const recentListEl = document.getElementById('recent-purchases-list');
+            if (recentPurchases.length === 0) {
+                recentListEl.innerHTML = '<p>Пока нет заказов.</p>';
+            } else {
+                recentPurchases.forEach(p => recentListEl.appendChild(renderAdminPurchaseItem(p.id, p)));
+            }
+        }
         function renderAdminProductItem(id, data) {
             const item = document.createElement('div');
-            item.className = 'card-bg p-4 rounded-lg shadow flex justify-between items-center mb-3 border border-custom';
+            item.className = 'card-bg p-4 rounded-lg shadow flex justify-between items-center border border-custom';
             item.innerHTML = `
                 <div class="flex items-center gap-4">
                     <img src="${data.imageUrl || 'https://placehold.co/64x64'}" class="w-12 h-12 rounded-md object-cover">
@@ -875,16 +921,16 @@
                     </div>
                 </div>
                 <div>
-                    <button class="edit-product-btn text-blue-500 hover:text-blue-700 dark:hover:text-blue-400 font-semibold mr-4" data-id="${id}">Ред.</button>
-                    <button class="delete-btn text-red-500 hover:text-red-700 dark:hover:text-red-400 font-semibold" data-collection="products" data-id="${id}">Удл.</button>
+                    <button class="edit-btn text-blue-500 hover:text-blue-700 font-semibold mr-4" data-id="${id}" data-type="product">Ред.</button>
+                    <button class="delete-btn text-red-500 hover:text-red-700 font-semibold" data-collection="products" data-id="${id}">Удл.</button>
                 </div>`;
             return item;
         }
-        function renderAdminFaqItem(id, data) { const item = document.createElement('div'); item.className = 'card-bg p-4 rounded-lg shadow flex justify-between items-center mb-2'; item.innerHTML = `<span>${data.question}</span><button class="delete-btn text-red-500" data-collection="faq" data-id="${id}">Удл.</button>`; return item; }
-        function renderAdminPromoItem(id, data) { const item = document.createElement('div'); item.className = 'card-bg p-4 rounded-lg shadow mb-2'; item.innerHTML = `<p>Код: <span class="font-bold">${data.code}</span></p><p>Скидка: ${data.discount}%</p><p>Использований: ${data.uses || 0}/${data.limit}</p><div><button class="edit-promo-btn text-blue-500 mr-2" data-id="${id}">Ред.</button><button class="delete-btn text-red-500" data-collection="promocodes" data-id="${id}">Удл.</button></div>`; return item; }
+        function renderAdminFaqItem(id, data) { const item = document.createElement('div'); item.className = 'card-bg p-4 rounded-lg shadow flex justify-between items-center border-custom'; item.innerHTML = `<span>${data.question}</span><button class="delete-btn text-red-500" data-collection="faq" data-id="${id}">Удл.</button>`; return item; }
+        function renderAdminPromoItem(id, data) { const item = document.createElement('div'); item.className = 'card-bg p-4 rounded-lg shadow border-custom'; item.innerHTML = `<p>Код: <span class="font-bold">${data.code}</span></p><p>Скидка: ${data.discount}%</p><p>Использований: ${data.uses || 0}/${data.limit}</p><div><button class="edit-btn text-blue-500 mr-2" data-id="${id}" data-type="promo">Ред.</button><button class="delete-btn text-red-500" data-collection="promocodes" data-id="${id}">Удл.</button></div>`; return item; }
         function renderAdminPaymentItem(id, data) {
             const item = document.createElement('div');
-            item.className = 'card-bg p-4 rounded-lg shadow flex justify-between items-center mb-3 border border-custom';
+            item.className = 'card-bg p-4 rounded-lg shadow flex justify-between items-center border border-custom';
             item.innerHTML = `
                 <div class="flex items-center gap-4">
                     <img src="${data.logoUrl || 'https://placehold.co/64x64'}" class="w-12 h-12 rounded-md object-contain">
@@ -894,70 +940,92 @@
                     </div>
                 </div>
                 <div>
-                    <button class="edit-payment-btn text-blue-500 hover:text-blue-700 dark:hover:text-blue-400 font-semibold mr-4" data-id="${id}">Ред.</button>
-                    <button class="delete-btn text-red-500 hover:text-red-700 dark:hover:text-red-400 font-semibold" data-collection="paymentMethods" data-id="${id}">Удл.</button>
+                    <button class="edit-btn text-blue-500 hover:text-blue-700 font-semibold mr-4" data-id="${id}" data-type="payment">Ред.</button>
+                    <button class="delete-btn text-red-500 hover:text-red-700 font-semibold" data-collection="paymentMethods" data-id="${id}">Удл.</button>
+                </div>`;
+            return item;
+        }
+        function renderAdminPurchaseItem(id, p) {
+            const item = document.createElement('div');
+            item.className = 'card-bg p-4 rounded-lg shadow border border-custom';
+            const telegramUsername = p.contactTelegram || '';
+            const telegramLink = `https://t.me/${telegramUsername.replace('@', '')}`;
+            const telegramDisplay = telegramUsername ? `<a href="${telegramLink}" target="_blank" class="text-primary">${telegramUsername}</a>` : 'не указан';
+            let statusColor = 'text-yellow-500';
+            if (p.status === 'Выполнен') statusColor = 'text-green-500';
+            if (p.status === 'Отменен' || p.status === 'Отклонен') statusColor = 'text-red-500';
+            item.innerHTML = `
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div class="md:col-span-2">
+                        <p><strong>Заказ:</strong> ${p.productName} (<span class="font-bold">${formatPrice(p.finalPrice, 'UZS')}</span>)</p>
+                        <p><strong>Пользователь:</strong> ${p.userEmail} (${telegramDisplay})</p>
+                        <p><strong>Статус:</strong> <span class="font-semibold ${statusColor}">${p.status}</span></p>
+                        <p class="text-sm text-gray-500 dark:text-gray-400"><strong>Заказан:</strong> ${new Date(p.createdAt.seconds * 1000).toLocaleString()}</p>
+                        ${p.orderId ? `<p><strong>Код заказа:</strong> <span class="font-mono bg-gray-200 dark:bg-gray-700 px-2 py-1 rounded">${p.orderId}</span></p>` : ''}
+                    </div>
+                    <div class="flex flex-col gap-2 items-start justify-center">
+                        ${p.paymentProofUrl ? `<a href="${p.paymentProofUrl}" target="_blank" class="w-full text-center px-4 py-2 text-sm font-semibold bg-blue-500 text-white rounded-md hover:bg-blue-600">Посмотреть чек</a>` : '<span class="text-sm text-gray-500">Чек не загружен</span>'}
+                        ${p.status === 'Ожидает подтверждения' ? `
+                        <div class="w-full flex gap-2">
+                            <button class="approve-purchase-btn flex-1 px-4 py-2 text-sm font-semibold bg-green-500 text-white rounded-md hover:bg-green-600" data-id="${id}">Подтвердить</button>
+                            <button class="reject-purchase-btn flex-1 px-4 py-2 text-sm font-semibold bg-red-500 text-white rounded-md hover:bg-red-600" data-id="${id}">Отклонить</button>
+                        </div>` : ''}
+                    </div>
                 </div>`;
             return item;
         }
         function loadAdminPurchases() {
-            onSnapshot(query(collection(db, "purchases")), (snapshot) => {
-                const listEl = document.getElementById('admin-list-container');
+            const contentEl = document.getElementById('admin-tab-content');
+            contentEl.innerHTML = `
+                <div class="flex justify-between items-center mb-6">
+                    <h3 class="text-2xl font-bold">Проверка покупок</h3>
+                    <input id="purchase-search" type="text" placeholder="Поиск по email или коду..." class="p-2 border border-custom rounded-lg input-bg text-sm focus:outline-none focus:ring-2 focus:ring-primary">
+                </div>
+                <div id="admin-list-container" class="space-y-3"></div>`;
+            
+            const listEl = document.getElementById('admin-list-container');
+            const searchInput = document.getElementById('purchase-search');
+
+            let allPurchases = [];
+            
+            const renderList = (purchasesToRender) => {
                 if(!listEl) return;
-                if (snapshot.empty) { listEl.innerHTML = '<p>Заявок на покупку нет.</p>'; return; }
-                listEl.innerHTML = '<div class="space-y-3"></div>';
-                const container = listEl.querySelector('.space-y-3');
+                listEl.innerHTML = '';
+                if(purchasesToRender.length === 0) {
+                    listEl.innerHTML = '<p>Ничего не найдено.</p>';
+                    return;
+                }
+                purchasesToRender.forEach(p => listEl.appendChild(renderAdminPurchaseItem(p.id, p.data)));
+            };
 
-                let purchases = snapshot.docs.map(doc => ({id: doc.id, ...doc.data()}));
-                purchases.sort((a,b) => (b.createdAt?.seconds || 0) - (a.createdAt?.seconds || 0));
+            onSnapshot(query(collection(db, "purchases"), orderBy("createdAt", "desc")), (snapshot) => {
+                allPurchases = snapshot.docs.map(doc => ({id: doc.id, data: doc.data()}));
+                renderList(allPurchases);
+            });
 
-                purchases.forEach(p => {
-                    const item = document.createElement('div');
-                    item.className = 'card-bg p-4 rounded-lg shadow border border-custom';
-                    
-                    const telegramUsername = p.contactTelegram || '';
-                    const telegramLink = `https://t.me/${telegramUsername.replace('@', '')}`;
-                    const telegramDisplay = telegramUsername ? `<a href="${telegramLink}" target="_blank" class="text-primary">${telegramUsername}</a>` : 'не указан';
-
-                    let statusColor = 'text-yellow-500';
-                    if (p.status === 'Выполнен') statusColor = 'text-green-500';
-                    if (p.status === 'Отменен' || p.status === 'Отклонен') statusColor = 'text-red-500';
-
-                    item.innerHTML = `
-                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                            <div class="md:col-span-2">
-                                <p><strong>Пользователь:</strong> ${p.userEmail} (${telegramDisplay})</p>
-                                <p><strong>Товар(ы):</strong> ${p.productName}</p>
-                                <p><strong>Статус:</strong> <span class="font-semibold ${statusColor}">${p.status}</span></p>
-                                <p class="text-sm text-gray-500 dark:text-gray-400"><strong>Заказан:</strong> ${new Date(p.createdAt.seconds * 1000).toLocaleString()}</p>
-                                ${p.orderId ? `<p><strong>Код заказа:</strong> <span class="font-mono bg-gray-200 dark:bg-gray-700 px-2 py-1 rounded">${p.orderId}</span></p>` : ''}
-                            </div>
-                            <div class="flex flex-col gap-2 items-start">
-                                ${p.paymentProofUrl ? `<a href="${p.paymentProofUrl}" target="_blank" class="w-full text-center px-4 py-2 text-sm font-semibold bg-blue-500 text-white rounded-md hover:bg-blue-600">Посмотреть чек</a>` : '<span class="text-sm text-gray-500">Чек не загружен</span>'}
-                                ${p.status === 'Ожидает подтверждения' ? `
-                                <div class="w-full flex gap-2">
-                                    <button class="approve-purchase-btn flex-1 px-4 py-2 text-sm font-semibold bg-green-500 text-white rounded-md hover:bg-green-600" data-id="${p.id}">Подтвердить</button>
-                                    <button class="reject-purchase-btn flex-1 px-4 py-2 text-sm font-semibold bg-red-500 text-white rounded-md hover:bg-red-600" data-id="${p.id}">Отклонить</button>
-                                </div>
-                                ` : ''}
-                            </div>
-                        </div>
-                    `;
-                    container.appendChild(item);
-                });
+            searchInput.addEventListener('input', (e) => {
+                const searchTerm = e.target.value.toLowerCase().trim();
+                if (!searchTerm) {
+                    renderList(allPurchases);
+                    return;
+                }
+                const filtered = allPurchases.filter(({data}) => 
+                    data.userEmail.toLowerCase().includes(searchTerm) || 
+                    (data.orderId && data.orderId.toLowerCase().includes(searchTerm))
+                );
+                renderList(filtered);
             });
         }
         function loadAdminChatsList(activeChatUserId) {
-            const listEl = document.getElementById('admin-list-container');
-            if(!listEl) return;
-            listEl.innerHTML = `<div class="flex flex-col md:flex-row gap-4 h-[70vh]"><div id="chat-list-sidebar" class="w-full md:w-1/3 border-r border-custom overflow-y-auto pr-2"></div><div id="chat-view" class="w-full md:w-2/3"></div></div>`;
-
-            onSnapshot(query(collection(db, "userChats")), async (snapshot) => {
+            const contentEl = document.getElementById('admin-tab-content');
+            contentEl.innerHTML = `<h3 class="text-2xl font-bold mb-6">Чаты с пользователями</h3><div class="flex flex-col md:flex-row gap-4 h-[70vh]"><div id="chat-list-sidebar" class="w-full md:w-1/3 border-r border-custom overflow-y-auto pr-2"></div><div id="chat-view" class="w-full md:w-2/3"></div></div>`;
+            
+            onSnapshot(query(collection(db, "userChats"), orderBy("lastActivity", "desc")), async (snapshot) => {
                 const sidebar = document.getElementById('chat-list-sidebar');
                 if(!sidebar) return;
                 sidebar.innerHTML = '';
-
+                
                 let chats = snapshot.docs.map(doc => doc.data());
-                chats.sort((a, b) => (b.lastActivity?.seconds || 0) - (a.lastActivity?.seconds || 0));
 
                 for (const chatData of chats) {
                     if(chatData.userId === ADMIN_UID) continue;
@@ -992,24 +1060,24 @@
 
             const modalContent = `
                 <div class="space-y-4">
-                    <input id="p-name" class="w-full p-2 border rounded input-bg border-custom" placeholder="Название (напр. Uzum Bank, Click)" value="${p.name || ''}">
+                    <input id="p-name" class="w-full p-2 border rounded input-bg border-custom" placeholder="Название (напр. Uzum Bank, ЮMoney)" value="${p.name || ''}">
 
                     <select id="p-type" class="w-full p-2 border rounded input-bg border-custom">
-                        <option value="card" ${p.type === 'card' ? 'selected' : ''}>Карта (для перевода)</option>
-                        <option value="ewallet" ${p.type === 'ewallet' ? 'selected' : ''}>Электронный кошелек (Payme, Click)</option>
+                        <option value="card" ${p.type === 'card' ? 'selected' : ''}>Банковская карта (для перевода)</option>
+                        <option value="ewallet" ${p.type === 'ewallet' ? 'selected' : ''}>Электронный кошелёк (QR/ссылка)</option>
                     </select>
 
-                    <textarea id="p-requisites" class="w-full p-2 border rounded input-bg border-custom" placeholder="Реквизиты (номер карты, ссылка на оплату)">${p.requisites || ''}</textarea>
+                    <textarea id="p-requisites" class="w-full p-2 border rounded input-bg border-custom" placeholder="Реквизиты (номер карты, ссылка на оплату)"></textarea>
 
                     <div>
                         <label class="block text-sm font-medium mb-1">Логотип</label>
-                        <input type="file" id="p-logo-file" class="w-full text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-violet-50 file:text-primary hover:file:bg-violet-100"/>
+                        <input type="file" id="p-logo-file" class="w-full text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-violet-50 dark:file:bg-violet-900/50 file:text-primary hover:file:bg-violet-100"/>
                         <img id="p-logo-preview" src="${p.logoUrl || ''}" class="w-24 h-24 object-contain mt-2 p-2 border border-dashed border-custom rounded-lg ${p.logoUrl ? '' : 'hidden'}">
                     </div>
 
                     <div id="qr-code-section" class="${p.type === 'ewallet' ? '' : 'hidden'}">
-                        <label class="block text-sm font-medium mb-1">QR-код для оплаты (для кошельков)</label>
-                        <input type="file" id="p-qr-file" class="w-full text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-violet-50 file:text-primary hover:file:bg-violet-100"/>
+                        <label class="block text-sm font-medium mb-1">QR-код для оплаты (необязательно)</label>
+                        <input type="file" id="p-qr-file" class="w-full text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-violet-50 dark:file:bg-violet-900/50 file:text-primary hover:file:bg-violet-100"/>
                         <img id="p-qr-preview" src="${p.qrCodeUrl || ''}" class="w-24 h-24 object-contain mt-2 p-2 border border-dashed border-custom rounded-lg ${p.qrCodeUrl ? '' : 'hidden'}">
                     </div>
 
@@ -1050,10 +1118,12 @@
                 };
 
                 await (methodId ? setDoc(doc(db, 'paymentMethods', methodId), data, { merge: true }) : addDoc(collection(db, 'paymentMethods'), data));
-                return true; // Close modal
+                return true;
             };
 
             const modal = showModal(title, modalContent, onSave, 'Сохранить');
+            
+            modal.querySelector('#p-requisites').value = p.requisites || '';
 
             const typeSelect = modal.querySelector('#p-type');
             const qrSection = modal.querySelector('#qr-code-section');
@@ -1095,24 +1165,27 @@
                 }
 
                 const target = e.target;
-
-                const confirmAction = (message, onConfirm) => {
-                    showModal('Подтвердите действие', `<p>${message}</p>`, () => { onConfirm(); return true; }, 'Да, уверен');
-                };
-
-                if (target.id === 'login-redirect' || target.id === 'login-for-chat') { signInWithGoogle(); }
+                const confirmAction = (message, onConfirm) => showModal('Подтвердите действие', `<p>${message}</p>`, () => { onConfirm(); return true; }, 'Да, уверен');
+                
+                if (target.id === 'login-redirect') signInWithGoogle();
                 if (target.closest('.admin-tab-btn')) { e.preventDefault(); window.location.hash = target.closest('.admin-tab-btn').getAttribute('href'); return; }
                 if (target.id === 'start-chat-btn') { openChat(); return; }
                 if (target.closest('.contact-seller-btn')) { const code = target.dataset.code; showContactModal(code); return; }
                 if (target.closest('.upload-proof-btn')) { showProofUploadModal(target.dataset.purchaseId); return; }
                 if (target.id === 'add-product-btn') showProductForm();
                 if (target.id === 'add-payment-btn') showPaymentMethodForm();
-                if (target.closest('.edit-payment-btn')) showPaymentMethodForm(target.dataset.id);
-                if (target.closest('.edit-product-btn')) showProductForm(target.closest('.edit-product-btn').dataset.id);
-                if (target.closest('.delete-btn')) { confirmAction('Вы уверены, что хотите удалить этот элемент?', () => { deleteDoc(doc(db, target.dataset.collection, target.dataset.id)); }); }
                 if (target.id === 'add-faq-btn') { const q = prompt("Вопрос:"); const a = prompt("Ответ:"); if (q && a) addDoc(collection(db, 'faq'), { question: q, answer: a }); }
                 if (target.id === 'add-promo-btn') showPromoForm();
-                if (target.closest('.edit-promo-btn')) showPromoForm(target.closest('.edit-promo-btn').dataset.id);
+
+                const editBtn = e.target.closest('.edit-btn');
+                if (editBtn) {
+                    const { id, type } = editBtn.dataset;
+                    if (type === 'product') showProductForm(id);
+                    if (type === 'payment') showPaymentMethodForm(id);
+                    if (type === 'promo') showPromoForm(id);
+                }
+
+                if (target.closest('.delete-btn')) { confirmAction('Вы уверены, что хотите удалить этот элемент?', () => deleteDoc(doc(db, target.dataset.collection, target.dataset.id))); }
                 if (target.closest('.faq-question')) { const q = target.closest('.faq-question'); q.classList.toggle('open'); }
                 if (target.closest('.add-to-cart-btn')) showPurchaseFlow(target.closest('.add-to-cart-btn').dataset.productId, true);
                 if (target.closest('.remove-from-cart-btn')) { cart.splice(target.dataset.index, 1); localStorage.setItem('asonik_cart', JSON.stringify(cart)); renderCartPage(); updateCartCount(); }
@@ -1127,31 +1200,21 @@
                 if (target.id === 'send-chat-message') { const chatId = target.dataset.chatId; const text = document.getElementById('chat-message-input').value.trim(); const senderId = target.dataset.senderId; sendChatMessage(chatId, senderId, text); document.getElementById('chat-message-input').value = ''; }
                 if (target.closest('#profile-btn')) { e.stopPropagation(); document.getElementById('profile-menu')?.classList.toggle('hidden'); }
                 if (target.id === 'change-avatar-btn') document.getElementById('avatar-upload').click();
-                if (target.closest('.cancel-order-btn')) {
-                    const purchaseId = target.dataset.purchaseId;
-                    confirmAction('Вы уверены, что хотите отменить этот заказ?', async () => {
-                        await updateDoc(doc(db, "purchases", purchaseId), { status: 'Отменен' });
-                    });
-                }
+                if (target.closest('.cancel-order-btn')) { const purchaseId = target.dataset.purchaseId; confirmAction('Вы уверены, что хотите отменить этот заказ?', () => updateDoc(doc(db, "purchases", purchaseId), { status: 'Отменен' })); }
                 if (target.closest('.approve-purchase-btn')) { await updateDoc(doc(db, "purchases", target.dataset.id), { status: 'Выполнен' }); }
                 if (target.closest('.reject-purchase-btn')) { await updateDoc(doc(db, "purchases", target.dataset.id), { status: 'Отклонен' }); }
                 if (target.id === 'save-profile-btn') {
                     const newName = document.getElementById('profile-name').value;
                     const avatarFile = document.getElementById('avatar-upload').files[0];
-                    target.textContent = 'Сохранение...';
-                    target.disabled = true;
+                    target.textContent = 'Сохранение...'; target.disabled = true;
                     try {
                         let newAvatarUrl = currentUser.photoURL;
                         if (avatarFile) newAvatarUrl = await uploadImage(avatarFile);
                         await updateProfile(currentUser, { displayName: newName, photoURL: newAvatarUrl });
                         await setDoc(doc(db, "users", currentUser.uid), { displayName: newName, photoURL: newAvatarUrl }, { merge: true });
                         alert('Профиль обновлен!');
-                    } catch (error) {
-                        alert('Ошибка обновления профиля: ' + error.message);
-                    } finally {
-                        target.textContent = 'Сохранить';
-                        target.disabled = false;
-                    }
+                    } catch (error) { alert('Ошибка обновления профиля: ' + error.message); } 
+                    finally { target.textContent = 'Сохранить'; target.disabled = false; }
                 }
             });
             document.addEventListener('change', e => { if (e.target.id === 'avatar-upload' && e.target.files[0]) { const reader = new FileReader(); reader.onload = (e) => document.getElementById('profile-avatar').src = e.target.result; reader.readAsDataURL(e.target.files[0]); } });
@@ -1194,13 +1257,10 @@
         }
         function updateAuthUI() {
             const container = document.getElementById('auth-container');
-            const navChatsLink = document.getElementById('nav-chats-link');
-            if(!container || !navChatsLink) return;
-
-            navChatsLink.href = '#chats';
+            if(!container) return;
 
             if (currentUser) {
-                container.innerHTML = `<div class="relative"><button id="profile-btn" class="flex items-center gap-2"><img src="${currentUser.photoURL || 'https://placehold.co/32x32'}" alt="Профиль" class="w-8 h-8 rounded-full"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg></button><div id="profile-menu" class="hidden absolute right-0 mt-2 w-52 card-bg rounded-md shadow-lg border border-custom z-10"><div class="px-4 py-2 border-b border-custom"><p class="font-semibold truncate">${currentUser.displayName}</p><p class="text-sm text-gray-500 dark:text-gray-400 truncate">${currentUser.email}</p></div><a href="#profile" class="nav-link block px-4 py-2 text-sm hover:bg-gray-100 dark:hover:bg-gray-700">Профиль</a>${isAdmin ? `<a href="#admin/products" class="nav-link block px-4 py-2 text-sm hover:bg-gray-100 dark:hover:bg-gray-700">Админ-панель</a>` : ''}<div class="border-t border-custom"></div><a href="#" id="logout-btn" class="block px-4 py-2 text-sm text-red-500 hover:bg-gray-100 dark:hover:bg-gray-700">Выйти</a></div></div>`;
+                container.innerHTML = `<div class="relative"><button id="profile-btn" class="flex items-center gap-2"><img src="${currentUser.photoURL || 'https://placehold.co/32x32'}" alt="Профиль" class="w-8 h-8 rounded-full"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg></button><div id="profile-menu" class="hidden absolute right-0 mt-2 w-52 card-bg rounded-md shadow-lg border border-custom z-10"><div class="px-4 py-2 border-b border-custom"><p class="font-semibold truncate">${currentUser.displayName}</p><p class="text-sm text-gray-500 dark:text-gray-400 truncate">${currentUser.email}</p></div><a href="#profile" class="nav-link block px-4 py-2 text-sm hover:bg-gray-100 dark:hover:bg-gray-700">Профиль</a>${isAdmin ? `<a href="#admin" class="nav-link block px-4 py-2 text-sm hover:bg-gray-100 dark:hover:bg-gray-700">Админ-панель</a>` : ''}<div class="border-t border-custom"></div><a href="#" id="logout-btn" class="block px-4 py-2 text-sm text-red-500 hover:bg-gray-100 dark:hover:bg-gray-700">Выйти</a></div></div>`;
             } else {
                 container.innerHTML = `<button id="google-login-btn" class="px-4 py-2 bg-primary text-white rounded-md hover:bg-primary-hover font-semibold flex items-center gap-2"><svg class="w-5 h-5" viewBox="0 0 48 48"><path fill="#FFC107" d="M43.611 20.083H42V20H24v8h11.303c-1.649 4.657-6.08 8-11.303 8c-6.627 0-12-5.373-12-12s5.373-12 12-12c3.059 0 5.842 1.154 7.961 3.039l5.657-5.657C34.046 6.053 29.268 4 24 4C12.955 4 4 12.955 4 24s8.955 20 20 20s20-8.955 20-20c0-1.341-.138-2.65-.389-3.917z"></path><path fill="#FF3D00" d="M6.306 14.691l6.571 4.819C14.655 15.108 18.961 12 24 12c3.059 0 5.842 1.154 7.961 3.039l5.657-5.657C34.046 6.053 29.268 4 24 4C16.318 4 9.656 8.337 6.306 14.691z"></path><path fill="#4CAF50" d="M24 44c5.166 0 9.86-1.977 13.409-5.192l-6.19-5.238C29.211 35.091 26.715 36 24 36c-5.202 0-9.619-3.317-11.283-7.946l-6.522 5.025C9.505 39.556 16.227 44 24 44z"></path><path fill="#1976D2" d="M43.611 20.083H42V20H24v8h11.303c-.792 2.237-2.231 4.166-4.087 5.571l6.19 5.238C44.572 34.043 46 29.392 46 24c0-1.341-.138-2.65-.389-3.917z"></path></svg>Войти</button>`;
             }
