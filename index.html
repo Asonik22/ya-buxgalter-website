@@ -172,7 +172,7 @@
             setupEventListeners();
             updateCartCount();
             
-            await loadPaymentMethods(); // Load payment methods once on startup
+            await loadPaymentMethods(); 
 
             onAuthStateChanged(auth, user => {
                 currentUser = user;
@@ -929,14 +929,16 @@
             window.addEventListener('hashchange', handleRouting);
 
             document.body.addEventListener('click', async e => {
-                const target = e.target.closest('.nav-link');
-                if (target) {
+                const navLink = e.target.closest('.nav-link');
+                if (navLink) {
                     e.preventDefault();
-                    window.location.hash = new URL(target.href).hash;
+                    const newHash = new URL(navLink.href).hash;
+                    if (window.location.hash !== newHash) {
+                        window.location.hash = newHash;
+                    }
+                    return; 
                 }
-            });
 
-            document.body.addEventListener('click', async e => {
                 const target = e.target;
                 
                 const confirmAction = (message, onConfirm) => {
