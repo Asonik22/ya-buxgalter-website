@@ -7,27 +7,26 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
-        /* --- Фирменная фиолетовая тема --- */
         :root {
-            --bg: #1a202c;
-            --card-bg: #2d3748;
-            --text: #e2e8f0;
-            --text-muted: #a0aec0;
-            --primary: #a78bfa;
-            --primary-hover: #8b5cf6;
-            --border: #4a5568;
+            --bg-light: #f9fafb; --text-light: #111827; --card-bg-light: #ffffff; --primary-light: #8b5cf6; --primary-hover-light: #7c3aed; --border-light: #e5e7eb;
+            --bg-dark: #1a202c; --text-dark: #e2e8f0; --card-bg-dark: #2d3748; --primary-dark: #a78bfa; --primary-hover-dark: #8b5cf6; --border-dark: #4a5568;
         }
+        html.dark { --bg: var(--bg-dark); --text: var(--text-dark); --card-bg: var(--card-bg-dark); --primary: var(--primary-dark); --primary-hover: var(--primary-hover-dark); --border: var(--border-dark); }
+        html:not(.dark) { --bg: var(--bg-light); --text: var(--text-light); --card-bg: var(--card-bg-light); --primary: var(--primary-light); --primary-hover: var(--primary-hover-light); --border: var(--border-light); }
+        
         body {
             font-family: 'Inter', sans-serif;
             background-color: var(--bg);
             color: var(--text);
+            transition: background-color 0.3s, color 0.3s;
         }
         .bg-primary { background-color: var(--primary); }
         .hover\:bg-primary-hover:hover { background-color: var(--primary-hover); }
         .text-primary { color: var(--primary); }
         .border-custom { border-color: var(--border); }
         .card-bg { background-color: var(--card-bg); }
-        .input-bg { background-color: #4a5568; }
+        .input-bg { background-color: var(--card-bg); border-color: var(--border); }
+        html.dark .input-bg { background-color: #4a5568; }
         .modal-backdrop { background-color: rgba(0, 0, 0, 0.7); }
 
         [data-page] { display: none; }
@@ -52,7 +51,6 @@
             box-shadow: 0 0 0 2px var(--primary);
         }
         
-        /* Стили для переключателя */
         .toggle-switch {
             position: relative;
             display: inline-block;
@@ -103,17 +101,18 @@
                 <div class="flex items-center space-x-8">
                     <a href="#main" class="text-2xl font-bold text-primary nav-link">Asonik Store</a>
                     <nav id="main-nav" class="hidden md:flex items-center space-x-6">
-                        <a href="#main" class="nav-link text-gray-300 hover:text-primary" data-lang-key="nav_main">Главная</a>
-                        <a href="#chats" id="nav-chats-link" class="nav-link text-gray-300 hover:text-primary" data-lang-key="nav_chats">Чаты</a>
-                        <a href="#faq" class="nav-link text-gray-300 hover:text-primary" data-lang-key="nav_faq">FAQ</a>
-                        <a href="#purchases" class="nav-link text-gray-300 hover:text-primary" data-lang-key="nav_purchases">Мои покупки</a>
+                        <a href="#main" class="nav-link text-gray-600 dark:text-gray-300 hover:text-primary" data-lang-key="nav_main">Главная</a>
+                        <a href="#chats" id="nav-chats-link" class="nav-link text-gray-600 dark:text-gray-300 hover:text-primary" data-lang-key="nav_chats">Чаты</a>
+                        <a href="#faq" class="nav-link text-gray-600 dark:text-gray-300 hover:text-primary" data-lang-key="nav_faq">FAQ</a>
+                        <a href="#purchases" class="nav-link text-gray-600 dark:text-gray-300 hover:text-primary" data-lang-key="nav_purchases">Мои покупки</a>
                     </nav>
                 </div>
                 <div class="flex items-center space-x-2 md:space-x-4">
                     <div id="currency-switcher" class="hidden md:block"></div>
                     <div id="lang-switcher" class="hidden md:block"></div>
+                    <button id="theme-toggle" class="p-2 rounded-full text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700"></button>
                     <div id="notifications-container" class="relative"></div>
-                    <a href="#cart" class="relative p-2 text-gray-400 nav-link"><svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"></path></svg><span id="cart-count" class="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-4 w-4 flex items-center justify-center hidden">0</span></a>
+                    <a href="#cart" class="relative p-2 text-gray-600 dark:text-gray-400 nav-link"><svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"></path></svg><span id="cart-count" class="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-4 w-4 flex items-center justify-center hidden">0</span></a>
                     <div id="auth-container" class="relative"></div>
                 </div>
             </div>
@@ -125,13 +124,13 @@
             <div id="featured-products-container" class="mb-12"></div>
             <h1 class="text-4xl font-bold text-center mb-8" data-lang-key="catalog_title">Каталог товаров</h1>
             <div class="mb-8 p-4 card-bg rounded-lg shadow-md flex flex-col md:flex-row gap-4 items-center border border-custom">
-                <input id="search-input" type="text" placeholder="Поиск по названию..." class="w-full md:flex-grow pl-4 pr-4 py-2 border border-custom rounded-lg focus:outline-none focus:ring-2 focus:ring-primary input-bg text-white">
-                <select id="category-filter" class="w-full md:w-auto p-2 border border-custom rounded-lg focus:outline-none focus:ring-2 focus:ring-primary input-bg text-white">
+                <input id="search-input" type="text" placeholder="Поиск по названию..." class="w-full md:flex-grow pl-4 pr-4 py-2 border border-custom rounded-lg focus:outline-none focus:ring-2 focus:ring-primary input-bg">
+                <select id="category-filter" class="w-full md:w-auto p-2 border border-custom rounded-lg focus:outline-none focus:ring-2 focus:ring-primary input-bg">
                     <option value="all" data-lang-key="all_categories">Все категории</option>
                     <option value="games" data-lang-key="category_games">Игры</option>
                     <option value="apps" data-lang-key="category_apps">Приложения</option>
                 </select>
-                <select id="sort-filter" class="w-full md:w-auto p-2 border border-custom rounded-lg focus:outline-none focus:ring-2 focus:ring-primary input-bg text-white">
+                <select id="sort-filter" class="w-full md:w-auto p-2 border border-custom rounded-lg focus:outline-none focus:ring-2 focus:ring-primary input-bg">
                     <option value="new" data-lang-key="sort_new">Сначала новые</option>
                     <option value="popular" data-lang-key="sort_popular">Сначала популярные</option>
                 </select>
@@ -224,6 +223,7 @@
 
         // --- LIFECYCLE ---
         document.addEventListener('DOMContentLoaded', () => {
+            initTheme();
             initSwitchers();
             setupEventListeners();
             updateCartCount();
@@ -345,8 +345,9 @@
                 }
                 container.innerHTML = `<h2 class="text-3xl font-bold mb-6 text-center">Рекомендуемые товары</h2><div id="featured-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6"></div>`;
                 const grid = document.getElementById('featured-grid');
+                grid.innerHTML = '';
                 snapshot.forEach(doc => {
-                    grid.appendChild(renderProductCard(doc.data()));
+                    grid.appendChild(renderProductCard({ id: doc.id, ...doc.data() }));
                 });
             });
         }
@@ -388,8 +389,8 @@
         function renderProductCard(product) {
             const card = document.createElement('div');
             card.className = "card-bg rounded-lg shadow-lg flex flex-col justify-between border border-custom overflow-hidden";
-            const verifiedBadge = product.isVerified ? `<span class="bg-green-900 text-green-200 text-xs font-bold px-2 py-1 rounded-full">✔ Подтверждено</span>` : '';
-            const pinnedBadge = product.isPinned ? `<span class="bg-blue-900 text-blue-200 text-xs font-bold px-2 py-1 rounded-full">★ Закреплено</span>` : '';
+            const verifiedBadge = product.isVerified ? `<span class="bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200 text-xs font-bold px-2 py-1 rounded-full">✔ Подтверждено</span>` : '';
+            const pinnedBadge = product.isPinned ? `<span class="bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200 text-xs font-bold px-2 py-1 rounded-full">★ Закреплено</span>` : '';
 
             card.innerHTML = `
                 <div class="relative">
@@ -398,12 +399,12 @@
                 </div>
                 <div class="p-4 flex-grow">
                     <h3 class="text-lg font-semibold truncate">${product.name}</h3>
-                    <p class="text-gray-400 mt-1 text-sm h-10 overflow-hidden">${product.description}</p>
+                    <p class="text-gray-600 dark:text-gray-400 mt-1 text-sm h-10 overflow-hidden">${product.description}</p>
                     <p class="text-2xl font-bold text-primary mt-2">${formatPrice(product.price || 0)}</p>
                 </div>
                 <div class="p-4 pt-2 border-t border-custom flex items-center gap-2">
-                    <button class="add-to-cart-btn p-2 rounded-md hover:bg-gray-700" data-product-id='${product.id}' title="В корзину"><svg class="w-6 h-6 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"></path></svg></button>
-                    <button class="share-btn p-2 rounded-md hover:bg-gray-700" data-product-name="${product.name}" title="Поделиться"><svg class="w-6 h-6 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12s-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6.002l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.367 2.684 3 3 0 00-5.367-2.684z"></path></svg></button>
+                    <button class="add-to-cart-btn p-2 rounded-md hover:bg-gray-100 dark:hover:bg-gray-700" data-product-id='${product.id}' title="В корзину"><svg class="w-6 h-6 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"></path></svg></button>
+                    <button class="share-btn p-2 rounded-md hover:bg-gray-100 dark:hover:bg-gray-700" data-product-name="${product.name}" title="Поделиться"><svg class="w-6 h-6 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12s-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6.002l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.367 2.684 3 3 0 00-5.367-2.684z"></path></svg></button>
                     <button class="buy-now-btn flex-grow bg-primary text-white py-2 px-4 rounded-lg hover:bg-primary-hover font-semibold" data-product-id="${product.id}" data-lang-key="buy_button">Купить</button>
                 </div>`;
             return card;
@@ -415,7 +416,7 @@
             contentEl.innerHTML = `
                 <div class="max-w-4xl mx-auto">
                     <h1 class="text-4xl font-bold text-center mb-4" data-lang-key="faq_title">Часто задаваемые вопросы</h1>
-                    <p class="text-center text-lg text-gray-400 mb-12">Здесь вы найдете ответы на самые популярные вопросы.</p>
+                    <p class="text-center text-lg text-gray-600 dark:text-gray-400 mb-12">Здесь вы найдете ответы на самые популярные вопросы.</p>
                     <div id="faq-list" class="space-y-4"></div>
                 </div>
             `;
@@ -437,7 +438,7 @@
                         </button>
                         <div class="faq-answer">
                             <div class="overflow-hidden">
-                                <p class="p-6 pt-0 text-gray-300">${item.answer}</p>
+                                <p class="p-6 pt-0 text-gray-600 dark:text-gray-300">${item.answer}</p>
                             </div>
                         </div>`;
                     listEl.appendChild(faqItem);
@@ -506,7 +507,7 @@
             renderChatInterface(contentEl, chatId, "Чат с администрацией", currentUser.uid);
         }
         function renderChatInterface(container, chatId, title, currentUserId) {
-            container.innerHTML = `<div class="max-w-4xl mx-auto card-bg border border-custom rounded-lg shadow"><div class="p-4 font-bold border-b border-custom">${title}</div><div id="messages-container" class="p-4 h-96 overflow-y-auto flex flex-col space-y-4">Загрузка...</div><div class="p-4 border-t border-custom flex gap-2"><input id="chat-message-input" class="flex-grow p-2 border rounded input-bg border-custom focus:ring-2 focus:ring-primary focus:outline-none text-white" placeholder="Введите сообщение..."><button id="send-chat-message" data-chat-id="${chatId}" data-sender-id="${currentUserId}" class="bg-primary text-white px-6 py-2 rounded-lg hover:bg-primary-hover">Отправить</button></div></div>`;
+            container.innerHTML = `<div class="max-w-4xl mx-auto card-bg border border-custom rounded-lg shadow"><div class="p-4 font-bold border-b border-custom">${title}</div><div id="messages-container" class="p-4 h-96 overflow-y-auto flex flex-col space-y-4">Загрузка...</div><div class="p-4 border-t border-custom flex gap-2"><input id="chat-message-input" class="flex-grow p-2 border rounded input-bg border-custom focus:ring-2 focus:ring-primary focus:outline-none" placeholder="Введите сообщение..."><button id="send-chat-message" data-chat-id="${chatId}" data-sender-id="${currentUserId}" class="bg-primary text-white px-6 py-2 rounded-lg hover:bg-primary-hover">Отправить</button></div></div>`;
             const messagesContainer = document.getElementById('messages-container');
             const q = query(collection(db, `chats/${chatId}/messages`), orderBy("createdAt", "asc"));
 
@@ -521,10 +522,10 @@
                     const timestamp = msg.createdAt ? new Date(msg.createdAt.seconds * 1000).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '';
 
                     messageEl.innerHTML = `
-                        <div class="px-4 py-2 rounded-lg max-w-sm md:max-w-md ${isMe ? 'bg-primary text-white' : 'bg-gray-700 text-white'}">
+                        <div class="px-4 py-2 rounded-lg max-w-sm md:max-w-md ${isMe ? 'bg-primary text-white' : 'bg-gray-200 dark:bg-gray-700 text-gray-900 dark:text-white'}">
                             <p>${msg.text}</p>
                         </div>
-                        <span class="text-xs text-gray-400">${timestamp}</span>
+                        <span class="text-xs text-gray-500 dark:text-gray-400">${timestamp}</span>
                     `;
                     messagesContainer.appendChild(messageEl);
                 });
@@ -620,13 +621,26 @@
                     
                     let statusColor, statusText;
                     switch(purchase.status) {
-                        case 'Выполнен': statusColor = 'bg-green-900 text-green-200'; statusText = 'Выполнен'; break;
+                        case 'Выполнен': statusColor = 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200'; statusText = 'Выполнен'; break;
                         case 'Отменен':
-                        case 'Отклонен': statusColor = 'bg-red-900 text-red-200'; statusText = purchase.status; break;
-                        default: statusColor = 'bg-yellow-900 text-yellow-200'; statusText = purchase.status;
+                        case 'Отклонен': statusColor = 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200'; statusText = purchase.status; break;
+                        default: statusColor = 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200'; statusText = purchase.status;
                     }
 
                     const productImageUrl = purchase.items && purchase.items[0] ? purchase.items[0].imageUrl : 'https://placehold.co/128x128';
+                    
+                    let actionButton;
+                    if (purchase.status === 'Выполнен') {
+                        actionButton = `<button class="contact-seller-btn w-full px-4 py-2 font-semibold bg-primary text-white rounded-md hover:bg-primary-hover" data-code="${purchase.orderId}">Получить товар</button>`;
+                    } else if (purchase.status === 'Ожидает оплаты') {
+                        actionButton = `
+                            <button class="upload-proof-btn w-full px-4 py-2 font-semibold bg-green-500 text-white rounded-md hover:bg-green-600" data-purchase-id="${doc.id}">Оплатить</button>
+                            <button class="cancel-order-btn w-full px-4 py-2 font-semibold border border-red-500 text-red-500 rounded-md hover:bg-red-500 hover:text-white" data-purchase-id="${doc.id}">Отменить</button>
+                        `;
+                    } else {
+                         actionButton = `<button class="contact-seller-btn w-full px-4 py-2 font-semibold bg-primary/20 text-primary rounded-md hover:bg-primary/30" data-code="${purchase.orderId}">Связаться</button>`;
+                    }
+
 
                     item.innerHTML = `
                         <div class="w-full sm:w-32 h-32 sm:h-auto flex-shrink-0">
@@ -637,17 +651,15 @@
                                 <h3 class="text-xl font-bold">${purchase.productName}</h3>
                                 <span class="text-xs font-bold px-2 py-1 rounded-full ${statusColor}">${statusText}</span>
                             </div>
-                            <div class="text-sm text-gray-400 space-y-2">
+                            <div class="text-sm text-gray-600 dark:text-gray-400 space-y-2">
                                 <p><strong>Дата:</strong> ${new Date(purchase.createdAt.seconds * 1000).toLocaleString()}</p>
-                                <p><strong>Код заказа:</strong> <span class="font-mono bg-gray-700 px-2 py-1 rounded">${purchase.orderId}</span></p>
+                                <p><strong>Код заказа:</strong> <span class="font-mono bg-gray-200 dark:bg-gray-700 px-2 py-1 rounded">${purchase.orderId}</span></p>
                                 ${paymentMethod ? `<p class="flex items-center gap-2"><strong>Способ оплаты:</strong> <img src="${paymentMethod.logoUrl}" class="h-5"> ${paymentMethod.name}</p>` : ''}
                                 ${purchase.rejectionReason ? `<p class="text-red-500"><strong>Причина отклонения:</strong> ${purchase.rejectionReason}</p>` : ''}
                             </div>
                         </div>
                         <div class="flex flex-col justify-center items-center gap-2 sm:w-40 flex-shrink-0 border-t sm:border-t-0 sm:border-l border-custom pt-4 sm:pt-0 sm:pl-6 mt-4 sm:mt-0">
-                             ${purchase.status === 'Ожидает оплаты' ? `<button class="upload-proof-btn w-full px-4 py-2 font-semibold bg-green-500 text-white rounded-md hover:bg-green-600" data-purchase-id="${doc.id}">Оплатить</button>` : ''}
-                             ${purchase.status === 'Ожидает оплаты' ? `<button class="cancel-order-btn w-full px-4 py-2 font-semibold border border-red-500 text-red-500 rounded-md hover:bg-red-500 hover:text-white" data-purchase-id="${doc.id}">Отменить заказ</button>` : ''}
-                             <button class="contact-seller-btn w-full px-4 py-2 font-semibold bg-primary/20 text-primary rounded-md hover:bg-primary/30" data-code="${purchase.orderId}">Связаться</button>
+                            ${actionButton}
                         </div>
                     `;
                     listEl.appendChild(item);
@@ -707,7 +719,7 @@
                         <label class="font-bold text-lg">Промокод</label>
                         <div class="flex gap-2 mt-1">
                             <input id="promo-input" class="w-full p-2 border rounded input-bg" placeholder="Введите промокод">
-                            <button id="apply-promo" class="px-4 py-2 bg-gray-600 rounded">Применить</button>
+                            <button id="apply-promo" class="px-4 py-2 bg-gray-200 dark:bg-gray-600 rounded">Применить</button>
                         </div>
                         <p id="promo-status" class="text-sm mt-1 h-4"></p>
                     </div>
@@ -787,13 +799,23 @@
 
                     if ((promoData.uses || 0) < promoData.limit) {
                         let discountApplicable = true;
+                        let itemToDiscount = total;
+
                         if (isForSingleProduct) {
-                            discountApplicable = items.some(item => item.productId === promoData.productId);
+                            const applicableItem = items.find(item => item.productId === promoData.productId);
+                            if (applicableItem) {
+                                itemToDiscount = applicableItem.price;
+                                // Recalculate total price based on one discounted item
+                                currentPrice = (total - itemToDiscount) + (itemToDiscount * (1 - (promoData.discount / 100)));
+                            } else {
+                                discountApplicable = false;
+                            }
+                        } else {
+                            currentPrice = total * (1 - (promoData.discount / 100));
                         }
 
+
                         if(discountApplicable) {
-                            const discount = promoData.discount / 100;
-                            currentPrice = total * (1 - discount);
                             appliedPromo = promoData;
                             appliedPromo.code = promoDoc.id;
 
@@ -829,7 +851,7 @@
                  if (method.type === 'card') {
                     paymentInstructions = `
                         <p>Пожалуйста, переведите точную сумму <span class="font-bold">${formatPrice(purchase.finalPrice)}</span> на карту ${method.name}:</p>
-                        <p class="font-mono text-lg my-2 p-2 bg-gray-700 rounded">${method.requisites}</p>
+                        <p class="font-mono text-lg my-2 p-2 bg-gray-200 dark:bg-gray-700 rounded">${method.requisites}</p>
                     `;
                 } else if (method.type === 'ewallet') {
                     paymentInstructions = `
@@ -934,7 +956,7 @@
                 'Связь с продавцом',
                 `<div class="text-center">
                     <p class="mb-4">Нажмите кнопку ниже, чтобы связаться с продавцом в Telegram. Пожалуйста, укажите код вашего заказа при общении:</p>
-                    <p class="text-3xl font-mono bg-gray-700 inline-block px-4 py-2 rounded-lg mb-6">${orderId}</p>
+                    <p class="text-3xl font-mono bg-gray-200 dark:bg-gray-700 inline-block px-4 py-2 rounded-lg mb-6">${orderId}</p>
                  </div>`,
                 () => {
                     window.open(telegramLink, '_blank');
@@ -979,7 +1001,7 @@
                         <h2 class="text-2xl font-bold mb-4">Админ-панель</h2>
                         <nav class="space-y-2">
                             ${tabs.map(tab => `
-                                <a href="#admin/${tab.id}" class="admin-tab-btn flex items-center gap-3 px-4 py-2 rounded-lg ${subpage === tab.id ? 'bg-primary text-white' : 'hover:bg-gray-700'}" data-tab="${tab.id}">
+                                <a href="#admin/${tab.id}" class="admin-tab-btn flex items-center gap-3 px-4 py-2 rounded-lg ${subpage === tab.id ? 'bg-primary text-white' : 'hover:bg-gray-100 dark:hover:bg-gray-700'}" data-tab="${tab.id}">
                                     <span>${tab.name}</span>
                                 </a>`).join('')}
                         </nav>
@@ -1235,7 +1257,6 @@
                 
                 let chatMetas = snapshot.docs.map(d => d.data());
                 
-                // Client-side sort and filter
                 chatMetas = chatMetas
                     .filter(chat => chat.userId !== ADMIN_UID)
                     .sort((a, b) => (b.lastActivity?.seconds || 0) - (a.lastActivity?.seconds || 0));
@@ -1365,12 +1386,12 @@
                     <textarea id="p-requisites" class="w-full p-2 border rounded input-bg border-custom" placeholder="Реквизиты (номер карты, ссылка на оплату)"></textarea>
                     <div>
                         <label class="block text-sm font-medium mb-1">Логотип</label>
-                        <input type="file" id="p-logo-file" class="w-full text-sm file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-violet-900/50 file:text-primary hover:file:bg-violet-100"/>
+                        <input type="file" id="p-logo-file" class="w-full text-sm file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-primary/10 dark:file:bg-violet-900/50 file:text-primary hover:file:bg-primary/20"/>
                         <img id="p-logo-preview" src="${p.logoUrl || ''}" class="w-24 h-24 object-contain mt-2 p-2 border border-dashed border-custom rounded-lg ${p.logoUrl ? '' : 'hidden'}">
                     </div>
                     <div id="qr-code-section" class="${p.type === 'ewallet' ? '' : 'hidden'}">
                         <label class="block text-sm font-medium mb-1">QR-код для оплаты (необязательно)</label>
-                        <input type="file" id="p-qr-file" class="w-full text-sm file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-violet-900/50 file:text-primary hover:file:bg-violet-100"/>
+                        <input type="file" id="p-qr-file" class="w-full text-sm file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-primary/10 dark:file:bg-violet-900/50 file:text-primary hover:file:bg-primary/20"/>
                         <img id="p-qr-preview" src="${p.qrCodeUrl || ''}" class="w-24 h-24 object-contain mt-2 p-2 border border-dashed border-custom rounded-lg ${p.qrCodeUrl ? '' : 'hidden'}">
                     </div>
                     <input id="p-order" type="number" class="w-full p-2 border rounded input-bg border-custom" placeholder="Порядок сортировки" value="${p.order || 0}">
@@ -1545,7 +1566,34 @@
             if(sortFilter) sortFilter.addEventListener('change', applyFiltersAndSort);
         }
 
-        // --- AUTH & UI ---
+        // --- THEME & AUTH ---
+        function initTheme() {
+            const themeToggleBtn = document.getElementById('theme-toggle');
+            if (!themeToggleBtn) return;
+            const moonIcon = `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg>`;
+            const sunIcon = `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"></circle><line x1="12" y1="1" x2="12" y2="3"></line><line x1="12" y1="21" x2="12" y2="23"></line><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line><line x1="1" y1="12" x2="3" y2="12"></line><line x1="21" y1="12" x2="23" y2="12"></line><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line></svg>`;
+
+            const docElement = document.documentElement;
+            const applyTheme = (theme) => {
+                if (theme === 'dark') {
+                    docElement.classList.add('dark');
+                    themeToggleBtn.innerHTML = sunIcon;
+                } else {
+                    docElement.classList.remove('dark');
+                    themeToggleBtn.innerHTML = moonIcon;
+                }
+            };
+            const savedTheme = localStorage.getItem('color-theme');
+            const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+            const currentTheme = savedTheme || (prefersDark ? 'dark' : 'light');
+            applyTheme(currentTheme);
+
+            themeToggleBtn.onclick = () => {
+                const newTheme = docElement.classList.contains('dark') ? 'light' : 'dark';
+                localStorage.setItem('color-theme', newTheme);
+                applyTheme(newTheme);
+            };
+        }
         function updateAuthUI() {
             const container = document.getElementById('auth-container');
             if(!container) return;
