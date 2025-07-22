@@ -29,7 +29,14 @@
         .faq-question.open + .faq-answer { grid-template-rows: 1fr; }
         .faq-question svg { transition: transform 0.3s; }
         .faq-question.open svg { transform: rotate(180deg); }
-        .payment-option.selected { border-color: var(--primary-dark); box-shadow: 0 0 0 2px var(--primary-dark); }
+        .payment-option.selected, .card-option.selected { 
+            border-color: var(--primary-light); 
+            box-shadow: 0 0 0 2px var(--primary-light);
+        }
+        .dark .payment-option.selected, .dark .card-option.selected {
+             border-color: var(--primary-dark); 
+             box-shadow: 0 0 0 2px var(--primary-dark);
+        }
     </style>
 </head>
 <body class="bg-light dark:bg-dark text-light dark:text-dark">
