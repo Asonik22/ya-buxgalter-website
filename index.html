@@ -83,10 +83,10 @@
 
         <div data-page="chats"><div id="chats-content"></div></div>
         <div data-page="faq"><h1 class="text-4xl font-bold text-center mb-8" data-lang-key="faq_title">Часто задаваемые вопросы</h1><div id="faq-content" class="max-w-4xl mx-auto space-y-4"></div></div>
-        <div data-page="purchases"><h1 class="text-4xl font-bold text-center mb-8" data-lang-key="purchases_title">Мои покупки</h1><div id="purchases-content"></div></div>
+        <div data-page="purchases"><div id="purchases-content"><p class="text-center">Загрузка ваших покупок...</p></div></div>
         <div data-page="admin"><div id="admin-content"></div></div>
         <div data-page="cart"><h1 class="text-4xl font-bold text-center mb-8" data-lang-key="cart_title">Корзина</h1><div id="cart-content"></div></div>
-        <div data-page="profile"><h1 class="text-4xl font-bold text-center mb-8" data-lang-key="profile_title">Профиль</h1><div id="profile-content"></div></div>
+        <div data-page="profile"><div id="profile-content"></div></div>
     </main>
 
     <div id="modals-container"></div>
@@ -117,9 +117,9 @@
         // --- STATE ---
         let currentUser = null;
         let isAdmin = false;
-        let authReady = false; // Auth state flag
+        let authReady = false;
         let allProducts = [];
-        let paymentMethods = []; // Will be loaded from Firestore
+        let paymentMethods = [];
         let cart = JSON.parse(localStorage.getItem('asonik_cart')) || [];
         const appState = {
             currency: 'UZS',
@@ -165,13 +165,12 @@
         }
 
         // --- LIFECYCLE ---
-        document.addEventListener('DOMContentLoaded', async () => {
+        document.addEventListener('DOMContentLoaded', () => {
             initTheme();
             initSwitchers();
             setupEventListeners();
             updateCartCount();
-
-            await loadPaymentMethods();
+            loadPaymentMethods();
 
             onAuthStateChanged(auth, user => {
                 currentUser = user;
@@ -182,8 +181,7 @@
                 }
                 authReady = true;
                 updateAuthUI();
-                if (window.location.hash.startsWith('#admin') && !isAdmin) window.location.hash = '#main';
-                handleRouting();
+                handleRouting(); 
             });
         });
 
@@ -211,7 +209,7 @@
         }
 
         // --- DATA FETCHING ---
-        async function loadPaymentMethods() {
+        function loadPaymentMethods() {
             const q = query(collection(db, "paymentMethods"), orderBy("order", "asc"));
             onSnapshot(q, (snapshot) => {
                 paymentMethods = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
@@ -226,7 +224,6 @@
             const hash = window.location.hash || '#main';
             let [page, subpage] = (hash.substring(1) || 'main').split('/');
             
-            // Default to dashboard for admin
             if (page === 'admin' && !subpage) {
                 subpage = 'dashboard';
                 window.location.hash = `admin/dashboard`;
@@ -248,7 +245,7 @@
             const protectedPages = ['purchases', 'chats', 'profile', 'admin'];
             if (protectedPages.includes(page) && !currentUser) {
                 const contentEl = document.querySelector(`[data-page="${page}"] > div`);
-                if (contentEl) contentEl.innerHTML = `<p class="text-center">Пожалуйста, <a href="#" id="login-redirect" class="text-primary underline">войдите</a>, чтобы просмотреть эту страницу.</p>`;
+                if (contentEl) contentEl.innerHTML = `<h1 class="text-4xl font-bold text-center mb-8">${t(page+'_title')}</h1><p class="text-center">Пожалуйста, <a href="#" id="login-redirect" class="text-primary underline">войдите</a>, чтобы просмотреть эту страницу.</p>`;
                 return;
             }
 
@@ -336,8 +333,9 @@
         }
         function loadProfilePage() {
             const contentEl = document.getElementById('profile-content');
-            if (!currentUser) return; // Guarded by loadPageContent
+            if (!contentEl || !currentUser) return;
             contentEl.innerHTML = `
+                <h1 class="text-4xl font-bold text-center mb-8" data-lang-key="profile_title">Профиль</h1>
                 <div class="max-w-3xl mx-auto card-bg p-8 rounded-2xl shadow-lg border border-custom">
                     <div class="flex flex-col md:flex-row items-center md:items-start gap-8">
                         <div class="flex flex-col items-center">
@@ -370,8 +368,9 @@
         // --- CHAT SYSTEM ---
         function loadChatsPage() {
              const contentEl = document.getElementById('chats-content');
-             if (!currentUser) return; // Guarded by loadPageContent
+             if (!contentEl || !currentUser) return;
              contentEl.innerHTML = `
+                <h1 class="text-4xl font-bold text-center mb-8" data-lang-key="nav_chats">Чаты</h1>
                 <div class="text-center max-w-lg mx-auto card-bg p-8 rounded-lg shadow-lg">
                     <h2 class="text-2xl font-bold mb-4">Поддержка клиентов</h2>
                     <p class="mb-6 text-gray-600 dark:text-gray-300">Если у вас возникли вопросы по заказам или другим темам, нажмите кнопку ниже, чтобы начать чат с администрацией.</p>
@@ -478,12 +477,18 @@
         }
         function loadPurchasesPage() {
             const contentEl = document.getElementById('purchases-content');
-            if (!currentUser) return; // Guarded by loadPageContent
-            onSnapshot(query(collection(db, "purchases"), where("userId", "==", currentUser.uid), orderBy("createdAt", "desc")), (snapshot) => {
-                if(!contentEl) return;
-                if (snapshot.empty) { contentEl.innerHTML = '<div class="text-center card-bg p-8 rounded-lg shadow-md"><p>У вас еще нет покупок.</p></div>'; return; }
-                contentEl.innerHTML = '<div class="space-y-4"></div>';
-                const container = contentEl.querySelector('.space-y-4');
+            if (!contentEl || !currentUser) return;
+            
+            contentEl.innerHTML = `<h1 class="text-4xl font-bold text-center mb-8" data-lang-key="purchases_title">Мои покупки</h1><div id="purchases-list" class="space-y-4"></div>`;
+            const listEl = document.getElementById('purchases-list');
+
+            const q = query(collection(db, "purchases"), where("userId", "==", currentUser.uid), orderBy("createdAt", "desc"));
+            onSnapshot(q, (snapshot) => {
+                if (snapshot.empty) { 
+                    listEl.innerHTML = '<div class="text-center card-bg p-8 rounded-lg shadow-md"><p>У вас еще нет покупок.</p></div>'; 
+                    return; 
+                }
+                listEl.innerHTML = '';
                 snapshot.forEach(doc => {
                     const purchase = doc.data();
                     const item = document.createElement('div');
@@ -508,7 +513,7 @@
                             </div>
                         </div>
                     `;
-                    container.appendChild(item);
+                    listEl.appendChild(item);
                 });
             });
         }
@@ -523,11 +528,11 @@
 
             const cardsHtml = enabledCards.length > 0 ? `
                 <div>
-                    <label class="font-bold text-lg mb-2 block">Банковские карты</label>
+                    <label class="font-bold text-lg mb-2 block">Банковские карты (переводом)</label>
                     <div class="grid grid-cols-2 gap-4">
                         ${enabledCards.map(p => `
-                            <button data-method-id="${p.id}" class="payment-option flex items-center justify-center gap-2 p-4 border-2 border-custom rounded-lg text-center">
-                                <img src="${p.logoUrl}" class="h-6 object-contain">
+                            <button data-method-id="${p.id}" class="payment-option flex flex-col items-center justify-center gap-2 p-4 border-2 border-custom rounded-lg text-center h-24">
+                                <img src="${p.logoUrl}" class="h-10 object-contain">
                                 <span>${p.name}</span>
                             </button>
                         `).join('')}
@@ -539,8 +544,8 @@
                     <label class="font-bold text-lg mb-2 block">Электронные кошельки</label>
                     <div class="grid grid-cols-2 gap-4">
                         ${enabledEwallets.map(p => `
-                            <button data-method-id="${p.id}" class="payment-option flex items-center justify-center gap-2 p-4 border-2 border-custom rounded-lg text-center">
-                                <img src="${p.logoUrl}" class="h-6 object-contain">
+                            <button data-method-id="${p.id}" class="payment-option flex flex-col items-center justify-center gap-2 p-4 border-2 border-custom rounded-lg text-center h-24">
+                                <img src="${p.logoUrl}" class="h-10 object-contain">
                                 <span>${p.name}</span>
                             </button>
                         `).join('')}
@@ -869,7 +874,7 @@
             const purchasesSnapshot = await getDocs(query(collection(db, "purchases")));
             const productsSnapshot = await getDocs(query(collection(db, "products")));
 
-            const allPurchases = purchasesSnapshot.docs.map(doc => doc.data());
+            const allPurchases = purchasesSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
             const completedPurchases = allPurchases.filter(p => p.status === 'Выполнен');
             const pendingPurchases = allPurchases.filter(p => p.status === 'Ожидает подтверждения');
             
@@ -936,7 +941,7 @@
                     <img src="${data.logoUrl || 'https://placehold.co/64x64'}" class="w-12 h-12 rounded-md object-contain">
                     <div>
                         <p class="font-semibold">${data.name} <span class="text-xs ${data.isEnabled ? 'text-green-500' : 'text-red-500'}">${data.isEnabled ? 'Включен' : 'Отключен'}</span></p>
-                        <p class="text-sm text-gray-500 dark:text-gray-400">Тип: ${data.type} | Порядок: ${data.order || 0}</p>
+                        <p class="text-sm text-gray-500 dark:text-gray-400">Тип: ${data.type === 'card' ? 'Карта' : 'Кошелек'} | Порядок: ${data.order || 0}</p>
                     </div>
                 </div>
                 <div>
@@ -1063,7 +1068,7 @@
                     <input id="p-name" class="w-full p-2 border rounded input-bg border-custom" placeholder="Название (напр. Uzum Bank, ЮMoney)" value="${p.name || ''}">
 
                     <select id="p-type" class="w-full p-2 border rounded input-bg border-custom">
-                        <option value="card" ${p.type === 'card' ? 'selected' : ''}>Банковская карта (для перевода)</option>
+                        <option value="card" ${p.type === 'card' ? 'selected' : ''}>Банковская карта (переводом)</option>
                         <option value="ewallet" ${p.type === 'ewallet' ? 'selected' : ''}>Электронный кошелёк (QR/ссылка)</option>
                     </select>
 
