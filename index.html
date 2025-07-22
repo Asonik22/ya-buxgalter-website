@@ -20,6 +20,17 @@
             color: var(--text);
             transition: background-color 0.3s, color 0.3s;
         }
+        .card-bg, .admin-tab-btn, button {
+            transition: all 0.2s ease-in-out;
+        }
+        .card-bg:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+        }
+        html.dark .card-bg:hover {
+             box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+        }
+        
         .bg-primary { background-color: var(--primary); }
         .hover\:bg-primary-hover:hover { background-color: var(--primary-hover); }
         .text-primary { color: var(--primary); }
@@ -32,64 +43,18 @@
         [data-page] { display: none; }
         [data-page].active { display: block; }
 
-        .faq-answer {
-            display: grid;
-            grid-template-rows: 0fr;
-            transition: grid-template-rows 0.3s ease-out;
-        }
-        .faq-question.open + .faq-answer {
-            grid-template-rows: 1fr;
-        }
-        .faq-icon {
-            transition: transform 0.3s;
-        }
-        .faq-question.open .faq-icon {
-            transform: rotate(45deg);
-        }
-        .payment-option.selected {
-            border-color: var(--primary);
-            box-shadow: 0 0 0 2px var(--primary);
-        }
+        .faq-answer { display: grid; grid-template-rows: 0fr; transition: grid-template-rows 0.3s ease-out; }
+        .faq-question.open + .faq-answer { grid-template-rows: 1fr; }
+        .faq-icon { transition: transform 0.3s; }
+        .faq-question.open .faq-icon { transform: rotate(45deg); }
+        .payment-option.selected { border-color: var(--primary); box-shadow: 0 0 0 2px var(--primary); }
         
-        .toggle-switch {
-            position: relative;
-            display: inline-block;
-            width: 44px;
-            height: 24px;
-        }
-        .toggle-switch input {
-            opacity: 0;
-            width: 0;
-            height: 0;
-        }
-        .toggle-slider {
-            position: absolute;
-            cursor: pointer;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background-color: #4a5568;
-            transition: .4s;
-            border-radius: 24px;
-        }
-        .toggle-slider:before {
-            position: absolute;
-            content: "";
-            height: 16px;
-            width: 16px;
-            left: 4px;
-            bottom: 4px;
-            background-color: white;
-            transition: .4s;
-            border-radius: 50%;
-        }
-        input:checked + .toggle-slider {
-            background-color: var(--primary);
-        }
-        input:checked + .toggle-slider:before {
-            transform: translateX(20px);
-        }
+        .toggle-switch { position: relative; display: inline-block; width: 44px; height: 24px; }
+        .toggle-switch input { opacity: 0; width: 0; height: 0; }
+        .toggle-slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #4a5568; transition: .4s; border-radius: 24px; }
+        .toggle-slider:before { position: absolute; content: ""; height: 16px; width: 16px; left: 4px; bottom: 4px; background-color: white; transition: .4s; border-radius: 50%; }
+        input:checked + .toggle-slider { background-color: var(--primary); }
+        input:checked + .toggle-slider:before { transform: translateX(20px); }
 
     </style>
 </head>
@@ -124,13 +89,13 @@
             <div id="featured-products-container" class="mb-12"></div>
             <h1 class="text-4xl font-bold text-center mb-8" data-lang-key="catalog_title">Каталог товаров</h1>
             <div class="mb-8 p-4 card-bg rounded-lg shadow-md flex flex-col md:flex-row gap-4 items-center border border-custom">
-                <input id="search-input" type="text" placeholder="Поиск по названию..." class="w-full md:flex-grow pl-4 pr-4 py-2 border border-custom rounded-lg focus:outline-none focus:ring-2 focus:ring-primary input-bg">
-                <select id="category-filter" class="w-full md:w-auto p-2 border border-custom rounded-lg focus:outline-none focus:ring-2 focus:ring-primary input-bg">
+                <input id="search-input" type="text" placeholder="Поиск по названию..." class="w-full md:flex-grow pl-4 pr-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary input-bg">
+                <select id="category-filter" class="w-full md:w-auto p-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary input-bg">
                     <option value="all" data-lang-key="all_categories">Все категории</option>
                     <option value="games" data-lang-key="category_games">Игры</option>
                     <option value="apps" data-lang-key="category_apps">Приложения</option>
                 </select>
-                <select id="sort-filter" class="w-full md:w-auto p-2 border border-custom rounded-lg focus:outline-none focus:ring-2 focus:ring-primary input-bg">
+                <select id="sort-filter" class="w-full md:w-auto p-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary input-bg">
                     <option value="new" data-lang-key="sort_new">Сначала новые</option>
                     <option value="popular" data-lang-key="sort_popular">Сначала популярные</option>
                 </select>
@@ -507,7 +472,7 @@
             renderChatInterface(contentEl, chatId, "Чат с администрацией", currentUser.uid);
         }
         function renderChatInterface(container, chatId, title, currentUserId) {
-            container.innerHTML = `<div class="max-w-4xl mx-auto card-bg border border-custom rounded-lg shadow"><div class="p-4 font-bold border-b border-custom">${title}</div><div id="messages-container" class="p-4 h-96 overflow-y-auto flex flex-col space-y-4">Загрузка...</div><div class="p-4 border-t border-custom flex gap-2"><input id="chat-message-input" class="flex-grow p-2 border rounded input-bg border-custom focus:ring-2 focus:ring-primary focus:outline-none" placeholder="Введите сообщение..."><button id="send-chat-message" data-chat-id="${chatId}" data-sender-id="${currentUserId}" class="bg-primary text-white px-6 py-2 rounded-lg hover:bg-primary-hover">Отправить</button></div></div>`;
+            container.innerHTML = `<div class="max-w-4xl mx-auto card-bg border border-custom rounded-lg shadow"><div class="p-4 font-bold border-b border-custom">${title}</div><div id="messages-container" class="p-4 h-96 overflow-y-auto flex flex-col space-y-4">Загрузка...</div><div class="p-4 border-t border-custom flex gap-2"><input id="chat-message-input" class="flex-grow p-2 border rounded input-bg border-custom focus:outline-none focus:ring-2 focus:ring-primary" placeholder="Введите сообщение..."><button id="send-chat-message" data-chat-id="${chatId}" data-sender-id="${currentUserId}" class="bg-primary text-white px-6 py-2 rounded-lg hover:bg-primary-hover">Отправить</button></div></div>`;
             const messagesContainer = document.getElementById('messages-container');
             const q = query(collection(db, `chats/${chatId}/messages`), orderBy("createdAt", "asc"));
 
@@ -601,7 +566,10 @@
         }
         async function loadPurchasesPage() {
             const contentEl = document.getElementById('purchases-content');
-            if (!currentUser) return; 
+            if (!currentUser) { 
+                contentEl.innerHTML = `<h1 class="text-4xl font-bold text-center mb-8" data-lang-key="purchases_title">Мои покупки</h1><p class="text-center">Пожалуйста, <a href="#" id="login-redirect" class="text-primary underline">войдите</a>, чтобы просмотреть эту страницу.</p>`;
+                return;
+            }
             
             contentEl.innerHTML = `<h1 class="text-4xl font-bold text-center mb-8" data-lang-key="purchases_title">Мои покупки</h1><div id="purchases-list" class="space-y-6"></div>`;
             const listEl = document.getElementById('purchases-list');
@@ -629,16 +597,16 @@
 
                     const productImageUrl = purchase.items && purchase.items[0] ? purchase.items[0].imageUrl : 'https://placehold.co/128x128';
                     
-                    let actionButton;
+                    let actionButtons;
                     if (purchase.status === 'Выполнен') {
-                        actionButton = `<button class="contact-seller-btn w-full px-4 py-2 font-semibold bg-primary text-white rounded-md hover:bg-primary-hover" data-code="${purchase.orderId}">Получить товар</button>`;
+                        actionButtons = `<button class="contact-seller-btn w-full px-4 py-2 font-semibold bg-primary text-white rounded-md hover:bg-primary-hover" data-code="${purchase.orderId}">Получить товар</button>`;
                     } else if (purchase.status === 'Ожидает оплаты') {
-                        actionButton = `
+                        actionButtons = `
                             <button class="upload-proof-btn w-full px-4 py-2 font-semibold bg-green-500 text-white rounded-md hover:bg-green-600" data-purchase-id="${doc.id}">Оплатить</button>
                             <button class="cancel-order-btn w-full px-4 py-2 font-semibold border border-red-500 text-red-500 rounded-md hover:bg-red-500 hover:text-white" data-purchase-id="${doc.id}">Отменить</button>
                         `;
                     } else {
-                         actionButton = `<button class="contact-seller-btn w-full px-4 py-2 font-semibold bg-primary/20 text-primary rounded-md hover:bg-primary/30" data-code="${purchase.orderId}">Связаться</button>`;
+                         actionButtons = `<button class="contact-seller-btn w-full px-4 py-2 font-semibold bg-primary/20 dark:bg-primary/30 text-primary rounded-md hover:bg-primary/30 dark:hover:bg-primary/40" data-code="${purchase.orderId}">Связаться</button>`;
                     }
 
 
@@ -659,7 +627,7 @@
                             </div>
                         </div>
                         <div class="flex flex-col justify-center items-center gap-2 sm:w-40 flex-shrink-0 border-t sm:border-t-0 sm:border-l border-custom pt-4 sm:pt-0 sm:pl-6 mt-4 sm:mt-0">
-                            ${actionButton}
+                            ${actionButtons}
                         </div>
                     `;
                     listEl.appendChild(item);
@@ -1043,81 +1011,53 @@
             if (!contentEl) return;
             contentEl.innerHTML = `<div class="text-center p-8">Загрузка статистики...</div>`;
             
-            const purchasesSnapshot = await getDocs(query(collection(db, "purchases")));
-            const productsSnapshot = await getDocs(query(collection(db, "products")));
-            const usersSnapshot = await getDocs(query(collection(db, "users"), orderBy("lastSeen", "desc")));
+            try {
+                const purchasesSnapshot = await getDocs(query(collection(db, "purchases")));
+                const usersSnapshot = await getDocs(collection(db, "users"));
+                const users = usersSnapshot.docs
+                    .map(doc => doc.data())
+                    .sort((a, b) => (b.lastSeen?.seconds || 0) - (a.lastSeen?.seconds || 0));
 
-            const allPurchases = purchasesSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-            
-            const today = new Date();
-            const yesterday = new Date(today);
-            yesterday.setDate(yesterday.getDate() - 1);
+                const allPurchases = purchasesSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                const completedPurchases = allPurchases.filter(p => p.status === 'Выполнен');
+                const totalRevenue = completedPurchases.reduce((sum, p) => sum + p.finalPrice, 0);
 
-            const todaysPurchases = allPurchases.filter(p => p.createdAt.toDate() > yesterday && p.status === 'Выполнен');
-            const todaysRevenue = todaysPurchases.reduce((sum, p) => sum + p.finalPrice, 0);
-
-            const completedPurchases = allPurchases.filter(p => p.status === 'Выполнен');
-            const totalRevenue = completedPurchases.reduce((sum, p) => sum + p.finalPrice, 0);
-            
-            const productSales = {};
-            completedPurchases.forEach(p => {
-                p.items.forEach(item => {
-                    productSales[item.name] = (productSales[item.name] || 0) + 1;
-                });
-            });
-            const topProducts = Object.entries(productSales).sort((a, b) => b[1] - a[1]).slice(0, 5);
-
-            contentEl.innerHTML = `
-                <h3 class="text-2xl font-bold mb-6">Статистика</h3>
-                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-6 mb-8">
-                    <div class="card-bg p-6 rounded-lg shadow-md border border-custom">
-                        <h4 class="font-bold text-lg mb-2">Общая статистика</h4>
-                        <p><strong>Общий доход:</strong> ${formatPrice(totalRevenue, 'UZS')}</p>
-                        <p><strong>Всего заказов:</strong> ${allPurchases.length}</p>
-                    </div>
-                    <div class="card-bg p-6 rounded-lg shadow-md border border-custom">
-                         <h4 class="font-bold text-lg mb-2">За сегодня</h4>
-                        <p><strong>Доход:</strong> ${formatPrice(todaysRevenue, 'UZS')}</p>
-                        <p><strong>Выполнено заказов:</strong> ${todaysPurchases.length}</p>
-                    </div>
-                </div>
-                <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                    <div id="top-products-section">
-                        <h3 class="text-2xl font-bold mb-4">Топ-5 товаров</h3>
-                        <div class="space-y-3">
-                            ${topProducts.length > 0 ? topProducts.map(([name, count]) => `
-                               <div class="card-bg p-4 rounded-lg flex justify-between items-center border border-custom">
-                                   <span>${name}</span>
-                                   <span class="font-bold">${count} продаж</span>
-                               </div>
-                            `).join('') : '<p>Пока нет проданных товаров.</p>'}
+                contentEl.innerHTML = `
+                    <h3 class="text-2xl font-bold mb-6">Статистика</h3>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+                        <div class="card-bg p-6 rounded-lg shadow-md border border-custom">
+                            <h4 class="font-bold text-lg mb-2">Общая статистика</h4>
+                            <p><strong>Общий доход:</strong> ${formatPrice(totalRevenue, 'UZS')}</p>
+                            <p><strong>Всего заказов:</strong> ${allPurchases.length}</p>
+                             <p><strong>Всего пользователей:</strong> ${users.length}</p>
                         </div>
                     </div>
-                    <div id="users-section"></div>
-                </div>
-            `;
-            
-            const usersContainer = document.getElementById('users-section');
-            if(usersContainer) {
-                const users = usersSnapshot.docs.map(doc => doc.data());
-                usersContainer.innerHTML = `
-                    <h3 class="text-2xl font-bold mb-4">Пользователи</h3>
-                    <div class="space-y-3 max-h-96 overflow-y-auto">
-                        ${users.map(user => `
-                           <div class="card-bg p-4 rounded-lg shadow flex items-center gap-4 border border-custom">
-                               <img src="${user.photoURL || 'https://placehold.co/48x48'}" class="w-12 h-12 rounded-full object-cover">
-                               <div class="flex-grow">
-                                   <p class="font-semibold">${user.displayName || 'Без имени'}</p>
-                                   <p class="text-sm text-gray-400">${user.email}</p>
+                    <div id="users-section"></div>`;
+
+                const usersContainer = document.getElementById('users-section');
+                if(usersContainer) {
+                    usersContainer.innerHTML = `
+                        <h3 class="text-2xl font-bold mb-4">Пользователи</h3>
+                        <div class="space-y-3 max-h-96 overflow-y-auto">
+                            ${users.map(user => `
+                               <div class="card-bg p-4 rounded-lg shadow flex items-center gap-4 border border-custom">
+                                   <img src="${user.photoURL || 'https://placehold.co/48x48'}" class="w-12 h-12 rounded-full object-cover">
+                                   <div class="flex-grow">
+                                       <p class="font-semibold">${user.displayName || 'Без имени'}</p>
+                                       <p class="text-sm text-gray-400">${user.email}</p>
+                                   </div>
+                                   <div class="text-sm text-gray-400 text-right">
+                                       <p>Последний визит:</p>
+                                       <p>${user.lastSeen ? new Date(user.lastSeen.seconds * 1000).toLocaleString() : 'Недавно'}</p>
+                                   </div>
                                </div>
-                               <div class="text-sm text-gray-400 text-right">
-                                   <p>Последний визит:</p>
-                                   <p>${user.lastSeen ? new Date(user.lastSeen.seconds * 1000).toLocaleString() : 'Недавно'}</p>
-                               </div>
-                           </div>
-                        `).join('')}
-                    </div>
-                `;
+                            `).join('')}
+                        </div>
+                    `;
+                }
+            } catch (error) {
+                console.error("Error loading dashboard:", error);
+                contentEl.innerHTML = `<p class="text-red-400">Ошибка загрузки статистики. Возможно, требуется создать индекс в Firebase для коллекции 'users' по полю 'lastSeen' (по убыванию).</p>`;
             }
         }
         function renderAdminProductItem(id, data) {
@@ -1268,6 +1208,7 @@
 
                 sidebar.innerHTML = '';
                 for (const chatData of chatMetas) {
+                    if(!chatData.userId) continue;
                     const userDoc = await getDoc(doc(db, "users", chatData.userId));
                     const userName = userDoc.exists() ? userDoc.data().displayName : 'Неизвестный';
                     const item = document.createElement('a');
@@ -1350,7 +1291,7 @@
                     <input id="promo-limit" type="number" class="w-full p-2 border rounded input-bg" placeholder="Лимит использований" value="${p.limit}">
                     <label>Применить к товару:</label>
                     <select id="promo-product" class="w-full p-2 border rounded input-bg">
-                        <option value="all" ${p.productId === 'all' ? 'selected' : ''}>Все товары</option>
+                        <option value="all" ${!p.productId || p.productId === 'all' ? 'selected' : ''}>Все товары</option>
                         ${productOptions}
                     </select>
                 </div>`, async (m) => { 
@@ -1637,7 +1578,10 @@
         }
         function setupNotificationsListener() {
             const container = document.getElementById('notifications-container');
-            if (!currentUser || !container) return;
+            if (!currentUser || !container) {
+                if (container) container.innerHTML = '';
+                return;
+            }
             
             const q = query(collection(db, "notifications"), where("userId", "==", currentUser.uid), orderBy("createdAt", "desc"));
             
@@ -1649,6 +1593,7 @@
         }
         function renderNotifications(notifications, unreadCount) {
              const container = document.getElementById('notifications-container');
+             if(!container) return;
              container.innerHTML = `
                 <button id="notifications-btn" class="relative p-2 text-gray-400">
                     <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"></path></svg>
