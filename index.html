@@ -913,8 +913,10 @@
                 purchases.forEach(p => {
                     const item = document.createElement('div');
                     item.className = 'card-bg p-4 rounded-lg shadow border border-custom';
-                    const message = `Здравствуйте, по поводу заказа ${p.orderId} от пользователя ${p.userEmail}.`;
-                    const telegramLink = `https://t.me/${p.contactTelegram.replace('@', '')}`;
+                    
+                    const telegramUsername = p.contactTelegram || '';
+                    const telegramLink = `https://t.me/${telegramUsername.replace('@', '')}`;
+                    const telegramDisplay = telegramUsername ? `<a href="${telegramLink}" target="_blank" class="text-primary">${telegramUsername}</a>` : 'не указан';
 
                     let statusColor = 'text-yellow-500';
                     if (p.status === 'Выполнен') statusColor = 'text-green-500';
@@ -923,10 +925,10 @@
                     item.innerHTML = `
                         <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                             <div class="md:col-span-2">
-                                <p><strong>Пользователь:</strong> ${p.userEmail} (<a href="${telegramLink}" target="_blank" class="text-primary">${p.contactTelegram}</a>)</p>
+                                <p><strong>Пользователь:</strong> ${p.userEmail} (${telegramDisplay})</p>
                                 <p><strong>Товар(ы):</strong> ${p.productName}</p>
                                 <p><strong>Статус:</strong> <span class="font-semibold ${statusColor}">${p.status}</span></p>
-                                <p class="text-sm text-gray-500 dark:text-gray-400"><stчrong>Заказан:</strong> ${new Date(p.createdAt.seconds * 1000).toLocaleString()}</p>
+                                <p class="text-sm text-gray-500 dark:text-gray-400"><strong>Заказан:</strong> ${new Date(p.createdAt.seconds * 1000).toLocaleString()}</p>
                                 ${p.orderId ? `<p><strong>Код заказа:</strong> <span class="font-mono bg-gray-200 dark:bg-gray-700 px-2 py-1 rounded">${p.orderId}</span></p>` : ''}
                             </div>
                             <div class="flex flex-col gap-2 items-start">
