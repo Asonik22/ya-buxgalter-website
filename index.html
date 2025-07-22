@@ -110,25 +110,6 @@
         const ADMIN_UID = 'vhmtXZxkZnOWviNQ39R1W3GE8mw2';
         const TELEGRAM_USERNAME = 'asonikofficial';
 
-        const PAYMENT_REQUISITES = {
-            Uzcard: '6262 5600 0314 2117',
-            Humo: 'Временно отключено',
-            Visa: '4046 3200 3453 3009',
-            Mastercard: '5174 2500 5600 0417',
-            Mir: '2204 1201 1263 4056',
-            YooMoneyLink: 'https://yoomoney.ru/to/4100118308403073/0',
-            YooMoneyQR: 'https://i.ibb.co/dG7pXyF/image.png'
-        };
-
-        const PAYMENT_LOGOS = {
-            Uzcard: 'https://i.ibb.co/NV7Mh1s/uzcard.png',
-            Humo: 'https://i.ibb.co/fH4C062/humo.png',
-            Visa: 'https://i.ibb.co/L9bC5P4/visa.png',
-            Mastercard: 'https://i.ibb.co/s5f2v2p/mastercard.png',
-            Mir: 'https://i.ibb.co/qjC9s3L/mir.png',
-            YooMoney: 'https://i.ibb.co/yQfQ1x8/yoomoney.png'
-        };
-
         // --- INITIALIZATION ---
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
@@ -139,6 +120,7 @@
         let isAdmin = false;
         let authReady = false; // Auth state flag
         let allProducts = [];
+        let paymentMethods = []; // Will be loaded from Firestore
         let cart = JSON.parse(localStorage.getItem('asonik_cart')) || [];
         const appState = {
             currency: 'UZS',
@@ -184,12 +166,14 @@
         }
 
         // --- LIFECYCLE ---
-        document.addEventListener('DOMContentLoaded', () => {
+        document.addEventListener('DOMContentLoaded', async () => {
             initTheme();
             initSwitchers();
             setupEventListeners();
             updateCartCount();
             
+            await loadPaymentMethods(); // Load payment methods once on startup
+
             onAuthStateChanged(auth, user => {
                 currentUser = user;
                 isAdmin = user ? user.uid === ADMIN_UID : false;
@@ -522,14 +506,17 @@
                     <div>
                         <label class="font-bold text-lg">Способ оплаты</label>
                         <div class="grid grid-cols-2 gap-4 mt-2">
+                            ${paymentMethods.filter(p => p.type === 'card_transfer' && p.isEnabled).length > 0 ? `
                             <button data-method="card_transfer" class="payment-option flex items-center justify-center gap-2 p-4 border-2 border-custom rounded-lg text-center">
                                 <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"></rect><line x1="1" y1="10" x2="23" y2="10"></line></svg>
                                 <span>Перевод (карты)</span>
+                            </button>` : ''}
+                             ${paymentMethods.filter(p => p.type === 'ewallet' && p.isEnabled).map(p => `
+                             <button data-method="${p.id}" class="payment-option flex items-center justify-center gap-2 p-4 border-2 border-custom rounded-lg text-center">
+                                <img src="${p.logoUrl}" class="w-6 h-6 object-contain">
+                                <span>${p.name}</span>
                             </button>
-                             <button data-method="yoomoney" class="payment-option flex items-center justify-center gap-2 p-4 border-2 border-custom rounded-lg text-center">
-                                <img src="${PAYMENT_LOGOS.YooMoney}" class="w-6 h-6">
-                                <span>ЮMoney</span>
-                            </button>
+                            `).join('')}
                         </div>
                     </div>
                     <div id="payment-details" class="hidden mt-4 p-4 rounded-lg bg-gray-100 dark:bg-gray-800"></div>
@@ -567,7 +554,7 @@
                     userId: currentUser.uid, userEmail: currentUser.email, orderId: orderId, items: items,
                     productName: items.length > 1 ? `${items.length} товар(ов)` : items[0].name, 
                     status: 'Ожидает оплаты',
-                    paymentMethod: paymentMethod,
+                    paymentMethodId: paymentMethod,
                     paymentDetail: paymentDetail || null,
                     contactTelegram: contactTelegram,
                     contactEmail: contactEmail,
@@ -601,22 +588,25 @@
                     modal.querySelectorAll('.payment-option').forEach(b => b.classList.remove('selected'));
                     btn.classList.add('selected');
                     const detailsEl = modal.querySelector('#payment-details');
-                    const method = btn.dataset.method;
+                    const methodId = btn.dataset.method;
                     let detailsHTML = '';
 
-                    if (method === 'card_transfer') {
+                    if (methodId === 'card_transfer') {
                         detailsHTML = `
                             <p class="font-semibold mb-2">Выберите карту для перевода:</p>
                             <div class="grid grid-cols-2 sm:grid-cols-3 gap-2">
-                                ${Object.entries(PAYMENT_LOGOS).filter(([key]) => key !== 'YooMoney').map(([card, logo]) => `
-                                    <button data-card="${card}" class="card-option p-2 border-2 border-custom rounded-md flex items-center justify-center h-16 ${PAYMENT_REQUISITES[card] === 'Временно отключено' ? 'opacity-50 cursor-not-allowed' : ''}" ${PAYMENT_REQUISITES[card] === 'Временно отключено' ? 'disabled' : ''}>
-                                        <img src="${logo}" alt="${card}" class="h-8 object-contain">
+                                ${paymentMethods.filter(p => p.type === 'card' && p.isEnabled).map(p => `
+                                    <button data-card="${p.name}" class="card-option p-2 border-2 border-custom rounded-md flex items-center justify-center h-16">
+                                        <img src="${p.logoUrl}" alt="${p.name}" class="h-8 object-contain">
                                     </button>
                                 `).join('')}
                             </div>
                         `;
-                    } else if (method === 'yoomoney') {
-                        detailsHTML = `<p class="font-semibold">Вы выбрали оплату через ЮMoney.</p>`;
+                    } else {
+                        const method = paymentMethods.find(p => p.id === methodId);
+                        if(method) {
+                           detailsHTML = `<p class="font-semibold">Вы выбрали оплату через ${method.name}.</p>`;
+                        }
                     }
 
                     detailsEl.innerHTML = detailsHTML;
@@ -641,23 +631,27 @@
             const purchase = purchaseDoc.data();
             
             let paymentInstructions = '';
-            if (purchase.paymentMethod === 'card_transfer') {
-                const card = purchase.paymentDetail;
-                paymentInstructions = `
-                    <p>Пожалуйста, переведите точную сумму <span class="font-bold">${formatPrice(purchase.finalPrice)}</span> на карту ${card}:</p>
-                    <p class="font-mono text-lg my-2 p-2 bg-gray-200 dark:bg-gray-700 rounded">${PAYMENT_REQUISITES[card]}</p>
-                `;
-            } else if (purchase.paymentMethod === 'yoomoney') {
-                paymentInstructions = `
-                    <p>Пожалуйста, оплатите точную сумму <span class="font-bold">${formatPrice(purchase.finalPrice)}</span> через ЮMoney одним из способов:</p>
-                    <div class="my-4 flex flex-col items-center">
-                        <p class="mb-2">1. Отсканируйте QR-код:</p>
-                        <img src="${PAYMENT_REQUISITES.YooMoneyQR}" class="w-48 h-48 border border-custom rounded-lg">
-                        <p class="my-2">2. Или перейдите по ссылке:</p>
-                        <a href="${PAYMENT_REQUISITES.YooMoneyLink}" target="_blank" class="text-primary underline">${PAYMENT_REQUISITES.YooMoneyLink}</a>
-                    </div>
-                `;
+            const method = paymentMethods.find(p => p.id === purchase.paymentMethodId || p.name === purchase.paymentDetail);
+
+            if (method) {
+                 if (method.type === 'card') {
+                    paymentInstructions = `
+                        <p>Пожалуйста, переведите точную сумму <span class="font-bold">${formatPrice(purchase.finalPrice)}</span> на карту ${method.name}:</p>
+                        <p class="font-mono text-lg my-2 p-2 bg-gray-200 dark:bg-gray-700 rounded">${method.requisites}</p>
+                    `;
+                } else if (method.type === 'ewallet') {
+                    paymentInstructions = `
+                        <p>Пожалуйста, оплатите точную сумму <span class="font-bold">${formatPrice(purchase.finalPrice)}</span> через ${method.name} одним из способов:</p>
+                        <div class="my-4 flex flex-col items-center">
+                            <p class="mb-2">1. Отсканируйте QR-код:</p>
+                            <img src="${method.qrCodeUrl}" class="w-48 h-48 border border-custom rounded-lg">
+                            <p class="my-2">2. Или перейдите по ссылке:</p>
+                            <a href="${method.requisites}" target="_blank" class="text-primary underline">${method.requisites}</a>
+                        </div>
+                    `;
+                }
             }
+           
 
             const modalContent = `
                 <div class="space-y-4">
@@ -784,9 +778,9 @@
                     <aside class="md:w-1/4 lg:w-1/5">
                         <h2 class="text-2xl font-bold mb-4">Админ-панель</h2>
                         <nav class="space-y-2">
-                            ${['products', 'faq', 'promocodes', 'purchases', 'chats'].map(tab => `
+                            ${['products', 'faq', 'promocodes', 'purchases', 'payment', 'chats'].map(tab => `
                                 <a href="#admin/${tab}" class="admin-tab-btn flex items-center gap-3 px-4 py-2 rounded-lg ${subpage === tab ? 'bg-primary text-white' : 'hover:bg-gray-100 dark:hover:bg-gray-700'}" data-tab="${tab}">
-                                    <span>${{'products':'Товары','faq':'FAQ','promocodes':'Промокоды','purchases':'Покупки','chats':'Чаты'}[tab]}</span>
+                                    <span>${{'products':'Товары','faq':'FAQ','promocodes':'Промокоды','purchases':'Покупки', 'payment': 'Оплата', 'chats':'Чаты'}[tab]}</span>
                                 </a>`).join('')}
                         </nav>
                     </aside>
@@ -800,13 +794,15 @@
             const contentEl = document.getElementById('admin-tab-content');
             if(!contentEl) return;
             const tabHeaders = {
-                products: 'Управление товарами', faq: 'Управление FAQ', promocodes: 'Управление промокодами', purchases: 'Проверка покупок', chats: 'Чаты с пользователями'
+                products: 'Управление товарами', faq: 'Управление FAQ', promocodes: 'Управление промокодами', purchases: 'Проверка покупок', payment: 'Способы оплаты', chats: 'Чаты с пользователями'
             };
             const buttons = {
                 products: `<button id="add-product-btn" class="bg-green-500 text-white px-4 py-2 rounded-lg hover:bg-green-600">Добавить товар</button>`,
                 faq: `<button id="add-faq-btn" class="bg-green-500 text-white px-4 py-2 rounded-lg hover:bg-green-600">Добавить FAQ</button>`,
                 promocodes: `<button id="add-promo-btn" class="bg-green-500 text-white px-4 py-2 rounded-lg hover:bg-green-600">Создать промокод</button>`,
-                purchases: '', chats: ''
+                purchases: '',
+                payment: `<button id="add-payment-btn" class="bg-green-500 text-white px-4 py-2 rounded-lg hover:bg-green-600">Добавить способ</button>`,
+                chats: ''
             };
             contentEl.innerHTML = `<div class="flex justify-between items-center mb-6"><h3 class="text-2xl font-bold">${tabHeaders[tab]}</h3><div>${buttons[tab]}</div></div><div id="admin-list-container"></div>`;
             
@@ -814,6 +810,7 @@
             if (tab === 'faq') loadAdminList('faq', 'admin-list-container', renderAdminFaqItem);
             if (tab === 'promocodes') loadAdminList('promocodes', 'admin-list-container', renderAdminPromoItem);
             if (tab === 'purchases') loadAdminPurchases();
+            if (tab === 'payment') loadAdminList('paymentMethods', 'admin-list-container', renderAdminPaymentItem);
             if (tab === 'chats') {
                 const userId = window.location.hash.split('/')[2];
                 loadAdminChatsList(userId);
@@ -936,7 +933,6 @@
                 if (target) {
                     e.preventDefault();
                     window.location.hash = new URL(target.href).hash;
-                    handleRouting();
                 }
             });
 
@@ -953,6 +949,8 @@
                 if (target.closest('.contact-seller-btn')) { const code = target.dataset.code; showContactModal(code); return; }
                 if (target.closest('.upload-proof-btn')) { showProofUploadModal(target.dataset.purchaseId); return; }
                 if (target.id === 'add-product-btn') showProductForm();
+                if (target.id === 'add-payment-btn') showPaymentMethodForm();
+                if (target.closest('.edit-payment-btn')) showPaymentMethodForm(target.dataset.id);
                 if (target.closest('.edit-product-btn')) showProductForm(target.closest('.edit-product-btn').dataset.id);
                 if (target.closest('.delete-btn')) { confirmAction('Вы уверены, что хотите удалить этот элемент?', () => { deleteDoc(doc(db, target.dataset.collection, target.dataset.id)); }); }
                 if (target.id === 'add-faq-btn') { const q = prompt("Вопрос:"); const a = prompt("Ответ:"); if (q && a) addDoc(collection(db, 'faq'), { question: q, answer: a }); }
