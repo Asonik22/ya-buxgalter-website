@@ -51,7 +51,8 @@
         
         .toggle-switch { position: relative; display: inline-block; width: 44px; height: 24px; }
         .toggle-switch input { opacity: 0; width: 0; height: 0; }
-        .toggle-slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #4a5568; transition: .4s; border-radius: 24px; }
+        .toggle-slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #9CA3AF; transition: .4s; border-radius: 24px; }
+        html.dark .toggle-slider { background-color: #4a5568; }
         .toggle-slider:before { position: absolute; content: ""; height: 16px; width: 16px; left: 4px; bottom: 4px; background-color: white; transition: .4s; border-radius: 50%; }
         input:checked + .toggle-slider { background-color: var(--primary); }
         input:checked + .toggle-slider:before { transform: translateX(20px); }
@@ -109,7 +110,6 @@
 
     <main class="container mx-auto px-4 py-8">
         <div data-page="main" class="active">
-            <div id="featured-products-container" class="mb-12"></div>
             <h1 class="text-4xl font-bold text-center mb-8" data-lang-key="catalog_title">Каталог товаров</h1>
             <div class="mb-8 p-4 card-bg rounded-lg shadow-md flex flex-col md:flex-row gap-4 items-center border border-custom">
                 <input id="search-input" type="text" placeholder="Поиск по названию..." class="w-full md:flex-grow pl-4 pr-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary input-bg">
@@ -123,6 +123,7 @@
                     <option value="popular" data-lang-key="sort_popular">Сначала популярные</option>
                 </select>
             </div>
+            <div id="featured-products-container" class="mb-12"></div>
             <div id="products-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6"></div>
         </div>
 
@@ -346,7 +347,7 @@
                     container.innerHTML = '';
                     return;
                 }
-                container.innerHTML = `<h2 class="text-3xl font-bold mb-6 text-center">Рекомендуемые товары</h2><div id="featured-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6"></div>`;
+                container.innerHTML = `<h2 class="text-3xl font-bold mb-6 text-left">Рекомендуемые товары</h2><div id="featured-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6"></div><hr class="border-custom my-12">`;
                 const grid = document.getElementById('featured-grid');
                 grid.innerHTML = '';
                 snapshot.forEach(doc => {
@@ -354,7 +355,7 @@
                 });
             }, (error) => {
                 console.error("Error loading featured products: ", error);
-                container.innerHTML = `<p class="text-center text-red-400">Не удалось загрузить рекомендованные товары. Возможно, требуется создать индекс в Firebase для коллекции 'products' по полю 'isFeatured'.</p>`;
+                container.innerHTML = `<p class="text-center text-red-400">Не удалось загрузить рекомендованные товары. Возможно, требуется создать индекс в Firebase.</p>`;
             });
         }
         function loadProducts() {
@@ -636,8 +637,8 @@
                     
                     let statusColor, statusText;
                     switch(purchase.status) {
-                        case 'Выполнен': statusColor = 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200'; statusText = 'Ожидает получения'; break;
-                        case 'Завершён': statusColor = 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200'; statusText = 'Завершён'; break;
+                        case 'Выполнен': statusColor = 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200'; statusText = 'Ожидает получения'; break;
+                        case 'Завершён': statusColor = 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200'; statusText = 'Завершён'; break;
                         case 'Отменен':
                         case 'Отклонен': statusColor = 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200'; statusText = purchase.status; break;
                         default: statusColor = 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200'; statusText = purchase.status;
@@ -1088,7 +1089,7 @@
                     .sort((a, b) => (b.lastSeen?.seconds || 0) - (a.lastSeen?.seconds || 0));
 
                 const allPurchases = purchasesSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-                const completedPurchases = allPurchases.filter(p => p.status === 'Выполнен');
+                const completedPurchases = allPurchases.filter(p => p.status === 'Выполнен' || p.status === 'Завершён');
                 const totalRevenue = completedPurchases.reduce((sum, p) => sum + p.finalPrice, 0);
 
                 contentEl.innerHTML = `
@@ -1129,7 +1130,7 @@
                 }
             } catch (error) {
                 console.error("Error loading dashboard:", error);
-                contentEl.innerHTML = `<p class="text-red-400">Ошибка загрузки статистики. Пожалуйста, создайте в Firebase индекс для коллекции 'users' по полю 'lastSeen' (по убыванию).</p>`;
+                contentEl.innerHTML = `<p class="text-red-400">Ошибка загрузки статистики. Пожалуйста, убедитесь, что в Firebase создан индекс для коллекции 'users' по полю 'lastSeen' (по убыванию).</p>`;
             }
         }
         async function loadCustomizationPage() {
@@ -1161,7 +1162,7 @@
             item.className = 'card-bg p-4 rounded-lg shadow flex justify-between items-center border border-custom';
             item.innerHTML = `
                 <div class="flex items-center gap-4">
-                    <input type="checkbox" class="product-bulk-checkbox h-5 w-5 rounded" data-id="${id}">
+                    <input type="checkbox" class="product-bulk-checkbox h-5 w-5 rounded text-primary focus:ring-primary" data-id="${id}">
                     <img src="${data.imageUrl || 'https://placehold.co/64x64'}" class="w-12 h-12 rounded-md object-cover">
                     <div>
                         <p class="font-semibold">${data.name}</p>
@@ -1223,6 +1224,10 @@
                 case 'Выполнен':
                     statusColor = 'text-blue-400';
                     actionButtonsHTML = `<button class="complete-purchase-btn w-full px-4 py-2 text-sm font-semibold bg-primary text-white rounded-md hover:bg-primary-hover" data-id="${id}">Завершить заказ</button>`;
+                    break;
+                case 'Завершён':
+                    statusColor = 'text-green-400';
+                    actionButtonsHTML = `<span class="text-sm text-green-400">Заказ завершён</span>`;
                     break;
                 case 'Ожидает подтверждения':
                     statusColor = 'text-yellow-400';
@@ -1644,6 +1649,23 @@
                     }; 
                     reader.readAsDataURL(e.target.files[0]); 
                 }
+                
+                // Bulk actions logic
+                if(e.target.matches('.product-bulk-checkbox')) {
+                    const checkboxes = document.querySelectorAll('.product-bulk-checkbox:checked');
+                    const actionBar = document.getElementById('bulk-actions-bar');
+                    if (checkboxes.length > 0) {
+                        actionBar.innerHTML = `
+                            <span class="font-semibold">Выбрано: ${checkboxes.length}</span>
+                            <button id="bulk-recommend-btn" class="px-3 py-1 text-sm bg-blue-500 text-white rounded">Рекомендовать</button>
+                            <button id="bulk-unrecommend-btn" class="px-3 py-1 text-sm bg-gray-500 text-white rounded">Убрать рек.</button>
+                            <button id="bulk-delete-btn" class="px-3 py-1 text-sm bg-red-500 text-white rounded">Удалить</button>
+                        `;
+                        actionBar.classList.remove('hidden');
+                    } else {
+                        actionBar.classList.add('hidden');
+                    }
+                }
             });
             document.addEventListener('click', (e) => { 
                 const menu = document.getElementById('profile-menu'); 
@@ -1652,6 +1674,26 @@
                 const notifications = document.getElementById('notifications-dropdown');
                 if (notifications && !notifications.classList.contains('hidden') && !e.target.closest('#notifications-container')) {
                     notifications.classList.add('hidden');
+                }
+                
+                // Bulk action button clicks
+                const selectedIds = Array.from(document.querySelectorAll('.product-bulk-checkbox:checked')).map(cb => cb.dataset.id);
+                if (selectedIds.length === 0) return;
+                
+                const batch = writeBatch(db);
+                if (e.target.id === 'bulk-delete-btn') {
+                    confirmAction(`Вы уверены, что хотите удалить ${selectedIds.length} товар(ов)?`, () => {
+                       selectedIds.forEach(id => batch.delete(doc(db, 'products', id)));
+                       batch.commit();
+                    });
+                }
+                if (e.target.id === 'bulk-recommend-btn') {
+                    selectedIds.forEach(id => batch.update(doc(db, 'products', id), { isFeatured: true }));
+                    batch.commit().then(() => showToast('Товары обновлены!'));
+                }
+                if (e.target.id === 'bulk-unrecommend-btn') {
+                    selectedIds.forEach(id => batch.update(doc(db, 'products', id), { isFeatured: false }));
+                    batch.commit().then(() => showToast('Товары обновлены!'));
                 }
             });
 
@@ -1719,7 +1761,7 @@
             if(!container) return;
 
             if (currentUser) {
-                container.innerHTML = `<div class="relative"><button id="profile-btn" class="flex items-center gap-2"><img src="${currentUser.photoURL || 'https://placehold.co/32x32'}" alt="Профиль" class="w-8 h-8 rounded-full"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg></button><div id="profile-menu" class="hidden absolute right-0 mt-2 w-52 card-bg rounded-md shadow-lg border border-custom z-10"><div class="px-4 py-2 border-b border-custom"><p class="font-semibold truncate">${currentUser.displayName}</p><p class="text-sm text-gray-400 truncate">${currentUser.email}</p></div><a href="#profile" class="nav-link block px-4 py-2 text-sm hover:bg-gray-700">Профиль</a>${isAdmin ? `<a href="#admin" class="nav-link block px-4 py-2 text-sm hover:bg-gray-700">Админ-панель</a>` : ''}<div class="border-t border-custom"></div><a href="#" id="logout-btn" class="block px-4 py-2 text-sm text-red-500 hover:bg-gray-700">Выйти</a></div></div>`;
+                container.innerHTML = `<div class="relative"><button id="profile-btn" class="flex items-center gap-2"><img src="${currentUser.photoURL || 'https://placehold.co/32x32'}" alt="Профиль" class="w-8 h-8 rounded-full"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg></button><div id="profile-menu" class="hidden absolute right-0 mt-2 w-52 card-bg rounded-md shadow-lg border border-custom z-10"><div class="px-4 py-2 border-b border-custom"><p class="font-semibold truncate">${currentUser.displayName}</p><p class="text-sm text-gray-400 truncate">${currentUser.email}</p></div><a href="#profile" class="nav-link block px-4 py-2 text-sm hover:bg-gray-100 dark:hover:bg-gray-700">Профиль</a>${isAdmin ? `<a href="#admin" class="nav-link block px-4 py-2 text-sm hover:bg-gray-100 dark:hover:bg-gray-700">Админ-панель</a>` : ''}<div class="border-t border-custom"></div><a href="#" id="logout-btn" class="block px-4 py-2 text-sm text-red-500 hover:bg-gray-100 dark:hover:bg-gray-700">Выйти</a></div></div>`;
             } else {
                 container.innerHTML = `<button id="google-login-btn" class="px-4 py-2 bg-primary text-white rounded-md hover:bg-primary-hover font-semibold flex items-center gap-2"><svg class="w-5 h-5" viewBox="0 0 48 48"><path fill="#FFC107" d="M43.611 20.083H42V20H24v8h11.303c-1.649 4.657-6.08 8-11.303 8c-6.627 0-12-5.373-12-12s5.373-12 12-12c3.059 0 5.842 1.154 7.961 3.039l5.657-5.657C34.046 6.053 29.268 4 24 4C12.955 4 4 12.955 4 24s8.955 20 20 20s20-8.955 20-20c0-1.341-.138-2.65-.389-3.917z"></path><path fill="#FF3D00" d="M6.306 14.691l6.571 4.819C14.655 15.108 18.961 12 24 12c3.059 0 5.842 1.154 7.961 3.039l5.657-5.657C34.046 6.053 29.268 4 24 4C16.318 4 9.656 8.337 6.306 14.691z"></path><path fill="#4CAF50" d="M24 44c5.166 0 9.86-1.977 13.409-5.192l-6.19-5.238C29.211 35.091 26.715 36 24 36c-5.202 0-9.619-3.317-11.283-7.946l-6.522 5.025C9.505 39.556 16.227 44 24 44z"></path><path fill="#1976D2" d="M43.611 20.083H42V20H24v8h11.303c-.792 2.237-2.231 4.166-4.087 5.571l6.19 5.238C44.572 34.043 46 29.392 46 24c0-1.341-.138-2.65-.389-3.917z"></path></svg>Войти</button>`;
             }
