@@ -1722,13 +1722,11 @@
                  }
                  if (target.closest('.review-purchase-btn')) {
                     const purchaseId = target.dataset.purchaseId;
-                    const purchaseDoc = await getDoc(doc(db, "purchases", purchaseId));
-                    if (!purchaseDoc.exists()) return;
-                    const purchase = purchaseDoc.data();
-                    const productToReview = purchase.items[0];
+                    const productId = target.dataset.productId;
+                    const productName = target.dataset.productName;
 
                     showModal('Оставить отзыв', `
-                        <p class="font-semibold mb-2">Оцените товар: ${productToReview.name}</p>
+                        <p class="font-semibold mb-2">Оцените товар: ${productName}</p>
                         <div class="star-rating">
                             <input type="radio" id="5-stars" name="rating" value="5" /><label for="5-stars">☆</label>
                             <input type="radio" id="4-stars" name="rating" value="4" /><label for="4-stars">☆</label>
@@ -1748,7 +1746,7 @@
                             userId: currentUser.uid,
                             userName: currentUser.displayName,
                             userPhotoURL: currentUser.photoURL,
-                            productId: productToReview.productId,
+                            productId: productId,
                             rating: parseInt(rating),
                             comment: comment,
                             createdAt: serverTimestamp()
@@ -1985,4 +1983,5 @@
     </script>
 </body>
 </html>
+
 }
