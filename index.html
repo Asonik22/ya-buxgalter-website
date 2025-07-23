@@ -152,16 +152,19 @@
         import { getFirestore, doc, getDoc, setDoc, addDoc, collection, getDocs, onSnapshot, updateDoc, deleteDoc, query, where, serverTimestamp, orderBy, increment, writeBatch, arrayUnion, arrayRemove } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
         // --- CONFIG ---
+        // !!! ВАЖНО: ЗАМЕНИТЕ ЭТОТ ОБЪЕКТ НА ВАШ СОБСТВЕННЫЙ ИЗ КОНСОЛИ FIREBASE !!!
         const firebaseConfig = {
-            apiKey: "AIzaSyC7smDYoy-LT58xCwjJsc9uZU9CgHQv5dM",
-            authDomain: "ya-buxgalter.firebaseapp.com",
-            projectId: "ya-buxgalter",
-            storageBucket: "ya-buxgalter.appspot.com",
-            messagingSenderId: "640345805387",
-            appId: "1:640345805387:web:a1adade77f809af84cb3ce"
+          apiKey: "ВАШ_КЛЮЧ_API",
+          authDomain: "ВАШ_authDomain",
+          projectId: "ВАШ_projectId",
+          storageBucket: "ВАШ_storageBucket",
+          messagingSenderId: "ВАШ_messagingSenderId",
+          appId: "ВАШ_appId"
         };
+        // !!! КОНЕЦ СЕКЦИИ ДЛЯ ЗАМЕНЫ !!!
+
         const IMGBB_API_KEY = '96bf3f29606f1989bb5a450ad3770cce';
-        const ADMIN_UID = 'vhmtXZxkZnOWviNQ39R1W3GE8mw2';
+        const ADMIN_UID = 'vhmtXZxkZnOWviNQ39R1W3GE8mw2'; // Замените на UID вашего админ-аккаунта
         const TELEGRAM_USERNAME = 'asonikofficial';
 
         // --- INITIALIZATION ---
@@ -671,10 +674,12 @@
                     } else if (purchase.status === 'Ожидает оплаты') {
                         actionButtons = `
                             <button class="upload-proof-btn w-full px-4 py-2 font-semibold bg-green-500 text-white rounded-md hover:bg-green-600" data-purchase-id="${id}">Оплатить</button>
-                            <button class="cancel-order-btn w-full px-4 py-2 font-semibold border border-red-500 text-red-500 rounded-md hover:bg-red-500 hover:text-white" data-purchase-id="${id}">Отменить</button>
+                            <button class="cancel-order-btn w-full px-4 py-2 font-semibold border border-red-500 text-red-500 rounded-md hover:bg-red-500 hover:text-white" data-purchase-id="${id}">Отменить заказ</button>
                         `;
-                    } else if (purchase.status === 'Завершён') {
-                        actionButtons = `<button class="review-purchase-btn w-full px-4 py-2 font-semibold bg-gray-500 dark:bg-gray-600 text-white rounded-md hover:bg-gray-600 dark:hover:bg-gray-700" data-purchase-id="${id}">Оставить отзыв</button>`;
+                    } else if (purchase.status === 'Завершён' && !purchase.isReviewed) {
+                        actionButtons = `<button class="review-purchase-btn w-full px-4 py-2 font-semibold bg-gray-500 dark:bg-gray-600 text-white rounded-md hover:bg-gray-600 dark:hover:bg-gray-700" data-purchase-id="${id}" data-product-id="${purchase.items[0].productId}" data-product-name="${purchase.productName}">Оставить отзыв</button>`;
+                    } else if (purchase.status === 'Завершён' && purchase.isReviewed) {
+                         actionButtons = `<p class="text-sm text-center text-gray-500 dark:text-gray-400">Отзыв оставлен. Спасибо!</p>`;
                     }
                     else {
                          actionButtons = `<button class="contact-seller-btn w-full px-4 py-2 font-semibold bg-primary/20 dark:bg-primary/30 text-primary rounded-md hover:bg-primary/30 dark:hover:bg-primary/40" data-code="${purchase.orderId}">Связаться</button>`;
@@ -1607,7 +1612,7 @@
                     if (window.location.hash !== newHash) {
                         window.location.hash = newHash;
                     }
-                    return;
+                    return; 
                 }
 
                 const target = e.target;
@@ -1662,7 +1667,7 @@
                 if (target.closest('#profile-btn')) { e.stopPropagation(); document.getElementById('profile-menu')?.classList.toggle('hidden'); }
                 if (target.id === 'change-avatar-btn') document.getElementById('avatar-upload').click();
                 if (target.closest('.cancel-order-btn')) { const purchaseId = target.dataset.purchaseId; confirmAction('Вы уверены, что хотите отменить этот заказ?', () => updateDoc(doc(db, "purchases", purchaseId), { status: 'Отменен' })); }
-                if (target.closest('.approve-purchase-btn')) { 
+                if (target.closest('.approve-purchase-btn') || target.closest('.manual-approve-btn')) { 
                     const purchaseId = target.dataset.id;
                     await updateDoc(doc(db, "purchases", purchaseId), { status: 'Выполнен' }); 
                     const purchaseDoc = await getDoc(doc(db, "purchases", purchaseId));
@@ -1727,13 +1732,11 @@
                  }
                  if (target.closest('.review-purchase-btn')) {
                     const purchaseId = target.dataset.purchaseId;
-                    const purchaseDoc = await getDoc(doc(db, "purchases", purchaseId));
-                    if (!purchaseDoc.exists()) return;
-                    const purchase = purchaseDoc.data();
-                    const productToReview = purchase.items[0];
+                    const productId = target.dataset.productId;
+                    const productName = target.dataset.productName;
 
                     showModal('Оставить отзыв', `
-                        <p class="font-semibold mb-2">Оцените товар: ${productToReview.name}</p>
+                        <p class="font-semibold mb-2">Оцените товар: ${productName}</p>
                         <div class="star-rating">
                             <input type="radio" id="5-stars" name="rating" value="5" /><label for="5-stars">☆</label>
                             <input type="radio" id="4-stars" name="rating" value="4" /><label for="4-stars">☆</label>
@@ -1753,7 +1756,7 @@
                             userId: currentUser.uid,
                             userName: currentUser.displayName,
                             userPhotoURL: currentUser.photoURL,
-                            productId: productToReview.productId,
+                            productId: productId,
                             rating: parseInt(rating),
                             comment: comment,
                             createdAt: serverTimestamp()
