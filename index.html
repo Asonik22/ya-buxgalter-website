@@ -60,13 +60,6 @@
         #mobile-menu { transition: opacity 0.3s ease-in-out; }
         #mobile-menu-panel { transition: transform 0.3s ease-in-out; }
 
-        .star-rating label { color: #ccc; cursor: pointer; font-size: 2rem; }
-        .star-rating input:checked ~ label,
-        .star-rating label:hover,
-        .star-rating label:hover ~ label { color: #f59e0b; }
-        .star-rating input { display: none; }
-        .star-rating { display: inline-flex; flex-direction: row-reverse; }
-
     </style>
 </head>
 <body>
@@ -673,8 +666,10 @@
                             <button class="upload-proof-btn w-full px-4 py-2 font-semibold bg-green-500 text-white rounded-md hover:bg-green-600" data-purchase-id="${id}">Оплатить</button>
                             <button class="cancel-order-btn w-full px-4 py-2 font-semibold border border-red-500 text-red-500 rounded-md hover:bg-red-500 hover:text-white" data-purchase-id="${id}">Отменить</button>
                         `;
-                    } else if (purchase.status === 'Завершён') {
+                    } else if (purchase.status === 'Завершён' && !purchase.isReviewed) {
                         actionButtons = `<button class="review-purchase-btn w-full px-4 py-2 font-semibold bg-gray-500 dark:bg-gray-600 text-white rounded-md hover:bg-gray-600 dark:hover:bg-gray-700" data-purchase-id="${id}">Оставить отзыв</button>`;
+                    } else if (purchase.status === 'Завершён' && purchase.isReviewed) {
+                         actionButtons = `<p class="text-sm text-center text-gray-500 dark:text-gray-400">Отзыв оставлен. Спасибо!</p>`;
                     }
                     else {
                          actionButtons = `<button class="contact-seller-btn w-full px-4 py-2 font-semibold bg-primary/20 dark:bg-primary/30 text-primary rounded-md hover:bg-primary/30 dark:hover:bg-primary/40" data-code="${purchase.orderId}">Связаться</button>`;
@@ -1167,7 +1162,7 @@
                 }
             } catch (error) {
                 console.error("Error loading dashboard:", error);
-                contentEl.innerHTML = `<p class="text-red-400">Ошибка загрузки статистики. Пожалуйста, убедитесь, что в Firebase создан индекс для коллекции 'users' по полю 'lastSeen' (по убыванию).</p>`;
+                contentEl.innerHTML = `<p class="text-red-400">Ошибка загрузки статистики. Возможно, требуется создать индекс в Firebase для коллекции 'users' по полю 'lastSeen' (по убыванию).</p>`;
             }
         }
         async function loadCustomizationPage() {
@@ -1662,7 +1657,7 @@
                 if (target.closest('#profile-btn')) { e.stopPropagation(); document.getElementById('profile-menu')?.classList.toggle('hidden'); }
                 if (target.id === 'change-avatar-btn') document.getElementById('avatar-upload').click();
                 if (target.closest('.cancel-order-btn')) { const purchaseId = target.dataset.purchaseId; confirmAction('Вы уверены, что хотите отменить этот заказ?', () => updateDoc(doc(db, "purchases", purchaseId), { status: 'Отменен' })); }
-                if (target.closest('.approve-purchase-btn')) { 
+                if (target.closest('.approve-purchase-btn') || target.closest('.manual-approve-btn')) { 
                     const purchaseId = target.dataset.id;
                     await updateDoc(doc(db, "purchases", purchaseId), { status: 'Выполнен' }); 
                     const purchaseDoc = await getDoc(doc(db, "purchases", purchaseId));
@@ -1990,3 +1985,6 @@
     </script>
 </body>
 </html>
+
+}
+
