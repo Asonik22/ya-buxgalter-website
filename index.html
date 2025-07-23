@@ -84,7 +84,6 @@
                     <div id="lang-switcher" class="hidden md:block"></div>
                     <button id="theme-toggle" class="p-2 rounded-full text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700"></button>
                     <div id="notifications-container" class="relative"></div>
-                    <a href="#wishlist" class="relative p-2 text-gray-600 dark:text-gray-400 nav-link"><svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 016.364 0L12 7.636l1.318-1.318a4.5 4.5 0 016.364 6.364L12 20.364l-7.682-7.682a4.5 4.5 0 010-6.364z"></path></svg></a>
                     <a href="#cart" class="relative p-2 text-gray-600 dark:text-gray-400 nav-link"><svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"></path></svg><span id="cart-count" class="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-4 w-4 flex items-center justify-center hidden">0</span></a>
                     <div id="auth-container" class="relative"></div>
 
@@ -131,7 +130,6 @@
         <div data-page="chats"><div id="chats-content"></div></div>
         <div data-page="faq"><div id="faq-content"></div></div>
         <div data-page="purchases"><div id="purchases-content"><p class="text-center">Загрузка ваших покупок...</p></div></div>
-        <div data-page="wishlist"><h1 class="text-4xl font-bold text-center mb-8">Избранное</h1><div id="wishlist-content"></div></div>
         <div data-page="admin"><div id="admin-content"></div></div>
         <div data-page="cart"><h1 class="text-4xl font-bold text-center mb-8" data-lang-key="cart_title">Корзина</h1><div id="cart-content"></div></div>
         <div data-page="profile"><div id="profile-content"></div></div>
@@ -142,7 +140,7 @@
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getAuth, onAuthStateChanged, GoogleAuthProvider, signInWithPopup, signOut, updateProfile } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, doc, getDoc, setDoc, addDoc, collection, getDocs, onSnapshot, updateDoc, deleteDoc, query, where, serverTimestamp, orderBy, increment, writeBatch, arrayUnion, arrayRemove } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { getFirestore, doc, getDoc, setDoc, addDoc, collection, getDocs, onSnapshot, updateDoc, deleteDoc, query, where, serverTimestamp, orderBy, increment, writeBatch } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
         // --- CONFIG ---
         const firebaseConfig = {
@@ -168,7 +166,6 @@
         let appReady = false;
         let allProducts = [];
         let paymentMethods = [];
-        let userWishlist = [];
         let cart = JSON.parse(localStorage.getItem('asonik_cart')) || [];
         const appState = {
             currency: 'UZS',
@@ -233,10 +230,8 @@
                 const userRef = doc(db, "users", user.uid);
                 await setDoc(userRef, { displayName: user.displayName, email: user.email, photoURL: user.photoURL, lastSeen: serverTimestamp() }, { merge: true });
                 setupNotificationsListener();
-                setupWishlistListener();
             } else {
                  document.getElementById('notifications-container').innerHTML = '';
-                 userWishlist = [];
             }
             appReady = true;
             updateAuthUI();
@@ -316,7 +311,7 @@
             translatePage();
         }
         function loadPageContent(page, subpage) {
-            const protectedPages = ['purchases', 'chats', 'profile', 'admin', 'wishlist'];
+            const protectedPages = ['purchases', 'chats', 'profile', 'admin'];
             if (protectedPages.includes(page) && !currentUser) {
                 const contentEl = document.querySelector(`[data-page="${page}"] > div`);
                 if (contentEl) {
@@ -333,7 +328,6 @@
                 case 'cart': renderCartPage(); break;
                 case 'chats': loadChatsPage(); break;
                 case 'purchases': loadPurchasesPage(); break;
-                case 'wishlist': loadWishlistPage(); break;
                 case 'profile': loadProfilePage(); break;
             }
         }
@@ -404,16 +398,10 @@
             card.className = "card-bg product-card rounded-lg shadow-lg flex flex-col justify-between border border-custom overflow-hidden";
             const verifiedBadge = product.isVerified ? `<span class="bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200 text-xs font-bold px-2 py-1 rounded-full">✔ Подтверждено</span>` : '';
             const pinnedBadge = product.isPinned ? `<span class="bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200 text-xs font-bold px-2 py-1 rounded-full">★ Закреплено</span>` : '';
-            const isWishlisted = userWishlist.includes(product.id);
 
             card.innerHTML = `
                 <div class="relative">
                     <img src="${product.imageUrl || 'https://placehold.co/600x400'}" class="w-full h-48 object-cover">
-                    <div class="absolute top-2 right-2">
-                        <button class="wishlist-btn p-2 rounded-full ${isWishlisted ? 'bg-red-500/80 text-white' : 'bg-black/30 text-white'}" data-product-id="${product.id}">
-                             <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M3.172 5.172a4 4 0 015.656 0L10 6.343l1.172-1.171a4 4 0 115.656 5.656L10 17.657l-6.828-6.829a4 4 0 010-5.656z" clip-rule="evenodd"></path></svg>
-                        </button>
-                    </div>
                     <div class="absolute bottom-2 left-2 flex gap-1">${pinnedBadge}${verifiedBadge}</div>
                 </div>
                 <div class="p-4 flex-grow">
@@ -666,10 +654,8 @@
                             <button class="upload-proof-btn w-full px-4 py-2 font-semibold bg-green-500 text-white rounded-md hover:bg-green-600" data-purchase-id="${id}">Оплатить</button>
                             <button class="cancel-order-btn w-full px-4 py-2 font-semibold border border-red-500 text-red-500 rounded-md hover:bg-red-500 hover:text-white" data-purchase-id="${id}">Отменить</button>
                         `;
-                    } else if (purchase.status === 'Завершён' && !purchase.isReviewed) {
-                        actionButtons = `<button class="review-purchase-btn w-full px-4 py-2 font-semibold bg-gray-500 dark:bg-gray-600 text-white rounded-md hover:bg-gray-600 dark:hover:bg-gray-700" data-purchase-id="${id}" data-product-id="${purchase.items[0].productId}" data-product-name="${purchase.productName}">Оставить отзыв</button>`;
-                    } else if (purchase.status === 'Завершён' && purchase.isReviewed) {
-                         actionButtons = `<p class="text-sm text-center text-gray-500 dark:text-gray-400">Отзыв оставлен. Спасибо!</p>`;
+                    } else if (purchase.status === 'Завершён') {
+                        actionButtons = `<p class="text-sm text-center text-gray-500 dark:text-gray-400">Спасибо за покупку!</p>`;
                     }
                     else {
                          actionButtons = `<button class="contact-seller-btn w-full px-4 py-2 font-semibold bg-primary/20 dark:bg-primary/30 text-primary rounded-md hover:bg-primary/30 dark:hover:bg-primary/40" data-code="${purchase.orderId}">Связаться</button>`;
@@ -710,22 +696,6 @@
                 const searchTerm = e.target.value.toLowerCase().trim();
                 const filtered = userPurchases.filter(({ purchase }) => purchase.productName.toLowerCase().includes(searchTerm));
                 renderPurchases(filtered);
-            });
-        }
-        
-        function loadWishlistPage() {
-            const contentEl = document.getElementById('wishlist-content');
-            if(!contentEl) return;
-            const wishlistProducts = allProducts.filter(p => userWishlist.includes(p.id));
-            
-            if (wishlistProducts.length === 0) {
-                contentEl.innerHTML = '<p class="text-center">Ваш список желаний пуст.</p>';
-                return;
-            }
-            contentEl.innerHTML = '<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6"></div>';
-            const grid = contentEl.querySelector('div');
-            wishlistProducts.forEach(product => {
-                grid.appendChild(renderProductCard(product));
             });
         }
 
@@ -1057,7 +1027,6 @@
                 { id: 'products', name: 'Товары' },
                 { id: 'payment', name: 'Оплата' },
                 { id: 'customization', name: 'Кастомизация' },
-                { id: 'reviews', name: 'Отзывы' },
                 { id: 'faq', name: 'FAQ' },
                 { id: 'promocodes', name: 'Промокоды' },
                 { id: 'chats', name: 'Чаты' },
@@ -1091,7 +1060,6 @@
             if (tab === 'purchases') loadAdminPurchases();
             if (tab === 'payment') loadAdminList('paymentMethods', 'Способы оплаты', renderAdminPaymentItem, `<button id="add-payment-btn" class="bg-green-500 text-white px-4 py-2 rounded-lg hover:bg-green-600">Добавить способ</button>`);
             if (tab === 'customization') loadCustomizationPage();
-            if (tab === 'reviews') loadAdminReviews();
             if (tab === 'chats') {
                 const userId = window.location.hash.split('/')[2];
                 loadAdminChatsList(userId);
@@ -1269,10 +1237,6 @@
                             <button class="reject-purchase-btn flex-1 px-4 py-2 text-sm font-semibold bg-red-500 text-white rounded-md hover:bg-red-600" data-id="${id}">Отклонить</button>
                         </div>`;
                     break;
-                 case 'Ожидает оплаты':
-                    statusColor = 'text-yellow-400';
-                    actionButtonsHTML = `<button class="manual-approve-btn w-full px-4 py-2 text-sm font-semibold bg-blue-500 text-white rounded-md hover:bg-blue-600" data-id="${id}">Подтвердить вручную</button>`;
-                    break;
                 default:
                     statusColor = 'text-gray-400';
                     actionButtonsHTML = '';
@@ -1376,44 +1340,6 @@
             } else {
                 document.getElementById('chat-view').innerHTML = '<div class="flex items-center justify-center h-full card-bg rounded-lg"><p>Выберите чат для просмотра.</p></div>';
             }
-        }
-        function loadAdminReviews() {
-            const contentEl = document.getElementById('admin-tab-content');
-            contentEl.innerHTML = `<h3 class="text-2xl font-bold mb-6">Отзывы пользователей</h3><div id="reviews-list" class="space-y-4"></div>`;
-            const listEl = document.getElementById('reviews-list');
-
-            const q = query(collection(db, 'reviews'), orderBy('createdAt', 'desc'));
-            onSnapshot(q, async (snapshot) => {
-                if(snapshot.empty) {
-                    listEl.innerHTML = '<p>Отзывов пока нет.</p>';
-                    return;
-                }
-                listEl.innerHTML = '';
-                for(const doc of snapshot.docs) {
-                    const review = doc.data();
-                    const product = allProducts.find(p => p.id === review.productId);
-                    const item = document.createElement('div');
-                    item.className = 'card-bg p-4 rounded-lg shadow border border-custom';
-                    item.innerHTML = `
-                        <div class="flex items-start gap-4">
-                            <img src="${review.userPhotoURL || 'https://placehold.co/48x48'}" class="w-12 h-12 rounded-full object-cover">
-                            <div class="flex-grow">
-                                <div class="flex justify-between items-center">
-                                    <div>
-                                        <p class="font-semibold">${review.userName}</p>
-                                        <p class="text-sm text-gray-400">О товаре: ${product ? product.name : 'Неизвестный товар'}</p>
-                                    </div>
-                                    <div class="flex items-center text-yellow-400">
-                                        ${'★'.repeat(review.rating)}${'☆'.repeat(5 - review.rating)}
-                                    </div>
-                                </div>
-                                <p class="mt-2">${review.comment}</p>
-                            </div>
-                        </div>
-                    `;
-                    listEl.appendChild(item);
-                }
-            });
         }
         async function showProductForm(productId) { 
             let p = { name: '', description: '', price: 0, imageUrl: '', isPinned: false, isVerified: false, isFeatured: false, variations: [], category: 'games' }; 
@@ -1602,7 +1528,7 @@
                     if (window.location.hash !== newHash) {
                         window.location.hash = newHash;
                     }
-                    return; 
+                    return;
                 }
 
                 const target = e.target;
@@ -1657,7 +1583,7 @@
                 if (target.closest('#profile-btn')) { e.stopPropagation(); document.getElementById('profile-menu')?.classList.toggle('hidden'); }
                 if (target.id === 'change-avatar-btn') document.getElementById('avatar-upload').click();
                 if (target.closest('.cancel-order-btn')) { const purchaseId = target.dataset.purchaseId; confirmAction('Вы уверены, что хотите отменить этот заказ?', () => updateDoc(doc(db, "purchases", purchaseId), { status: 'Отменен' })); }
-                if (target.closest('.approve-purchase-btn') || target.closest('.manual-approve-btn')) { 
+                if (target.closest('.approve-purchase-btn')) { 
                     const purchaseId = target.dataset.id;
                     await updateDoc(doc(db, "purchases", purchaseId), { status: 'Выполнен' }); 
                     const purchaseDoc = await getDoc(doc(db, "purchases", purchaseId));
@@ -1708,53 +1634,6 @@
                     confirmAction(message, async () => {
                         await updateDoc(doc(db, 'users', userId), { isBanned: !isBanned });
                     });
-                 }
-                 if (target.closest('.wishlist-btn')) {
-                     if(!currentUser) { showToast('Войдите, чтобы добавить в избранное'); return; }
-                     const btn = target.closest('.wishlist-btn');
-                     const productId = btn.dataset.productId;
-                     const userRef = doc(db, 'users', currentUser.uid);
-                     if (userWishlist.includes(productId)) {
-                         await updateDoc(userRef, { wishlist: arrayRemove(productId) });
-                     } else {
-                         await updateDoc(userRef, { wishlist: arrayUnion(productId) });
-                     }
-                 }
-                 if (target.closest('.review-purchase-btn')) {
-                    const purchaseId = target.dataset.purchaseId;
-                    const productId = target.dataset.productId;
-                    const productName = target.dataset.productName;
-
-                    showModal('Оставить отзыв', `
-                        <p class="font-semibold mb-2">Оцените товар: ${productName}</p>
-                        <div class="star-rating">
-                            <input type="radio" id="5-stars" name="rating" value="5" /><label for="5-stars">☆</label>
-                            <input type="radio" id="4-stars" name="rating" value="4" /><label for="4-stars">☆</label>
-                            <input type="radio" id="3-stars" name="rating" value="3" /><label for="3-stars">☆</label>
-                            <input type="radio" id="2-stars" name="rating" value="2" /><label for="2-stars">☆</label>
-                            <input type="radio" id="1-star" name="rating" value="1" /><label for="1-star">☆</label>
-                        </div>
-                        <textarea id="review-comment" class="w-full mt-4 p-2 border rounded input-bg" placeholder="Ваш комментарий..."></textarea>
-                    `, async (m) => {
-                        const rating = m.querySelector('input[name="rating"]:checked')?.value;
-                        if (!rating) {
-                            alert('Пожалуйста, поставьте оценку.');
-                            return false;
-                        }
-                        const comment = m.querySelector('#review-comment').value;
-                        await addDoc(collection(db, 'reviews'), {
-                            userId: currentUser.uid,
-                            userName: currentUser.displayName,
-                            userPhotoURL: currentUser.photoURL,
-                            productId: productId,
-                            rating: parseInt(rating),
-                            comment: comment,
-                            createdAt: serverTimestamp()
-                        });
-                        await updateDoc(doc(db, 'purchases', purchaseId), { isReviewed: true });
-                        showToast('Спасибо за ваш отзыв!');
-                        return true;
-                    }, 'Отправить отзыв');
                  }
             });
             document.addEventListener('change', e => { 
@@ -1877,15 +1756,15 @@
                 applyTheme(newTheme);
             };
         }
-        function updateAuthUI() { 
-            const container = document.getElementById('auth-container'); 
-            if(!container) return; 
+        function updateAuthUI() {
+            const container = document.getElementById('auth-container');
+            if(!container) return;
 
-            if (currentUser) { 
-                container.innerHTML = `<div class="relative"><button id="profile-btn" class="flex items-center gap-2"><img src="${currentUser.photoURL || 'https://placehold.co/32x32'}" alt="Профиль" class="w-8 h-8 rounded-full"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg></button><div id="profile-menu" class="hidden absolute right-0 mt-2 w-52 card-bg rounded-md shadow-lg border border-custom z-10"><div class="px-4 py-2 border-b border-custom"><p class="font-semibold truncate">${currentUser.displayName}</p><p class="text-sm text-gray-400 truncate">${currentUser.email}</p></div><a href="#profile" class="nav-link block px-4 py-2 text-sm hover:bg-gray-100 dark:hover:bg-gray-700">Профиль</a>${isAdmin ? `<a href="#admin" class="nav-link block px-4 py-2 text-sm hover:bg-gray-100 dark:hover:bg-gray-700">Админ-панель</a>` : ''}<div class="border-t border-custom"></div><a href="#" id="logout-btn" class="block px-4 py-2 text-sm text-red-500 hover:bg-gray-100 dark:hover:bg-gray-700">Выйти</a></div></div>`; 
-            } else { 
-                container.innerHTML = `<button id="google-login-btn" class="px-4 py-2 bg-primary text-white rounded-md hover:bg-primary-hover font-semibold flex items-center gap-2"><svg class="w-5 h-5" viewBox="0 0 48 48"><path fill="#FFC107" d="M43.611 20.083H42V20H24v8h11.303c-1.649 4.657-6.08 8-11.303 8c-6.627 0-12-5.373-12-12s5.373-12 12-12c3.059 0 5.842 1.154 7.961 3.039l5.657-5.657C34.046 6.053 29.268 4 24 4C12.955 4 4 12.955 4 24s8.955 20 20 20s20-8.955 20-20c0-1.341-.138-2.65-.389-3.917z"></path><path fill="#FF3D00" d="M6.306 14.691l6.571 4.819C14.655 15.108 18.961 12 24 12c3.059 0 5.842 1.154 7.961 3.039l5.657-5.657C34.046 6.053 29.268 4 24 4C16.318 4 9.656 8.337 6.306 14.691z"></path><path fill="#4CAF50" d="M24 44c5.166 0 9.86-1.977 13.409-5.192l-6.19-5.238C29.211 35.091 26.715 36 24 36c-5.202 0-9.619-3.317-11.283-7.946l-6.522 5.025C9.505 39.556 16.227 44 24 44z"></path><path fill="#1976D2" d="M43.611 20.083H42V20H24v8h11.303c-.792 2.237-2.231 4.166-4.087 5.571l6.19 5.238C44.572 34.043 46 29.392 46 24c0-1.341-.138-2.65-.389-3.917z"></path></svg>Войти</button>`; 
-            } 
+            if (currentUser) {
+                container.innerHTML = `<div class="relative"><button id="profile-btn" class="flex items-center gap-2"><img src="${currentUser.photoURL || 'https://placehold.co/32x32'}" alt="Профиль" class="w-8 h-8 rounded-full"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg></button><div id="profile-menu" class="hidden absolute right-0 mt-2 w-52 card-bg rounded-md shadow-lg border border-custom z-10"><div class="px-4 py-2 border-b border-custom"><p class="font-semibold truncate">${currentUser.displayName}</p><p class="text-sm text-gray-400 truncate">${currentUser.email}</p></div><a href="#profile" class="nav-link block px-4 py-2 text-sm hover:bg-gray-100 dark:hover:bg-gray-700">Профиль</a>${isAdmin ? `<a href="#admin" class="nav-link block px-4 py-2 text-sm hover:bg-gray-100 dark:hover:bg-gray-700">Админ-панель</a>` : ''}<div class="border-t border-custom"></div><a href="#" id="logout-btn" class="block px-4 py-2 text-sm text-red-500 hover:bg-gray-100 dark:hover:bg-gray-700">Выйти</a></div></div>`;
+            } else {
+                container.innerHTML = `<button id="google-login-btn" class="px-4 py-2 bg-primary text-white rounded-md hover:bg-primary-hover font-semibold flex items-center gap-2"><svg class="w-5 h-5" viewBox="0 0 48 48"><path fill="#FFC107" d="M43.611 20.083H42V20H24v8h11.303c-1.649 4.657-6.08 8-11.303 8c-6.627 0-12-5.373-12-12s5.373-12 12-12c3.059 0 5.842 1.154 7.961 3.039l5.657-5.657C34.046 6.053 29.268 4 24 4C12.955 4 4 12.955 4 24s8.955 20 20 20s20-8.955 20-20c0-1.341-.138-2.65-.389-3.917z"></path><path fill="#FF3D00" d="M6.306 14.691l6.571 4.819C14.655 15.108 18.961 12 24 12c3.059 0 5.842 1.154 7.961 3.039l5.657-5.657C34.046 6.053 29.268 4 24 4C16.318 4 9.656 8.337 6.306 14.691z"></path><path fill="#4CAF50" d="M24 44c5.166 0 9.86-1.977 13.409-5.192l-6.19-5.238C29.211 35.091 26.715 36 24 36c-5.202 0-9.619-3.317-11.283-7.946l-6.522 5.025C9.505 39.556 16.227 44 24 44z"></path><path fill="#1976D2" d="M43.611 20.083H42V20H24v8h11.303c-.792 2.237-2.231 4.166-4.087 5.571l6.19 5.238C44.572 34.043 46 29.392 46 24c0-1.341-.138-2.65-.389-3.917z"></path></svg>Войти</button>`;
+            }
         }
         function signInWithGoogle() { const provider = new GoogleAuthProvider(); signInWithPopup(auth, provider).catch((error) => { console.error("Google Sign-In Error: ", error); alert("Google Sign-In Failed: " + error.message); }); }
         function initSwitchers() {
@@ -1966,22 +1845,6 @@
                 }
              });
         }
-        // --- WISHLIST ---
-        function setupWishlistListener() {
-            if (!currentUser) return;
-            onSnapshot(doc(db, "users", currentUser.uid), (doc) => {
-                userWishlist = doc.data()?.wishlist || [];
-                // Re-render products if on main page to update heart icons
-                if(window.location.hash === '' || window.location.hash === '#main') {
-                    applyFiltersAndSort();
-                }
-                if(window.location.hash === '#wishlist') {
-                    loadWishlistPage();
-                }
-            });
-        }
     </script>
 </body>
 </html>
-
-}
