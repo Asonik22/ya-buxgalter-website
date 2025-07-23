@@ -25,7 +25,7 @@
         }
         .product-card:hover {
             transform: translateY(-2px);
-            box-shadow: 0 4px R20px rgba(0,0,0,0.1);
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
         }
         html.dark .product-card:hover {
              box-shadow: 0 4px 20px rgba(0,0,0,0.3);
@@ -56,12 +56,8 @@
         input:checked + .toggle-slider { background-color: var(--primary); }
         input:checked + .toggle-slider:before { transform: translateX(20px); }
         
-        #mobile-menu {
-            transition: opacity 0.3s ease-in-out;
-        }
-        #mobile-menu-panel {
-            transition: transform 0.3s ease-in-out;
-        }
+        #mobile-menu { transition: opacity 0.3s ease-in-out; }
+        #mobile-menu-panel { transition: transform 0.3s ease-in-out; }
 
     </style>
 </head>
@@ -70,7 +66,10 @@
     <header class="card-bg shadow-md sticky top-0 z-40 border-b border-custom">
         <div class="container mx-auto px-4">
             <div class="flex justify-between items-center h-16">
-                <a href="#main" class="text-2xl font-bold text-primary nav-link">Asonik Store</a>
+                <a href="#main" class="flex items-center gap-3 text-2xl font-bold text-primary nav-link">
+                    <img id="store-logo" src="" alt="logo" class="h-8 w-8 rounded-full hidden">
+                    <span>Asonik Store</span>
+                </a>
                 
                 <nav class="hidden md:flex items-center space-x-6">
                     <a href="#main" class="nav-link text-gray-600 dark:text-gray-300 hover:text-primary" data-lang-key="nav_main">Главная</a>
@@ -218,7 +217,7 @@
             updateCartCount();
             
             onAuthStateChanged(auth, async (user) => {
-                await loadPaymentMethods();
+                await Promise.all([loadPaymentMethods(), loadStoreSettings()]);
                 await initializeAppState(user);
             });
         });
@@ -263,6 +262,19 @@
         }
 
         // --- DATA FETCHING ---
+        async function loadStoreSettings() {
+            const settingsDoc = await getDoc(doc(db, "storeSettings", "config"));
+            if (settingsDoc.exists()) {
+                const { logoUrl } = settingsDoc.data();
+                const logoEl = document.getElementById('store-logo');
+                if (logoUrl) {
+                    logoEl.src = logoUrl;
+                    logoEl.classList.remove('hidden');
+                } else {
+                    logoEl.classList.add('hidden');
+                }
+            }
+        }
         function loadPaymentMethods() {
             return new Promise(resolve => {
                 const q = query(collection(db, "paymentMethods"), orderBy("order", "asc"));
@@ -600,18 +612,24 @@
                 return;
             }
             
-            contentEl.innerHTML = `<h1 class="text-4xl font-bold text-center mb-8" data-lang-key="purchases_title">Мои покупки</h1><div id="purchases-list" class="space-y-6"></div>`;
+            contentEl.innerHTML = `
+                <h1 class="text-4xl font-bold text-center mb-8" data-lang-key="purchases_title">Мои покупки</h1>
+                <div class="mb-6 max-w-md mx-auto">
+                     <input type="text" id="my-purchases-search" placeholder="Поиск по названию товара..." class="w-full p-2 border rounded-lg input-bg focus:outline-none focus:ring-2 focus:ring-primary">
+                </div>
+                <div id="purchases-list" class="space-y-6"></div>`;
             const listEl = document.getElementById('purchases-list');
+            const searchInput = document.getElementById('my-purchases-search');
+            let userPurchases = [];
 
-            const q = query(collection(db, "purchases"), where("userId", "==", currentUser.uid), orderBy("createdAt", "desc"));
-            onSnapshot(q, async (snapshot) => {
-                if (snapshot.empty) { 
-                    listEl.innerHTML = '<div class="text-center card-bg p-8 rounded-lg shadow-md"><p>У вас еще нет покупок.</p></div>'; 
+            const renderPurchases = (purchasesToRender) => {
+                 if (purchasesToRender.length === 0) { 
+                    listEl.innerHTML = '<div class="text-center card-bg p-8 rounded-lg shadow-md"><p>Ничего не найдено.</p></div>'; 
                     return; 
                 }
                 listEl.innerHTML = '';
-                for (const doc of snapshot.docs) {
-                    const purchase = doc.data();
+                purchasesToRender.forEach(purchaseData => {
+                    const {id, purchase} = purchaseData;
                     const paymentMethod = paymentMethods.find(p => p.id === purchase.paymentMethodId);
                     const item = document.createElement('div');
                     item.className = 'card-bg p-4 sm:p-6 rounded-lg shadow-md border border-custom flex flex-col sm:flex-row gap-6';
@@ -631,15 +649,10 @@
                         actionButtons = `<button class="contact-seller-btn w-full px-4 py-2 font-semibold bg-primary text-white rounded-md hover:bg-primary-hover" data-code="${purchase.orderId}">Получить товар</button>`;
                     } else if (purchase.status === 'Ожидает оплаты') {
                         actionButtons = `
-                            <button class="upload-proof-btn w-full px-4 py-2 font-semibold bg-green-500 text-white rounded-md hover:bg-green-600" data-purchase-id="${doc.id}">Оплатить</button>
-                            <button class="cancel-order-btn w-full px-4 py-2 font-semibold border border-red-500 text-red-500 rounded-md hover:bg-red-500 hover:text-white" data-purchase-id="${doc.id}">Отменить заказ</button>
+                            <button class="upload-proof-btn w-full px-4 py-2 font-semibold bg-green-500 text-white rounded-md hover:bg-green-600" data-purchase-id="${id}">Оплатить</button>
+                            <button class="cancel-order-btn w-full px-4 py-2 font-semibold border border-red-500 text-red-500 rounded-md hover:bg-red-500 hover:text-white" data-purchase-id="${id}">Отменить заказ</button>
                         `;
-                    } else if (purchase.status === 'Ожидает подтверждения') {
-                        actionButtons = `
-                            <button class="contact-seller-btn w-full px-4 py-2 font-semibold bg-primary/20 dark:bg-primary/30 text-primary rounded-md hover:bg-primary/30 dark:hover:bg-primary/40" data-code="${purchase.orderId}">Связаться</button>
-                        `;
-                    }
-                    else {
+                    } else {
                          actionButtons = `<button class="contact-seller-btn w-full px-4 py-2 font-semibold bg-primary/20 dark:bg-primary/30 text-primary rounded-md hover:bg-primary/30 dark:hover:bg-primary/40" data-code="${purchase.orderId}">Связаться</button>`;
                     }
 
@@ -665,7 +678,19 @@
                         </div>
                     `;
                     listEl.appendChild(item);
-                }
+                });
+            }
+
+            const q = query(collection(db, "purchases"), where("userId", "==", currentUser.uid), orderBy("createdAt", "desc"));
+            onSnapshot(q, (snapshot) => {
+                userPurchases = snapshot.docs.map(doc => ({ id: doc.id, purchase: doc.data() }));
+                renderPurchases(userPurchases);
+            });
+
+            searchInput.addEventListener('input', (e) => {
+                const searchTerm = e.target.value.toLowerCase().trim();
+                const filtered = userPurchases.filter(({ purchase }) => purchase.productName.toLowerCase().includes(searchTerm));
+                renderPurchases(filtered);
             });
         }
 
@@ -738,6 +763,12 @@
                 const contactEmail = m.querySelector('#contact-email').value;
 
                 if (!contactTelegram || !contactEmail) { alert("Пожалуйста, укажите ваши контактные данные."); return false; }
+                
+                const userDoc = await getDoc(doc(db, "users", currentUser.uid));
+                if (userDoc.exists() && userDoc.data().isBanned) {
+                    showModal('Ошибка', '<p>Ваш аккаунт заблокирован. Вы не можете совершать покупки. Пожалуйста, свяжитесь с администрацией.</p>');
+                    return false;
+                }
 
                 const orderId = generateUniqueCode();
                 const purchaseRef = doc(collection(db, "purchases"));
@@ -990,6 +1021,7 @@
                 { id: 'purchases', name: 'Покупки' },
                 { id: 'products', name: 'Товары' },
                 { id: 'payment', name: 'Оплата' },
+                { id: 'customization', name: 'Кастомизация' },
                 { id: 'faq', name: 'FAQ' },
                 { id: 'promocodes', name: 'Промокоды' },
                 { id: 'chats', name: 'Чаты' },
@@ -1022,6 +1054,7 @@
             if (tab === 'promocodes') loadAdminList('promocodes', 'Управление промокодами', renderAdminPromoItem, `<button id="add-promo-btn" class="bg-green-500 text-white px-4 py-2 rounded-lg hover:bg-green-600">Создать промокод</button>`);
             if (tab === 'purchases') loadAdminPurchases();
             if (tab === 'payment') loadAdminList('paymentMethods', 'Способы оплаты', renderAdminPaymentItem, `<button id="add-payment-btn" class="bg-green-500 text-white px-4 py-2 rounded-lg hover:bg-green-600">Добавить способ</button>`);
+            if (tab === 'customization') loadCustomizationPage();
             if (tab === 'chats') {
                 const userId = window.location.hash.split('/')[2];
                 loadAdminChatsList(userId);
@@ -1047,7 +1080,7 @@
                 const purchasesSnapshot = await getDocs(query(collection(db, "purchases")));
                 const usersSnapshot = await getDocs(collection(db, "users"));
                 const usersData = usersSnapshot.docs
-                    .map(doc => doc.data())
+                    .map(doc => ({id: doc.id, ...doc.data()}))
                     .sort((a, b) => (b.lastSeen?.seconds || 0) - (a.lastSeen?.seconds || 0));
 
                 const allPurchases = purchasesSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
@@ -1078,10 +1111,13 @@
                                        <p class="font-semibold">${user.displayName || 'Без имени'}</p>
                                        <p class="text-sm text-gray-400">${user.email}</p>
                                    </div>
-                                   <div class="text-sm text-gray-400 text-right">
+                                   <div class="text-sm text-gray-400 text-right mr-4">
                                        <p>Последний визит:</p>
                                        <p>${user.lastSeen ? new Date(user.lastSeen.seconds * 1000).toLocaleString() : 'Недавно'}</p>
                                    </div>
+                                   <button class="ban-user-btn px-4 py-2 text-sm font-semibold rounded-md ${user.isBanned ? 'bg-yellow-500 hover:bg-yellow-600' : 'bg-red-500 hover:bg-red-600'} text-white" data-user-id="${user.id}" data-is-banned="${!!user.isBanned}">
+                                     ${user.isBanned ? 'Разбанить' : 'Бан'}
+                                   </button>
                                </div>
                             `).join('')}
                         </div>
@@ -1089,7 +1125,31 @@
                 }
             } catch (error) {
                 console.error("Error loading dashboard:", error);
-                contentEl.innerHTML = `<p class="text-red-400">Ошибка загрузки статистики. Возможно, требуется создать индекс в Firebase для коллекции 'users' по полю 'lastSeen' (по убыванию).</p>`;
+                contentEl.innerHTML = `<p class="text-red-400">Ошибка загрузки статистики. Пожалуйста, создайте в Firebase индекс для коллекции 'users' по полю 'lastSeen' (по убыванию).</p>`;
+            }
+        }
+        async function loadCustomizationPage() {
+            const contentEl = document.getElementById('admin-tab-content');
+            contentEl.innerHTML = `
+                <h3 class="text-2xl font-bold mb-6">Кастомизация магазина</h3>
+                <div class="space-y-4 max-w-lg">
+                    <div>
+                        <label class="block text-sm font-medium mb-1">Логотип магазина (отображается в шапке)</label>
+                        <input type="file" id="logo-upload-input" class="w-full text-sm file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-primary/10 dark:file:bg-violet-900/50 file:text-primary hover:file:bg-primary/20"/>
+                        <img id="logo-preview" src="" class="w-24 h-24 object-contain mt-2 p-2 border border-dashed border-custom rounded-lg hidden">
+                    </div>
+                    <button id="save-customization-btn" class="px-6 py-2 bg-primary text-white rounded-lg hover:bg-primary-hover">Сохранить</button>
+                </div>
+            `;
+
+            const settingsDoc = await getDoc(doc(db, "storeSettings", "config"));
+            if (settingsDoc.exists()) {
+                const { logoUrl } = settingsDoc.data();
+                const logoPreview = document.getElementById('logo-preview');
+                if (logoUrl) {
+                    logoPreview.src = logoUrl;
+                    logoPreview.classList.remove('hidden');
+                }
             }
         }
         function renderAdminProductItem(id, data) {
@@ -1245,7 +1305,7 @@
                     const userName = userDoc.exists() ? userDoc.data().displayName : 'Неизвестный';
                     const item = document.createElement('a');
                     item.href = `#admin/chats/${chatData.userId}`;
-                    item.className = `block p-3 rounded-lg mb-2 ${activeChatUserId === chatData.userId ? 'bg-primary text-white' : 'hover:bg-gray-700'}`;
+                    item.className = `block p-3 rounded-lg mb-2 ${activeChatUserId === chatData.userId ? 'bg-primary text-white' : 'hover:bg-gray-100 dark:hover:bg-gray-700'}`;
                     item.textContent = userName || 'User ' + chatData.userId.substring(0, 5);
                     sidebar.appendChild(item);
                 }
@@ -1460,6 +1520,21 @@
                 if (target.id === 'add-payment-btn') showPaymentMethodForm();
                 if (target.id === 'add-faq-btn') { const q = prompt("Вопрос:"); const a = prompt("Ответ:"); if (q && a) addDoc(collection(db, 'faq'), { question: q, answer: a }); }
                 if (target.id === 'add-promo-btn') showPromoForm();
+                if (target.id === 'save-customization-btn') {
+                    const btn = target;
+                    btn.textContent = 'Сохранение...'; btn.disabled = true;
+                    const logoFile = document.getElementById('logo-upload-input').files[0];
+                    if (logoFile) {
+                        const logoUrl = await uploadImage(logoFile);
+                        if (logoUrl) {
+                            await setDoc(doc(db, "storeSettings", "config"), { logoUrl }, { merge: true });
+                            await loadStoreSettings();
+                        }
+                    }
+                    btn.textContent = 'Сохранить'; btn.disabled = false;
+                    showToast('Настройки сохранены!');
+                }
+
 
                 const editBtn = e.target.closest('.edit-btn');
                 if (editBtn) {
@@ -1520,8 +1595,30 @@
                     const isEnabled = target.checked;
                     await updateDoc(doc(db, "paymentMethods", id), { isEnabled });
                 }
+                 if (target.closest('.ban-user-btn')) {
+                    const btn = target.closest('.ban-user-btn');
+                    const userId = btn.dataset.userId;
+                    const isBanned = btn.dataset.isBanned === 'true';
+                    const message = isBanned ? 'Вы уверены, что хотите разбанить этого пользователя?' : 'Вы уверены, что хотите забанить этого пользователя?';
+                    confirmAction(message, async () => {
+                        await updateDoc(doc(db, 'users', userId), { isBanned: !isBanned });
+                    });
+                 }
             });
-            document.addEventListener('change', e => { if (e.target.id === 'avatar-upload' && e.target.files[0]) { const reader = new FileReader(); reader.onload = (e) => document.getElementById('profile-avatar').src = e.target.result; reader.readAsDataURL(e.target.files[0]); } });
+            document.addEventListener('change', e => { 
+                if (e.target.id === 'avatar-upload' && e.target.files[0]) { 
+                    const reader = new FileReader(); reader.onload = (e) => document.getElementById('profile-avatar').src = e.target.result; reader.readAsDataURL(e.target.files[0]); 
+                }
+                if (e.target.id === 'logo-upload-input' && e.target.files[0]) { 
+                    const reader = new FileReader(); 
+                    reader.onload = (e) => {
+                        const preview = document.getElementById('logo-preview');
+                        preview.src = e.target.result;
+                        preview.classList.remove('hidden');
+                    }; 
+                    reader.readAsDataURL(e.target.files[0]); 
+                }
+            });
             document.addEventListener('click', (e) => { 
                 const menu = document.getElementById('profile-menu'); 
                 if (menu && !menu.classList.contains('hidden') && !e.target.closest('#profile-btn')) menu.classList.add('hidden');
