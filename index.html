@@ -60,13 +60,6 @@
         #mobile-menu { transition: opacity 0.3s ease-in-out; }
         #mobile-menu-panel { transition: transform 0.3s ease-in-out; }
 
-        .star-rating label { color: #ccc; cursor: pointer; font-size: 2rem; }
-        .star-rating input:checked ~ label,
-        .star-rating label:hover,
-        .star-rating label:hover ~ label { color: #f59e0b; }
-        .star-rating input { display: none; }
-        .star-rating { display: inline-flex; flex-direction: row-reverse; }
-
     </style>
 </head>
 <body>
@@ -152,19 +145,16 @@
         import { getFirestore, doc, getDoc, setDoc, addDoc, collection, getDocs, onSnapshot, updateDoc, deleteDoc, query, where, serverTimestamp, orderBy, increment, writeBatch, arrayUnion, arrayRemove } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
         // --- CONFIG ---
-        // !!! ВАЖНО: ЗАМЕНИТЕ ЭТОТ ОБЪЕКТ НА ВАШ СОБСТВЕННЫЙ ИЗ КОНСОЛИ FIREBASE !!!
         const firebaseConfig = {
-          apiKey: "ВАШ_КЛЮЧ_API",
-          authDomain: "ВАШ_authDomain",
-          projectId: "ВАШ_projectId",
-          storageBucket: "ВАШ_storageBucket",
-          messagingSenderId: "ВАШ_messagingSenderId",
-          appId: "ВАШ_appId"
+            apiKey: "AIzaSyC7smDYoy-LT58xCwjJsc9uZU9CgHQv5dM",
+            authDomain: "ya-buxgalter.firebaseapp.com",
+            projectId: "ya-buxgalter",
+            storageBucket: "ya-buxgalter.appspot.com",
+            messagingSenderId: "640345805387",
+            appId: "1:640345805387:web:a1adade77f809af84cb3ce"
         };
-        // !!! КОНЕЦ СЕКЦИИ ДЛЯ ЗАМЕНЫ !!!
-
         const IMGBB_API_KEY = '96bf3f29606f1989bb5a450ad3770cce';
-        const ADMIN_UID = 'vhmtXZxkZnOWviNQ39R1W3GE8mw2'; // Замените на UID вашего админ-аккаунта
+        const ADMIN_UID = 'vhmtXZxkZnOWviNQ39R1W3GE8mw2';
         const TELEGRAM_USERNAME = 'asonikofficial';
 
         // --- INITIALIZATION ---
@@ -1993,3 +1983,5 @@
     </script>
 </body>
 </html>
+
+}
