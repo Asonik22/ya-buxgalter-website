@@ -636,7 +636,8 @@
                     
                     let statusColor, statusText;
                     switch(purchase.status) {
-                        case 'Выполнен': statusColor = 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200'; statusText = 'Выполнен'; break;
+                        case 'Выполнен': statusColor = 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200'; statusText = 'Ожидает получения'; break;
+                        case 'Завершён': statusColor = 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200'; statusText = 'Завершён'; break;
                         case 'Отменен':
                         case 'Отклонен': statusColor = 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200'; statusText = purchase.status; break;
                         default: statusColor = 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200'; statusText = purchase.status;
@@ -650,9 +651,12 @@
                     } else if (purchase.status === 'Ожидает оплаты') {
                         actionButtons = `
                             <button class="upload-proof-btn w-full px-4 py-2 font-semibold bg-green-500 text-white rounded-md hover:bg-green-600" data-purchase-id="${id}">Оплатить</button>
-                            <button class="cancel-order-btn w-full px-4 py-2 font-semibold border border-red-500 text-red-500 rounded-md hover:bg-red-500 hover:text-white" data-purchase-id="${id}">Отменить заказ</button>
+                            <button class="cancel-order-btn w-full px-4 py-2 font-semibold border border-red-500 text-red-500 rounded-md hover:bg-red-500 hover:text-white" data-purchase-id="${id}">Отменить</button>
                         `;
-                    } else {
+                    } else if (purchase.status === 'Завершён') {
+                        actionButtons = `<p class="text-sm text-center text-gray-500 dark:text-gray-400">Спасибо за покупку!</p>`;
+                    }
+                    else {
                          actionButtons = `<button class="contact-seller-btn w-full px-4 py-2 font-semibold bg-primary/20 dark:bg-primary/30 text-primary rounded-md hover:bg-primary/30 dark:hover:bg-primary/40" data-code="${purchase.orderId}">Связаться</button>`;
                     }
 
@@ -1062,7 +1066,7 @@
         }
         function loadAdminList(collectionName, title, renderFunction, buttonHtml = '') {
             const contentEl = document.getElementById('admin-tab-content');
-            contentEl.innerHTML = `<div class="flex justify-between items-center mb-6"><h3 class="text-2xl font-bold">${title}</h3><div>${buttonHtml}</div></div><div id="admin-list-container" class="space-y-3"></div>`;
+            contentEl.innerHTML = `<div id="bulk-actions-bar" class="hidden mb-4 p-2 card-bg border border-custom rounded-lg flex items-center gap-4"></div><div class="flex justify-between items-center mb-6"><h3 class="text-2xl font-bold">${title}</h3><div>${buttonHtml}</div></div><div id="admin-list-container" class="space-y-3"></div>`;
             const listEl = document.getElementById('admin-list-container');
             
             onSnapshot(query(collection(db, collectionName)), (snapshot) => {
@@ -1157,6 +1161,7 @@
             item.className = 'card-bg p-4 rounded-lg shadow flex justify-between items-center border border-custom';
             item.innerHTML = `
                 <div class="flex items-center gap-4">
+                    <input type="checkbox" class="product-bulk-checkbox h-5 w-5 rounded" data-id="${id}">
                     <img src="${data.imageUrl || 'https://placehold.co/64x64'}" class="w-12 h-12 rounded-md object-cover">
                     <div>
                         <p class="font-semibold">${data.name}</p>
@@ -1212,9 +1217,26 @@
             const telegramUsername = p.contactTelegram || '';
             const telegramLink = `https://t.me/${telegramUsername.replace('@', '')}`;
             const telegramDisplay = telegramUsername ? `<a href="${telegramLink}" target="_blank" class="text-primary">${telegramUsername}</a>` : 'не указан';
-            let statusColor = 'text-yellow-400';
-            if (p.status === 'Выполнен') statusColor = 'text-green-400';
-            if (p.status === 'Отменен' || p.status === 'Отклонен') statusColor = 'text-red-400';
+            
+            let statusColor, actionButtonsHTML;
+            switch(p.status) {
+                case 'Выполнен':
+                    statusColor = 'text-blue-400';
+                    actionButtonsHTML = `<button class="complete-purchase-btn w-full px-4 py-2 text-sm font-semibold bg-primary text-white rounded-md hover:bg-primary-hover" data-id="${id}">Завершить заказ</button>`;
+                    break;
+                case 'Ожидает подтверждения':
+                    statusColor = 'text-yellow-400';
+                     actionButtonsHTML = `
+                        <div class="w-full flex gap-2">
+                            <button class="approve-purchase-btn flex-1 px-4 py-2 text-sm font-semibold bg-green-500 text-white rounded-md hover:bg-green-600" data-id="${id}">Подтвердить</button>
+                            <button class="reject-purchase-btn flex-1 px-4 py-2 text-sm font-semibold bg-red-500 text-white rounded-md hover:bg-red-600" data-id="${id}">Отклонить</button>
+                        </div>`;
+                    break;
+                default:
+                    statusColor = 'text-gray-400';
+                    actionButtonsHTML = '';
+            }
+
             item.innerHTML = `
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                     <div class="md:col-span-2">
@@ -1227,11 +1249,7 @@
                     </div>
                     <div class="flex flex-col gap-2 items-start justify-center">
                         ${p.paymentProofUrl ? `<a href="${p.paymentProofUrl}" target="_blank" class="w-full text-center px-4 py-2 text-sm font-semibold bg-blue-500 text-white rounded-md hover:bg-blue-600">Посмотреть чек</a>` : '<span class="text-sm text-gray-500">Чек не загружен</span>'}
-                        ${p.status === 'Ожидает подтверждения' ? `
-                        <div class="w-full flex gap-2">
-                            <button class="approve-purchase-btn flex-1 px-4 py-2 text-sm font-semibold bg-green-500 text-white rounded-md hover:bg-green-600" data-id="${id}">Подтвердить</button>
-                            <button class="reject-purchase-btn flex-1 px-4 py-2 text-sm font-semibold bg-red-500 text-white rounded-md hover:bg-red-600" data-id="${id}">Отклонить</button>
-                        </div>` : ''}
+                        ${actionButtonsHTML}
                     </div>
                 </div>`;
             return item;
@@ -1565,6 +1583,14 @@
                     await updateDoc(doc(db, "purchases", purchaseId), { status: 'Выполнен' }); 
                     const purchaseDoc = await getDoc(doc(db, "purchases", purchaseId));
                     if(purchaseDoc.exists()) createNotification(purchaseDoc.data().userId, `Ваш заказ #${purchaseDoc.data().orderId} был выполнен!`);
+                }
+                 if (target.closest('.complete-purchase-btn')) { 
+                    const purchaseId = target.dataset.id;
+                    confirmAction('Вы уверены, что хотите завершить заказ? (Товар будет отмечен как выданный)', async () => {
+                        await updateDoc(doc(db, "purchases", purchaseId), { status: 'Завершён' }); 
+                        const purchaseDoc = await getDoc(doc(db, "purchases", purchaseId));
+                        if(purchaseDoc.exists()) createNotification(purchaseDoc.data().userId, `Ваш заказ #${purchaseDoc.data().orderId} завершен!`, `Спасибо за покупку!`);
+                    });
                 }
                 if (target.closest('.reject-purchase-btn')) {
                     const purchaseId = target.dataset.id;
