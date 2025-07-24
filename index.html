@@ -20,7 +20,7 @@
             --primary-light: #818cf8; 
             --primary-hover-light: #6366f1; 
             --border-light: #e5e7eb;
-            --logo-text-light: #4f46e5; /* Более темный сине-фиолетовый для лого */
+            --logo-text-light: #6a0dad; /* Более фиолетовый для лого */
 
             --bg-dark: #111827; 
             --text-dark: #e5e7eb; 
@@ -28,7 +28,7 @@
             --primary-dark: #a78bfa; 
             --primary-hover-dark: #8b5cf6; 
             --border-dark: #374151;
-            --logo-text-dark: #c7d2fe; /* Светлее для темной темы */
+            --logo-text-dark: #d8b4fe; /* Светлее фиолетовый для темной темы */
         }
         html.dark { 
             --bg: var(--bg-dark); --text: var(--text-dark); --card-bg: var(--card-bg-dark); 
@@ -276,7 +276,7 @@
         let cart = JSON.parse(localStorage.getItem('asonik_cart')) || [];
         const appState = {
             currency: 'UZS',
-            lang: 'RU',
+            lang: 'RU', // По умолчанию русский
             rates: { UZS: 1, RUB: 0.0073, USD: 0.000078 }
         };
 
@@ -290,15 +290,9 @@
                 faq_title: 'Часто задаваемые вопросы', purchases_title: 'Мои покупки', cart_title: 'Корзина', profile_title: 'Профиль',
                 buy_button: 'Купить',
                 reviews_button: 'Отзывы',
-            },
-            EN: {
-                nav_main: 'Home', nav_chats: 'Chats', nav_faq: 'FAQ', nav_purchases: 'My Purchases',
-                catalog_title: 'Product Catalog', search_placeholder: 'Search by name...',
-                all_categories: 'All Categories', category_games: 'Games', category_apps: 'Apps',
-                sort_new: 'Newest first', sort_popular: 'Popular first',
-                faq_title: 'Frequently Asked Questions', purchases_title: 'My Purchases', cart_title: 'Cart', profile_title: 'Profile',
-                buy_button: 'Buy',
-                reviews_button: 'Reviews',
+                // Дополнительные тексты для кастомизации
+                contact_email_label: 'Контактный Email',
+                contact_phone_label: 'Контактный телефон',
             },
             UZ: {
                 nav_main: 'Asosiy', nav_chats: 'Chatlar', nav_faq: 'FAQ', nav_purchases: 'Xaridlarim',
@@ -308,6 +302,8 @@
                 faq_title: 'Ko\'p so\'raladigan savollar', purchases_title: 'Mening xaridlarim', cart_title: 'Savatcha', profile_title: 'Profil',
                 buy_button: 'Sotib olish',
                 reviews_button: 'Sharhlar',
+                contact_email_label: 'Aloqa E-pochta',
+                contact_phone_label: 'Aloqa telefon raqami',
             }
         };
         function t(key) { return (translations[appState.lang] && translations[appState.lang][key]) || key; }
@@ -542,7 +538,7 @@
             }
             translatePage();
         }
-        async function loadPageContent(page, subpage) { // Добавил async
+        async function loadPageContent(page, subpage) { 
             const protectedPages = ['purchases', 'chats', 'profile', 'admin', 'wishlist'];
             if (protectedPages.includes(page) && !currentUser) {
                 const contentEl = document.querySelector(`[data-page="${page}"] > div`);
@@ -554,7 +550,7 @@
             }
 
             switch(page) {
-                case 'main': await loadMainPage(); break; // Добавил await
+                case 'main': await loadMainPage(); break; 
                 case 'faq': loadFaq(); break;
                 case 'admin': await loadAdminPanel(subpage); break; 
                 case 'cart': renderCartPage(); break;
@@ -566,7 +562,7 @@
         }
 
         // --- PAGE LOADERS ---
-        async function loadMainPage() { // Сделал async для баннера
+        async function loadMainPage() { 
             const mainPageWrapper = document.getElementById('main-page-content-wrapper');
             if (!mainPageWrapper) return;
 
@@ -1284,7 +1280,7 @@
 
             if (product.variations && product.variations.length > 0) {
                 let variationsHTML = product.variations.map((v, index) => `<label class="block p-4 border rounded-lg cursor-pointer hover:border-primary"><input type="radio" name="variation" value="${index}" class="mr-2"><span>${v.name}</span> - <span class="font-bold">${formatPrice(v.price)}</span></label>`).join('');
-                showModal(`Выберите вариант для "${product.name}"`, `<div class="space-y-2">${variationsHTML}</div>`, async (m) => { // Добавил async
+                showModal(`Выберите вариант для "${product.name}"`, `<div class="space-y-2">${variationsHTML}</div>`, async (m) => { 
                     const selectedVariation = m.querySelector('input[name="variation"]:checked');
                     if (!selectedVariation) { alert("Пожалуйста, выберите вариант."); return false; }
                     const variationIndex = parseInt(selectedVariation.value);
@@ -1293,7 +1289,7 @@
                     } else {
                         const item = product.variations[variationIndex];
                         const items = [{ productId: product.id, name: product.name, variationName: item.name, price: item.price, imageUrl: product.imageUrl }];
-                        await showCheckoutModal(items, item.price, `Оформление: ${product.name} (${item.name})`); // Добавил await
+                        await showCheckoutModal(items, item.price, `Оформление: ${product.name} (${item.name})`); 
                     }
                     return true;
                 });
@@ -1302,7 +1298,7 @@
                     addToCart(productId);
                 } else {
                     const items = [{ productId: product.id, name: product.name, variationName: null, price: product.price, imageUrl: product.imageUrl }];
-                    await showCheckoutModal(items, product.price, `Оформление: ${product.name}`); // Добавил await
+                    await showCheckoutModal(items, product.price, `Оформление: ${product.name}`); 
                 }
             }
         }
@@ -1340,7 +1336,7 @@
         }
 
         // --- ADMIN PANEL ---
-        async function loadAdminPanel(subpage = 'dashboard') { // Добавил async
+        async function loadAdminPanel(subpage = 'dashboard') { 
             if (!isAdmin) return;
             const adminContent = document.getElementById('admin-content');
             const tabs = [
@@ -1365,9 +1361,9 @@
                 </nav>
                 <div id="admin-tab-content" class="card-bg p-6 rounded-lg shadow-lg border border-custom min-h-[60vh]"></div>
             `;
-            await loadAdminTab(subpage); // Добавил await
+            await loadAdminTab(subpage); 
         }
-        async function loadAdminTab(tab) { // Добавил async
+        async function loadAdminTab(tab) { 
             const contentEl = document.getElementById('admin-tab-content');
             if(!contentEl) return;
             
@@ -1495,11 +1491,11 @@
                                 </select>
                             </div>
                              <div>
-                                <label class="block text-sm font-medium mb-1">Контактный Email</label>
+                                <label class="block text-sm font-medium mb-1" data-lang-key="contact_email_label">Контактный Email</label>
                                 <input type="email" id="contact-email-input" class="w-full p-2 border rounded input-bg" placeholder="email@example.com">
                             </div>
                             <div>
-                                <label class="block text-sm font-medium mb-1">Контактный телефон</label>
+                                <label class="block text-sm font-medium mb-1" data-lang-key="contact_phone_label">Контактный телефон</label>
                                 <input type="text" id="contact-phone-input" class="w-full p-2 border rounded input-bg" placeholder="+1234567890">
                             </div>
                             <button id="save-main-settings-btn" class="px-6 py-2 bg-primary text-white rounded-lg hover:bg-primary-hover">Сохранить</button>
@@ -1532,7 +1528,7 @@
                 }
                 if (adPlacementSelect) adPlacementSelect.value = adPlacement || 'before_catalog';
                 if (contactEmailInput) contactEmailInput.value = contactEmail || '';
-                if (contactPhoneInput) contactPhoneInput.phone = contactPhone || '';
+                if (contactPhoneInput) contactPhoneInput.value = contactPhone || ''; // Исправлено .phone на .value
             }
             await loadAdminAds(); 
             await loadAdminSocialLinks(); 
@@ -1695,13 +1691,13 @@
                 renderList(filtered);
             });
         }
-        async function loadAdminChatsList(activeChatUserId) { // Добавил async
+        async function loadAdminChatsList(activeChatUserId) { 
             const contentEl = document.getElementById('admin-tab-content');
             contentEl.innerHTML = `<h3 class="text-2xl font-bold mb-6">Чаты с пользователями</h3><div class="flex flex-col md:flex-row gap-4 h-[70vh]"><div id="chat-list-sidebar" class="w-full md:w-1/3 border-r border-custom overflow-y-auto pr-2">Загрузка чатов...</div><div id="chat-view" class="w-full md:w-2/3"></div></div>`;
             const sidebar = document.getElementById('chat-list-sidebar');
 
             const q = query(collection(db, "userChats"), orderBy("lastActivity", "desc"));
-            onSnapshot(q, async (snapshot) => { // Добавил async
+            onSnapshot(q, async (snapshot) => { 
                 if (!sidebar) return;
                 
                 let chatMetas = snapshot.docs.map(d => d.data());
@@ -1720,7 +1716,7 @@
                 for (const chatData of chatMetas) {
                     if(!chatData.userId) continue;
                     // Получаем имя пользователя, с которым ведется чат
-                    const userDoc = await getDoc(doc(db, "users", chatData.userId)); // Добавил await
+                    const userDoc = await getDoc(doc(db, "users", chatData.userId)); 
                     const userName = userDoc.exists() ? userDoc.data().displayName : 'Неизвестный пользователь';
                     const item = document.createElement('a');
                     item.href = `#admin/chats/${chatData.userId}`;
@@ -1733,7 +1729,7 @@
             if(activeChatUserId) {
                 const chatId = `${activeChatUserId}_${ADMIN_UID}`;
                 // Передаем userName, чтобы отобразить его в заголовке чата
-                const userDoc = await getDoc(doc(db, "users", activeChatUserId)); // Добавил await
+                const userDoc = await getDoc(doc(db, "users", activeChatUserId)); 
                 const userName = userDoc.exists() ? userDoc.data().displayName : 'Неизвестный пользователь';
                 renderChatInterface(document.getElementById('chat-view'), chatId, `Чат с: ${userName}`, ADMIN_UID);
             } else {
@@ -2560,7 +2556,7 @@
                      showReviewsModal(productId);
                  }
             });
-            document.addEventListener('change', async e => { // Добавил async
+            document.addEventListener('change', async e => { 
                 if (e.target.id === 'avatar-upload' && e.target.files[0]) { 
                     const reader = new FileReader(); reader.onload = (e) => document.getElementById('profile-avatar').src = e.target.result; reader.readAsDataURL(e.target.files[0]); 
                 }
@@ -2590,7 +2586,7 @@
                     }
                 }
             });
-            document.addEventListener('click', async (e) => { // Добавил async
+            document.addEventListener('click', async (e) => { 
                 const menu = document.getElementById('profile-menu'); 
                 if (menu && !menu.classList.contains('hidden') && !e.target.closest('#profile-btn')) menu.classList.add('hidden');
                 
@@ -2604,20 +2600,20 @@
                 
                 const batch = writeBatch(db);
                 if (e.target.id === 'bulk-delete-btn') {
-                    confirmAction(`Вы уверены, что хотите удалить ${selectedIds.length} товар(ов)?`, async () => { // Добавил async
+                    confirmAction(`Вы уверены, что хотите удалить ${selectedIds.length} товар(ов)?`, async () => { 
                        selectedIds.forEach(id => batch.delete(doc(db, 'products', id)));
-                       await batch.commit(); // Добавил await
+                       await batch.commit(); 
                        showToast('Товары удалены!');
                     });
                 }
                 if (e.target.id === 'bulk-recommend-btn') {
                     selectedIds.forEach(id => batch.update(doc(db, 'products', id), { isFeatured: true }));
-                    await batch.commit(); // Добавил await
+                    await batch.commit(); 
                     showToast('Товары обновлены!');
                 }
                 if (e.target.id === 'bulk-unrecommend-btn') {
                     selectedIds.forEach(id => batch.update(doc(db, 'products', id), { isFeatured: false }));
-                    await batch.commit(); // Добавил await
+                    await batch.commit(); 
                     showToast('Товары обновлены!');
                 }
             });
@@ -2704,7 +2700,8 @@
                 });
             }
             if(langSwitcher) {
-                langSwitcher.innerHTML = `<select id="lang-select" class="p-2 border border-custom rounded-lg focus:outline-none focus:ring-2 focus:ring-primary input-bg text-sm"><option>RU</option><option>EN</option><option>UZ</option></select>`;
+                // Оставляем только RU и UZ
+                langSwitcher.innerHTML = `<select id="lang-select" class="p-2 border border-custom rounded-lg focus:outline-none focus:ring-2 focus:ring-primary input-bg text-sm"><option>RU</option><option>UZ</option></select>`;
                 document.getElementById('lang-select').addEventListener('change', (e) => {
                     appState.lang = e.target.value;
                     handleRouting();
