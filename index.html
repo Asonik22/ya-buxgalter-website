@@ -7,8 +7,9 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
+        /* ОБНОВЛЕНИЕ ДИЗАЙНА: Новая, более свежая фиолетовая тема */
         :root {
-            --bg-light: #f9fafb; --text-light: #111827; --card-bg-light: #ffffff; --primary-light: #8b5cf6; --primary-hover-light: #7c3aed; --border-light: #e5e7eb;
+            --bg-light: #f7f8fc; --text-light: #111827; --card-bg-light: #ffffff; --primary-light: #a78bfa; --primary-hover-light: #8b5cf6; --border-light: #e5e7eb;
             --bg-dark: #1a202c; --text-dark: #e2e8f0; --card-bg-dark: #2d3748; --primary-dark: #a78bfa; --primary-hover-dark: #8b5cf6; --border-dark: #4a5568;
         }
         html.dark { --bg: var(--bg-dark); --text: var(--text-dark); --card-bg: var(--card-bg-dark); --primary: var(--primary-dark); --primary-hover: var(--primary-hover-dark); --border: var(--border-dark); }
@@ -25,7 +26,7 @@
         }
         .product-card:hover {
             transform: translateY(-2px);
-            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+            box-shadow: 0 4px 20px rgba(0,0,0,0.08);
         }
         html.dark .product-card:hover {
              box-shadow: 0 4px 20px rgba(0,0,0,0.3);
@@ -60,6 +61,12 @@
         #mobile-menu { transition: opacity 0.3s ease-in-out; }
         #mobile-menu-panel { transition: transform 0.3s ease-in-out; }
 
+        /* НОВЫЙ ФУНКЦИОНАЛ: Стили для отображения звезд рейтинга */
+        .star-rating { display: flex; flex-direction: row-reverse; justify-content: center; }
+        .star-rating input { display: none; }
+        .star-rating label { font-size: 2rem; color: #d1d5db; cursor: pointer; transition: color 0.2s; }
+        .star-rating input:checked ~ label, .star-rating:not(:checked) > label:hover, .star-rating:not(:checked) > label:hover ~ label { color: #f59e0b; }
+        .card-stars { color: #f59e0b; }
     </style>
 </head>
 <body>
@@ -155,7 +162,6 @@
             measurementId: "G-6BE0LTDP4B"
         };
         const IMGBB_API_KEY = '96bf3f29606f1989bb5a450ad3770cce';
-        // ВАЖНО: Я вставил ваш UID администратора
         const ADMIN_UID = 'MrjXzJnZYbb6jb65B4f4aYDTVBt2';
         const TELEGRAM_USERNAME = 'asonikofficial';
 
@@ -164,7 +170,6 @@
         const auth = getAuth(app);
         const db = getFirestore(app);
 
-        // Включаем оффлайн-режим для Firestore
         enableIndexedDbPersistence(db)
             .catch((err) => {
                 if (err.code == 'failed-precondition') {
@@ -179,6 +184,8 @@
         let isAdmin = false;
         let appReady = false;
         let allProducts = [];
+        let allReviews = []; // НОВЫЙ ФУНКЦИОНАЛ: Храним все отзывы
+        let productRatings = {}; // НОВЫЙ ФУНКЦИОНАЛ: Храним рассчитанные рейтинги
         let paymentMethods = [];
         let userWishlist = [];
         let cart = JSON.parse(localStorage.getItem('asonik_cart')) || [];
@@ -197,6 +204,7 @@
                 sort_new: 'Сначала новые', sort_popular: 'Сначала популярные',
                 faq_title: 'Часто задаваемые вопросы', purchases_title: 'Мои покупки', cart_title: 'Корзина', profile_title: 'Профиль',
                 buy_button: 'Купить',
+                reviews_button: 'Отзывы',
             },
             EN: {
                 nav_main: 'Home', nav_chats: 'Chats', nav_faq: 'FAQ', nav_purchases: 'My Purchases',
@@ -205,6 +213,7 @@
                 sort_new: 'Newest first', sort_popular: 'Popular first',
                 faq_title: 'Frequently Asked Questions', purchases_title: 'My Purchases', cart_title: 'Cart', profile_title: 'Profile',
                 buy_button: 'Buy',
+                reviews_button: 'Reviews',
             },
             UZ: {
                 nav_main: 'Asosiy', nav_chats: 'Chatlar', nav_faq: 'FAQ', nav_purchases: 'Xaridlarim',
@@ -213,6 +222,7 @@
                 sort_new: 'Avval yangilari', sort_popular: 'Avval ommaboplari',
                 faq_title: 'Ko\'p so\'raladigan savollar', purchases_title: 'Mening xaridlarim', cart_title: 'Savatcha', profile_title: 'Profil',
                 buy_button: 'Sotib olish',
+                reviews_button: 'Sharhlar',
             }
         };
         function t(key) { return (translations[appState.lang] && translations[appState.lang][key]) || key; }
@@ -233,7 +243,12 @@
             updateCartCount();
             
             onAuthStateChanged(auth, async (user) => {
-                await Promise.all([loadPaymentMethods(), loadStoreSettings()]);
+                // Загружаем все данные параллельно для ускорения
+                await Promise.all([
+                    loadPaymentMethods(), 
+                    loadStoreSettings(),
+                    loadAllReviews() // НОВЫЙ ФУНКЦИОНАЛ: Загружаем отзывы при старте
+                ]);
                 await initializeAppState(user);
             });
         });
@@ -309,6 +324,58 @@
                 });
             });
         }
+        // НОВЫЙ ФУНКЦИОНАЛ: Загрузка и обработка всех отзывов
+        function loadAllReviews() {
+             return new Promise(resolve => {
+                const q = query(collection(db, "reviews"));
+                onSnapshot(q, (snapshot) => {
+                    allReviews = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                    
+                    // Рассчитываем средний рейтинг для каждого товара
+                    const ratings = {};
+                    allReviews.forEach(review => {
+                        if (!ratings[review.productId]) {
+                            ratings[review.productId] = { total: 0, count: 0 };
+                        }
+                        ratings[review.productId].total += review.rating;
+                        ratings[review.productId].count += 1;
+                    });
+
+                    productRatings = {};
+                    for (const productId in ratings) {
+                        productRatings[productId] = {
+                            average: ratings[productId].total / ratings[productId].count,
+                            count: ratings[productId].count
+                        };
+                    }
+                    
+                    // Обновляем уже отрисованные карточки
+                    updateProductCardsWithRatings();
+                    resolve();
+                }, (error) => {
+                    console.error("Error loading reviews:", error);
+                    resolve(); // Продолжаем работу даже если отзывы не загрузились
+                });
+            });
+        }
+        // НОВЫЙ ФУНКЦИОНАЛ: Обновление карточек новыми данными о рейтинге
+        function updateProductCardsWithRatings() {
+            document.querySelectorAll('.product-card').forEach(card => {
+                const productId = card.dataset.productId;
+                const ratingData = productRatings[productId];
+                const ratingContainer = card.querySelector('.rating-container');
+                if (ratingData && ratingContainer) {
+                    const stars = '★'.repeat(Math.round(ratingData.average)) + '☆'.repeat(5 - Math.round(ratingData.average));
+                    ratingContainer.innerHTML = `
+                        <div class="flex items-center gap-1">
+                            <span class="card-stars text-lg">${stars}</span>
+                            <span class="text-xs text-gray-500 dark:text-gray-400">(${ratingData.count})</span>
+                        </div>
+                    `;
+                }
+            });
+        }
+
 
         // --- ROUTING ---
         function handleRouting() {
@@ -378,6 +445,7 @@
                 snapshot.forEach(doc => {
                     grid.appendChild(renderProductCard({ id: doc.id, ...doc.data() }));
                 });
+                updateProductCardsWithRatings(); // Обновляем рейтинг
             }, (error) => {
                 console.error("Error loading featured products: ", error);
                 container.innerHTML = `<p class="text-center text-red-400">Не удалось загрузить рекомендованные товары. Возможно, требуется создать индекс в Firebase.</p>`;
@@ -419,18 +487,36 @@
             filtered.forEach(product => {
                 productsGrid.appendChild(renderProductCard(product));
             });
+            updateProductCardsWithRatings(); // Обновляем рейтинг
             translatePage();
         }
         function renderProductCard(product) {
             const card = document.createElement('div');
             card.className = "card-bg product-card rounded-lg shadow-lg flex flex-col justify-between border border-custom overflow-hidden";
+            card.dataset.productId = product.id; // Добавляем ID для обновления рейтинга
             const verifiedBadge = product.isVerified ? `<span class="bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200 text-xs font-bold px-2 py-1 rounded-full">✔ Подтверждено</span>` : '';
             const pinnedBadge = product.isPinned ? `<span class="bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200 text-xs font-bold px-2 py-1 rounded-full">★ Закреплено</span>` : '';
             const isWishlisted = userWishlist.includes(product.id);
 
+            // НОВЫЙ ФУНКЦИОНАЛ: Получаем данные о рейтинге
+            const ratingData = productRatings[product.id];
+            let ratingHTML = '<div class="h-6"></div>'; // Placeholder
+            if (ratingData) {
+                const stars = '★'.repeat(Math.round(ratingData.average)) + '☆'.repeat(5 - Math.round(ratingData.average));
+                ratingHTML = `
+                    <div class="flex items-center gap-1">
+                        <span class="card-stars text-lg">${stars}</span>
+                        <span class="text-xs text-gray-500 dark:text-gray-400">(${ratingData.count})</span>
+                    </div>
+                `;
+            }
+
             card.innerHTML = `
                 <div class="relative">
-                    <img src="${product.imageUrl || 'https://placehold.co/600x400'}" class="w-full h-48 object-cover">
+                    <!-- ИСПРАВЛЕНИЕ БАГА: Добавлен onerror для сломанных картинок -->
+                    <img src="${product.imageUrl || 'https://placehold.co/600x400/a78bfa/ffffff?text=No+Image'}" 
+                         onerror="this.onerror=null; this.src='https://placehold.co/600x400/a78bfa/ffffff?text=${encodeURIComponent(product.name)}';"
+                         class="w-full h-48 object-cover">
                     <div class="absolute top-2 right-2">
                         <button class="wishlist-btn p-2 rounded-full ${isWishlisted ? 'bg-red-500/80 text-white' : 'bg-black/30 text-white'}" data-product-id="${product.id}">
                              <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M3.172 5.172a4 4 0 015.656 0L10 6.343l1.172-1.171a4 4 0 115.656 5.656L10 17.657l-6.828-6.829a4 4 0 010-5.656z" clip-rule="evenodd"></path></svg>
@@ -442,6 +528,11 @@
                     <h3 class="text-lg font-semibold truncate">${product.name}</h3>
                     <p class="text-gray-600 dark:text-gray-400 mt-1 text-sm h-10 overflow-hidden">${product.description}</p>
                     <p class="text-2xl font-bold text-primary mt-2">${formatPrice(product.price || 0)}</p>
+                </div>
+                <!-- НОВЫЙ ФУНКЦИОНАЛ: Блок с рейтингом и кнопкой "Отзывы" -->
+                <div class="px-4 pb-2 flex justify-between items-center">
+                    <div class="rating-container">${ratingHTML}</div>
+                    <button class="show-reviews-btn text-sm text-primary hover:underline" data-product-id="${product.id}" data-lang-key="reviews_button">Отзывы</button>
                 </div>
                 <div class="p-4 pt-2 border-t border-custom flex items-center gap-2">
                     <button class="add-to-cart-btn p-2 rounded-md hover:bg-gray-100 dark:hover:bg-gray-700" data-product-id='${product.id}' title="В корзину"><svg class="w-6 h-6 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"></path></svg></button>
@@ -494,7 +585,7 @@
                 <div class="max-w-3xl mx-auto card-bg p-8 rounded-2xl shadow-lg border border-custom">
                     <div class="flex flex-col md:flex-row items-center md:items-start gap-8">
                         <div class="flex flex-col items-center">
-                            <img id="profile-avatar" src="${currentUser.photoURL || 'https://placehold.co/128x128'}" alt="avatar" class="w-32 h-32 rounded-full mb-4 object-cover border-4 border-primary/50">
+                            <img id="profile-avatar" src="${currentUser.photoURL || 'https://placehold.co/128x128'}" alt="avatar" class="w-32 h-32 rounded-full mb-4 object-cover border-4 border-primary/50" onerror="this.onerror=null; this.src='https://placehold.co/128x128/a78bfa/ffffff?text=User';">
                             <input type="file" id="avatar-upload" class="hidden" accept="image/*">
                             <button id="change-avatar-btn" class="text-sm text-primary hover:underline">Сменить аватар</button>
                         </div>
@@ -622,7 +713,7 @@
                     ${cart.map((item, index) => `
                         <div class="card-bg p-4 rounded-lg shadow flex justify-between items-center mb-2">
                             <div class="flex items-center gap-4">
-                                <img src="${item.imageUrl || 'https://placehold.co/64x64'}" class="w-16 h-16 rounded-md object-cover">
+                                <img src="${item.imageUrl || 'https://placehold.co/64x64'}" class="w-16 h-16 rounded-md object-cover" onerror="this.onerror=null; this.src='https://placehold.co/64x64/a78bfa/ffffff?text=...';">
                                 <div>
                                     <p class="font-bold">${item.name}</p>
                                     <p class="text-sm text-gray-400">${item.variation ? item.variation.name : 'Стандарт'}</p>
@@ -700,7 +791,7 @@
 
                     item.innerHTML = `
                         <div class="w-full sm:w-32 h-32 sm:h-auto flex-shrink-0">
-                            <img src="${productImageUrl}" class="w-full h-full object-cover rounded-md">
+                            <img src="${productImageUrl}" class="w-full h-full object-cover rounded-md" onerror="this.onerror=null; this.src='https://placehold.co/128x128/a78bfa/ffffff?text=...';">
                         </div>
                         <div class="flex-grow">
                             <div class="flex justify-between items-start mb-2">
@@ -710,7 +801,7 @@
                             <div class="text-sm text-gray-600 dark:text-gray-400 space-y-2">
                                 <p><strong>Дата:</strong> ${new Date(purchase.createdAt.seconds * 1000).toLocaleString()}</p>
                                 <p><strong>Код заказа:</strong> <span class="font-mono bg-gray-200 dark:bg-gray-700 px-2 py-1 rounded">${purchase.orderId}</span></p>
-                                ${paymentMethod ? `<p class="flex items-center gap-2"><strong>Способ оплаты:</strong> <img src="${paymentMethod.logoUrl}" class="h-5"> ${paymentMethod.name}</p>` : ''}
+                                ${paymentMethod ? `<p class="flex items-center gap-2"><strong>Способ оплаты:</strong> <img src="${paymentMethod.logoUrl}" class="h-5" onerror="this.onerror=null; this.style.display='none';"> ${paymentMethod.name}</p>` : ''}
                                 ${purchase.rejectionReason ? `<p class="text-red-500"><strong>Причина отклонения:</strong> ${purchase.rejectionReason}</p>` : ''}
                             </div>
                         </div>
@@ -766,7 +857,7 @@
                     <div class="grid grid-cols-2 gap-4">
                         ${enabledCards.map(p => `
                             <button data-method-id="${p.id}" class="payment-option flex flex-col items-center justify-center gap-2 p-2 border-2 border-custom rounded-lg text-center h-20">
-                                <img src="${p.logoUrl}" class="h-12 object-contain">
+                                <img src="${p.logoUrl}" class="h-12 object-contain" onerror="this.onerror=null; this.style.display='none';">
                             </button>
                         `).join('')}
                     </div>
@@ -778,7 +869,7 @@
                     <div class="grid grid-cols-2 gap-4">
                         ${enabledEwallets.map(p => `
                             <button data-method-id="${p.id}" class="payment-option flex flex-col items-center justify-center gap-2 p-2 border-2 border-custom rounded-lg text-center h-20">
-                                <img src="${p.logoUrl}" class="h-12 object-contain">
+                                <img src="${p.logoUrl}" class="h-12 object-contain" onerror="this.onerror=null; this.style.display='none';">
                             </button>
                         `).join('')}
                     </div>
@@ -945,7 +1036,7 @@
                     paymentInstructions = `
                         <p>Пожалуйста, оплатите точную сумму <span class="font-bold">${formatPrice(purchase.finalPrice)}</span> через ${method.name} одним из способов:</p>
                         <div class="my-4 flex flex-col items-center gap-4">
-                             ${method.qrCodeUrl ? `<div><p class="mb-2 text-center">1. Отсканируйте QR-код:</p><img src="${method.qrCodeUrl}" class="w-48 h-48 border border-custom rounded-lg"></div>` : ''}
+                             ${method.qrCodeUrl ? `<div><p class="mb-2 text-center">1. Отсканируйте QR-код:</p><img src="${method.qrCodeUrl}" class="w-48 h-48 border border-custom rounded-lg" onerror="this.onerror=null; this.style.display='none';"></div>` : ''}
                              ${method.requisites ? `<div><p class="my-2 text-center">2. Или перейдите по ссылке:</p><a href="${method.requisites}" target="_blank" class="text-primary underline break-all">${method.requisites}</a></div>` : ''}
                         </div>
                     `;
@@ -1165,7 +1256,7 @@
                         <div class="space-y-3 max-h-96 overflow-y-auto">
                             ${usersData.map(user => `
                                <div class="card-bg p-4 rounded-lg shadow flex items-center gap-4 border border-custom">
-                                   <img src="${user.photoURL || 'https://placehold.co/48x48'}" class="w-12 h-12 rounded-full object-cover">
+                                   <img src="${user.photoURL || 'https://placehold.co/48x48'}" class="w-12 h-12 rounded-full object-cover" onerror="this.onerror=null; this.src='https://placehold.co/48x48/a78bfa/ffffff?text=...';">
                                    <div class="flex-grow">
                                        <p class="font-semibold">${user.displayName || 'Без имени'}</p>
                                        <p class="text-sm text-gray-400">${user.email}</p>
@@ -1217,7 +1308,7 @@
             item.innerHTML = `
                 <div class="flex items-center gap-4">
                     <input type="checkbox" class="product-bulk-checkbox h-5 w-5 rounded text-primary focus:ring-primary" data-id="${id}">
-                    <img src="${data.imageUrl || 'https://placehold.co/64x64'}" class="w-12 h-12 rounded-md object-cover">
+                    <img src="${data.imageUrl || 'https://placehold.co/64x64'}" class="w-12 h-12 rounded-md object-cover" onerror="this.onerror=null; this.src='https://placehold.co/64x64/a78bfa/ffffff?text=...';">
                     <div>
                         <p class="font-semibold">${data.name}</p>
                         <p class="text-sm text-gray-400">${formatPrice(data.price)}</p>
@@ -1250,7 +1341,7 @@
             item.className = 'card-bg p-4 rounded-lg shadow flex justify-between items-center border border-custom';
             item.innerHTML = `
                 <div class="flex items-center gap-4 flex-grow">
-                    <img src="${data.logoUrl || 'https://placehold.co/64x64'}" class="w-12 h-12 rounded-md object-contain">
+                    <img src="${data.logoUrl || 'https://placehold.co/64x64'}" class="w-12 h-12 rounded-md object-contain" onerror="this.onerror=null; this.style.display='none';">
                     <div>
                         <p class="font-semibold">${data.name}</p>
                         <p class="text-sm text-gray-400">Тип: ${data.type === 'card' ? 'Карта' : 'Кошелек'} | Порядок: ${data.order || 0}</p>
@@ -1418,7 +1509,7 @@
                     item.className = 'card-bg p-4 rounded-lg shadow border border-custom';
                     item.innerHTML = `
                         <div class="flex items-start gap-4">
-                            <img src="${review.userPhotoURL || 'https://placehold.co/48x48'}" class="w-12 h-12 rounded-full object-cover">
+                            <img src="${review.userPhotoURL || 'https://placehold.co/48x48'}" class="w-12 h-12 rounded-full object-cover" onerror="this.onerror=null; this.src='https://placehold.co/48x48/a78bfa/ffffff?text=...';">
                             <div class="flex-grow">
                                 <div class="flex justify-between items-center">
                                     <div>
@@ -1611,6 +1702,42 @@
             setupPreview('p-logo-file', 'p-logo-preview');
             setupPreview('p-qr-file', 'p-qr-preview');
         }
+        
+        // НОВЫЙ ФУНКЦИОНАЛ: Модальное окно для просмотра отзывов
+        function showReviewsModal(productId) {
+            const product = allProducts.find(p => p.id === productId);
+            if (!product) return;
+
+            const productReviews = allReviews.filter(r => r.productId === productId)
+                .sort((a, b) => (b.createdAt?.seconds || 0) - (a.createdAt?.seconds || 0));
+
+            let reviewsHTML = '<p class="text-center text-gray-500">Для этого товара еще нет отзывов.</p>';
+
+            if (productReviews.length > 0) {
+                reviewsHTML = productReviews.map(review => `
+                    <div class="p-4 border-b border-custom last:border-b-0">
+                        <div class="flex items-start gap-4">
+                            <img src="${review.userPhotoURL || 'https://placehold.co/48x48'}" class="w-12 h-12 rounded-full object-cover" onerror="this.onerror=null; this.src='https://placehold.co/48x48/a78bfa/ffffff?text=...';">
+                            <div class="flex-grow">
+                                <div class="flex justify-between items-center">
+                                    <div>
+                                        <p class="font-semibold">${review.userName}</p>
+                                        <p class="text-sm text-gray-400">${new Date(review.createdAt.seconds * 1000).toLocaleDateString()}</p>
+                                    </div>
+                                    <div class="flex items-center text-yellow-400 text-lg">
+                                        ${'★'.repeat(review.rating)}${'☆'.repeat(5 - review.rating)}
+                                    </div>
+                                </div>
+                                <p class="mt-2 text-gray-700 dark:text-gray-300">${review.comment}</p>
+                            </div>
+                        </div>
+                    </div>
+                `).join('');
+            }
+            
+            showModal(`Отзывы о "${product.name}"`, `<div class="space-y-4">${reviewsHTML}</div>`);
+        }
+
 
         // --- EVENT LISTENERS ---
         function setupEventListeners() {
@@ -1778,6 +1905,11 @@
                         return true;
                     }, 'Отправить отзыв');
                  }
+                 // НОВЫЙ ФУНКЦИОНАЛ: Обработчик для кнопки "Отзывы"
+                 if (target.closest('.show-reviews-btn')) {
+                     const productId = target.dataset.productId;
+                     showReviewsModal(productId);
+                 }
             });
             document.addEventListener('change', e => { 
                 if (e.target.id === 'avatar-upload' && e.target.files[0]) { 
@@ -1904,7 +2036,7 @@
             if(!container) return; 
 
             if (currentUser) { 
-                container.innerHTML = `<div class="relative"><button id="profile-btn" class="flex items-center gap-2"><img src="${currentUser.photoURL || 'https://placehold.co/32x32'}" alt="Профиль" class="w-8 h-8 rounded-full"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg></button><div id="profile-menu" class="hidden absolute right-0 mt-2 w-52 card-bg rounded-md shadow-lg border border-custom z-10"><div class="px-4 py-2 border-b border-custom"><p class="font-semibold truncate">${currentUser.displayName}</p><p class="text-sm text-gray-400 truncate">${currentUser.email}</p></div><a href="#profile" class="nav-link block px-4 py-2 text-sm hover:bg-gray-100 dark:hover:bg-gray-700">Профиль</a>${isAdmin ? `<a href="#admin" class="nav-link block px-4 py-2 text-sm hover:bg-gray-100 dark:hover:bg-gray-700">Админ-панель</a>` : ''}<div class="border-t border-custom"></div><a href="#" id="logout-btn" class="block px-4 py-2 text-sm text-red-500 hover:bg-gray-100 dark:hover:bg-gray-700">Выйти</a></div></div>`; 
+                container.innerHTML = `<div class="relative"><button id="profile-btn" class="flex items-center gap-2"><img src="${currentUser.photoURL || 'https://placehold.co/32x32'}" alt="Профиль" class="w-8 h-8 rounded-full" onerror="this.onerror=null; this.src='https://placehold.co/32x32/a78bfa/ffffff?text=${currentUser.displayName?.charAt(0) || 'U'}';"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg></button><div id="profile-menu" class="hidden absolute right-0 mt-2 w-52 card-bg rounded-md shadow-lg border border-custom z-10"><div class="px-4 py-2 border-b border-custom"><p class="font-semibold truncate">${currentUser.displayName}</p><p class="text-sm text-gray-400 truncate">${currentUser.email}</p></div><a href="#profile" class="nav-link block px-4 py-2 text-sm hover:bg-gray-100 dark:hover:bg-gray-700">Профиль</a>${isAdmin ? `<a href="#admin" class="nav-link block px-4 py-2 text-sm hover:bg-gray-100 dark:hover:bg-gray-700">Админ-панель</a>` : ''}<div class="border-t border-custom"></div><a href="#" id="logout-btn" class="block px-4 py-2 text-sm text-red-500 hover:bg-gray-100 dark:hover:bg-gray-700">Выйти</a></div></div>`; 
             } else { 
                 container.innerHTML = `<button id="google-login-btn" class="px-4 py-2 bg-primary text-white rounded-md hover:bg-primary-hover font-semibold flex items-center gap-2"><svg class="w-5 h-5" viewBox="0 0 48 48"><path fill="#FFC107" d="M43.611 20.083H42V20H24v8h11.303c-1.649 4.657-6.08 8-11.303 8c-6.627 0-12-5.373-12-12s5.373-12 12-12c3.059 0 5.842 1.154 7.961 3.039l5.657-5.657C34.046 6.053 29.268 4 24 4C12.955 4 4 12.955 4 24s8.955 20 20 20s20-8.955 20-20c0-1.341-.138-2.65-.389-3.917z"></path><path fill="#FF3D00" d="M6.306 14.691l6.571 4.819C14.655 15.108 18.961 12 24 12c3.059 0 5.842 1.154 7.961 3.039l5.657-5.657C34.046 6.053 29.268 4 24 4C16.318 4 9.656 8.337 6.306 14.691z"></path><path fill="#4CAF50" d="M24 44c5.166 0 9.86-1.977 13.409-5.192l-6.19-5.238C29.211 35.091 26.715 36 24 36c-5.202 0-9.619-3.317-11.283-7.946l-6.522 5.025C9.505 39.556 16.227 44 24 44z"></path><path fill="#1976D2" d="M43.611 20.083H42V20H24v8h11.303c-.792 2.237-2.231 4.166-4.087 5.571l6.19 5.238C44.572 34.043 46 29.392 46 24c0-1.341-.138-2.65-.389-3.917z"></path></svg>Войти</button>`; 
             } 
