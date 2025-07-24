@@ -93,6 +93,51 @@
         .star-rating label { font-size: 2rem; color: #d1d5db; cursor: pointer; transition: color 0.2s; }
         .star-rating input:checked ~ label, .star-rating:not(:checked) > label:hover, .star-rating:not(:checked) > label:hover ~ label { color: #f59e0b; }
         .card-stars { color: #f59e0b; }
+
+        /* Стили для горизонтальной навигации админ-панели */
+        .admin-tabs {
+            display: flex;
+            flex-wrap: wrap; /* Для переноса на новую строку на маленьких экранах */
+            border-bottom: 1px solid var(--border);
+            margin-bottom: 1.5rem;
+        }
+        .admin-tabs .admin-tab-btn {
+            padding: 0.75rem 1.25rem;
+            border-radius: 0.5rem 0.5rem 0 0; /* Скругленные углы только сверху */
+            margin-right: 0.5rem;
+            margin-bottom: -1px; /* Чтобы перекрывать нижнюю границу */
+            background-color: var(--card-bg);
+            color: var(--text);
+            font-weight: 600;
+            transition: all 0.2s ease-in-out;
+            border: 1px solid transparent;
+            border-bottom: none; /* Убираем нижнюю границу по умолчанию */
+        }
+        .admin-tabs .admin-tab-btn.active {
+            background-color: var(--primary);
+            color: white;
+            border-color: var(--border);
+            border-bottom-color: var(--primary); /* Выделяем активную вкладку */
+            box-shadow: 0 -2px 8px rgba(0,0,0,0.05); /* Легкая тень сверху */
+        }
+        .admin-tabs .admin-tab-btn:hover:not(.active) {
+            background-color: var(--bg); /* Светлее при наведении */
+            color: var(--primary-hover);
+        }
+        /* Стили для баннера */
+        .ad-banner-container {
+            max-width: 800px; /* Ограничиваем ширину баннера */
+            margin-left: auto;
+            margin-right: auto;
+            border-radius: 0.75rem; /* rounded-lg */
+            overflow: hidden;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); /* shadow-md */
+        }
+        .ad-banner-container img {
+            width: 100%;
+            height: 160px; /* Фиксированная высота для баннера */
+            object-fit: cover; /* Обрезает изображение, чтобы оно поместилось */
+        }
     </style>
 </head>
 <body>
@@ -144,22 +189,24 @@
 
     <main class="container mx-auto px-4 py-8">
         <div data-page="main" class="active">
-            <div id="ads-container" class="mb-8"></div>
-            <h1 class="text-4xl font-bold text-center mb-8" data-lang-key="catalog_title">Каталог товаров</h1>
-            <div class="mb-8 p-4 card-bg rounded-lg shadow-md flex flex-col md:flex-row gap-4 items-center border border-custom">
-                <input id="search-input" type="text" placeholder="Поиск по названию..." class="w-full md:flex-grow pl-4 pr-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary input-bg">
-                <select id="category-filter" class="w-full md:w-auto p-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary input-bg">
-                    <option value="all" data-lang-key="all_categories">Все категории</option>
-                    <option value="games" data-lang-key="category_games">Игры</option>
-                    <option value="apps" data-lang-key="category_apps">Приложения</option>
-                </select>
-                <select id="sort-filter" class="w-full md:w-auto p-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary input-bg">
-                    <option value="new" data-lang-key="sort_new">Сначала новые</option>
-                    <option value="popular" data-lang-key="sort_popular">Сначала популярные</option>
-                </select>
+            <div id="main-page-content-wrapper">
+                <!-- Рекламный баннер будет вставляться здесь динамически -->
+                <h1 class="text-4xl font-bold text-center mb-8" data-lang-key="catalog_title">Каталог товаров</h1>
+                <div class="mb-8 p-4 card-bg rounded-lg shadow-md flex flex-col md:flex-row gap-4 items-center border border-custom">
+                    <input id="search-input" type="text" placeholder="Поиск по названию..." class="w-full md:flex-grow pl-4 pr-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary input-bg">
+                    <select id="category-filter" class="w-full md:w-auto p-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary input-bg">
+                        <option value="all" data-lang-key="all_categories">Все категории</option>
+                        <option value="games" data-lang-key="category_games">Игры</option>
+                        <option value="apps" data-lang-key="category_apps">Приложения</option>
+                    </select>
+                    <select id="sort-filter" class="w-full md:w-auto p-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary input-bg">
+                        <option value="new" data-lang-key="sort_new">Сначала новые</option>
+                        <option value="popular" data-lang-key="sort_popular">Сначала популярные</option>
+                    </select>
+                </div>
+                <div id="featured-products-container" class="mb-12"></div>
+                <div id="products-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6"></div>
             </div>
-            <div id="featured-products-container" class="mb-12"></div>
-            <div id="products-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6"></div>
         </div>
 
         <div data-page="chats"><div id="chats-content"></div></div>
@@ -196,7 +243,7 @@
             storageBucket: "asonikstore-v3.appspot.com",
             messagingSenderId: "1018442222532",
             appId: "1:1018442222532:web:9b78f7be6c5c02bb327291",
-            measurementId: "G-6BE0LTDP4B" // Убрана лишняя запятая
+            measurementId: "G-6BE0LTDP4B" 
         };
         // Используем ключ из старого кода, как вы просили
         const IMGBB_API_KEY = '96bf3f29606f1989bb5a450ad3770cce'; 
@@ -306,7 +353,7 @@
             appReady = true;
             updateAuthUI();
             handleRouting();
-            loadAdvertisements();
+            // loadAdvertisements() теперь вызывается внутри loadMainPage в зависимости от настройки
         }
 
 
@@ -338,7 +385,7 @@
             try {
                 const settingsDoc = await getDoc(doc(db, "storeSettings", "config"));
                 if (settingsDoc.exists()) {
-                    const { logoUrl, socialLinks } = settingsDoc.data();
+                    const { logoUrl, socialLinks, adPlacement, contactEmail, contactPhone } = settingsDoc.data();
                     const logoEl = document.getElementById('store-logo');
                     if (logoUrl) {
                         logoEl.src = logoUrl;
@@ -347,6 +394,10 @@
                         logoEl.classList.add('hidden');
                     }
                     renderSocialLinks(socialLinks);
+                    // Сохраняем настройки в appState для доступа
+                    appState.adPlacement = adPlacement || 'before_catalog';
+                    appState.contactEmail = contactEmail || '';
+                    appState.contactPhone = contactPhone || '';
                 }
             } catch (error) {
                 console.error("Could not load store settings:", error);
@@ -411,24 +462,40 @@
                 }
             });
         }
-        function loadAdvertisements() {
+        async function loadAdvertisements() { // Сделал async для получения adPlacement
             const container = document.getElementById('ads-container');
-            if (!container) return;
+            const mainPageWrapper = document.getElementById('main-page-content-wrapper');
+            if (!container || !mainPageWrapper) return;
 
             const q = query(collection(db, "advertisements"), where("isActive", "==", true));
-            onSnapshot(q, (snapshot) => {
-                if(snapshot.empty) {
-                    container.innerHTML = '';
-                    return;
+            const snapshot = await getDocs(q); // Получаем данные один раз, не слушаем изменения
+
+            if(snapshot.empty) {
+                container.innerHTML = '';
+                container.remove(); // Удаляем контейнер, если нет рекламы
+                return;
+            }
+            
+            // Отображаем только первый активный баннер
+            const ad = snapshot.docs[0].data();
+            container.innerHTML = `
+                <a href="${ad.link}" target="_blank" class="block w-full ad-banner-container">
+                    <img src="${ad.imageUrl}" alt="Рекламный баннер" onerror="this.onerror=null; this.style.display='none';">
+                </a>
+            `;
+            container.classList.add('mb-8'); // Добавляем отступ снизу
+
+            // Управление размещением баннера
+            if (appState.adPlacement === 'before_catalog') {
+                mainPageWrapper.prepend(container);
+            } else { // 'after_catalog'
+                const productsGrid = document.getElementById('products-grid');
+                if (productsGrid) {
+                    productsGrid.parentNode.insertBefore(container, productsGrid.nextSibling);
+                } else {
+                    mainPageWrapper.appendChild(container); // Если сетки товаров нет, просто в конец
                 }
-                // Отображаем только первый активный баннер
-                const ad = snapshot.docs[0].data();
-                container.innerHTML = `
-                    <a href="${ad.link}" target="_blank" class="block w-full rounded-lg overflow-hidden shadow-lg">
-                        <img src="${ad.imageUrl}" class="w-full h-auto object-contain" onerror="this.onerror=null; this.style.display='none';">
-                    </a>
-                `;
-            });
+            }
         }
         function renderSocialLinks(links) {
             const container = document.getElementById('social-links-container');
@@ -436,14 +503,17 @@
                 if(container) container.innerHTML = '';
                 return;
             }
-            const iconMap = {
+            // Обновленная карта иконок для соцсетей, если нет кастомной картинки
+            const defaultIconMap = {
                 telegram: `<svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24"><path d="M9.78 18.65l.28-4.23 7.68-6.92c.34-.31-.07-.46-.52-.19L7.74 13.3 3.64 12c-.88-.25-.89-.86.2-1.3l15.97-6.16c.73-.33 1.43.18 1.15 1.3l-2.72 12.57c-.28 1.13-1.04 1.4-1.74 1.02l-4.84-3.56-2.31 2.24c-.25.24-.45.44-.8.44z"/></svg>`,
                 instagram: `<svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24"><path d="M7.8 2h8.4C19.4 2 22 4.6 22 7.8v8.4a5.8 5.8 0 0 1-5.8 5.8H7.8C4.6 22 2 19.4 2 16.2V7.8A5.8 5.8 0 0 1 7.8 2m-.2 2A3.6 3.6 0 0 0 4 7.6v8.8A3.6 3.6 0 0 0 7.6 20h8.8A3.6 3.6 0 0 0 20 16.4V7.6A3.6 3.6 0 0 0 16.4 4H7.6m9.65 1.5a1.25 1.25 0 0 1 1.25 1.25A1.25 1.25 0 0 1 17.25 8 1.25 1.25 0 0 1 16 6.75a1.25 1.25 0 0 1 1.25-1.25M12 7a5 5 0 0 1 5 5 5 5 0 0 1-5 5 5 5 0 0 1-5-5 5 5 0 0 1 5-5m0 2a3 3 0 0 0-3 3 3 3 0 0 0 3 3 3 3 0 0 0 3-3 3 3 0 0 0-3-3z"/></svg>`,
+                youtube: `<svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm7.01 12.01c-.13.34-.65.71-1.12.71-.47 0-.9-.37-1.03-.71-.24-.61-.24-1.5-.24-2.29s0-1.68.24-2.29c.13-.34.56-.71 1.03-.71.47 0 .99.37 1.12.71.24.61.24 1.5.24 2.29s0 1.68-.24 2.29zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5z"/></svg>`, // Пример YouTube
+                facebook: `<svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2.04C6.5 2.04 2 6.53 2 12.04c0 5.06 3.69 9.27 8.52 9.95v-7.05H7.33v-2.9h3.19v-2.18c0-3.15 1.91-4.87 4.71-4.87 1.34 0 2.49.1 2.82.14v3.1h-1.85c-1.46 0-1.74.7-1.74 1.71v2.24h3.88l-.63 2.9h-3.25v7.05C18.31 21.31 22 17.1 22 12.04c0-5.51-4.5-10-9.96-10z"/></svg>`, // Пример Facebook
                 default: `<svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"></path></svg>`
             };
             container.innerHTML = links.map(link => `
                 <a href="${link.url}" target="_blank" class="text-gray-500 hover:text-primary dark:text-gray-400" title="${link.name}">
-                    ${iconMap[link.name.toLowerCase()] || iconMap.default}
+                    ${link.imageUrl ? `<img src="${link.imageUrl}" alt="${link.name}" class="w-6 h-6 object-contain">` : (defaultIconMap[link.name.toLowerCase()] || defaultIconMap.default)}
                 </a>
             `).join('');
         }
@@ -484,9 +554,9 @@
             }
 
             switch(page) {
-                case 'main': loadMainPage(); break;
+                case 'main': await loadMainPage(); break; // Добавил await
                 case 'faq': loadFaq(); break;
-                case 'admin': await loadAdminPanel(subpage); break; // Добавил await
+                case 'admin': await loadAdminPanel(subpage); break; 
                 case 'cart': renderCartPage(); break;
                 case 'chats': loadChatsPage(); break;
                 case 'purchases': loadPurchasesPage(); break;
@@ -496,7 +566,34 @@
         }
 
         // --- PAGE LOADERS ---
-        function loadMainPage() {
+        async function loadMainPage() { // Сделал async для баннера
+            const mainPageWrapper = document.getElementById('main-page-content-wrapper');
+            if (!mainPageWrapper) return;
+
+            // Удаляем старый баннер, если он есть
+            const oldAdContainer = document.getElementById('ads-container');
+            if (oldAdContainer) {
+                oldAdContainer.remove();
+            }
+
+            // Создаем новый контейнер для баннера
+            const adContainer = document.createElement('div');
+            adContainer.id = 'ads-container';
+            adContainer.className = 'mb-8'; // Добавляем отступ снизу по умолчанию
+
+            // Вставляем баннер в зависимости от настройки
+            if (appState.adPlacement === 'before_catalog') {
+                mainPageWrapper.prepend(adContainer);
+            } else { // 'after_catalog'
+                const productsGrid = document.getElementById('products-grid');
+                if (productsGrid) {
+                    productsGrid.parentNode.insertBefore(adContainer, productsGrid.nextSibling);
+                } else {
+                    mainPageWrapper.appendChild(adContainer);
+                }
+            }
+            
+            await loadAdvertisements(); // Загружаем сам баннер
             loadFeaturedProducts();
             loadProducts();
         }
@@ -1259,37 +1356,32 @@
             ];
 
             adminContent.innerHTML = `
-                <div class="flex flex-col md:flex-row gap-8">
-                    <aside class="md:w-1/4 lg:w-1/5">
-                        <h2 class="text-2xl font-bold mb-4">Админ-панель</h2>
-                        <nav class="space-y-2">
-                            ${tabs.map(tab => `
-                                <a href="#admin/${tab.id}" class="admin-tab-btn flex items-center gap-3 px-4 py-2 rounded-lg ${subpage === tab.id ? 'bg-primary text-white' : 'hover:bg-gray-100 dark:hover:bg-gray-700'}" data-tab="${tab.id}">
-                                    <span>${tab.name}</span>
-                                </a>`).join('')}
-                        </nav>
-                    </aside>
-                    <div class="flex-grow">
-                        <div id="admin-tab-content" class="card-bg p-6 rounded-lg shadow-lg border border-custom min-h-[60vh]"></div>
-                    </div>
-                </div>`;
+                <h2 class="text-3xl font-bold mb-6">Админ-панель</h2>
+                <nav class="admin-tabs mb-6">
+                    ${tabs.map(tab => `
+                        <a href="#admin/${tab.id}" class="admin-tab-btn px-5 py-3 rounded-t-lg font-semibold ${subpage === tab.id ? 'active' : 'hover:bg-gray-100 dark:hover:bg-gray-700'}" data-tab="${tab.id}">
+                            <span>${tab.name}</span>
+                        </a>`).join('')}
+                </nav>
+                <div id="admin-tab-content" class="card-bg p-6 rounded-lg shadow-lg border border-custom min-h-[60vh]"></div>
+            `;
             await loadAdminTab(subpage); // Добавил await
         }
         async function loadAdminTab(tab) { // Добавил async
             const contentEl = document.getElementById('admin-tab-content');
             if(!contentEl) return;
             
-            if (tab === 'dashboard') await loadAdminDashboard(); // Добавил await
+            if (tab === 'dashboard') await loadAdminDashboard(); 
             if (tab === 'products') loadAdminList('products', 'Управление товарами', renderAdminProductItem, `<button id="add-product-btn" class="bg-green-500 text-white px-4 py-2 rounded-lg hover:bg-green-600">Добавить товар</button>`);
             if (tab === 'faq') loadAdminList('faq', 'Управление FAQ', renderAdminFaqItem, `<button id="add-faq-btn" class="bg-green-500 text-white px-4 py-2 rounded-lg hover:bg-green-600">Добавить FAQ</button>`);
             if (tab === 'promocodes') loadAdminList('promocodes', 'Управление промокодами', renderAdminPromoItem, `<button id="add-promo-btn" class="bg-green-500 text-white px-4 py-2 rounded-lg hover:bg-green-600">Создать промокод</button>`);
             if (tab === 'purchases') loadAdminPurchases();
             if (tab === 'payment') loadAdminList('paymentMethods', 'Способы оплаты', renderAdminPaymentItem, `<button id="add-payment-btn" class="bg-green-500 text-white px-4 py-2 rounded-lg hover:bg-green-600">Добавить способ</button>`);
-            if (tab === 'customization') await loadCustomizationPage(); // Добавил await
+            if (tab === 'customization') await loadCustomizationPage(); 
             if (tab === 'reviews') loadAdminReviews();
             if (tab === 'chats') {
                 const userId = window.location.hash.split('/')[2];
-                await loadAdminChatsList(userId); // Добавил await
+                await loadAdminChatsList(userId); 
             }
         }
         function loadAdminList(collectionName, title, renderFunction, buttonHtml = '') {
@@ -1395,6 +1487,21 @@
                                 <input type="file" id="logo-upload-input" class="w-full text-sm file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-primary/10 dark:file:bg-violet-900/50 file:text-primary hover:file:bg-primary/20"/>
                                 <img id="logo-preview" src="" class="w-24 h-24 object-contain mt-2 p-2 border border-dashed border-custom rounded-lg hidden">
                             </div>
+                            <div>
+                                <label class="block text-sm font-medium mb-1">Расположение рекламного баннера</label>
+                                <select id="ad-placement-select" class="w-full p-2 border rounded input-bg">
+                                    <option value="before_catalog">Перед каталогом товаров</option>
+                                    <option value="after_catalog">После каталога товаров</option>
+                                </select>
+                            </div>
+                             <div>
+                                <label class="block text-sm font-medium mb-1">Контактный Email</label>
+                                <input type="email" id="contact-email-input" class="w-full p-2 border rounded input-bg" placeholder="email@example.com">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium mb-1">Контактный телефон</label>
+                                <input type="text" id="contact-phone-input" class="w-full p-2 border rounded input-bg" placeholder="+1234567890">
+                            </div>
                             <button id="save-main-settings-btn" class="px-6 py-2 bg-primary text-white rounded-lg hover:bg-primary-hover">Сохранить</button>
                         </div>
                     </div>
@@ -1413,15 +1520,22 @@
 
             const settingsDoc = await getDoc(doc(db, "storeSettings", "config"));
             if (settingsDoc.exists()) {
-                const { logoUrl } = settingsDoc.data();
+                const { logoUrl, adPlacement, contactEmail, contactPhone } = settingsDoc.data();
                 const logoPreview = document.getElementById('logo-preview');
+                const adPlacementSelect = document.getElementById('ad-placement-select');
+                const contactEmailInput = document.getElementById('contact-email-input');
+                const contactPhoneInput = document.getElementById('contact-phone-input');
+
                 if (logoUrl) {
                     logoPreview.src = logoUrl;
                     logoPreview.classList.remove('hidden');
                 }
+                if (adPlacementSelect) adPlacementSelect.value = adPlacement || 'before_catalog';
+                if (contactEmailInput) contactEmailInput.value = contactEmail || '';
+                if (contactPhoneInput) contactPhoneInput.phone = contactPhone || '';
             }
-            await loadAdminAds(); // Добавил await
-            await loadAdminSocialLinks(); // Добавил await
+            await loadAdminAds(); 
+            await loadAdminSocialLinks(); 
         }
         function renderAdminProductItem(id, data) {
             const item = document.createElement('div');
@@ -1455,7 +1569,7 @@
         function renderAdminPromoItem(id, data) { 
             const item = document.createElement('div');
             item.className = 'card-bg p-4 rounded-lg shadow border-custom';
-            const product = data.productId && data.productId !== 'all' ? allProducts.find(p => p.id === data.productId) : null;
+            const product = allProducts.find(p => p.id === data.productId); // Ищем продукт по ID
             item.innerHTML = `
                 <p>Код: <span class="font-bold">${data.code}</span></p>
                 <p>Скидка: ${data.discount}%</p>
@@ -2049,54 +2163,85 @@
                 };
             }
         }
-        async function showSocialLinkEditForm(linkId, existingLink) {
-            let slData = { name: '', url: '' };
-            if (existingLink) { // If editing an existing link directly from customisation page
-                slData = existingLink;
-            } else if (linkId) { // If editing from a list (e.g. if we add a list view later)
+        async function showSocialLinkEditForm(linkId, existingLinkData) {
+            let slData = { id: linkId || Date.now().toString(), name: '', url: '', imageUrl: '' }; // Добавил id и imageUrl
+            if (existingLinkData) {
+                slData = { ...slData, ...existingLinkData }; // Объединяем существующие данные
+            } else if (linkId) {
+                // Если linkId передан, но existingLinkData нет (например, при редактировании из списка)
                 const settingsDoc = await getDoc(doc(db, "storeSettings", "config"));
                 if (settingsDoc.exists() && settingsDoc.data().socialLinks) {
-                    slData = settingsDoc.data().socialLinks.find(link => link.id === linkId);
-                }
-                if (!slData) { // If not found, create new
-                    slData = { name: '', url: '' };
+                    const foundLink = settingsDoc.data().socialLinks.find(link => link.id === linkId);
+                    if (foundLink) slData = { ...slData, ...foundLink };
                 }
             }
 
-
-            showModal(linkId ? 'Редактировать ссылку' : 'Добавить ссылку', `
+            const modal = showModal(linkId ? 'Редактировать ссылку' : 'Добавить ссылку', `
                 <div class="space-y-4">
                     <input id="sl-name" class="w-full p-2 border rounded input-bg" placeholder="Название (напр. Telegram, Instagram)" value="${slData.name}">
                     <input id="sl-url" class="w-full p-2 border rounded input-bg" placeholder="URL-адрес (напр. https://t.me/yourchannel)" value="${slData.url}">
+                    <div>
+                        <label class="block text-sm font-medium mb-1">Иконка (изображение)</label>
+                        <input type="file" id="sl-image-file" class="w-full text-sm file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-primary/10 dark:file:bg-violet-900/50 file:text-primary hover:file:bg-primary/20"/>
+                        <img id="sl-image-preview" src="${slData.imageUrl || ''}" class="w-12 h-12 object-contain mt-2 p-2 border border-dashed border-custom rounded-lg ${slData.imageUrl ? '' : 'hidden'}">
+                    </div>
                 </div>
             `, async (m) => {
                 const newName = m.querySelector('#sl-name').value;
                 const newUrl = m.querySelector('#sl-url').value;
+                const imageFile = m.querySelector('#sl-image-file').files[0];
+                let imageUrl = slData.imageUrl;
 
                 if (!newName || !newUrl) {
                     alert('Пожалуйста, заполните все поля.');
                     return false;
                 }
 
+                if (imageFile) {
+                    const uploadedUrl = await uploadImage(imageFile);
+                    if (uploadedUrl) imageUrl = uploadedUrl;
+                    else return false; // Ошибка загрузки изображения
+                }
+
                 const settingsRef = doc(db, "storeSettings", "config");
                 const currentSettings = await getDoc(settingsRef);
-                const socialLinks = currentSettings.exists() && currentSettings.data().socialLinks ? [...currentSettings.data().socialLinks] : [];
+                let socialLinks = currentSettings.exists() && currentSettings.data().socialLinks ? [...currentSettings.data().socialLinks] : [];
 
-                if (linkId && existingLink) { // Editing existing item from direct object
+                const newLink = { id: slData.id, name: newName, url: newUrl, imageUrl: imageUrl };
+
+                if (linkId) { // Редактирование существующей ссылки
                     const index = socialLinks.findIndex(link => link.id === linkId);
                     if (index !== -1) {
-                        socialLinks[index] = { id: linkId, name: newName, url: newUrl };
+                        socialLinks[index] = newLink;
                     }
-                } else { // Adding new
-                    socialLinks.push({ id: Date.now().toString(), name: newName, url: newUrl }); // Simple unique ID
+                } else { // Добавление новой ссылки
+                    socialLinks.push(newLink);
                 }
                 
                 await updateDoc(settingsRef, { socialLinks: socialLinks });
                 showToast('Социальная ссылка сохранена!');
-                await loadStoreSettings(); // Re-render social links on main page
-                loadAdminSocialLinks(); // Re-render admin list
+                await loadStoreSettings(); // Перезагружаем настройки, чтобы обновить футер
+                loadAdminSocialLinks(); // Обновляем список в админ-панели
                 return true;
             }, 'Сохранить');
+
+            // Предпросмотр изображения для социальной ссылки
+            const slImageFile = modal.querySelector('#sl-image-file');
+            const slImagePreview = modal.querySelector('#sl-image-preview');
+            if (slImageFile && slImagePreview) {
+                slImageFile.onchange = (e) => {
+                    if (e.target.files[0]) {
+                        const reader = new FileReader();
+                        reader.onload = (event) => {
+                            slImagePreview.src = event.target.result;
+                            slImagePreview.classList.remove('hidden');
+                        };
+                        reader.readAsDataURL(e.target.files[0]);
+                    } else {
+                        slImagePreview.classList.add('hidden');
+                    }
+                };
+            }
         }
 
         function showReviewsModal(productId) {
@@ -2173,10 +2318,11 @@
             }
             socialLinksListEl.innerHTML = socialLinks.map(link => `
                 <div class="flex items-center gap-4 p-3 border-b border-custom last:border-b-0">
+                    ${link.imageUrl ? `<img src="${link.imageUrl}" alt="${link.name}" class="w-8 h-8 object-contain rounded-full">` : `<div class="w-8 h-8 flex items-center justify-center text-gray-500 dark:text-gray-400">${link.name.charAt(0).toUpperCase()}</div>`}
                     <p class="font-semibold">${link.name}</p>
                     <p class="text-sm text-gray-400 truncate flex-grow">${link.url}</p>
                     <div>
-                        <button class="edit-social-link-btn text-blue-500 hover:text-blue-400 mr-2" data-id="${link.id}" data-name="${link.name}" data-url="${link.url}">Ред.</button>
+                        <button class="edit-social-link-btn text-blue-500 hover:text-blue-400 mr-2" data-id="${link.id}" data-name="${link.name}" data-url="${link.url}" data-image-url="${link.imageUrl || ''}">Ред.</button>
                         <button class="delete-social-link-btn text-red-500 hover:text-red-400" data-id="${link.id}">Удл.</button>
                     </div>
                 </div>
@@ -2203,30 +2349,54 @@
                 const confirmAction = (message, onConfirm) => showModal('Подтвердите действие', `<p>${message}</p>`, () => { onConfirm(); return true; }, 'Да, уверен');
                 
                 if (target.id === 'login-redirect') signInWithGoogle();
-                if (target.closest('.admin-tab-btn')) { e.preventDefault(); window.location.hash = target.closest('.admin-tab-btn').getAttribute('href'); return; }
+                // Обработка кликов по горизонтальным вкладкам админ-панели
+                const adminTabBtn = target.closest('.admin-tab-btn');
+                if (adminTabBtn) { 
+                    e.preventDefault(); 
+                    const tabId = adminTabBtn.dataset.tab;
+                    window.location.hash = `admin/${tabId}`; 
+                    return; 
+                }
+
                 if (target.id === 'start-chat-btn') { openChat(); return; }
                 if (target.closest('.contact-seller-btn')) { const code = target.dataset.code; showContactModal(code); return; }
-                if (target.closest('.upload-proof-btn')) { await showProofUploadModal(target.dataset.purchaseId); return; } // Добавил await
-                if (target.id === 'add-product-btn') await showProductForm(); // Добавил await
-                if (target.id === 'add-payment-btn') await showPaymentMethodForm(); // Добавил await
-                if (target.id === 'add-faq-btn') await showFaqForm(); // Добавил await
-                if (target.id === 'add-promo-btn') await showPromoForm(); // Добавил await
-                if (target.id === 'add-ad-btn') await showAdForm(); // Добавил await
-                if (target.id === 'add-social-link-btn') await showSocialLinkEditForm(); // Добавил await
-                if (target.id === 'add-fake-review-btn') await showFakeReviewForm(); // Добавил await
+                if (target.closest('.upload-proof-btn')) { await showProofUploadModal(target.dataset.purchaseId); return; } 
+                if (target.id === 'add-product-btn') await showProductForm(); 
+                if (target.id === 'add-payment-btn') await showPaymentMethodForm(); 
+                if (target.id === 'add-faq-btn') await showFaqForm(); 
+                if (target.id === 'add-promo-btn') await showPromoForm(); 
+                if (target.id === 'add-ad-btn') await showAdForm(); 
+                if (target.id === 'add-social-link-btn') await showSocialLinkEditForm(); 
+                if (target.id === 'add-fake-review-btn') await showFakeReviewForm(); 
 
 
                 if (target.id === 'save-main-settings-btn') {
                     const btn = target;
                     btn.textContent = 'Сохранение...'; btn.disabled = true;
                     const logoFile = document.getElementById('logo-upload-input').files[0];
+                    const adPlacement = document.getElementById('ad-placement-select').value;
+                    const contactEmail = document.getElementById('contact-email-input').value;
+                    const contactPhone = document.getElementById('contact-phone-input').value;
+
+                    let logoUrl = (await getDoc(doc(db, "storeSettings", "config"))).data()?.logoUrl || ''; // Получаем текущий URL лого
+                    
                     if (logoFile) {
-                        const logoUrl = await uploadImage(logoFile);
-                        if (logoUrl) {
-                            await setDoc(doc(db, "storeSettings", "config"), { logoUrl }, { merge: true });
-                            await loadStoreSettings();
+                        const uploadedLogoUrl = await uploadImage(logoFile);
+                        if (uploadedLogoUrl) {
+                            logoUrl = uploadedLogoUrl;
+                        } else {
+                            btn.textContent = 'Сохранить'; btn.disabled = false;
+                            return; // Прерываем сохранение, если загрузка лого не удалась
                         }
                     }
+                    
+                    await setDoc(doc(db, "storeSettings", "config"), { 
+                        logoUrl, 
+                        adPlacement,
+                        contactEmail,
+                        contactPhone
+                    }, { merge: true });
+                    await loadStoreSettings(); // Перезагружаем настройки для обновления appState
                     btn.textContent = 'Сохранить'; btn.disabled = false;
                     showToast('Настройки сохранены!');
                 }
@@ -2235,20 +2405,20 @@
                 const editBtn = e.target.closest('.edit-btn');
                 if (editBtn) {
                     const { id, type } = editBtn.dataset;
-                    if (type === 'product') await showProductForm(id); // Добавил await
-                    if (type === 'payment') await showPaymentMethodForm(id); // Добавил await
-                    if (type === 'promo') await showPromoForm(id); // Добавил await
-                    if (type === 'ad') await showAdForm(id); // Добавил await
-                    if (type === 'faq') await showFaqForm(id); // Добавил await
+                    if (type === 'product') await showProductForm(id); 
+                    if (type === 'payment') await showPaymentMethodForm(id); 
+                    if (type === 'promo') await showPromoForm(id); 
+                    if (type === 'ad') await showAdForm(id); 
+                    if (type === 'faq') await showFaqForm(id); 
                 }
                 const editSocialLinkBtn = e.target.closest('.edit-social-link-btn');
                 if (editSocialLinkBtn) {
-                    const { id, name, url } = editSocialLinkBtn.dataset;
-                    await showSocialLinkEditForm(id, { id, name, url }); // Добавил await
+                    const { id, name, url, imageUrl } = editSocialLinkBtn.dataset; // Получаем imageUrl
+                    await showSocialLinkEditForm(id, { id, name, url, imageUrl }); 
                 }
 
-                if (target.closest('.delete-btn')) { confirmAction('Вы уверены, что хотите удалить этот элемент?', async () => { await deleteDoc(doc(db, target.dataset.collection, target.dataset.id)); showToast('Элемент удален!'); }); } // Добавил async/await
-                if (target.closest('.delete-review-btn')) { confirmAction('Вы уверены, что хотите удалить этот отзыв?', async () => { await deleteDoc(doc(db, 'reviews', target.dataset.id)); showToast('Отзыв удален!'); }); } // Добавил async/await
+                if (target.closest('.delete-btn')) { confirmAction('Вы уверены, что хотите удалить этот элемент?', async () => { await deleteDoc(doc(db, target.dataset.collection, target.dataset.id)); showToast('Элемент удален!'); }); } 
+                if (target.closest('.delete-review-btn')) { confirmAction('Вы уверены, что хотите удалить этот отзыв?', async () => { await deleteDoc(doc(db, 'reviews', target.dataset.id)); showToast('Отзыв удален!'); }); } 
                 if (target.closest('.delete-social-link-btn')) {
                     const linkIdToDelete = target.dataset.id;
                     confirmAction('Вы уверены, что хотите удалить эту социальную ссылку?', async () => {
@@ -2265,20 +2435,20 @@
                 }
 
                 if (target.closest('.faq-question')) { const q = target.closest('.faq-question'); q.classList.toggle('open'); }
-                if (target.closest('.add-to-cart-btn')) await showPurchaseFlow(target.dataset.productId, true); // Добавил await
-                if (target.closest('.remove-from-cart-btn')) { cart.splice(target.dataset.index, 1); localStorage.setItem('asonik_cart', JSON.stringify(cart)); renderCartPage(); updateCartCount(); showToast('Товар удален из корзины.'); } // Добавил showToast
-                if (target.closest('.share-btn')) { e.preventDefault(); navigator.clipboard.writeText(`Посмотри товар "${target.closest('.share-btn').dataset.productName}" в Asonik Store!`).then(() => showToast('Ссылка скопирована!')).catch(err => console.error('Failed to copy text: ', err)); } // Использовал showToast
-                if (target.matches('.buy-now-btn')) await showPurchaseFlow(target.dataset.productId); // Добавил await
+                if (target.closest('.add-to-cart-btn')) await showPurchaseFlow(target.dataset.productId, true); 
+                if (target.closest('.remove-from-cart-btn')) { cart.splice(target.dataset.index, 1); localStorage.setItem('asonik_cart', JSON.stringify(cart)); renderCartPage(); updateCartCount(); showToast('Товар удален из корзины.'); } 
+                if (target.closest('.share-btn')) { e.preventDefault(); navigator.clipboard.writeText(`Посмотри товар "${target.closest('.share-btn').dataset.productName}" в Asonik Store!`).then(() => showToast('Ссылка скопирована!')).catch(err => console.error('Failed to copy text: ', err)); } 
+                if (target.matches('.buy-now-btn')) await showPurchaseFlow(target.dataset.productId); 
                 if (target.id === 'checkout-cart-btn') {
                     if (!currentUser) { showModal('Требуется вход', '<p>Для оформления заказа необходимо войти в свой аккаунт.</p>', () => { signInWithGoogle(); return true; }, 'Войти через Google'); return; }
-                    await showCheckoutModal(cart, cart.reduce((sum, item) => sum + (item.price || 0), 0), 'Оформление заказа'); // Добавил await
+                    await showCheckoutModal(cart, cart.reduce((sum, item) => sum + (item.price || 0), 0), 'Оформление заказа'); 
                 }
                 if (target.id === 'google-login-btn') signInWithGoogle();
-                if (target.id === 'logout-btn' || target.id === 'logout-btn-profile') signOut(auth).then(() => showToast('Вы вышли из аккаунта.')); // Добавил showToast
-                if (target.id === 'send-chat-message') { const chatId = target.dataset.chatId; const text = document.getElementById('chat-message-input').value.trim(); const senderId = target.dataset.senderId; await sendChatMessage(chatId, senderId, text); document.getElementById('chat-message-input').value = ''; } // Добавил await
+                if (target.id === 'logout-btn' || target.id === 'logout-btn-profile') signOut(auth).then(() => showToast('Вы вышли из аккаунта.')); 
+                if (target.id === 'send-chat-message') { const chatId = target.dataset.chatId; const text = document.getElementById('chat-message-input').value.trim(); const senderId = target.dataset.senderId; await sendChatMessage(chatId, senderId, text); document.getElementById('chat-message-input').value = ''; } 
                 if (target.closest('#profile-btn')) { e.stopPropagation(); document.getElementById('profile-menu')?.classList.toggle('hidden'); }
                 if (target.id === 'change-avatar-btn') document.getElementById('avatar-upload').click();
-                if (target.closest('.cancel-order-btn')) { const purchaseId = target.dataset.purchaseId; confirmAction('Вы уверены, что хотите отменить этот заказ?', async () => { await updateDoc(doc(db, "purchases", purchaseId), { status: 'Отменен' }); showToast('Заказ отменен.'); }); } // Добавил async/await
+                if (target.closest('.cancel-order-btn')) { const purchaseId = target.dataset.purchaseId; confirmAction('Вы уверены, что хотите отменить этот заказ?', async () => { await updateDoc(doc(db, "purchases", purchaseId), { status: 'Отменен' }); showToast('Заказ отменен.'); }); } 
                 if (target.closest('.approve-purchase-btn') || target.closest('.manual-approve-btn')) { 
                     const purchaseId = target.dataset.id;
                     await updateDoc(doc(db, "purchases", purchaseId), { status: 'Выполнен' }); 
@@ -2522,7 +2692,7 @@
                 container.innerHTML = `<button id="google-login-btn" class="px-4 py-2 bg-primary text-white rounded-md hover:bg-primary-hover font-semibold flex items-center gap-2"><svg class="w-5 h-5" viewBox="0 0 48 48"><path fill="#FFC107" d="M43.611 20.083H42V20H24v8h11.303c-1.649 4.657-6.08 8-11.303 8c-6.627 0-12-5.373-12-12s5.373-12 12-12c3.059 0 5.842 1.154 7.961 3.039l5.657-5.657C34.046 6.053 29.268 4 24 4C12.955 4 4 12.955 4 24s8.955 20 20 20s20-8.955 20-20c0-1.341-.138-2.65-.389-3.917z"></path><path fill="#FF3D00" d="M6.306 14.691l6.571 4.819C14.655 15.108 18.961 12 24 12c3.059 0 5.842 1.154 7.961 3.039l5.657-5.657C34.046 6.053 29.268 4 24 4C16.318 4 9.656 8.337 6.306 14.691z"></path><path fill="#4CAF50" d="M24 44c5.166 0 9.86-1.977 13.409-5.192l-6.19-5.238C29.211 35.091 26.715 36 24 36c-5.202 0-9.619-3.317-11.283-7.946l-6.522 5.025C9.505 39.556 16.227 44 24 44z"></path><path fill="#1976D2" d="M43.611 20.083H42V20H24v8h11.303c-.792 2.237-2.231 4.166-4.087 5.571l6.19 5.238C44.572 34.043 46 29.392 46 24c0-1.341-.138-2.65-.389-3.917z"></path></svg>Войти</button>`; 
             } 
         }
-        function signInWithGoogle() { const provider = new GoogleAuthProvider(); signInWithPopup(auth, provider).catch((error) => { console.error("Google Sign-In Error: ", error); showToast("Ошибка входа через Google: " + error.message, true); }); } // Использовал showToast
+        function signInWithGoogle() { const provider = new GoogleAuthProvider(); signInWithPopup(auth, provider).catch((error) => { console.error("Google Sign-In Error: ", error); showToast("Ошибка входа через Google: " + error.message, true); }); } 
         function initSwitchers() {
             const currencySwitcher = document.getElementById('currency-switcher');
             const langSwitcher = document.getElementById('lang-switcher');
