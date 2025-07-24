@@ -5,31 +5,58 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Asonik Store</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <!-- ОБНОВЛЕНИЕ: Новый шрифт Manrope для более современного вида -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <!-- Библиотека для экспорта в Excel -->
+    <script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
     <style>
-        /* ОБНОВЛЕНИЕ ДИЗАЙНА: Новая, более свежая фиолетовая тема */
+        /* ОБНОВЛЕНИЕ ДИЗАЙНА: Новая, более яркая и насыщенная фиолетовая тема */
         :root {
-            --bg-light: #f7f8fc; --text-light: #111827; --card-bg-light: #ffffff; --primary-light: #a78bfa; --primary-hover-light: #8b5cf6; --border-light: #e5e7eb;
-            --bg-dark: #1a202c; --text-dark: #e2e8f0; --card-bg-dark: #2d3748; --primary-dark: #a78bfa; --primary-hover-dark: #8b5cf6; --border-dark: #4a5568;
+            --bg-light: #f7f8fc; 
+            --text-light: #1f2937; 
+            --card-bg-light: #ffffff; 
+            --primary-light: #818cf8; 
+            --primary-hover-light: #6366f1; 
+            --border-light: #e5e7eb;
+            --logo-text-light: #4f46e5;
+
+            --bg-dark: #111827; 
+            --text-dark: #e5e7eb; 
+            --card-bg-dark: #1f2937; 
+            --primary-dark: #a78bfa; 
+            --primary-hover-dark: #8b5cf6; 
+            --border-dark: #374151;
+            --logo-text-dark: #c7d2fe;
         }
-        html.dark { --bg: var(--bg-dark); --text: var(--text-dark); --card-bg: var(--card-bg-dark); --primary: var(--primary-dark); --primary-hover: var(--primary-hover-dark); --border: var(--border-dark); }
-        html:not(.dark) { --bg: var(--bg-light); --text: var(--text-light); --card-bg: var(--card-bg-light); --primary: var(--primary-light); --primary-hover: var(--primary-hover-light); --border: var(--border-light); }
+        html.dark { 
+            --bg: var(--bg-dark); --text: var(--text-dark); --card-bg: var(--card-bg-dark); 
+            --primary: var(--primary-dark); --primary-hover: var(--primary-hover-dark); 
+            --border: var(--border-dark); --logo-text: var(--logo-text-dark);
+        }
+        html:not(.dark) { 
+            --bg: var(--bg-light); --text: var(--text-light); --card-bg: var(--card-bg-light); 
+            --primary: var(--primary-light); --primary-hover: var(--primary-hover-light); 
+            --border: var(--border-light); --logo-text: var(--logo-text-light);
+        }
         
         body {
-            font-family: 'Inter', sans-serif;
+            font-family: 'Manrope', sans-serif;
             background-color: var(--bg);
             color: var(--text);
             transition: background-color 0.3s, color 0.3s;
         }
+        .logo-text { color: var(--logo-text); }
         .product-card, button, a {
             transition: all 0.2s ease-in-out;
         }
         .product-card:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+            transform: translateY(-4px);
+            box-shadow: 0 8px 25px rgba(102, 102, 255, 0.1);
         }
         html.dark .product-card:hover {
-             box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+             box-shadow: 0 8px 25px rgba(0,0,0,0.3);
         }
         
         .bg-primary { background-color: var(--primary); }
@@ -61,7 +88,6 @@
         #mobile-menu { transition: opacity 0.3s ease-in-out; }
         #mobile-menu-panel { transition: transform 0.3s ease-in-out; }
 
-        /* НОВЫЙ ФУНКЦИОНАЛ: Стили для отображения звезд рейтинга */
         .star-rating { display: flex; flex-direction: row-reverse; justify-content: center; }
         .star-rating input { display: none; }
         .star-rating label { font-size: 2rem; color: #d1d5db; cursor: pointer; transition: color 0.2s; }
@@ -74,9 +100,9 @@
     <header class="card-bg shadow-md sticky top-0 z-40 border-b border-custom">
         <div class="container mx-auto px-4">
             <div class="flex justify-between items-center h-16">
-                <a href="#main" class="flex items-center gap-3 text-2xl font-bold text-primary nav-link">
+                <a href="#main" class="flex items-center gap-3 text-2xl font-bold nav-link">
                     <img id="store-logo" src="" alt="logo" class="h-8 w-8 rounded-full hidden">
-                    <span>Asonik Store</span>
+                    <span class="logo-text">Asonik Store</span>
                 </a>
                 
                 <nav class="hidden md:flex items-center space-x-6">
@@ -118,6 +144,7 @@
 
     <main class="container mx-auto px-4 py-8">
         <div data-page="main" class="active">
+            <div id="ads-container" class="mb-8"></div>
             <h1 class="text-4xl font-bold text-center mb-8" data-lang-key="catalog_title">Каталог товаров</h1>
             <div class="mb-8 p-4 card-bg rounded-lg shadow-md flex flex-col md:flex-row gap-4 items-center border border-custom">
                 <input id="search-input" type="text" placeholder="Поиск по названию..." class="w-full md:flex-grow pl-4 pr-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary input-bg">
@@ -143,6 +170,15 @@
         <div data-page="cart"><h1 class="text-4xl font-bold text-center mb-8" data-lang-key="cart_title">Корзина</h1><div id="cart-content"></div></div>
         <div data-page="profile"><div id="profile-content"></div></div>
     </main>
+    
+    <footer id="main-footer" class="container mx-auto px-4 py-6 mt-8 border-t border-custom">
+        <div id="social-links-container" class="flex justify-center items-center gap-6"></div>
+    </footer>
+
+    <div class="text-center text-sm text-gray-500 dark:text-gray-400 py-4">
+        © Asonik Store 2025
+    </div>
+
 
     <div id="modals-container"></div>
 
@@ -184,8 +220,8 @@
         let isAdmin = false;
         let appReady = false;
         let allProducts = [];
-        let allReviews = []; // НОВЫЙ ФУНКЦИОНАЛ: Храним все отзывы
-        let productRatings = {}; // НОВЫЙ ФУНКЦИОНАЛ: Храним рассчитанные рейтинги
+        let allReviews = []; 
+        let productRatings = {}; 
         let paymentMethods = [];
         let userWishlist = [];
         let cart = JSON.parse(localStorage.getItem('asonik_cart')) || [];
@@ -243,11 +279,10 @@
             updateCartCount();
             
             onAuthStateChanged(auth, async (user) => {
-                // Загружаем все данные параллельно для ускорения
                 await Promise.all([
                     loadPaymentMethods(), 
                     loadStoreSettings(),
-                    loadAllReviews() // НОВЫЙ ФУНКЦИОНАЛ: Загружаем отзывы при старте
+                    loadAllReviews()
                 ]);
                 await initializeAppState(user);
             });
@@ -268,6 +303,7 @@
             appReady = true;
             updateAuthUI();
             handleRouting();
+            loadAdvertisements();
         }
 
 
@@ -284,9 +320,9 @@
             for (let i = 0; i < 4; i++) code += nums.charAt(Math.floor(Math.random() * nums.length));
             return code;
         }
-        function showToast(message) {
+        function showToast(message, isError = false) {
             const toast = document.createElement('div');
-            toast.className = 'fixed bottom-5 right-5 bg-green-500 text-white py-2 px-4 rounded-lg shadow-lg z-50';
+            toast.className = `fixed bottom-5 right-5 text-white py-2 px-4 rounded-lg shadow-lg z-50 ${isError ? 'bg-red-500' : 'bg-green-500'}`;
             toast.textContent = message;
             document.body.appendChild(toast);
             setTimeout(() => {
@@ -299,7 +335,7 @@
             try {
                 const settingsDoc = await getDoc(doc(db, "storeSettings", "config"));
                 if (settingsDoc.exists()) {
-                    const { logoUrl } = settingsDoc.data();
+                    const { logoUrl, socialLinks } = settingsDoc.data();
                     const logoEl = document.getElementById('store-logo');
                     if (logoUrl) {
                         logoEl.src = logoUrl;
@@ -307,6 +343,7 @@
                     } else {
                         logoEl.classList.add('hidden');
                     }
+                    renderSocialLinks(socialLinks);
                 }
             } catch (error) {
                 console.error("Could not load store settings:", error);
@@ -315,7 +352,7 @@
         function loadPaymentMethods() {
             return new Promise(resolve => {
                 const q = query(collection(db, "paymentMethods"), orderBy("order", "asc"));
-                const unsubscribe = onSnapshot(q, (snapshot) => {
+                onSnapshot(q, (snapshot) => {
                     paymentMethods = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
                     resolve();
                 }, (error) => {
@@ -324,14 +361,12 @@
                 });
             });
         }
-        // НОВЫЙ ФУНКЦИОНАЛ: Загрузка и обработка всех отзывов
         function loadAllReviews() {
              return new Promise(resolve => {
                 const q = query(collection(db, "reviews"));
                 onSnapshot(q, (snapshot) => {
                     allReviews = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
                     
-                    // Рассчитываем средний рейтинг для каждого товара
                     const ratings = {};
                     allReviews.forEach(review => {
                         if (!ratings[review.productId]) {
@@ -349,16 +384,14 @@
                         };
                     }
                     
-                    // Обновляем уже отрисованные карточки
                     updateProductCardsWithRatings();
                     resolve();
                 }, (error) => {
                     console.error("Error loading reviews:", error);
-                    resolve(); // Продолжаем работу даже если отзывы не загрузились
+                    resolve();
                 });
             });
         }
-        // НОВЫЙ ФУНКЦИОНАЛ: Обновление карточек новыми данными о рейтинге
         function updateProductCardsWithRatings() {
             document.querySelectorAll('.product-card').forEach(card => {
                 const productId = card.dataset.productId;
@@ -375,7 +408,41 @@
                 }
             });
         }
+        function loadAdvertisements() {
+            const container = document.getElementById('ads-container');
+            if (!container) return;
 
+            const q = query(collection(db, "advertisements"), where("isActive", "==", true));
+            onSnapshot(q, (snapshot) => {
+                if(snapshot.empty) {
+                    container.innerHTML = '';
+                    return;
+                }
+                const ad = snapshot.docs[0].data(); // Показываем только одну активную рекламу
+                container.innerHTML = `
+                    <a href="${ad.link}" target="_blank" class="block w-full rounded-lg overflow-hidden shadow-lg">
+                        <img src="${ad.imageUrl}" class="w-full h-auto object-contain" onerror="this.onerror=null; this.style.display='none';">
+                    </a>
+                `;
+            });
+        }
+        function renderSocialLinks(links) {
+            const container = document.getElementById('social-links-container');
+            if (!container || !links || links.length === 0) {
+                if(container) container.innerHTML = '';
+                return;
+            }
+            const iconMap = {
+                telegram: `<svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24"><path d="M9.78 18.65l.28-4.23 7.68-6.92c.34-.31-.07-.46-.52-.19L7.74 13.3 3.64 12c-.88-.25-.89-.86.2-1.3l15.97-6.16c.73-.33 1.43.18 1.15 1.3l-2.72 12.57c-.28 1.13-1.04 1.4-1.74 1.02l-4.84-3.56-2.31 2.24c-.25.24-.45.44-.8.44z"/></svg>`,
+                instagram: `<svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24"><path d="M7.8 2h8.4C19.4 2 22 4.6 22 7.8v8.4a5.8 5.8 0 0 1-5.8 5.8H7.8C4.6 22 2 19.4 2 16.2V7.8A5.8 5.8 0 0 1 7.8 2m-.2 2A3.6 3.6 0 0 0 4 7.6v8.8A3.6 3.6 0 0 0 7.6 20h8.8A3.6 3.6 0 0 0 20 16.4V7.6A3.6 3.6 0 0 0 16.4 4H7.6m9.65 1.5a1.25 1.25 0 0 1 1.25 1.25A1.25 1.25 0 0 1 17.25 8 1.25 1.25 0 0 1 16 6.75a1.25 1.25 0 0 1 1.25-1.25M12 7a5 5 0 0 1 5 5 5 5 0 0 1-5 5 5 5 0 0 1-5-5 5 5 0 0 1 5-5m0 2a3 3 0 0 0-3 3 3 3 0 0 0 3 3 3 3 0 0 0 3-3 3 3 0 0 0-3-3z"/></svg>`,
+                default: `<svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"></path></svg>`
+            };
+            container.innerHTML = links.map(link => `
+                <a href="${link.url}" target="_blank" class="text-gray-500 hover:text-primary dark:text-gray-400" title="${link.name}">
+                    ${iconMap[link.name.toLowerCase()] || iconMap.default}
+                </a>
+            `).join('');
+        }
 
         // --- ROUTING ---
         function handleRouting() {
@@ -445,7 +512,7 @@
                 snapshot.forEach(doc => {
                     grid.appendChild(renderProductCard({ id: doc.id, ...doc.data() }));
                 });
-                updateProductCardsWithRatings(); // Обновляем рейтинг
+                updateProductCardsWithRatings();
             }, (error) => {
                 console.error("Error loading featured products: ", error);
                 container.innerHTML = `<p class="text-center text-red-400">Не удалось загрузить рекомендованные товары. Возможно, требуется создать индекс в Firebase.</p>`;
@@ -487,20 +554,19 @@
             filtered.forEach(product => {
                 productsGrid.appendChild(renderProductCard(product));
             });
-            updateProductCardsWithRatings(); // Обновляем рейтинг
+            updateProductCardsWithRatings();
             translatePage();
         }
         function renderProductCard(product) {
             const card = document.createElement('div');
             card.className = "card-bg product-card rounded-lg shadow-lg flex flex-col justify-between border border-custom overflow-hidden";
-            card.dataset.productId = product.id; // Добавляем ID для обновления рейтинга
+            card.dataset.productId = product.id;
             const verifiedBadge = product.isVerified ? `<span class="bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200 text-xs font-bold px-2 py-1 rounded-full">✔ Подтверждено</span>` : '';
             const pinnedBadge = product.isPinned ? `<span class="bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200 text-xs font-bold px-2 py-1 rounded-full">★ Закреплено</span>` : '';
             const isWishlisted = userWishlist.includes(product.id);
 
-            // НОВЫЙ ФУНКЦИОНАЛ: Получаем данные о рейтинге
             const ratingData = productRatings[product.id];
-            let ratingHTML = '<div class="h-6"></div>'; // Placeholder
+            let ratingHTML = '<div class="h-6"></div>';
             if (ratingData) {
                 const stars = '★'.repeat(Math.round(ratingData.average)) + '☆'.repeat(5 - Math.round(ratingData.average));
                 ratingHTML = `
@@ -513,7 +579,6 @@
 
             card.innerHTML = `
                 <div class="relative">
-                    <!-- ИСПРАВЛЕНИЕ БАГА: Добавлен onerror для сломанных картинок -->
                     <img src="${product.imageUrl || 'https://placehold.co/600x400/a78bfa/ffffff?text=No+Image'}" 
                          onerror="this.onerror=null; this.src='https://placehold.co/600x400/a78bfa/ffffff?text=${encodeURIComponent(product.name)}';"
                          class="w-full h-48 object-cover">
@@ -529,7 +594,6 @@
                     <p class="text-gray-600 dark:text-gray-400 mt-1 text-sm h-10 overflow-hidden">${product.description}</p>
                     <p class="text-2xl font-bold text-primary mt-2">${formatPrice(product.price || 0)}</p>
                 </div>
-                <!-- НОВЫЙ ФУНКЦИОНАЛ: Блок с рейтингом и кнопкой "Отзывы" -->
                 <div class="px-4 pb-2 flex justify-between items-center">
                     <div class="rating-container">${ratingHTML}</div>
                     <button class="show-reviews-btn text-sm text-primary hover:underline" data-product-id="${product.id}" data-lang-key="reviews_button">Отзывы</button>
@@ -1051,6 +1115,8 @@
                     <p class="font-bold">После оплаты, пожалуйста, загрузите скриншот чека:</p>
                     <input type="file" id="proof-upload" class="w-full p-2 border rounded input-bg" accept="image/*" required>
                     <img id="proof-preview" class="hidden w-full max-w-xs mx-auto rounded-lg mt-2">
+                    <!-- ИСПРАВЛЕНИЕ БАГА: Индикатор загрузки для чека -->
+                    <div id="upload-loader" class="hidden text-center">Загрузка изображения...</div>
                 </div>
             `;
 
@@ -1061,8 +1127,9 @@
                     return false;
                 }
                 const saveBtn = m.querySelector('.save-modal-btn');
-                saveBtn.textContent = 'Загрузка...';
-                saveBtn.disabled = true;
+                const loader = m.querySelector('#upload-loader');
+                saveBtn.classList.add('hidden');
+                loader.classList.remove('hidden');
 
                 const proofUrl = await uploadImage(proofFile);
                 if (proofUrl) {
@@ -1074,8 +1141,8 @@
                     return true;
                 } else {
                     alert("Ошибка загрузки чека. Попробуйте снова.");
-                    saveBtn.textContent = 'Отправить чек';
-                    saveBtn.disabled = false;
+                    saveBtn.classList.remove('hidden');
+                    loader.classList.add('hidden');
                     return false;
                 }
             };
@@ -1238,14 +1305,14 @@
                 const totalRevenue = completedPurchases.reduce((sum, p) => sum + p.finalPrice, 0);
 
                 contentEl.innerHTML = `
-                    <h3 class="text-2xl font-bold mb-6">Статистика</h3>
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-                        <div class="card-bg p-6 rounded-lg shadow-md border border-custom">
-                            <h4 class="font-bold text-lg mb-2">Общая статистика</h4>
-                            <p><strong>Общий доход:</strong> ${formatPrice(totalRevenue, 'UZS')}</p>
-                            <p><strong>Всего заказов:</strong> ${allPurchases.length}</p>
-                             <p><strong>Всего пользователей:</strong> ${usersData.length}</p>
-                        </div>
+                    <div class="flex justify-between items-center mb-6">
+                        <h3 class="text-2xl font-bold">Статистика</h3>
+                        <button id="export-stats-btn" class="px-4 py-2 text-sm font-semibold bg-green-500 text-white rounded-md hover:bg-green-600">Экспорт в Excel</button>
+                    </div>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+                        <div class="card-bg p-6 rounded-lg shadow-md border border-custom"><h4 class="font-bold text-lg mb-2">Общий доход</h4><p class="text-3xl font-extrabold text-primary">${formatPrice(totalRevenue, 'UZS')}</p></div>
+                        <div class="card-bg p-6 rounded-lg shadow-md border border-custom"><h4 class="font-bold text-lg mb-2">Всего заказов</h4><p class="text-3xl font-extrabold">${allPurchases.length}</p></div>
+                        <div class="card-bg p-6 rounded-lg shadow-md border border-custom"><h4 class="font-bold text-lg mb-2">Всего пользователей</h4><p class="text-3xl font-extrabold">${usersData.length}</p></div>
                     </div>
                     <div id="users-section"></div>`;
 
@@ -1282,13 +1349,28 @@
             const contentEl = document.getElementById('admin-tab-content');
             contentEl.innerHTML = `
                 <h3 class="text-2xl font-bold mb-6">Кастомизация магазина</h3>
-                <div class="space-y-4 max-w-lg">
-                    <div>
-                        <label class="block text-sm font-medium mb-1">Логотип магазина (отображается в шапке)</label>
-                        <input type="file" id="logo-upload-input" class="w-full text-sm file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-primary/10 dark:file:bg-violet-900/50 file:text-primary hover:file:bg-primary/20"/>
-                        <img id="logo-preview" src="" class="w-24 h-24 object-contain mt-2 p-2 border border-dashed border-custom rounded-lg hidden">
+                <div class="space-y-8">
+                    <div class="card-bg p-6 rounded-lg shadow border border-custom">
+                        <h4 class="font-bold text-lg mb-4">Основные настройки</h4>
+                        <div class="space-y-4 max-w-lg">
+                            <div>
+                                <label class="block text-sm font-medium mb-1">Логотип магазина (в шапке)</label>
+                                <input type="file" id="logo-upload-input" class="w-full text-sm file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-primary/10 dark:file:bg-violet-900/50 file:text-primary hover:file:bg-primary/20"/>
+                                <img id="logo-preview" src="" class="w-24 h-24 object-contain mt-2 p-2 border border-dashed border-custom rounded-lg hidden">
+                            </div>
+                            <button id="save-main-settings-btn" class="px-6 py-2 bg-primary text-white rounded-lg hover:bg-primary-hover">Сохранить</button>
+                        </div>
                     </div>
-                    <button id="save-customization-btn" class="px-6 py-2 bg-primary text-white rounded-lg hover:bg-primary-hover">Сохранить</button>
+                    <div class="card-bg p-6 rounded-lg shadow border border-custom">
+                        <h4 class="font-bold text-lg mb-4">Рекламный баннер</h4>
+                        <div id="ad-list"></div>
+                        <button id="add-ad-btn" class="mt-4 px-4 py-2 text-sm bg-green-500 text-white rounded-lg hover:bg-green-600">Добавить рекламу</button>
+                    </div>
+                    <div class="card-bg p-6 rounded-lg shadow border border-custom">
+                        <h4 class="font-bold text-lg mb-4">Социальные сети</h4>
+                        <div id="social-links-list" class="space-y-2"></div>
+                        <button id="add-social-link-btn" class="mt-4 px-4 py-2 text-sm bg-green-500 text-white rounded-lg hover:bg-green-600">Добавить ссылку</button>
+                    </div>
                 </div>
             `;
 
@@ -1301,6 +1383,8 @@
                     logoPreview.classList.remove('hidden');
                 }
             }
+            loadAdminAds();
+            loadAdminSocialLinks();
         }
         function renderAdminProductItem(id, data) {
             const item = document.createElement('div');
@@ -1492,18 +1576,23 @@
         }
         function loadAdminReviews() {
             const contentEl = document.getElementById('admin-tab-content');
-            contentEl.innerHTML = `<h3 class="text-2xl font-bold mb-6">Отзывы пользователей</h3><div id="reviews-list" class="space-y-4"></div>`;
+            contentEl.innerHTML = `
+                <div class="flex justify-between items-center mb-6">
+                    <h3 class="text-2xl font-bold">Отзывы пользователей</h3>
+                    <button id="add-fake-review-btn" class="px-4 py-2 text-sm bg-blue-500 text-white rounded-md hover:bg-blue-600">Добавить фейк-отзыв</button>
+                </div>
+                <div id="reviews-list" class="space-y-4"></div>`;
             const listEl = document.getElementById('reviews-list');
 
             const q = query(collection(db, 'reviews'), orderBy('createdAt', 'desc'));
-            onSnapshot(q, async (snapshot) => {
+            onSnapshot(q, (snapshot) => {
                 if(snapshot.empty) {
                     listEl.innerHTML = '<p>Отзывов пока нет.</p>';
                     return;
                 }
                 listEl.innerHTML = '';
-                for(const doc of snapshot.docs) {
-                    const review = doc.data();
+                snapshot.forEach(doc => {
+                    const review = {id: doc.id, ...doc.data()};
                     const product = allProducts.find(p => p.id === review.productId);
                     const item = document.createElement('div');
                     item.className = 'card-bg p-4 rounded-lg shadow border border-custom';
@@ -1516,8 +1605,9 @@
                                         <p class="font-semibold">${review.userName}</p>
                                         <p class="text-sm text-gray-400">О товаре: ${product ? product.name : 'Неизвестный товар'}</p>
                                     </div>
-                                    <div class="flex items-center text-yellow-400">
-                                        ${'★'.repeat(review.rating)}${'☆'.repeat(5 - review.rating)}
+                                    <div class="flex items-center gap-2">
+                                        <div class="flex items-center text-yellow-400">${'★'.repeat(review.rating)}${'☆'.repeat(5 - review.rating)}</div>
+                                        <button class="delete-review-btn text-red-500 hover:text-red-400" data-id="${review.id}">&times;</button>
                                     </div>
                                 </div>
                                 <p class="mt-2">${review.comment}</p>
@@ -1525,7 +1615,7 @@
                         </div>
                     `;
                     listEl.appendChild(item);
-                }
+                });
             });
         }
         async function showProductForm(productId) { 
@@ -1703,7 +1793,6 @@
             setupPreview('p-qr-file', 'p-qr-preview');
         }
         
-        // НОВЫЙ ФУНКЦИОНАЛ: Модальное окно для просмотра отзывов
         function showReviewsModal(productId) {
             const product = allProducts.find(p => p.id === productId);
             if (!product) return;
@@ -1766,7 +1855,7 @@
                 if (target.id === 'add-payment-btn') showPaymentMethodForm();
                 if (target.id === 'add-faq-btn') { const q = prompt("Вопрос:"); const a = prompt("Ответ:"); if (q && a) addDoc(collection(db, 'faq'), { question: q, answer: a }); }
                 if (target.id === 'add-promo-btn') showPromoForm();
-                if (target.id === 'save-customization-btn') {
+                if (target.id === 'save-main-settings-btn') {
                     const btn = target;
                     btn.textContent = 'Сохранение...'; btn.disabled = true;
                     const logoFile = document.getElementById('logo-upload-input').files[0];
@@ -1905,7 +1994,6 @@
                         return true;
                     }, 'Отправить отзыв');
                  }
-                 // НОВЫЙ ФУНКЦИОНАЛ: Обработчик для кнопки "Отзывы"
                  if (target.closest('.show-reviews-btn')) {
                      const productId = target.dataset.productId;
                      showReviewsModal(productId);
@@ -1925,7 +2013,6 @@
                     reader.readAsDataURL(e.target.files[0]); 
                 }
                 
-                // Bulk actions logic
                 if(e.target.matches('.product-bulk-checkbox')) {
                     const checkboxes = document.querySelectorAll('.product-bulk-checkbox:checked');
                     const actionBar = document.getElementById('bulk-actions-bar');
@@ -1951,7 +2038,6 @@
                     notifications.classList.add('hidden');
                 }
                 
-                // Bulk action button clicks
                 const selectedIds = Array.from(document.querySelectorAll('.product-bulk-checkbox:checked')).map(cb => cb.dataset.id);
                 if (selectedIds.length === 0) return;
                 
@@ -1972,7 +2058,6 @@
                 }
             });
 
-            // Mobile menu listeners
             const mobileMenu = document.getElementById('mobile-menu');
             const mobileMenuPanel = document.getElementById('mobile-menu-panel');
             document.getElementById('mobile-menu-btn').addEventListener('click', () => {
@@ -2125,7 +2210,6 @@
             if (!currentUser) return;
             onSnapshot(doc(db, "users", currentUser.uid), (doc) => {
                 userWishlist = doc.data()?.wishlist || [];
-                // Re-render products if on main page to update heart icons
                 if(window.location.hash === '' || window.location.hash === '#main') {
                     applyFiltersAndSort();
                 }
