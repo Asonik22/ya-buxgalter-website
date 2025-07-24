@@ -142,25 +142,39 @@
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getAuth, onAuthStateChanged, GoogleAuthProvider, signInWithPopup, signOut, updateProfile } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, doc, getDoc, setDoc, addDoc, collection, getDocs, onSnapshot, updateDoc, deleteDoc, query, where, serverTimestamp, orderBy, increment, writeBatch, arrayUnion, arrayRemove } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { getFirestore, doc, getDoc, setDoc, addDoc, collection, getDocs, onSnapshot, updateDoc, deleteDoc, query, where, serverTimestamp, orderBy, increment, writeBatch, arrayUnion, arrayRemove, enableIndexedDbPersistence } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
         // --- CONFIG ---
+        // ВАЖНО: Я заменил старые ключи на новые из вашего проекта AsonikStore-v3
         const firebaseConfig = {
-            apiKey: "AIzaSyC7smDYoy-LT58xCwjJsc9uZU9CgHQv5dM",
-            authDomain: "ya-buxgalter.firebaseapp.com",
-            projectId: "ya-buxgalter",
-            storageBucket: "ya-buxgalter.appspot.com",
-            messagingSenderId: "640345805387",
-            appId: "1:640345805387:web:a1adade77f809af84cb3ce"
+            apiKey: "AIzaSyDim7T4GqxZK4zM9tBDLkcGTSveVOaUbMY",
+            authDomain: "asonikstore-v3.firebaseapp.com",
+            projectId: "asonikstore-v3",
+            storageBucket: "asonikstore-v3.appspot.com",
+            messagingSenderId: "1018442222532",
+            appId: "1:1018442222532:web:9b78f7be6c5c02bb327291",
+            measurementId: "G-6BE0LTDP4B"
         };
-        const IMGBB_API_KEY = '96bf3f29606f1989bb5a450ad3770cce';
-        const ADMIN_UID = 'vhmtXZxkZnOWviNQ39R1W3GE8mw2';
-        const TELEGRAM_USERNAME = 'asonikofficial';
+        const IMGBB_API_KEY = '96bf3f29606f1989bb5a450ad3770cce'; // Этот ключ для загрузки картинок, его можно оставить
+        const ADMIN_UID = 'vhmtXZxkZnOWviNQ39R1W3GE8mw2'; // ВАЖНО: Замените это на UID вашего админ-аккаунта в новом проекте
+        const TELEGRAM_USERNAME = 'asonikofficial'; // Ваш телеграм
 
         // --- INITIALIZATION ---
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
         const db = getFirestore(app);
+
+        // FIX: Включаем оффлайн-режим для Firestore, чтобы избежать ошибки "client is offline" при первой загрузке
+        enableIndexedDbPersistence(db)
+            .catch((err) => {
+                if (err.code == 'failed-precondition') {
+                    // Вероятно, открыто несколько вкладок. Это нормально.
+                    console.warn("Persistence failed, likely due to multiple tabs open");
+                } else if (err.code == 'unimplemented') {
+                    // Браузер не поддерживает эту функцию.
+                    console.warn("Persistence is not supported in this browser");
+                }
+            });
 
         // --- STATE ---
         let currentUser = null;
@@ -228,6 +242,7 @@
 
         async function initializeAppState(user) {
             currentUser = user;
+            // ВАЖНО: Проверка на админа теперь использует ADMIN_UID из конфига
             isAdmin = user ? user.uid === ADMIN_UID : false;
             if (user) {
                 const userRef = doc(db, "users", user.uid);
@@ -269,23 +284,31 @@
 
         // --- DATA FETCHING ---
         async function loadStoreSettings() {
-            const settingsDoc = await getDoc(doc(db, "storeSettings", "config"));
-            if (settingsDoc.exists()) {
-                const { logoUrl } = settingsDoc.data();
-                const logoEl = document.getElementById('store-logo');
-                if (logoUrl) {
-                    logoEl.src = logoUrl;
-                    logoEl.classList.remove('hidden');
-                } else {
-                    logoEl.classList.add('hidden');
+            try {
+                const settingsDoc = await getDoc(doc(db, "storeSettings", "config"));
+                if (settingsDoc.exists()) {
+                    const { logoUrl } = settingsDoc.data();
+                    const logoEl = document.getElementById('store-logo');
+                    if (logoUrl) {
+                        logoEl.src = logoUrl;
+                        logoEl.classList.remove('hidden');
+                    } else {
+                        logoEl.classList.add('hidden');
+                    }
                 }
+            } catch (error) {
+                console.error("Could not load store settings:", error);
             }
         }
         function loadPaymentMethods() {
             return new Promise(resolve => {
                 const q = query(collection(db, "paymentMethods"), orderBy("order", "asc"));
-                onSnapshot(q, (snapshot) => {
+                const unsubscribe = onSnapshot(q, (snapshot) => {
                     paymentMethods = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                    resolve();
+                }, (error) => {
+                    console.error("Error loading payment methods, maybe an index is needed?", error);
+                    // Если есть ошибка (например, нет индекса), мы все равно продолжаем, чтобы не блокировать приложение
                     resolve();
                 });
             });
@@ -369,6 +392,9 @@
             onSnapshot(q, (snapshot) => {
                 allProducts = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
                 applyFiltersAndSort();
+            }, (error) => {
+                 console.error("Error loading products:", error);
+                 document.getElementById('products-grid').innerHTML = `<p class="col-span-full text-center text-red-500">Не удалось загрузить товары. Проверьте консоль.</p>`;
             });
         }
         function applyFiltersAndSort() {
@@ -1983,5 +2009,3 @@
     </script>
 </body>
 </html>
-
-}
