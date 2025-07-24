@@ -418,7 +418,7 @@
                     container.innerHTML = '';
                     return;
                 }
-                const ad = snapshot.docs[0].data(); // Показываем только одну активную рекламу
+                const ad = snapshot.docs[0].data();
                 container.innerHTML = `
                     <a href="${ad.link}" target="_blank" class="block w-full rounded-lg overflow-hidden shadow-lg">
                         <img src="${ad.imageUrl}" class="w-full h-auto object-contain" onerror="this.onerror=null; this.style.display='none';">
@@ -1115,7 +1115,6 @@
                     <p class="font-bold">После оплаты, пожалуйста, загрузите скриншот чека:</p>
                     <input type="file" id="proof-upload" class="w-full p-2 border rounded input-bg" accept="image/*" required>
                     <img id="proof-preview" class="hidden w-full max-w-xs mx-auto rounded-lg mt-2">
-                    <!-- ИСПРАВЛЕНИЕ БАГА: Индикатор загрузки для чека -->
                     <div id="upload-loader" class="hidden text-center">Загрузка изображения...</div>
                 </div>
             `;
@@ -2176,12 +2175,15 @@
              const container = document.getElementById('notifications-container');
              if(!container) return;
              container.innerHTML = `
-                <button id="notifications-btn" class="relative p-2 text-gray-400">
+                <button id="notifications-btn" class="relative p-2 text-gray-500 dark:text-gray-400">
                     <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"></path></svg>
                     ${unreadCount > 0 ? `<span class="absolute top-0 right-0 bg-red-500 text-white text-xs rounded-full h-4 w-4 flex items-center justify-center">${unreadCount}</span>` : ''}
                 </button>
                 <div id="notifications-dropdown" class="hidden absolute right-0 mt-2 w-80 card-bg rounded-md shadow-lg border border-custom z-20">
-                    <div class="p-4 font-bold border-b border-custom">Уведомления</div>
+                    <div class="p-4 font-bold border-b border-custom flex justify-between items-center">
+                        <span>Уведомления</span>
+                        ${unreadCount > 0 ? `<button id="mark-all-read-btn" class="text-sm text-primary hover:underline">Отметить все как прочитанные</button>` : ''}
+                    </div>
                     <div class="max-h-96 overflow-y-auto">
                         ${notifications.length > 0 ? notifications.map(n => `
                             <div class="p-4 border-b border-custom ${!n.isRead ? 'bg-primary/10' : ''}">
@@ -2193,16 +2195,8 @@
                 </div>
              `;
 
-             container.querySelector('#notifications-btn').addEventListener('click', async () => {
-                const dropdown = container.querySelector('#notifications-dropdown');
-                dropdown.classList.toggle('hidden');
-                if (!dropdown.classList.contains('hidden')) {
-                    const batch = writeBatch(db);
-                    notifications.filter(n => !n.isRead).forEach(n => {
-                        batch.update(doc(db, "notifications", n.id), { isRead: true });
-                    });
-                    await batch.commit();
-                }
+             container.querySelector('#notifications-btn').addEventListener('click', () => {
+                container.querySelector('#notifications-dropdown').classList.toggle('hidden');
              });
         }
         // --- WISHLIST ---
