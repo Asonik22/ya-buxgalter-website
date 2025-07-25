@@ -4,6 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Asonik Store</title>
+    <!-- Добавлена заглушка для favicon.ico -->
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🛒</text></svg>" />
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- ОБНОВЛЕНИЕ: Новый шрифт Manrope для более современного вида -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -749,6 +751,7 @@
                             <img id="profile-avatar" src="${currentUser.photoURL || 'https://placehold.co/128x128'}" alt="avatar" class="w-32 h-32 rounded-full mb-4 object-cover border-4 border-primary/50" onerror="this.onerror=null; this.src='https://placehold.co/128x128/a78bfa/ffffff?text=User';">
                             <input type="file" id="avatar-upload" class="hidden" accept="image/*">
                             <button id="change-avatar-btn" class="text-sm text-primary hover:underline">Сменить аватар</button>
+                            <div id="avatar-upload-loader" class="hidden text-sm text-gray-500 mt-2">Загрузка...</div>
                         </div>
                         <div class="flex-grow w-full">
                             <h2 class="text-3xl font-bold mb-6">${currentUser.displayName || 'Пользователь'}</h2>
@@ -1410,7 +1413,10 @@
                 contentEl.innerHTML = `
                     <div class="flex justify-between items-center mb-6">
                         <h3 class="text-2xl font-bold">Статистика</h3>
-                        <button id="export-stats-btn" class="px-4 py-2 text-sm font-semibold bg-green-500 text-white rounded-md hover:bg-green-600">Экспорт в Excel</button>
+                        <div class="flex gap-2">
+                            <button id="export-stats-btn" class="px-4 py-2 text-sm font-semibold bg-green-500 text-white rounded-md hover:bg-green-600">Экспорт в Excel</button>
+                            <button id="reset-revenue-btn" class="px-4 py-2 text-sm font-semibold bg-red-500 text-white rounded-md hover:bg-red-600">Обнулить доход</button>
+                        </div>
                     </div>
                     <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
                         <div class="card-bg p-6 rounded-lg shadow-md border border-custom"><h4 class="font-bold text-lg mb-2">Общий доход</h4><p class="text-3xl font-extrabold text-primary">${formatPrice(totalRevenue, 'UZS')}</p></div>
@@ -1444,11 +1450,34 @@
                     `;
                 }
                  document.getElementById('export-stats-btn').onclick = () => exportPurchasesToExcel(allPurchases);
+                 document.getElementById('reset-revenue-btn').onclick = () => resetRevenue(); // Добавлено событие для новой кнопки
             } catch (error) {
                 console.error("Error loading dashboard:", error);
                 contentEl.innerHTML = `<p class="text-red-400">Ошибка загрузки статистики. Пожалуйста, убедитесь, что в Firebase создан индекс для коллекции 'users' по полю 'lastSeen' (по убыванию).</p>`;
             }
         }
+        // Новая функция для обнуления дохода
+        async function resetRevenue() {
+            confirmAction('Вы уверены, что хотите обнулить весь доход? Это действие необратимо и изменит статус всех покупок на "Отменен".', async () => {
+                const purchasesRef = collection(db, "purchases");
+                const q = query(purchasesRef, where("status", "in", ["Выполнен", "Завершён", "Ожидает подтверждения", "Ожидает оплаты"])); // Выбираем только те, которые влияют на доход
+                const snapshot = await getDocs(q);
+                const batch = writeBatch(db);
+
+                snapshot.docs.forEach(docSnapshot => {
+                    batch.update(doc(db, "purchases", docSnapshot.id), {
+                        status: 'Отменен',
+                        finalPrice: 0, // Обнуляем цену
+                        rejectionReason: 'Доход обнулен администратором'
+                    });
+                });
+
+                await batch.commit();
+                showToast('Доход успешно обнулен и покупки помечены как отмененные!');
+                loadAdminDashboard(); // Перезагружаем статистику
+            });
+        }
+
         function exportPurchasesToExcel(purchases) {
             const data = purchases.map(p => ({
                 'ID заказа': p.id,
@@ -2476,15 +2505,30 @@
                 if (target.id === 'save-profile-btn') {
                     const newName = document.getElementById('profile-name').value;
                     const avatarFile = document.getElementById('avatar-upload').files[0];
-                    target.textContent = 'Сохранение...'; target.disabled = true;
+                    const loader = document.getElementById('avatar-upload-loader'); // Получаем лоадер
+                    target.textContent = 'Сохранение...'; 
+                    target.disabled = true;
+                    loader.classList.remove('hidden'); // Показываем лоадер
+
                     try {
                         let newAvatarUrl = currentUser.photoURL;
-                        if (avatarFile) newAvatarUrl = await uploadImage(avatarFile);
+                        if (avatarFile) {
+                            newAvatarUrl = await uploadImage(avatarFile);
+                            if (!newAvatarUrl) { // Если загрузка не удалась
+                                showToast('Ошибка загрузки аватара. Попробуйте снова.', true);
+                                return; // Прерываем выполнение
+                            }
+                        }
                         await updateProfile(currentUser, { displayName: newName, photoURL: newAvatarUrl });
                         await setDoc(doc(db, "users", currentUser.uid), { displayName: newName, photoURL: newAvatarUrl }, { merge: true });
                         showToast('Профиль обновлен!');
-                    } catch (error) { showToast('Ошибка обновления профиля: ' + error.message, true); } 
-                    finally { target.textContent = 'Сохранить'; target.disabled = false; }
+                    } catch (error) { 
+                        showToast('Ошибка обновления профиля: ' + error.message, true); 
+                    } finally { 
+                        target.textContent = 'Сохранить'; 
+                        target.disabled = false; 
+                        loader.classList.add('hidden'); // Скрываем лоадер
+                    }
                 }
                  if (target.matches('.toggle-payment-btn')) {
                     const id = target.dataset.id;
