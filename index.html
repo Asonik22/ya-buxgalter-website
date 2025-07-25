@@ -378,6 +378,27 @@
             }, 3000);
         }
 
+        // Глобальная функция showModal для подтверждений
+        function showModal(title, content, onSave, saveButtonText = 'Подтвердить') {
+             const modal = document.createElement('div');
+             modal.className = 'fixed inset-0 z-50 flex items-center justify-center modal-backdrop';
+             modal.innerHTML = `<div class="card-bg rounded-lg shadow-xl w-11/12 md:w-2/3 lg:w-1/2 p-6 max-h-[90vh] overflow-y-auto"><div class="flex justify-between items-center mb-4"><h2 class="text-2xl font-bold">${title}</h2><button class="close-modal-btn text-2xl">&times;</button></div><div>${content}</div>${onSave ? `<div class="mt-6 flex justify-end gap-4"><button class="close-modal-btn px-6 py-2 rounded-lg">Отмена</button><button class="save-modal-btn bg-primary text-white px-6 py-2 rounded-lg">${saveButtonText}</button></div>` : ''}</div>`;
+             document.getElementById('modals-container').appendChild(modal);
+             modal.querySelectorAll('.close-modal-btn').forEach(btn => btn.onclick = () => modal.remove());
+             if (onSave) {
+                 const saveBtn = modal.querySelector('.save-modal-btn');
+                 saveBtn.onclick = async () => {
+                     const shouldClose = await onSave(modal);
+                     if (shouldClose !== false) modal.remove();
+                 };
+             }
+             return modal;
+        }
+
+        // Глобальная функция confirmAction
+        const confirmAction = (message, onConfirm) => showModal('Подтвердите действие', `<p>${message}</p>`, () => { onConfirm(); return true; }, 'Да, уверен');
+
+
         // --- DATA FETCHING ---
         async function loadStoreSettings() {
             try {
@@ -585,9 +606,9 @@
             } else { // 'after_catalog'
                 const productsGrid = document.getElementById('products-grid');
                 if (productsGrid) {
-                    productsGrid.parentNode.insertBefore(adContainer, productsGrid.nextSibling);
+                    mainPageWrapper.insertBefore(adContainer, productsGrid.nextSibling); // Вставляем после сетки товаров
                 } else {
-                    mainPageWrapper.appendChild(adContainer);
+                    mainPageWrapper.appendChild(adContainer); // Если сетки товаров нет, просто в конец
                 }
             }
             
@@ -1322,22 +1343,6 @@
                 'Перейти в Telegram'
             );
         }
-        function showModal(title, content, onSave, saveButtonText = 'Подтвердить') {
-             const modal = document.createElement('div');
-             modal.className = 'fixed inset-0 z-50 flex items-center justify-center modal-backdrop';
-             modal.innerHTML = `<div class="card-bg rounded-lg shadow-xl w-11/12 md:w-2/3 lg:w-1/2 p-6 max-h-[90vh] overflow-y-auto"><div class="flex justify-between items-center mb-4"><h2 class="text-2xl font-bold">${title}</h2><button class="close-modal-btn text-2xl">&times;</button></div><div>${content}</div>${onSave ? `<div class="mt-6 flex justify-end gap-4"><button class="close-modal-btn px-6 py-2 rounded-lg">Отмена</button><button class="save-modal-btn bg-primary text-white px-6 py-2 rounded-lg">${saveButtonText}</button></div>` : ''}</div>`;
-             document.getElementById('modals-container').appendChild(modal);
-             modal.querySelectorAll('.close-modal-btn').forEach(btn => btn.onclick = () => modal.remove());
-             if (onSave) {
-                 const saveBtn = modal.querySelector('.save-modal-btn');
-                 saveBtn.onclick = async () => {
-                     const shouldClose = await onSave(modal);
-                     if (shouldClose !== false) modal.remove();
-                 };
-             }
-             return modal;
-        }
-
         // --- ADMIN PANEL ---
         async function loadAdminPanel(subpage = 'dashboard') { 
             if (!isAdmin) return;
@@ -1972,7 +1977,7 @@
             const modal = showModal(promoId ? 'Редактировать промокод' : 'Создать промокод', `
                 <div class="space-y-4">
                     <input id="promo-code" class="w-full p-2 border rounded input-bg" placeholder="Промокод (напр. SALE20)" value="${p.code}" ${promoId ? 'disabled' : ''}>
-                    <label>Скидка: <span id="promo-discount-val">${p.discount}</span>%</label><input id="promo-discount" type="range" min="1" max="100" value="${p.discount}" class="w-full">
+                    <label>Скидка: <span id="promo-discount-val">${p.discount}</span>%</label><input type="range" min="1" max="100" value="${p.discount}" class="w-full" id="promo-discount">
                     <input id="promo-limit" type="number" class="w-full p-2 border rounded input-bg" placeholder="Лимит использований" value="${p.limit}">
                     <label>Применить к товару:</label>
                     <select id="promo-product" class="w-full p-2 border rounded input-bg">
@@ -2128,7 +2133,7 @@
             let adData = { imageUrl: '', link: '', isActive: true };
             if (adId) {
                 const docSnap = await getDoc(doc(db, 'advertisements', adId));
-                if (docSnap.exists()) adData = { id: docSnap.id, ...docSnap.data() };
+                if (docSnap.exists()) adData = { id: docSnap.id, ...adData.data() }; // Исправлено .data()
             }
 
             const modal = showModal(adId ? 'Редактировать рекламу' : 'Добавить рекламу', `
@@ -2371,7 +2376,6 @@
                 }
 
                 const target = e.target;
-                const confirmAction = (message, onConfirm) => showModal('Подтвердите действие', `<p>${message}</p>`, () => { onConfirm(); return true; }, 'Да, уверен');
                 
                 if (target.id === 'login-redirect') signInWithGoogle();
                 // Обработка кликов по горизонтальным вкладкам админ-панели
@@ -2575,7 +2579,7 @@
                         </div>
                         <textarea id="review-comment" class="w-full mt-4 p-2 border rounded input-bg" placeholder="Ваш комментарий..."></textarea>
                     `, async (m) => {
-                        const rating = m.querySelector('input[name="rating"]:checked')?.value;
+                        const rating = m.querySelector('input[name="rating']:checked')?.value;
                         if (!rating) {
                             alert('Пожалуйста, поставьте оценку.');
                             return false;
