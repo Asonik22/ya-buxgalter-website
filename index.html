@@ -510,7 +510,7 @@
             } else { // 'after_catalog'
                 const productsGrid = document.getElementById('products-grid');
                 if (productsGrid) {
-                    productsGrid.parentNode.insertBefore(container, productsGrid.nextSibling);
+                    mainPageWrapper.insertBefore(container, productsGrid.nextSibling); // Вставляем после сетки товаров
                 } else {
                     mainPageWrapper.appendChild(container); // Если сетки товаров нет, просто в конец
                 }
@@ -1832,7 +1832,7 @@
                         <input type="radio" id="fake-4-stars" name="fake-rating" value="4" /><label for="fake-4-stars">☆</label>
                         <input type="radio" id="fake-3-stars" name="fake-rating" value="3" /><label for="fake-3-stars">☆</label>
                         <input type="radio" id="fake-2-stars" name="fake-rating" value="2" /><label for="fake-2-stars">☆</label>
-                        <input type="radio" id="fake-1-star" name="fake-rating" value="1" /><label for="fake-1-star">☆</label>
+                        <input type="radio" id="1-star" name="fake-rating" value="1" /><label for="1-star">☆</label>
                     </div>
                     <textarea id="fake-review-comment" class="w-full mt-4 p-2 border rounded input-bg" placeholder="Комментарий..."></textarea>
                 </div>
@@ -2133,7 +2133,7 @@
             let adData = { imageUrl: '', link: '', isActive: true };
             if (adId) {
                 const docSnap = await getDoc(doc(db, 'advertisements', adId));
-                if (docSnap.exists()) adData = { id: docSnap.id, ...adData.data() }; // Исправлено .data()
+                if (docSnap.exists()) adData = { id: docSnap.id, ...docSnap.data() }; // Исправлено .data()
             }
 
             const modal = showModal(adId ? 'Редактировать рекламу' : 'Добавить рекламу', `
