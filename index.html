@@ -1634,7 +1634,7 @@
         }
         function renderAdminPurchaseItem(id, p) {
             const item = document.createElement('div');
-            item.className = 'card-bg p-4 rounded-lg shadow border border-custom';
+            item.className = 'card-bg p-4 rounded-lg shadow flex justify-between items-center border border-custom';
             const telegramUsername = p.contactTelegram || '';
             const telegramLink = `https://t.me/${telegramUsername.replace('@', '')}`;
             const telegramDisplay = telegramUsername ? `<a href="${telegramLink}" target="_blank" class="text-primary">${telegramUsername}</a>` : 'не указан';
@@ -1714,10 +1714,6 @@
 
             searchInput.addEventListener('input', (e) => {
                 const searchTerm = e.target.value.toLowerCase().trim();
-                if (!searchTerm) {
-                    renderList(allPurchases);
-                    return;
-                }
                 const filtered = allPurchases.filter(({data}) => 
                     data.userEmail.toLowerCase().includes(searchTerm) || 
                     (data.orderId && data.orderId.toLowerCase().includes(searchTerm))
@@ -2141,7 +2137,7 @@
                     <div>
                         <label class="block text-sm font-medium mb-1">Изображение баннера</label>
                         <input type="file" id="ad-image-file" class="w-full text-sm file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-primary/10 dark:file:bg-violet-900/50 file:text-primary hover:file:bg-primary/20"/>
-                        <img id="ad-image-preview" src="${adData.imageUrl || ''}" class class="w-full max-w-xs object-contain mt-2 p-2 border border-dashed border-custom rounded-lg ${adData.imageUrl ? '' : 'hidden'}">
+                        <img id="ad-image-preview" src="${adData.imageUrl || ''}" class="w-full max-w-xs object-contain mt-2 p-2 border border-dashed border-custom rounded-lg ${adData.imageUrl ? '' : 'hidden'}">
                     </div>
                     <input id="ad-link" class="w-full p-2 border rounded input-bg" placeholder="Ссылка (URL)" value="${adData.link}">
                     <label class="flex items-center gap-2">
