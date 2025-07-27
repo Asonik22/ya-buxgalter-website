@@ -4,14 +4,11 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Asonik Store</title>
-    <!-- Добавлена заглушка для favicon.ico -->
     <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🛒</text></svg>" />
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- ОБНОВЛЕНИЕ: Новый шрифт Manrope для более современного вида -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-    <!-- Библиотека для экспорта в Excel -->
     <script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
     <style>
         /* ОБНОВЛЕНИЕ ДИЗАЙНА: Новая, более яркая и насыщенная фиолетовая тема */
@@ -157,6 +154,7 @@
                     <a href="#chats" id="nav-chats-link" class="nav-link text-gray-600 dark:text-gray-300 hover:text-primary" data-lang-key="nav_chats">Чаты</a>
                     <a href="#faq" class="nav-link text-gray-600 dark:text-gray-300 hover:text-primary" data-lang-key="nav_faq">FAQ</a>
                     <a href="#purchases" class="nav-link text-gray-600 dark:text-gray-300 hover:text-primary" data-lang-key="nav_purchases">Мои покупки</a>
+                    <a href="#download" class="nav-link text-gray-600 dark:text-gray-300 hover:text-primary" data-lang-key="nav_download">Скачать приложение</a>
                 </nav>
 
                 <div class="flex items-center space-x-2 md:space-x-4">
@@ -184,6 +182,7 @@
                  <a href="#chats" class="nav-link hover:text-primary" data-lang-key="nav_chats">Чаты</a>
                  <a href="#faq" class="nav-link hover:text-primary" data-lang-key="nav_faq">FAQ</a>
                  <a href="#purchases" class="nav-link hover:text-primary" data-lang-key="nav_purchases">Мои покупки</a>
+                 <a href="#download" class="nav-link hover:text-primary" data-lang-key="nav_download">Скачать приложение</a>
             </nav>
         </div>
     </div>
@@ -192,7 +191,6 @@
     <main class="container mx-auto px-4 py-8">
         <div data-page="main" class="active">
             <div id="main-page-content-wrapper">
-                <!-- Рекламный баннер будет вставляться здесь динамически -->
                 <h1 class="text-4xl font-bold text-center mb-8" data-lang-key="catalog_title">Каталог товаров</h1>
                 <div class="mb-8 p-4 card-bg rounded-lg shadow-md flex flex-col md:flex-row gap-4 items-center border border-custom">
                     <input id="search-input" type="text" placeholder="Поиск по названию..." class="w-full md:flex-grow pl-4 pr-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary input-bg">
@@ -218,13 +216,13 @@
         <div data-page="admin"><div id="admin-content"></div></div>
         <div data-page="cart"><h1 class="text-4xl font-bold text-center mb-8" data-lang-key="cart_title">Корзина</h1><div id="cart-content"></div></div>
         <div data-page="profile"><div id="profile-content"></div></div>
+        <div data-page="download"><div id="download-content"></div></div>
     </main>
     
     <footer id="main-footer" class="container mx-auto px-4 py-6 mt-8 border-t border-custom">
         <div id="social-links-container" class="flex justify-center items-center gap-6"></div>
     </footer>
 
-    <!-- Отдельная шторка Asonik store 2025 -->
     <div class="text-center text-sm text-gray-500 dark:text-gray-400 py-4">
         © Asonik Store 2025
     </div>
@@ -285,7 +283,7 @@
         // --- TRANSLATIONS ---
         const translations = {
             RU: {
-                nav_main: 'Главная', nav_chats: 'Чаты', nav_faq: 'FAQ', nav_purchases: 'Мои покупки',
+                nav_main: 'Главная', nav_chats: 'Чаты', nav_faq: 'FAQ', nav_purchases: 'Мои покупки', nav_download: 'Скачать приложение',
                 catalog_title: 'Каталог товаров', search_placeholder: 'Поиск по названию...',
                 all_categories: 'Все категории', category_games: 'Игры', category_apps: 'Приложения',
                 sort_new: 'Сначала новые', sort_popular: 'Сначала популярные',
@@ -295,9 +293,10 @@
                 // Дополнительные тексты для кастомизации
                 contact_email_label: 'Контактный Email',
                 contact_phone_label: 'Контактный телефон',
+                download_title: 'Скачать приложение'
             },
             UZ: {
-                nav_main: 'Asosiy', nav_chats: 'Chatlar', nav_faq: 'FAQ', nav_purchases: 'Xaridlarim',
+                nav_main: 'Asosiy', nav_chats: 'Chatlar', nav_faq: 'FAQ', nav_purchases: 'Xaridlarim', nav_download: 'Ilovani yuklab olish',
                 catalog_title: 'Mahsulotlar katalogi', search_placeholder: 'Nomi bo\'yicha qidirish...',
                 all_categories: 'Barcha kategoriyalar', category_games: 'O\'yinlar', category_apps: 'Ilovalar',
                 sort_new: 'Avval yangilari', sort_popular: 'Avval ommaboplari',
@@ -306,6 +305,7 @@
                 reviews_button: 'Sharhlar',
                 contact_email_label: 'Aloqa E-pochta',
                 contact_phone_label: 'Aloqa telefon raqami',
+                download_title: 'Ilovani yuklab olish'
             }
         };
         function t(key) { return (translations[appState.lang] && translations[appState.lang][key]) || key; }
@@ -404,7 +404,7 @@
             try {
                 const settingsDoc = await getDoc(doc(db, "storeSettings", "config"));
                 if (settingsDoc.exists()) {
-                    const { logoUrl, socialLinks, adPlacement, contactEmail, contactPhone } = settingsDoc.data();
+                    const { logoUrl, socialLinks, adPlacement, contactEmail, contactPhone, appDownload } = settingsDoc.data();
                     const logoEl = document.getElementById('store-logo');
                     if (logoUrl) {
                         logoEl.src = logoUrl;
@@ -417,6 +417,7 @@
                     appState.adPlacement = adPlacement || 'before_catalog';
                     appState.contactEmail = contactEmail || '';
                     appState.contactPhone = contactPhone || '';
+                    appState.appDownload = appDownload || {};
                 }
             } catch (error) {
                 console.error("Could not load store settings:", error);
@@ -581,6 +582,7 @@
                 case 'purchases': loadPurchasesPage(); break;
                 case 'wishlist': loadWishlistPage(); break;
                 case 'profile': loadProfilePage(); break;
+                case 'download': loadDownloadPage(); break;
             }
         }
 
@@ -1039,6 +1041,24 @@
             });
         }
 
+        // ДОБАВЛЕНО: Функция для загрузки страницы "Скачать приложение"
+        function loadDownloadPage() {
+            const contentEl = document.getElementById('download-content');
+            if(!contentEl) return;
+            const appData = appState.appDownload || {};
+            contentEl.innerHTML = `
+                <div class="max-w-xl mx-auto card-bg p-8 rounded-lg shadow-lg text-center">
+                    <h1 class="text-4xl font-bold mb-4" data-lang-key="download_title">${t('download_title')}</h1>
+                    <p class="text-gray-600 dark:text-gray-400 mb-6">${appData.description || 'Описание не задано. Пожалуйста, настройте его в админ-панели.'}</p>
+                    <div class="flex flex-col gap-4">
+                        ${appData.exeLink ? `<a href="${appData.exeLink}" class="w-full px-6 py-3 bg-primary text-white rounded-md hover:bg-primary-hover font-semibold">Скачать для Windows (.exe)</a>` : ''}
+                        ${appData.apkLink ? `<a href="${appData.apkLink}" class="w-full px-6 py-3 bg-primary text-white rounded-md hover:bg-primary-hover font-semibold">Скачать для Android (.apk)</a>` : ''}
+                        ${!appData.exeLink && !appData.apkLink ? `<p class="text-red-500">Ссылки для скачивания не настроены.</p>` : ''}
+                    </div>
+                </div>
+            `;
+            translatePage();
+        }
 
         // --- PURCHASE FLOW & MODALS ---
         async function showCheckoutModal(items, total, title) {
@@ -1064,13 +1084,22 @@
                  <div>
                     <label class="font-bold text-lg mb-2 block">Электронные кошельки</label>
                     <div class="grid grid-cols-2 gap-4">
-                        ${enabledEwallets.map(p => `
-                            <button data-method-id="${p.id}" class="payment-option flex flex-col items-center justify-center gap-2 p-2 border-2 border-custom rounded-lg text-center h-20">
-                                <img src="${p.logoUrl}" class="h-12 object-contain" onerror="this.onerror=null; this.style.display='none';">
-                            </button>
-                        `).join('')}
+                        ${enabledEwallets.map(p => {
+                            const priceInRub = formatPrice(total, 'RUB');
+                            const priceText = p.name.toLowerCase() === 'юmoney' ? 
+                                `<span>${formatPrice(total)}</span> <span class="text-sm text-gray-500">(${priceInRub})</span>` :
+                                `<span>${formatPrice(total)}</span>`;
+                            return `
+                                <button data-method-id="${p.id}" class="payment-option flex flex-col items-center justify-center gap-2 p-2 border-2 border-custom rounded-lg text-center">
+                                    <img src="${p.logoUrl}" class="h-12 object-contain" onerror="this.onerror=null; this.style.display='none';">
+                                    <span class="text-sm font-semibold">${p.name}</span>
+                                    ${p.name.toLowerCase() === 'юmoney' ? `<p class="text-sm text-red-500">(${priceInRub})</p>` : ''}
+                                </button>
+                            `;
+                        }).join('')}
                     </div>
                 </div>` : '';
+
 
             if (enabledCards.length === 0 && enabledEwallets.length === 0) {
                  showModal('Ошибка', '<p>Нет доступных способов оплаты. Пожалуйста, свяжитесь с администрацией.</p>');
@@ -1357,6 +1386,7 @@
                 { id: 'faq', name: 'FAQ' },
                 { id: 'promocodes', name: 'Промокоды' },
                 { id: 'chats', name: 'Чаты' },
+                { id: 'download', name: 'Приложение' }, // ДОБАВЛЕНО: вкладка для управления приложением
             ];
 
             adminContent.innerHTML = `
@@ -1387,6 +1417,7 @@
                 const userId = window.location.hash.split('/')[2];
                 await loadAdminChatsList(userId); 
             }
+            if (tab === 'download') await loadAdminDownloadPage(); // ДОБАВЛЕНО: вызов новой функции
         }
         function loadAdminList(collectionName, title, renderFunction, buttonHtml = '') {
             const contentEl = document.getElementById('admin-tab-content');
@@ -1810,6 +1841,31 @@
                 });
             });
         }
+        async function loadAdminDownloadPage() {
+            const contentEl = document.getElementById('admin-tab-content');
+            if(!contentEl) return;
+            const appData = (await getDoc(doc(db, "storeSettings", "config"))).data()?.appDownload || {};
+
+            contentEl.innerHTML = `
+                <h3 class="text-2xl font-bold mb-6">Настройка страницы "Скачать приложение"</h3>
+                <div class="max-w-xl space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium mb-1">Описание страницы</label>
+                        <textarea id="download-description" class="w-full p-2 border rounded input-bg" placeholder="Напишите, почему стоит скачать ваше приложение">${appData.description || ''}</textarea>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium mb-1">Ссылка на .exe (Windows)</label>
+                        <input id="download-exe-link" class="w-full p-2 border rounded input-bg" placeholder="https://example.com/myapp.exe" value="${appData.exeLink || ''}">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium mb-1">Ссылка на .apk (Android)</label>
+                        <input id="download-apk-link" class="w-full p-2 border rounded input-bg" placeholder="https://example.com/myapp.apk" value="${appData.apkLink || ''}">
+                    </div>
+                    <button id="save-download-settings-btn" class="px-6 py-2 bg-primary text-white rounded-lg hover:bg-primary-hover">Сохранить</button>
+                </div>
+            `;
+        }
+
         async function showFakeReviewForm() {
             const productsOptions = allProducts.map(p => `<option value="${p.id}">${p.name}</option>`).join('');
 
@@ -2424,6 +2480,29 @@
                     await loadStoreSettings(); // Перезагружаем настройки для обновления appState
                     btn.textContent = 'Сохранить'; btn.disabled = false;
                     showToast('Настройки сохранены!');
+                }
+
+                 // ДОБАВЛЕНО: Сохранение настроек для страницы "Скачать приложение"
+                if (target.id === 'save-download-settings-btn') {
+                    const btn = target;
+                    btn.textContent = 'Сохранение...'; btn.disabled = true;
+                    const description = document.getElementById('download-description').value;
+                    const exeLink = document.getElementById('download-exe-link').value;
+                    const apkLink = document.getElementById('download-apk-link').value;
+
+                    const appDownloadData = {
+                        description,
+                        exeLink,
+                        apkLink
+                    };
+                    
+                    await setDoc(doc(db, "storeSettings", "config"), { 
+                        appDownload: appDownloadData
+                    }, { merge: true });
+
+                    await loadStoreSettings();
+                    btn.textContent = 'Сохранить'; btn.disabled = false;
+                    showToast('Настройки приложения сохранены!');
                 }
 
 
