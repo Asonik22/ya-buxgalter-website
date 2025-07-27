@@ -1249,15 +1249,15 @@
             const method = paymentMethods.find(p => p.id === purchase.paymentMethodId);
 
             if (method) {
+                 // Определяем цену в рублях, если это ЮMoney
+                const rublePrice = (method.name.toLowerCase() === 'юmoney') ? ` (<span class="font-bold text-red-500">${formatPrice(purchase.finalPrice, 'RUB')}</span>)` : '';
+
                  if (method.type === 'card') {
                     paymentInstructions = `
                         <p>Пожалуйста, переведите точную сумму <span class="font-bold">${formatPrice(purchase.finalPrice)}</span> на карту ${method.name}:</p>
                         <p class="font-mono text-lg my-2 p-2 bg-gray-200 dark:bg-gray-700 rounded">${method.requisites}</p>
                     `;
                 } else if (method.type === 'ewallet') {
-                    // Изменено: теперь цена в рублях отображается здесь для ЮMoney
-                    const rublePrice = method.name.toLowerCase() === 'юmoney' ? ` (<span class="font-bold text-red-500">${formatPrice(purchase.finalPrice, 'RUB')}</span>)` : '';
-
                     paymentInstructions = `
                         <p>Пожалуйста, оплатите точную сумму <span class="font-bold">${formatPrice(purchase.finalPrice)}</span>${rublePrice} через ${method.name} одним из способов:</p>
                         <div class="my-4 flex flex-col items-center gap-4">
@@ -2564,4 +2564,352 @@
                     confirmAction('Вы уверены, что хотите завершить заказ? (Товар будет отмечен как выданный)', async () => {
                         await updateDoc(doc(db, "purchases", purchaseId), { status: 'Завершён' }); 
                         const purchaseDoc = await getDoc(doc(db, "purchases", purchaseId));
-                        if(purchaseDoc.exists()) createNotification(purchaseDoc.data().userId, `Ваш заказ #${purchaseDoc.
+                        if(purchaseDoc.exists()) createNotification(purchaseDoc.data().userId, `Ваш заказ #${purchaseDoc.data().orderId} завершен!`, `Спасибо за покупку!`);
+                        showToast('Заказ завершен!');
+                    });
+                }
+                if (target.closest('.reject-purchase-btn')) {
+                    const purchaseId = target.dataset.id;
+                    showModal('Отклонить заказ', `<textarea id="rejection-reason" class="w-full p-2 border rounded input-bg" placeholder="Укажите причину отклонения (необязательно)"></textarea>`, 
+                    async (m) => {
+                        const reason = m.querySelector('#rejection-reason').value.trim();
+                        await updateDoc(doc(db, "purchases", purchaseId), { status: 'Отклонен', rejectionReason: reason || null });
+                        const purchaseDoc = await getDoc(doc(db, "purchases", purchaseId));
+                        if(purchaseDoc.exists()) createNotification(purchaseDoc.data().userId, `Ваш заказ #${purchaseDoc.data().orderId} был отклонен.`, reason);
+                        showToast('Заказ отклонен.');
+                        return true;
+                    }, 'Отклонить');
+                }
+                if (target.id === 'save-profile-btn') {
+                    const newName = document.getElementById('profile-name').value;
+                    const avatarFile = document.getElementById('avatar-upload').files[0];
+                    const loader = document.getElementById('avatar-upload-loader'); // Получаем лоадер
+                    target.textContent = 'Сохранение...'; 
+                    target.disabled = true;
+                    loader.classList.remove('hidden'); // Показываем лоадер
+
+                    try {
+                        let newAvatarUrl = currentUser.photoURL;
+                        if (avatarFile) {
+                            newAvatarUrl = await uploadImage(avatarFile);
+                            if (!newAvatarUrl) { // Если загрузка не удалась
+                                showToast('Ошибка загрузки аватара. Попробуйте снова.', true);
+                                return; // Прерываем выполнение
+                            }
+                        }
+                        await updateProfile(currentUser, { displayName: newName, photoURL: newAvatarUrl });
+                        await setDoc(doc(db, "users", currentUser.uid), { displayName: newName, photoURL: newAvatarUrl }, { merge: true });
+                        showToast('Профиль обновлен!');
+                    } catch (error) { 
+                        showToast('Ошибка обновления профиля: ' + error.message, true); 
+                    } finally { 
+                        target.textContent = 'Сохранить'; 
+                        target.disabled = false; 
+                        loader.classList.add('hidden'); // Скрываем лоадер
+                    }
+                }
+                 if (target.matches('.toggle-payment-btn')) {
+                    const id = target.dataset.id;
+                    const isEnabled = target.checked;
+                    await updateDoc(doc(db, "paymentMethods", id), { isEnabled });
+                    showToast('Статус способа оплаты обновлен.');
+                }
+                 if (target.closest('.ban-user-btn')) {
+                    const btn = target.closest('.ban-user-btn');
+                    const userId = btn.dataset.userId;
+                    const isBanned = btn.dataset.isBanned === 'true';
+                    const message = isBanned ? 'Вы уверены, что хотите разбанить этого пользователя?' : 'Вы уверены, что хотите забанить этого пользователя?';
+                    confirmAction(message, async () => {
+                        await updateDoc(doc(db, 'users', userId), { isBanned: !isBanned });
+                        showToast(isBanned ? 'Пользователь разбанен!' : 'Пользователь забанен!');
+                    });
+                 }
+                 if (target.closest('.wishlist-btn')) {
+                     if(!currentUser) { showToast('Войдите, чтобы добавить в избранное'); return; }
+                     const btn = target.closest('.wishlist-btn');
+                     const productId = btn.dataset.productId;
+                     const userRef = doc(db, 'users', currentUser.uid);
+                     if (userWishlist.includes(productId)) {
+                         await updateDoc(userRef, { wishlist: arrayRemove(productId) });
+                         showToast('Удалено из избранного');
+                     } else {
+                         await updateDoc(userRef, { wishlist: arrayUnion(productId) });
+                         showToast('Добавлено в избранное!');
+                     }
+                 }
+                 if (target.closest('.review-purchase-btn')) {
+                    const purchaseId = target.dataset.purchaseId;
+                    const productId = target.dataset.productId;
+                    const productName = target.dataset.productName;
+
+                    showModal('Оставить отзыв', `
+                        <p class="font-semibold mb-2">Оцените товар: ${productName}</p>
+                        <div class="star-rating">
+                            <input type="radio" id="5-stars" name="rating" value="5" /><label for="5-stars">☆</label>
+                            <input type="radio" id="4-stars" name="rating" value="4" /><label for="4-stars">☆</label>
+                            <input type="radio" id="3-stars" name="rating" value="3" /><label for="3-stars">☆</label>
+                            <input type="radio" id="2-stars" name="rating" value="2" /><label for="2-stars">☆</label>
+                            <input type="radio" id="1-star" name="rating" value="1" /><label for="1-star">☆</label>
+                        </div>
+                        <textarea id="review-comment" class="w-full mt-4 p-2 border rounded input-bg" placeholder="Ваш комментарий..."></textarea>
+                    `, async (m) => {
+                        const rating = m.querySelector('input[name="rating"]:checked')?.value;
+                        if (!rating) {
+                            alert('Пожалуйста, поставьте оценку.');
+                            return false;
+                        }
+                        const comment = m.querySelector('#review-comment').value;
+                        await addDoc(collection(db, 'reviews'), {
+                            userId: currentUser.uid,
+                            userName: currentUser.displayName,
+                            userPhotoURL: currentUser.photoURL,
+                            productId: productId,
+                            rating: parseInt(rating),
+                            comment: comment,
+                            createdAt: serverTimestamp()
+                        });
+                        await updateDoc(doc(db, 'purchases', purchaseId), { isReviewed: true });
+                        showToast('Спасибо за ваш отзыв!');
+                        return true;
+                    }, 'Отправить отзыв');
+                 }
+                 if (target.closest('.show-reviews-btn')) {
+                     const productId = target.dataset.productId;
+                     showReviewsModal(productId);
+                 }
+            });
+            document.addEventListener('change', async e => { 
+                if (e.target.id === 'avatar-upload' && e.target.files[0]) { 
+                    const reader = new FileReader(); reader.onload = (e) => document.getElementById('profile-avatar').src = e.target.result; reader.readAsDataURL(e.target.files[0]); 
+                }
+                if (e.target.id === 'logo-upload-input' && e.target.files[0]) { 
+                    const reader = new FileReader(); 
+                    reader.onload = (e) => {
+                        const preview = document.getElementById('logo-preview');
+                        preview.src = e.target.result;
+                        preview.classList.remove('hidden');
+                    }; 
+                    reader.readAsDataURL(e.target.files[0]); 
+                }
+                
+                if(e.target.matches('.product-bulk-checkbox')) {
+                    const checkboxes = document.querySelectorAll('.product-bulk-checkbox:checked');
+                    const actionBar = document.getElementById('bulk-actions-bar');
+                    if (checkboxes.length > 0) {
+                        actionBar.innerHTML = `
+                            <span class="font-semibold">Выбрано: ${checkboxes.length}</span>
+                            <button id="bulk-recommend-btn" class="px-3 py-1 text-sm bg-blue-500 text-white rounded">Рекомендовать</button>
+                            <button id="bulk-unrecommend-btn" class="px-3 py-1 text-sm bg-gray-500 text-white rounded">Убрать рек.</button>
+                            <button id="bulk-delete-btn" class="px-3 py-1 text-sm bg-red-500 text-white rounded">Удалить</button>
+                        `;
+                        actionBar.classList.remove('hidden');
+                    } else {
+                        actionBar.classList.add('hidden');
+                    }
+                }
+            });
+            document.addEventListener('click', async (e) => { 
+                const menu = document.getElementById('profile-menu'); 
+                if (menu && !menu.classList.contains('hidden') && !e.target.closest('#profile-btn')) menu.classList.add('hidden');
+                
+                const notifications = document.getElementById('notifications-dropdown');
+                if (notifications && !notifications.classList.contains('hidden') && !e.target.closest('#notifications-container')) {
+                    notifications.classList.add('hidden');
+                }
+                
+                const selectedIds = Array.from(document.querySelectorAll('.product-bulk-checkbox:checked')).map(cb => cb.dataset.id);
+                if (selectedIds.length === 0) return;
+                
+                const batch = writeBatch(db);
+                if (e.target.id === 'bulk-delete-btn') {
+                    confirmAction(`Вы уверены, что хотите удалить ${selectedIds.length} товар(ов)?`, async () => { 
+                       selectedIds.forEach(id => batch.delete(doc(db, 'products', id)));
+                       await batch.commit(); 
+                       showToast('Товары удалены!');
+                    });
+                }
+                if (e.target.id === 'bulk-recommend-btn') {
+                    selectedIds.forEach(id => batch.update(doc(db, 'products', id), { isFeatured: true }));
+                    await batch.commit(); 
+                    showToast('Товары обновлены!');
+                }
+                if (e.target.id === 'bulk-unrecommend-btn') {
+                    selectedIds.forEach(id => batch.update(doc(db, 'products', id), { isFeatured: false }));
+                    await batch.commit(); 
+                    showToast('Товары обновлены!');
+                }
+            });
+
+            const mobileMenu = document.getElementById('mobile-menu');
+            const mobileMenuPanel = document.getElementById('mobile-menu-panel');
+            if (mobileMenu && mobileMenuPanel) { // Проверяем существование элементов
+                document.getElementById('mobile-menu-btn').addEventListener('click', () => {
+                    mobileMenu.classList.remove('hidden');
+                    setTimeout(() => {
+                        mobileMenu.classList.remove('opacity-0');
+                        mobileMenuPanel.classList.remove('translate-x-full');
+                    }, 10);
+                });
+                const closeMobileMenu = () => {
+                    mobileMenu.classList.add('opacity-0');
+                    mobileMenuPanel.classList.add('translate-x-full');
+                    setTimeout(() => mobileMenu.classList.add('hidden'), 300);
+                }
+                document.getElementById('mobile-menu-close-btn').addEventListener('click', closeMobileMenu);
+                document.getElementById('mobile-nav-links').addEventListener('click', (e) => {
+                    if(e.target.classList.contains('nav-link')) {
+                        closeMobileMenu();
+                    }
+                });
+            }
+
+
+            const searchInput = document.getElementById('search-input');
+            const categoryFilter = document.getElementById('category-filter');
+            const sortFilter = document.getElementById('sort-filter');
+            if(searchInput) searchInput.addEventListener('input', applyFiltersAndSort);
+            if(categoryFilter) categoryFilter.addEventListener('change', applyFiltersAndSort);
+            if(sortFilter) sortFilter.addEventListener('change', applyFiltersAndSort);
+        }
+
+        // --- THEME & AUTH ---
+        function initTheme() {
+            const themeToggleBtn = document.getElementById('theme-toggle');
+            if (!themeToggleBtn) return;
+            const moonIcon = `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg>`;
+            const sunIcon = `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"></circle><line x1="12" y1="1" x2="12" y2="3"></line><line x1="12" y1="21" x2="12" y2="23"></line><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line><line x1="1" y1="12" x2="3" y2="12"></line><line x1="21" y1="12" x2="23" y2="12"></line><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line></svg>`;
+
+            const docElement = document.documentElement;
+            const applyTheme = (theme) => {
+                if (theme === 'dark') {
+                    docElement.classList.add('dark');
+                    themeToggleBtn.innerHTML = sunIcon;
+                } else {
+                    docElement.classList.remove('dark');
+                    themeToggleBtn.innerHTML = moonIcon;
+                }
+            };
+            const savedTheme = localStorage.getItem('color-theme');
+            const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+            const currentTheme = savedTheme || (prefersDark ? 'dark' : 'light');
+            applyTheme(currentTheme);
+
+            themeToggleBtn.onclick = () => {
+                const newTheme = docElement.classList.contains('dark') ? 'light' : 'dark';
+                localStorage.setItem('color-theme', newTheme);
+                applyTheme(newTheme);
+            };
+        }
+        function updateAuthUI() { 
+            const container = document.getElementById('auth-container'); 
+            if(!container) return; 
+
+            if (currentUser) { 
+                container.innerHTML = `<div class="relative"><button id="profile-btn" class="flex items-center gap-2"><img src="${currentUser.photoURL || 'https://placehold.co/32x32'}" alt="Профиль" class="w-8 h-8 rounded-full" onerror="this.onerror=null; this.src='https://placehold.co/32x32/a78bfa/ffffff?text=${currentUser.displayName?.charAt(0) || 'U'}';"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg></button><div id="profile-menu" class="hidden absolute right-0 mt-2 w-52 card-bg rounded-md shadow-lg border border-custom z-10"><div class="px-4 py-2 border-b border-custom"><p class="font-semibold truncate">${currentUser.displayName}</p><p class="text-sm text-gray-400 truncate">${currentUser.email}</p></div><a href="#profile" class="nav-link block px-4 py-2 text-sm hover:bg-gray-100 dark:hover:bg-gray-700">Профиль</a>${isAdmin ? `<a href="#admin" class="nav-link block px-4 py-2 text-sm hover:bg-gray-100 dark:hover:bg-gray-700">Админ-панель</a>` : ''}<div class="border-t border-custom"></div><a href="#" id="logout-btn" class="block px-4 py-2 text-sm text-red-500 hover:bg-gray-100 dark:hover:bg-gray-700">Выйти</a></div></div>`; 
+            } else { 
+                container.innerHTML = `<button id="google-login-btn" class="px-4 py-2 bg-primary text-white rounded-md hover:bg-primary-hover font-semibold flex items-center gap-2"><svg class="w-5 h-5" viewBox="0 0 48 48"><path fill="#FFC107" d="M43.611 20.083H42V20H24v8h11.303c-1.649 4.657-6.08 8-11.303 8c-6.627 0-12-5.373-12-12s5.373-12 12-12c3.059 0 5.842 1.154 7.961 3.039l5.657-5.657C34.046 6.053 29.268 4 24 4C12.955 4 4 12.955 4 24s8.955 20 20 20s20-8.955 20-20c0-1.341-.138-2.65-.389-3.917z"></path><path fill="#FF3D00" d="M6.306 14.691l6.571 4.819C14.655 15.108 18.961 12 24 12c3.059 0 5.842 1.154 7.961 3.039l5.657-5.657C34.046 6.053 29.268 4 24 4C16.318 4 9.656 8.337 6.306 14.691z"></path><path fill="#4CAF50" d="M24 44c5.166 0 9.86-1.977 13.409-5.192l-6.19-5.238C29.211 35.091 26.715 36 24 36c-5.202 0-9.619-3.317-11.283-7.946l-6.522 5.025C9.505 39.556 16.227 44 24 44z"></path><path fill="#1976D2" d="M43.611 20.083H42V20H24v8h11.303c-.792 2.237-2.231 4.166-4.087 5.571l6.19 5.238C44.572 34.043 46 29.392 46 24c0-1.341-.138-2.65-.389-3.917z"></path></svg>Войти</button>`; 
+            } 
+        }
+        function signInWithGoogle() { const provider = new GoogleAuthProvider(); signInWithPopup(auth, provider).catch((error) => { console.error("Google Sign-In Error: ", error); showToast("Ошибка входа через Google: " + error.message, true); }); } 
+        function initSwitchers() {
+            const currencySwitcher = document.getElementById('currency-switcher');
+            const langSwitcher = document.getElementById('lang-switcher');
+            if(currencySwitcher) {
+                currencySwitcher.innerHTML = `<select id="currency-select" class="p-2 border border-custom rounded-lg focus:outline-none focus:ring-2 focus:ring-primary input-bg text-sm"><option>UZS</option><option>RUB</option><option>USD</option></select>`;
+                document.getElementById('currency-select').addEventListener('change', (e) => {
+                    appState.currency = e.target.value;
+                    handleRouting();
+                });
+            }
+            if(langSwitcher) {
+                // Оставляем только RU и UZ
+                langSwitcher.innerHTML = `<select id="lang-select" class="p-2 border border-custom rounded-lg focus:outline-none focus:ring-2 focus:ring-primary input-bg text-sm"><option>RU</option><option>UZ</option></select>`;
+                document.getElementById('lang-select').addEventListener('change', (e) => {
+                    appState.lang = e.target.value;
+                    handleRouting();
+                });
+            }
+        }
+
+        // --- NOTIFICATIONS ---
+        async function createNotification(userId, title, body = '') {
+            if (!userId) return;
+            await addDoc(collection(db, "notifications"), {
+                userId,
+                title,
+                body,
+                isRead: false,
+                createdAt: serverTimestamp()
+            });
+        }
+        function setupNotificationsListener() {
+            const container = document.getElementById('notifications-container');
+            if (!currentUser || !container) {
+                if (container) container.innerHTML = '';
+                return;
+            }
+            
+            const q = query(collection(db, "notifications"), where("userId", "==", currentUser.uid), orderBy("createdAt", "desc"));
+            
+            onSnapshot(q, (snapshot) => {
+                const notifications = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                const unreadCount = notifications.filter(n => !n.isRead).length;
+                renderNotifications(notifications, unreadCount);
+            });
+        }
+        function renderNotifications(notifications, unreadCount) {
+             const container = document.getElementById('notifications-container');
+             if(!container) return;
+             container.innerHTML = `
+                <button id="notifications-btn" class="relative p-2 text-gray-500 dark:text-gray-400">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"></path></svg>
+                    ${unreadCount > 0 ? `<span class="absolute top-0 right-0 bg-red-500 text-white text-xs rounded-full h-4 w-4 flex items-center justify-center">${unreadCount}</span>` : ''}
+                </button>
+                <div id="notifications-dropdown" class="hidden absolute right-0 mt-2 w-80 card-bg rounded-md shadow-lg border border-custom z-20">
+                    <div class="p-4 font-bold border-b border-custom flex justify-between items-center">
+                        <span>Уведомления</span>
+                        ${unreadCount > 0 ? `<button id="mark-all-read-btn" class="text-sm text-primary hover:underline">Отметить все как прочитанные</button>` : ''}
+                    </div>
+                    <div class="max-h-96 overflow-y-auto">
+                        ${notifications.length > 0 ? notifications.map(n => `
+                            <div class="p-4 border-b border-custom ${!n.isRead ? 'bg-primary/10' : ''}">
+                                <p class="font-semibold">${n.title}</p>
+                                ${n.body ? `<p class="text-sm text-gray-400">${n.body}</p>` : ''}
+                            </div>
+                        `).join('') : '<p class="p-4 text-center text-sm text-gray-400">У вас нет уведомлений.</p>'}
+                    </div>
+                </div>
+             `;
+
+             container.querySelector('#notifications-btn').addEventListener('click', () => {
+                container.querySelector('#notifications-dropdown').classList.toggle('hidden');
+             });
+             // Mark all as read button listener
+             const markAllReadBtn = container.querySelector('#mark-all-read-btn');
+             if (markAllReadBtn) {
+                markAllReadBtn.addEventListener('click', async () => {
+                    const batch = writeBatch(db);
+                    notifications.filter(n => !n.isRead).forEach(n => {
+                        batch.update(doc(db, 'notifications', n.id), { isRead: true });
+                    });
+                    await batch.commit();
+                    showToast('Все уведомления помечены как прочитанные.');
+                });
+             }
+        }
+        // --- WISHLIST ---
+        function setupWishlistListener() {
+            if (!currentUser) return;
+            onSnapshot(doc(db, "users", currentUser.uid), (doc) => {
+                userWishlist = doc.data()?.wishlist || [];
+                if(window.location.hash === '' || window.location.hash === '#main') {
+                    applyFiltersAndSort();
+                }
+                if(window.location.hash === '#wishlist') {
+                    loadWishlistPage();
+                }
+            });
+        }
+    </script>
+</body>
+</html>
