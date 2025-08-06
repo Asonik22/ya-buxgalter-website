@@ -127,6 +127,11 @@
         .status-badge.pending { background-color: #f59e0b; color: white; }
         .status-badge.rejected { background-color: #ef4444; color: white; }
         .status-badge.cancelled { background-color: #6b7280; color: white; }
+        /* Star rating */
+        .star-rating { display: flex; flex-direction: row-reverse; justify-content: center; }
+        .star-rating input { display: none; }
+        .star-rating label { font-size: 2rem; color: #ccc; cursor: pointer; transition: color 0.2s; }
+        .star-rating input:checked ~ label, .star-rating label:hover, .star-rating label:hover ~ label { color: #f59e0b; }
     </style>
 </head>
 <body class="antialiased">
@@ -149,8 +154,10 @@
                 </nav>
 
                 <div class="flex items-center space-x-2 md:space-x-4">
-                    <button id="balance-btn" class="hidden items-center justify-center w-10 h-10 rounded-full bg-primary/10 hover:bg-primary/20 border border-primary/30 transition-all">
-                        <svg class="h-6 w-6 text-primary" viewBox="0 0 20 20" fill="currentColor"><path d="M4 4a2 2 0 00-2 2v1h16V6a2 2 0 00-2-2H4z"></path><path fill-rule="evenodd" d="M18 9H2v5a2 2 0 002 2h12a2 2 0 002-2V9zM4 13a1 1 0 011-1h1a1 1 0 110 2H5a1 1 0 01-1-1zm5-1a1 1 0 100 2h1a1 1 0 100-2H9z" clip-rule="evenodd"></path></svg>
+                    <button id="balance-btn" class="hidden items-center gap-2 px-4 py-2 rounded-full bg-primary/10 hover:bg-primary/20 border border-primary/30 transition-all">
+                        <svg class="h-5 w-5 text-primary" viewBox="0 0 20 20" fill="currentColor"><path d="M4 4a2 2 0 00-2 2v1h16V6a2 2 0 00-2-2H4z"></path><path fill-rule="evenodd" d="M18 9H2v5a2 2 0 002 2h12a2 2 0 002-2V9zM4 13a1 1 0 011-1h1a1 1 0 110 2H5a1 1 0 01-1-1zm5-1a1 1 0 100 2h1a1 1 0 100-2H9z" clip-rule="evenodd"></path></svg>
+                        <span class="font-semibold text-sm">Баланс</span>
+                        <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd"></path></svg>
                     </button>
                     <div id="currency-switcher" class="hidden md:block"></div>
                     <div id="lang-switcher" class="hidden md:block"></div>
@@ -345,18 +352,60 @@
             const el = document.getElementById('main-page-content-wrapper'); 
             const banner = appState.adBanner;
             const bannerHTML = banner?.imageUrl ? `<a href="${banner.linkUrl || '#'}" target="_blank" class="block mb-8"><img src="${banner.imageUrl}" class="w-full rounded-lg shadow-lg"></a>` : '';
-            el.innerHTML = `${bannerHTML}<h1 class="text-4xl font-bold text-center mb-8" data-lang-key="catalog_title"></h1><div class="mb-8 p-4 card-bg rounded-lg shadow-md flex items-center border border-custom"><input id="search-input" type="text" data-lang-placeholder="search_placeholder" class="w-full pl-4 pr-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary input-bg"></div><div id="products-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6"></div>`; 
-            const searchInput = document.getElementById('search-input'); 
-            if(searchInput) searchInput.addEventListener('input', applyFiltersAndSort); 
+            el.innerHTML = `${bannerHTML}
+                <h1 class="text-4xl font-bold text-center mb-8" data-lang-key="catalog_title"></h1>
+                <div class="mb-8 p-4 card-bg rounded-lg shadow-md flex flex-col md:flex-row items-center gap-4 border border-custom">
+                    <input id="search-input" type="text" data-lang-placeholder="search_placeholder" class="w-full md:w-2/3 modern-input">
+                    <select id="sort-select" class="w-full md:w-1/3 modern-input">
+                        <option value="newest">Сначала новые</option>
+                        <option value="price_asc">Цена: по возрастанию</option>
+                        <option value="price_desc">Цена: по убыванию</option>
+                        <option value="popular">Популярные</option>
+                    </select>
+                </div>
+                <div id="products-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6"></div>`; 
+            document.getElementById('search-input').addEventListener('input', applyFiltersAndSort); 
+            document.getElementById('sort-select').addEventListener('change', applyFiltersAndSort); 
             loadProducts(); 
         };
-        const loadProducts = () => onSnapshot(query(collection(db, "products"), orderBy("createdAt", "desc")), s => { allProducts = s.docs.map(d => ({ id: d.id, ...d.data() })); applyFiltersAndSort(); });
-        const applyFiltersAndSort = () => { let filtered = [...allProducts]; const term = document.getElementById('search-input')?.value.toLowerCase(); if (term) filtered = filtered.filter(p => p.name.toLowerCase().includes(term)); const grid = document.getElementById('products-grid'); if (!grid) return; grid.innerHTML = filtered.length ? filtered.map(p => renderProductCard(p)).join('') : `<p class="col-span-full text-center">Товары не найдены.</p>`; translatePage(); };
+        const loadProducts = () => onSnapshot(query(collection(db, "products")), s => { allProducts = s.docs.map(d => ({ id: d.id, ...d.data() })); applyFiltersAndSort(); });
+        const applyFiltersAndSort = () => { 
+            let filtered = [...allProducts]; 
+            const term = document.getElementById('search-input')?.value.toLowerCase(); 
+            if (term) {
+                filtered = filtered.filter(p => p.name.toLowerCase().includes(term));
+            }
+
+            const sortBy = document.getElementById('sort-select')?.value;
+            switch(sortBy) {
+                case 'price_asc': filtered.sort((a,b) => (a.price || 0) - (b.price || 0)); break;
+                case 'price_desc': filtered.sort((a,b) => (b.price || 0) - (a.price || 0)); break;
+                case 'popular': filtered.sort((a,b) => (b.purchaseCount || 0) - (a.purchaseCount || 0)); break;
+                default: filtered.sort((a,b) => (b.createdAt?.toMillis()||0) - (a.createdAt?.toMillis()||0)); break;
+            }
+
+            // Pinned products first
+            filtered.sort((a, b) => (b.isPinned ? 1 : 0) - (a.isPinned ? 1 : 0));
+
+            const grid = document.getElementById('products-grid'); 
+            if (!grid) return; 
+            grid.innerHTML = filtered.length ? filtered.map(p => renderProductCard(p)).join('') : `<p class="col-span-full text-center">Товары не найдены.</p>`; 
+            translatePage(); 
+        };
         
         const renderProductCard = (p) => {
-            const privateBadge = p.isPrivateSeller ? `<div class="absolute top-2 right-12 bg-yellow-500 text-white w-8 h-8 rounded-full flex items-center justify-center cursor-help" title="Частное лицо"><svg class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clip-rule="evenodd" /></svg></div>` : '';
+            const statusIcon = p.productStatus === 'official' 
+                ? `<div class="absolute top-2 left-2 bg-blue-500 text-white w-8 h-8 rounded-full flex items-center justify-center cursor-help" title="Официальный товар"><svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M6.267 3.455a3.066 3.066 0 001.745-.723 3.066 3.066 0 013.976 0 3.066 3.066 0 001.745.723 3.066 3.066 0 012.812 2.812c.051.643.304 1.254.723 1.745a3.066 3.066 0 010 3.976 3.066 3.066 0 00-.723 1.745 3.066 3.066 0 01-2.812 2.812 3.066 3.066 0 00-1.745.723 3.066 3.066 0 01-3.976 0 3.066 3.066 0 00-1.745-.723 3.066 3.066 0 01-2.812-2.812 3.066 3.066 0 00-.723-1.745 3.066 3.066 0 010-3.976 3.066 3.066 0 00.723-1.745 3.066 3.066 0 012.812-2.812zm7.44 5.252a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" /></svg></div>`
+                : `<div class="absolute top-2 left-2 bg-yellow-500 text-white w-8 h-8 rounded-full flex items-center justify-center cursor-help" title="Частный продавец"><svg class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clip-rule="evenodd" /></svg></div>`;
+            const pinnedIcon = p.isPinned ? `<div class="absolute top-2 right-12 bg-red-500 text-white w-8 h-8 rounded-full flex items-center justify-center" title="Закреплено"><svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M5.05 3.636a1 1 0 011.414 0L10 7.172l3.536-3.536a1 1 0 111.414 1.414L11.414 8.586l3.536 3.535a1 1 0 11-1.414 1.414L10 10.414l-3.536 3.536a1 1 0 01-1.414-1.414L8.586 8.586 5.05 5.05a1 1 0 010-1.414z" clip-rule="evenodd" /></svg></div>` : '';
+
             return `<div class="card-bg rounded-lg shadow-lg flex flex-col justify-between border border-custom overflow-hidden transition-all duration-300 hover:shadow-2xl hover:-translate-y-1" data-product-id="${p.id}">
-                <div class="relative"><img src="${p.imageUrl || 'https://placehold.co/600x400/673ab7/ffffff?text=No+Image'}" class="w-full h-48 object-cover"><div class="absolute top-2 right-2"><button class="wishlist-btn p-2 rounded-full ${userWishlist.includes(p.id) ? 'bg-red-500/80' : 'bg-black/30'} text-white" data-product-id="${p.id}"><svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M3.172 5.172a4 4 0 015.656 0L10 6.343l1.172-1.171a4 4 0 115.656 5.656L10 17.657l-6.828-6.829a4 4 0 010-5.656z" clip-rule="evenodd"></path></svg></button></div>${privateBadge}</div>
+                <div class="relative">
+                    <img src="${p.imageUrl || 'https://placehold.co/600x400/673ab7/ffffff?text=No+Image'}" class="w-full h-48 object-cover">
+                    <div class="absolute top-2 right-2"><button class="wishlist-btn p-2 rounded-full ${userWishlist.includes(p.id) ? 'bg-red-500/80' : 'bg-black/30'} text-white" data-product-id="${p.id}"><svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M3.172 5.172a4 4 0 015.656 0L10 6.343l1.172-1.171a4 4 0 115.656 5.656L10 17.657l-6.828-6.829a4 4 0 010-5.656z" clip-rule="evenodd"></path></svg></button></div>
+                    ${statusIcon}
+                    ${pinnedIcon}
+                </div>
                 <div class="p-4 flex-grow"><h3 class="text-lg font-semibold truncate">${p.name}</h3><p class="text-gray-600 dark:text-gray-400 mt-1 text-sm h-10 overflow-hidden">${p.description}</p><p class="text-2xl font-bold text-primary mt-2">${formatPrice(p.price || 0)}</p></div>
                 <div class="p-4 pt-2 border-t border-custom flex items-center gap-2"><button class="add-to-cart-btn p-2 rounded-md hover:bg-gray-100 dark:hover:bg-gray-700" data-product-id="${p.id}" title="В корзину"><svg class="w-6 h-6 pointer-events-none" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"></path></svg></button><button class="buy-now-btn flex-grow btn-primary py-2 px-4 rounded-lg font-semibold" data-product-id="${p.id}" data-lang-key="buy_button"></button></div>
             </div>`;
@@ -377,6 +426,7 @@
                  paymentButtonsHTML += `<button class="payment-option w-full p-4 border rounded-lg text-left" data-method="topup"><strong>Комбинированная оплата</strong><br><span class="text-sm">Списать ${formatPrice(appState.balance)} и пополнить на ${formatPrice(balanceNeeded)}</span></button>`;
             }
             paymentButtonsHTML += `<button class="payment-option w-full p-4 border rounded-lg text-left" data-method="external"><strong>Оплатить напрямую</strong><br><span class="text-sm">Полная сумма: ${formatPrice(currentTotal)}</span></button>`;
+            paymentButtonsHTML += `<button class="payment-option w-full p-4 border rounded-lg text-left" data-method="topup_custom"><strong>Пополнить баланс и оплатить</strong><br><span class="text-sm">Вы сами выбираете сумму пополнения</span></button>`;
 
             const onSave = async m => { const code = m.querySelector('#promo-input').value.toUpperCase().trim(); if (!code) return false; const promoDoc = await getDoc(doc(db, "promocodes", code)); if (promoDoc.exists()) { const promoData = promoDoc.data(); if ((promoData.uses || 0) < promoData.limit) { currentTotal = total * (1 - (promoData.discount/100)); appliedPromo = {code, ...promoData}; m.querySelector('#total-price-display').textContent = formatPrice(currentTotal); showToast(`Промокод применен!`); } else { showToast('Промокод не действителен', true); } } else { showToast('Неверный промокод', true); } return false; };
             const modal = showModal(`Оформление заказа`, `<p>Товар: <strong>${items.length > 1 ? `${items.length} товаров` : items[0].name}</strong></p><p>Сумма: <strong id="total-price-display">${formatPrice(currentTotal)}</strong></p>
@@ -384,17 +434,64 @@
                 <div class="mt-4 flex gap-2"><input id="promo-input" class="w-full modern-input" placeholder="Промокод..."><button id="apply-promo-btn" class="p-2 bg-gray-500 text-white rounded-lg">Применить</button></div>`, onSave, 'Применить');
             modal.querySelector('.save-modal-btn').classList.add('hidden');
             modal.querySelector('#apply-promo-btn').onclick = () => onSave(modal);
-            modal.querySelectorAll('.payment-option').forEach(btn => btn.onclick = async () => { const method = btn.dataset.method; modal.remove(); if (method === 'balance') await processBalancePurchase(items, currentTotal, appliedPromo); else if (method === 'topup') showBalanceTopUpPaymentModal(balanceNeeded, () => showCheckoutModal(items, total)); else await showExternalPaymentModal(items, currentTotal, appliedPromo); });
+            modal.querySelectorAll('.payment-option').forEach(btn => btn.onclick = async () => { 
+                const method = btn.dataset.method; 
+                modal.remove(); 
+                if (method === 'balance') await processBalancePurchase(items, currentTotal, appliedPromo); 
+                else if (method === 'topup') showBalanceTopUpPaymentModal(balanceNeeded, () => showCheckoutModal(items, total));
+                else if (method === 'topup_custom') showModal('Пополнить баланс', `<p>Введите сумму, на которую хотите пополнить баланс. Если сумма будет больше стоимости товара (${formatPrice(currentTotal)}), остаток будет зачислен на ваш счет.</p><input type="number" id="custom-topup-amount" class="w-full modern-input mt-2" placeholder="Сумма пополнения">`, m => { const amount = parseFloat(m.querySelector('#custom-topup-amount').value); if (amount > 0) { m.remove(); showBalanceTopUpPaymentModal(amount, () => showCheckoutModal(items, total)); } else { showToast('Введите корректную сумму', true); return false; } }, 'Далее');
+                else await showExternalPaymentModal(items, currentTotal, appliedPromo); 
+            });
         }
-        const processBalancePurchase = async (items, total, promo) => { await updateDoc(doc(db, "users", currentUser.uid), { balance: increment(-total), balanceHistory: arrayUnion({ type: 'purchase', amount: -total, product: items[0].name, date: new Date().toISOString() }) }); await addDoc(collection(db, "purchases"), { userId: currentUser.uid, userEmail: currentUser.email, orderId: generateCode(), items, productName: items.length > 1 ? `${items.length} товаров` : items[0].name, status: 'Выполнен', paymentMethod: 'Баланс', finalPrice: total, promoCode: promo?.code || null, createdAt: serverTimestamp() }); if (items.length > 1) { cart = []; localStorage.setItem('asonik_cart', '[]'); updateCartCount(); } showToast('Покупка совершена!'); window.location.hash = '#purchases'; };
-        const showExternalPaymentModal = async (items, total, promo) => { const cards = paymentMethods.filter(p=>p.isEnabled && p.type==='card'), wallets = paymentMethods.filter(p=>p.isEnabled && p.type==='ewallet'); if (!cards.length && !wallets.length) { showModal('Ошибка', '<p>Способы оплаты не настроены.</p>'); return; } const onSave = async m => { const selected = m.querySelector('.payment-option.selected'); if (!selected) return false; const pRef = await addDoc(collection(db, "purchases"), { userId: currentUser.uid, orderId: generateCode(), items, productName: items.length > 1 ? `${items.length} товаров`: items[0].name, status: 'Ожидает оплаты', paymentMethodId: selected.dataset.methodId, finalPrice: total, promoCode: promo?.code || null, createdAt: serverTimestamp() }); if (items.length > 1) { cart = []; localStorage.setItem('asonik_cart', '[]'); updateCartCount(); } window.location.hash = '#purchases'; showProofUploadModal(pRef.id); return true; }; const modal = showModal('Выберите способ', `<div class="space-y-4">${cards.length ? `<div><h3 class="font-bold mb-2 border-b pb-1">Банковские карты</h3><div class="grid grid-cols-2 gap-4">${cards.map(p => `<button data-method-id="${p.id}" class="payment-option flex flex-col items-center p-2 border-2 rounded-lg h-24"><img src="${p.logoUrl}" class="h-12 object-contain"><span class="text-sm">${p.name}</span></button>`).join('')}</div></div>`:''}${wallets.length ? `<div><h3 class="font-bold mb-2 border-b pb-1">Электронные кошельки</h3><div class="grid grid-cols-2 gap-4">${wallets.map(p => `<button data-method-id="${p.id}" class="payment-option flex flex-col items-center p-2 border-2 rounded-lg h-24"><img src="${p.logoUrl}" class="h-12 object-contain"><span class="text-sm">${p.name}</span></button>`).join('')}</div></div>`:''}</div>`, onSave, 'К оплате'); modal.querySelectorAll('.payment-option').forEach(btn => btn.onclick = () => { modal.querySelectorAll('.payment-option').forEach(b => b.classList.remove('selected')); btn.classList.add('selected'); }); };
-        const loadPurchasesPage = () => { const el = document.getElementById('purchases-content'); if (!currentUser) return; el.innerHTML = `<h1 class="text-4xl font-bold text-center mb-8" data-lang-key="purchases_title"></h1><div id="purchases-list" class="space-y-6"></div>`; onSnapshot(query(collection(db, "purchases"), where("userId", "==", currentUser.uid), orderBy("createdAt", "desc")), s => { document.getElementById('purchases-list').innerHTML = s.docs.map(d => renderPurchaseItem(d.id, d.data())).join('') || '<p class="text-center">Здесь будут ваши покупки.</p>'; }); };
+        const processBalancePurchase = async (items, total, promo) => { 
+            const batch = writeBatch(db);
+            const userRef = doc(db, "users", currentUser.uid);
+            batch.update(userRef, { 
+                balance: increment(-total), 
+                balanceHistory: arrayUnion({ type: 'purchase', amount: -total, product: items[0].name, date: new Date().toISOString() }) 
+            });
+            
+            const purchaseRef = doc(collection(db, "purchases"));
+            batch.set(purchaseRef, { 
+                userId: currentUser.uid, 
+                userEmail: currentUser.email, 
+                orderId: generateCode(), 
+                items, 
+                productName: items.length > 1 ? `${items.length} товаров` : items[0].name, 
+                status: 'Завершен', 
+                paymentMethod: 'Баланс', 
+                finalPrice: total, 
+                promoCode: promo?.code || null, 
+                createdAt: serverTimestamp(),
+                review: null
+            });
+
+            // Increment purchase count for each product
+            items.forEach(item => {
+                const productRef = doc(db, "products", item.id);
+                batch.update(productRef, { purchaseCount: increment(1) });
+            });
+
+            await batch.commit();
+
+            if (items.length > 1) { 
+                cart = []; 
+                localStorage.setItem('asonik_cart', '[]'); 
+                updateCartCount(); 
+            } 
+            showToast('Покупка совершена!'); 
+            window.location.hash = '#purchases'; 
+        };
+        const showExternalPaymentModal = async (items, total, promo) => { const cards = paymentMethods.filter(p=>p.isEnabled && p.type==='card'), wallets = paymentMethods.filter(p=>p.isEnabled && p.type==='ewallet'); if (!cards.length && !wallets.length) { showModal('Ошибка', '<p>Способы оплаты не настроены.</p>'); return; } const onSave = async m => { const selected = m.querySelector('.payment-option.selected'); if (!selected) return false; const pRef = await addDoc(collection(db, "purchases"), { userId: currentUser.uid, orderId: generateCode(), items, productName: items.length > 1 ? `${items.length} товаров`: items[0].name, status: 'Ожидает оплаты', paymentMethodId: selected.dataset.methodId, finalPrice: total, promoCode: promo?.code || null, createdAt: serverTimestamp(), review: null }); if (items.length > 1) { cart = []; localStorage.setItem('asonik_cart', '[]'); updateCartCount(); } window.location.hash = '#purchases'; showProofUploadModal(pRef.id); return true; }; const modal = showModal('Выберите способ', `<div class="space-y-4">${cards.length ? `<div><h3 class="font-bold mb-2 border-b pb-1">Банковские карты</h3><div class="grid grid-cols-2 gap-4">${cards.map(p => `<button data-method-id="${p.id}" class="payment-option flex flex-col items-center p-2 border-2 rounded-lg h-24"><img src="${p.logoUrl}" class="h-12 object-contain"><span class="text-sm">${p.name}</span></button>`).join('')}</div></div>`:''}${wallets.length ? `<div><h3 class="font-bold mb-2 border-b pb-1">Электронные кошельки</h3><div class="grid grid-cols-2 gap-4">${wallets.map(p => `<button data-method-id="${p.id}" class="payment-option flex flex-col items-center p-2 border-2 rounded-lg h-24"><img src="${p.logoUrl}" class="h-12 object-contain"><span class="text-sm">${p.name}</span></button>`).join('')}</div></div>`:''}</div>`, onSave, 'К оплате'); modal.querySelectorAll('.payment-option').forEach(btn => btn.onclick = () => { modal.querySelectorAll('.payment-option').forEach(b => b.classList.remove('selected')); btn.classList.add('selected'); }); };
+        const loadPurchasesPage = () => { const el = document.getElementById('purchases-content'); if (!currentUser) return; el.innerHTML = `<h1 class="text-4xl font-bold text-center mb-8" data-lang-key="purchases_title"></h1><div id="purchases-list" class="space-y-6"></div>`; onSnapshot(query(collection(db, "purchases"), where("userId", "==", currentUser.uid), orderBy("createdAt", "desc")), s => { const container = document.getElementById('purchases-list'); if (container) container.innerHTML = s.docs.map(d => renderPurchaseItem(d.id, d.data())).join('') || '<p class="text-center">Здесь будут ваши покупки.</p>'; }); };
         const renderPurchaseItem = (id, p) => {
-            const statusMap = { 'Выполнен': 'completed', 'Ожидает оплаты': 'pending', 'Ожидает подтверждения': 'pending', 'Отклонен': 'rejected', 'Отменен': 'cancelled' };
+            const statusMap = { 'Выполнен': 'completed', 'Ожидает оплаты': 'pending', 'Ожидает подтверждения': 'pending', 'Отклонен': 'rejected', 'Отменен': 'cancelled', 'Завершен': 'completed' };
             const statusClass = statusMap[p.status] || 'pending';
             let buttons = '';
             if(p.status === 'Ожидает оплаты') { buttons += `<button class="upload-proof-btn btn-primary text-sm px-3 py-1 rounded-md" data-id="${id}">Загрузить чек</button><button class="cancel-purchase-btn btn-danger text-sm px-3 py-1 rounded-md ml-2" data-id="${id}">Отменить</button>`; } 
-            if(p.status === 'Выполнен' && !p.isTopUp) { buttons += `<button class="contact-seller-btn btn-primary text-sm px-3 py-1 rounded-md ml-2" data-code="${p.orderId}">Получить товар</button>`; } 
+            if(p.status === 'Выполнен' && !p.isTopUp) { buttons += `<button class="contact-seller-btn btn-primary text-sm px-3 py-1 rounded-md ml-2" data-code="${p.orderId}">Получить товар</button><button class="complete-order-btn bg-green-500 text-white text-sm px-3 py-1 rounded-md ml-2" data-id="${id}">Завершить заказ</button>`; }
+            if(p.status === 'Завершен' && !p.isTopUp && !p.review) { buttons += `<button class="leave-review-btn btn-primary text-sm px-3 py-1 rounded-md ml-2" data-id="${id}" data-product-id="${p.items[0].id}">Оставить отзыв</button>`; }
+
             return `<div class="card-bg p-4 sm:p-6 rounded-lg border border-custom flex flex-col sm:flex-row gap-4 items-start shadow-md">
                 <img src="${p.items[0].imageUrl || 'https://placehold.co/128x128'}" class="w-full sm:w-32 h-32 sm:h-auto flex-shrink-0 object-cover rounded-md">
                 <div class="flex-grow">
@@ -403,7 +500,7 @@
                         <span class="status-badge ${statusClass}">${p.status}</span>
                     </div>
                     <p class="text-sm text-gray-500">Код заказа: ${p.orderId}</p>
-                    <p class="text-sm text-gray-500">Дата: ${new Date(p.createdAt.seconds*1000).toLocaleString()}</p>
+                    <p class="text-sm text-gray-500">Дата: ${p.createdAt ? new Date(p.createdAt.seconds*1000).toLocaleString() : 'N/A'}</p>
                     <p class="text-lg font-semibold mt-1">Сумма: ${formatPrice(p.finalPrice)}</p>
                     ${p.rejectionReason ? `<p class="mt-2 p-2 rounded-md bg-red-500/10 text-red-700 dark:text-red-300 text-sm"><strong>Причина отказа:</strong> ${p.rejectionReason}</p>`:''}
                     <div class="mt-4 flex gap-2">${buttons}</div>
@@ -413,7 +510,6 @@
         const showContactModal = code => showModal('Связь с продавцом', `<p>Для получения товара, пожалуйста, свяжитесь с нами в Telegram и сообщите этот код заказа:</p><p class="my-4 text-center font-mono p-2 bg-gray-200 dark:bg-gray-700 rounded-md text-lg">${code}</p>`, () => { window.open(`https://t.me/${TELEGRAM_USERNAME}?text=Здравствуйте, мой заказ ${code}`, '_blank'); return true; }, 'Перейти в Telegram');
 
         // --- BALANCE MANAGEMENT ---
-        const updateBalanceDisplay = () => { const el = document.getElementById('user-balance-display'); if (el) el.textContent = formatPrice(appState.balance); };
         const showBalanceModal = () => { 
             const history = appState.balanceHistory.map(i => {
                 let text = '';
@@ -426,7 +522,13 @@
                     <span class="${i.amount > 0 ? 'text-green-500' : 'text-red-500'} font-semibold">${formatPrice(i.amount)}</span>
                 </li>`;
             }).join(''); 
-            showModal('Баланс', `<div class="text-center mb-4"><p>Текущий баланс</p><p class="text-4xl font-bold">${formatPrice(appState.balance)}</p></div><div><input id="topup-amount" type="number" class="w-full modern-input" placeholder="Сумма пополнения (UZS)"></div><div class="mt-4"><h3 class="font-semibold mb-2">История операций</h3><ul class="space-y-2 max-h-48 overflow-y-auto">${history || '<p>История пуста.</p>'}</ul></div>`, async m => { const amount = parseFloat(m.querySelector('#topup-amount').value); if (!amount || amount <= 0) return false; m.remove(); showBalanceTopUpPaymentModal(amount); return false; }, 'Пополнить'); 
+            showModal('Баланс', `<div class="text-center mb-4"><p>Текущий баланс</p><p id="modal-balance-display" class="text-4xl font-bold">${formatPrice(appState.balance)}</p></div><div><input id="topup-amount" type="number" class="w-full modern-input" placeholder="Сумма пополнения (UZS)"></div><div class="mt-4"><h3 class="font-semibold mb-2">История операций</h3><ul class="space-y-2 max-h-48 overflow-y-auto">${history || '<p>История пуста.</p>'}</ul></div>`, async m => { const amount = parseFloat(m.querySelector('#topup-amount').value); if (!amount || amount <= 0) return false; m.remove(); showBalanceTopUpPaymentModal(amount); return false; }, 'Пополнить'); 
+            onSnapshot(doc(db, "users", currentUser.uid), docSnap => {
+                const balanceDisplay = document.getElementById('modal-balance-display');
+                if (balanceDisplay) {
+                    balanceDisplay.textContent = formatPrice(docSnap.data().balance || 0);
+                }
+            });
         };
         const showBalanceTopUpPaymentModal = async (amount, callback) => { const methods = paymentMethods.filter(p => p.isEnabled); if (!methods.length) return; const onSave = async m => { const selected = m.querySelector('.payment-option.selected'); if (!selected) return false; const pData = { userId: currentUser.uid, userEmail: currentUser.email, orderId: generateCode(), items: [{ name: `Пополнение на ${formatPrice(amount)}`, imageUrl:''}], productName: "Пополнение баланса", status: 'Ожидает оплаты', paymentMethodId: selected.dataset.methodId, finalPrice: amount, createdAt: serverTimestamp(), isTopUp: true }; const pRef = await addDoc(collection(db, "purchases"), pData); window.location.hash = '#purchases'; showProofUploadModal(pRef.id); if (callback) callback(); return true; }; const modal = showModal(`Пополнение на ${formatPrice(amount)}`, `<div class="grid grid-cols-2 gap-4">${methods.map(p => `<button data-method-id="${p.id}" class="payment-option flex flex-col items-center p-2 border-2 rounded-lg h-24"><img src="${p.logoUrl}" class="h-12 object-contain"><span class="text-sm">${p.name}</span></button>`).join('')}</div>`, onSave, 'К оплате'); modal.querySelectorAll('.payment-option').forEach(btn => btn.onclick = () => { modal.querySelectorAll('.payment-option').forEach(b => b.classList.remove('selected')); btn.classList.add('selected'); }); };
         
@@ -434,7 +536,7 @@
         async function loadAdminPanel(subpage) { 
             if (!isAdmin) return; 
             const el = document.getElementById('admin-content'); 
-            const tabs = [{ id: 'users', name: 'Пользователи', icon:'<svg class="w-5 h-5" viewBox="0 0 20 20" fill="currentColor"><path d="M9 6a3 3 0 11-6 0 3 3 0 016 0zM17 6a3 3 0 11-6 0 3 3 0 016 0zM12.93 17c.046-.327.07-.66.07-1a6.97 6.97 0 00-1.5-4.33A5 5 0 0119 16v1h-6.07zM6 11a5 5 0 015 5v1H1v-1a5 5 0 015-5z" /></svg>'}, { id: 'products', name: 'Товары', icon: '<svg class="w-5 h-5" viewBox="0 0 20 20" fill="currentColor"><path d="M5 4a2 2 0 012-2h6a2 2 0 012 2v2a2 2 0 01-2 2H7a2 2 0 01-2-2V4zM5 12a2 2 0 012-2h6a2 2 0 012 2v2a2 2 0 01-2 2H7a2 2 0 01-2-2v-2z" /></svg>'}, { id: 'purchases', name: 'Покупки', icon: '<svg class="w-5 h-5" viewBox="0 0 20 20" fill="currentColor"><path d="M3 1a1 1 0 000 2h1.22l.305 1.222a.997.997 0 00.01.042l1.358 5.43-.893.892C3.74 11.846 4.632 14 6.414 14H15a1 1 0 000-2H6.414l1-1H14a1 1 0 00.894-.553l3-6A1 1 0 0017 3H6.28l-.31-1.243A1 1 0 005 1H3zM16 16.5a1.5 1.5 0 11-3 0 1.5 1.5 0 013 0zM6.5 18a1.5 1.5 0 100-3 1.5 1.5 0 000 3z" /></svg>'}, { id: 'payment', name: 'Оплата', icon: '<svg class="w-5 h-5" viewBox="0 0 20 20" fill="currentColor"><path d="M4 4a2 2 0 00-2 2v1h16V6a2 2 0 00-2-2H4z" /><path fill-rule="evenodd" d="M18 9H2v5a2 2 0 002 2h12a2 2 0 002-2V9zM4 13a1 1 0 011-1h1a1 1 0 110 2H5a1 1 0 01-1-1zm5-1a1 1 0 100 2h1a1 1 0 100-2H9z" clip-rule="evenodd" /></svg>'}, { id: 'customization', name: 'Кастомизация', icon: '<svg class="w-5 h-5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M11.49 3.17c-.38-1.56-2.6-1.56-2.98 0a1.532 1.532 0 01-2.286.948c-1.372-.836-2.942.734-1.57 1.996A1.532 1.532 0 013.17 8.51c-1.56.38-1.56 2.6 0 2.98a1.532 1.532 0 01.948 2.286c-.836 1.372.734 2.942 1.996 1.57a1.532 1.532 0 012.286.948c.38 1.56 2.6 1.56 2.98 0a1.532 1.532 0 012.286-.948c1.372.836 2.942-.734 1.57-1.996A1.532 1.532 0 0116.83 11.49c1.56-.38 1.56-2.6 0-2.98a1.532 1.532 0 01-.948-2.286c.836-1.372-.734-2.942-1.996-1.57A1.532 1.532 0 0111.49 3.17zM10 13a3 3 0 100-6 3 3 0 000 6z" clip-rule="evenodd" /></svg>'}, { id: 'faq', name: 'FAQ', icon: '<svg class="w-5 h-5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-8-3a1 1 0 00-.867.5 1 1 0 11-1.731-1A3 3 0 0113 8a3.001 3.001 0 01-2 2.83V11a1 1 0 11-2 0v-1a1 1 0 011-1 1 1 0 100-2zm0 8a1 1 0 100-2 1 1 0 000 2z" clip-rule="evenodd" /></svg>'}, {id: 'promocodes', name: 'Промокоды', icon: '<svg class="w-5 h-5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M17.707 9.293a1 1 0 010 1.414l-7 7a1 1 0 01-1.414 0l-7-7A.997.997 0 012 10V5a3 3 0 013-3h5a3 3 0 013 3v2.586l4.707 4.707zM5 6a1 1 0 100-2 1 1 0 000 2z" clip-rule="evenodd" /></svg>'}, { id: 'chats', name: 'Чаты', icon: '<svg class="w-5 h-5" viewBox="0 0 20 20" fill="currentColor"><path d="M2 5a2 2 0 012-2h7a2 2 0 012 2v4a2 2 0 01-2 2H9l-3 3v-3H4a2 2 0 01-2-2V5z" /><path d="M15 7v2a4 4 0 01-4 4H9.828l-1.766 1.767c.28.149.599.233.938.233h7a2 2 0 002-2v-4a2 2 0 00-2-2h-1.172a4 4 0 01-3.535-1.464L12 4.343V7z" /></svg>'}, { id: 'download', name: 'Приложение', icon: '<svg class="w-5 h-5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zM6.293 6.707a1 1 0 010-1.414l3-3a1 1 0 011.414 0l3 3a1 1 0 01-1.414 1.414L11 5.414V13a1 1 0 11-2 0V5.414L7.707 6.707a1 1 0 01-1.414 0z" clip-rule="evenodd" /></svg>'}]; 
+            const tabs = [{ id: 'users', name: 'Пользователи', icon:'<svg class="w-5 h-5" viewBox="0 0 20 20" fill="currentColor"><path d="M9 6a3 3 0 11-6 0 3 3 0 016 0zM17 6a3 3 0 11-6 0 3 3 0 016 0zM12.93 17c.046-.327.07-.66.07-1a6.97 6.97 0 00-1.5-4.33A5 5 0 0119 16v1h-6.07zM6 11a5 5 0 015 5v1H1v-1a5 5 0 015-5z" /></svg>'}, { id: 'products', name: 'Товары', icon: '<svg class="w-5 h-5" viewBox="0 0 20 20" fill="currentColor"><path d="M5 4a2 2 0 012-2h6a2 2 0 012 2v2a2 2 0 01-2 2H7a2 2 0 01-2-2V4zM5 12a2 2 0 012-2h6a2 2 0 012 2v2a2 2 0 01-2 2H7a2 2 0 01-2-2v-2z" /></svg>'}, { id: 'purchases', name: 'Покупки', icon: '<svg class="w-5 h-5" viewBox="0 0 20 20" fill="currentColor"><path d="M3 1a1 1 0 000 2h1.22l.305 1.222a.997.997 0 00.01.042l1.358 5.43-.893.892C3.74 11.846 4.632 14 6.414 14H15a1 1 0 000-2H6.414l1-1H14a1 1 0 00.894-.553l3-6A1 1 0 0017 3H6.28l-.31-1.243A1 1 0 005 1H3zM16 16.5a1.5 1.5 0 11-3 0 1.5 1.5 0 013 0zM6.5 18a1.5 1.5 0 100-3 1.5 1.5 0 000 3z" /></svg>'}, { id: 'reviews', name: 'Отзывы', icon: '<svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" /></svg>'}, { id: 'payment', name: 'Оплата', icon: '<svg class="w-5 h-5" viewBox="0 0 20 20" fill="currentColor"><path d="M4 4a2 2 0 00-2 2v1h16V6a2 2 0 00-2-2H4z" /><path fill-rule="evenodd" d="M18 9H2v5a2 2 0 002 2h12a2 2 0 002-2V9zM4 13a1 1 0 011-1h1a1 1 0 110 2H5a1 1 0 01-1-1zm5-1a1 1 0 100 2h1a1 1 0 100-2H9z" clip-rule="evenodd" /></svg>'}, { id: 'customization', name: 'Кастомизация', icon: '<svg class="w-5 h-5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M11.49 3.17c-.38-1.56-2.6-1.56-2.98 0a1.532 1.532 0 01-2.286.948c-1.372-.836-2.942.734-1.57 1.996A1.532 1.532 0 013.17 8.51c-1.56.38-1.56 2.6 0 2.98a1.532 1.532 0 01.948 2.286c-.836 1.372.734 2.942 1.996 1.57a1.532 1.532 0 012.286.948c.38 1.56 2.6 1.56 2.98 0a1.532 1.532 0 012.286-.948c1.372.836 2.942-.734 1.57-1.996A1.532 1.532 0 0116.83 11.49c1.56-.38 1.56-2.6 0-2.98a1.532 1.532 0 01-.948-2.286c.836-1.372-.734-2.942-1.996-1.57A1.532 1.532 0 0111.49 3.17zM10 13a3 3 0 100-6 3 3 0 000 6z" clip-rule="evenodd" /></svg>'}, { id: 'faq', name: 'FAQ', icon: '<svg class="w-5 h-5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-8-3a1 1 0 00-.867.5 1 1 0 11-1.731-1A3 3 0 0113 8a3.001 3.001 0 01-2 2.83V11a1 1 0 11-2 0v-1a1 1 0 011-1 1 1 0 100-2zm0 8a1 1 0 100-2 1 1 0 000 2z" clip-rule="evenodd" /></svg>'}, {id: 'promocodes', name: 'Промокоды', icon: '<svg class="w-5 h-5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M17.707 9.293a1 1 0 010 1.414l-7 7a1 1 0 01-1.414 0l-7-7A.997.997 0 012 10V5a3 3 0 013-3h5a3 3 0 013 3v2.586l4.707 4.707zM5 6a1 1 0 100-2 1 1 0 000 2z" clip-rule="evenodd" /></svg>'}, { id: 'chats', name: 'Чаты', icon: '<svg class="w-5 h-5" viewBox="0 0 20 20" fill="currentColor"><path d="M2 5a2 2 0 012-2h7a2 2 0 012 2v4a2 2 0 01-2 2H9l-3 3v-3H4a2 2 0 01-2-2V5z" /><path d="M15 7v2a4 4 0 01-4 4H9.828l-1.766 1.767c.28.149.599.233.938.233h7a2 2 0 002-2v-4a2 2 0 00-2-2h-1.172a4 4 0 01-3.535-1.464L12 4.343V7z" /></svg>'}, { id: 'download', name: 'Приложение', icon: '<svg class="w-5 h-5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zM6.293 6.707a1 1 0 010-1.414l3-3a1 1 0 011.414 0l3 3a1 1 0 01-1.414 1.414L11 5.414V13a1 1 0 11-2 0V5.414L7.707 6.707a1 1 0 01-1.414 0z" clip-rule="evenodd" /></svg>'}]; 
             el.innerHTML = `<h2 class="text-3xl font-bold mb-6">Админ-панель</h2><nav class="admin-tabs flex flex-wrap border-b border-custom mb-6">${tabs.map(t => `<a href="#admin/${t.id}" class="admin-tab-btn flex items-center gap-2 py-3 px-5 rounded-t-lg mr-2 mb-[-1px] bg-transparent font-semibold border border-transparent border-b-0 ${subpage === t.id ? 'active' : ''}" data-tab="${t.id}">${t.icon}<span>${t.name}</span></a>`).join('')}</nav><div id="admin-tab-content" class="card-bg p-6 rounded-lg min-h-[60vh] shadow-inner"></div>`; 
             loadAdminTab(subpage); 
         }
@@ -446,6 +548,7 @@
                 case 'products': loadAdminList('products', 'Товары', renderAdminProductItem, `<button id="add-product-btn" class="btn-primary px-4 py-2 rounded-lg">Добавить товар</button>`); break; 
                 case 'faq': loadAdminList('faq', 'FAQ', renderAdminFaqItem, `<button id="add-faq-btn" class="btn-primary px-4 py-2 rounded-lg">Добавить</button>`); break; 
                 case 'purchases': loadAdminPurchases(); break; 
+                case 'reviews': loadAdminReviews(); break;
                 case 'payment': loadAdminList('paymentMethods', 'Способы оплаты', renderAdminPaymentItem, `<button id="add-payment-btn" class="btn-primary px-4 py-2 rounded-lg">Добавить</button>`); break; 
                 case 'promocodes': loadAdminList('promocodes', 'Промокоды', renderAdminPromoItem, `<button id="add-promo-btn" class="btn-primary px-4 py-2 rounded-lg">Добавить</button>`); break; 
                 case 'customization': loadCustomizationPage(); break; 
@@ -460,6 +563,7 @@
                            <button class="reject-purchase-btn bg-red-500 hover:bg-red-600 text-white px-3 py-1 text-sm rounded-md ml-2" data-id="${id}">Отклонить</button>`; 
             } 
             return `<div class="card-bg p-4 rounded-lg flex flex-col md:flex-row justify-between items-start md:items-center border border-custom gap-4">
+                <img src="${p.items[0].imageUrl || 'https://placehold.co/64x64'}" class="w-16 h-16 object-cover rounded-md flex-shrink-0">
                 <div class="flex-grow">
                     <p class="font-bold">${p.productName}</p>
                     <p class="text-sm text-gray-400">Пользователь: ${p.userEmail || 'N/A'}</p>
@@ -478,7 +582,7 @@
         
         // --- ADMIN FORMS (RE-DESIGNED) ---
         async function showProductForm(pId) {
-            let p = {name:'',description:'',price:0,imageUrl:'',productStatus:'official'};
+            let p = {name:'',description:'',price:0,imageUrl:'',productStatus:'official', isPinned: false};
             if(pId){const d=await getDoc(doc(db,'products',pId)); if(d.exists()) p=d.data();}
             
             const onSave = async m => {
@@ -492,6 +596,7 @@
                     price: parseFloat(m.querySelector('#p-price').value) || 0, 
                     imageUrl: url, 
                     productStatus: m.querySelector('input[name="product-status"]:checked').value,
+                    isPinned: m.querySelector('#p-pinned').checked,
                     createdAt: p.createdAt || serverTimestamp(),
                     updatedAt: serverTimestamp()
                 };
@@ -540,6 +645,10 @@
                                 <span class="ml-2">Частный продавец</span>
                             </label>
                         </div>
+                    </div>
+                    <div class="flex items-center">
+                        <input type="checkbox" id="p-pinned" ${p.isPinned ? 'checked' : ''} class="h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary">
+                        <label for="p-pinned" class="ml-2 block text-sm">Закрепить товар (будет первым в списке)</label>
                     </div>
                 </div>`;
             
@@ -592,6 +701,7 @@
                         </div>
                     </div>
                     <button id="save-theme-btn" class="btn-primary px-4 py-2 rounded-lg mt-4">Сохранить тему</button>
+                    <button id="reset-theme-btn" class="bg-gray-500 text-white px-4 py-2 rounded-lg mt-4 ml-2">Сбросить</button>
                 </div>
                 <hr class="border-custom">
                 <div>
@@ -616,7 +726,25 @@
         };
 
         // --- THEME & AUTH UI ---
-        const initTheme = () => { const btn = document.getElementById('theme-toggle'); if(!btn) return; const apply = t => { if(t==='dark'){document.documentElement.classList.add('dark'); btn.innerHTML='☀️'} else {document.documentElement.classList.remove('dark'); btn.innerHTML='🌙'}}; apply(localStorage.getItem('color-theme')||'light'); btn.onclick=() => {const n = document.documentElement.classList.contains('dark') ? 'light' : 'dark'; localStorage.setItem('color-theme',n); apply(n);};};
+        const initTheme = () => { 
+            const btn = document.getElementById('theme-toggle'); 
+            if(!btn) return; 
+            const apply = t => { 
+                if(t==='dark'){
+                    document.documentElement.classList.add('dark'); 
+                    btn.innerHTML='☀️';
+                } else {
+                    document.documentElement.classList.remove('dark'); 
+                    btn.innerHTML='🌙';
+                }
+            }; 
+            apply(localStorage.getItem('color-theme')||'light'); 
+            btn.onclick=() => {
+                const n = document.documentElement.classList.contains('dark') ? 'light' : 'dark'; 
+                localStorage.setItem('color-theme',n); 
+                apply(n);
+            };
+        };
         const updateAuthUI = () => { const c = document.getElementById('auth-container'); if(!c) return; if (currentUser) { c.innerHTML = `<div class="relative"><button id="profile-btn" class="flex items-center gap-2"><img src="${currentUser.photoURL||'https://placehold.co/32x32'}" class="w-8 h-8 rounded-full object-cover"><svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd"></path></svg></button><div id="profile-menu" class="hidden absolute right-0 mt-2 w-52 card-bg rounded-md shadow-lg z-10"><a href="#profile" class="nav-link block px-4 py-2">Профиль</a>${isAdmin ? `<a href="#admin" class="nav-link block px-4 py-2">Админ-панель</a>` : ''}<a href="#" id="logout-btn" class="block px-4 py-2 text-red-500">Выйти</a></div></div>`;} else { c.innerHTML = `<button id="google-login-btn" class="px-4 py-2 btn-primary rounded-md">Войти</button>`; } };
         const signInWithGoogle = () => { const p = new GoogleAuthProvider(); signInWithPopup(auth, p).catch(e => showToast("Ошибка: " + e.message, true)); };
         
@@ -626,6 +754,15 @@
             document.body.addEventListener('click', async e => {
                 const { target } = e;
                 const closest = sel => target.closest(sel);
+
+                // Auto-close dropdowns
+                if (!closest('#profile-btn') && !closest('#profile-menu')) {
+                    document.getElementById('profile-menu')?.classList.add('hidden');
+                }
+                if (!closest('#notifications-btn') && !closest('#notifications-dropdown')) {
+                    document.getElementById('notifications-dropdown')?.classList.add('hidden');
+                }
+
                 if (closest('.nav-link')) { e.preventDefault(); window.location.hash = new URL(closest('.nav-link').href).hash; }
                 if (closest('.admin-tab-btn')) { e.preventDefault(); window.location.hash = `admin/${closest('.admin-tab-btn').dataset.tab}`; }
                 if (target.id === 'google-login-btn' || target.id === 'login-redirect') signInWithGoogle();
@@ -644,15 +781,20 @@
                 if (target.id === 'add-product-btn') showProductForm();
                 if (closest('.edit-btn')) { const { id, type } = closest('.edit-btn').dataset; if(type==='product') showProductForm(id); }
                 if (closest('.delete-btn')) confirmAction('Вы уверены, что хотите удалить этот элемент?', async () => await deleteDoc(doc(db, closest('.delete-btn').dataset.collection, closest('.delete-btn').dataset.id)));
+                if (closest('.complete-order-btn')) { await updateDoc(doc(db, "purchases", closest('.complete-order-btn').dataset.id), { status: 'Завершен' }); showToast('Заказ завершен!'); }
+                if (closest('.leave-review-btn')) { showReviewForm(closest('.leave-review-btn').dataset.id, closest('.leave-review-btn').dataset.productId); }
                 
                 if (closest('.approve-purchase-btn')) {
                     const btn = closest('.approve-purchase-btn');
                     const { id, userId, amount, isTopup } = btn.dataset;
+                    const batch = writeBatch(db);
+                    
                     if (isTopup === 'true') {
                         const purchaseDoc = await getDoc(doc(db, "purchases", id));
                         const purchaseData = purchaseDoc.data();
                         const paymentMethod = paymentMethods.find(m => m.id === purchaseData.paymentMethodId);
-                        await updateDoc(doc(db, "users", userId), { 
+                        const userRef = doc(db, "users", userId);
+                        batch.update(userRef, { 
                             balance: increment(parseFloat(amount)), 
                             balanceHistory: arrayUnion({ 
                                 type: 'topup', 
@@ -662,7 +804,19 @@
                             }) 
                         });
                     }
-                    await updateDoc(doc(db, "purchases", id), { status: 'Выполнен' });
+                    
+                    const purchaseRef = doc(db, "purchases", id);
+                    batch.update(purchaseRef, { status: 'Выполнен' });
+                    
+                    // Increment purchase count
+                    const purchaseDoc = await getDoc(purchaseRef);
+                    const items = purchaseDoc.data().items;
+                    items.forEach(item => {
+                        const productRef = doc(db, "products", item.id);
+                        batch.update(productRef, { purchaseCount: increment(1) });
+                    });
+
+                    await batch.commit();
                     showToast('Заказ подтвержден!');
                 }
 
@@ -719,6 +873,15 @@
                     await setDoc(doc(db, "storeSettings", "config"), { themeColors }, { merge: true });
                     applyCustomTheme(themeColors);
                     showToast('Тема сохранена!');
+                }
+                 if (target.id === 'reset-theme-btn') {
+                    confirmAction('Сбросить цвета темы к стандартным?', async () => {
+                        const defaultColors = { primaryLight: '#673ab7', bgLight: '#f3e5f5', primaryDark: '#9575cd', bgDark: '#1a102c' };
+                        await setDoc(doc(db, "storeSettings", "config"), { themeColors: defaultColors }, { merge: true });
+                        applyCustomTheme(defaultColors);
+                        loadCustomizationPage(); // Reload to show default values in pickers
+                        showToast('Тема сброшена!');
+                    });
                 }
                 if (target.id === 'save-site-name-btn') {
                     const newName = document.getElementById('site-name-input').value;
@@ -812,13 +975,118 @@
         async function uploadImage(file) { const fd = new FormData(); fd.append('image', file); try { const res = await fetch(`https://api.imgbb.com/1/upload?key=${IMGBB_API_KEY}`, { method: 'POST', body: fd }); const r = await res.json(); if (r.success) return r.data.url; else throw new Error(r.error.message); } catch (e) { alert('Ошибка: ' + e.message); return null; } }
         const initSwitchers = () => { const cur = document.getElementById('currency-switcher'), lang = document.getElementById('lang-switcher'); if(cur) { cur.innerHTML = `<select id="currency-select" class="p-2 border rounded input-bg text-sm"><option>UZS</option><option>RUB</option><option>USD</option></select>`; cur.querySelector('select').value = appState.currency; } if(lang) { lang.innerHTML = `<select id="lang-select" class="p-2 border rounded input-bg text-sm"><option>RU</option><option>UZ</option></select>`; lang.querySelector('select').value = appState.lang; } };
         const setupNotificationsListener = () => { const c = document.getElementById('notifications-container'); if (!currentUser || !c) return; onSnapshot(query(collection(db, "notifications"), where("userId", "==", currentUser.uid), orderBy("createdAt", "desc")), s => { const n = s.docs.map(d => ({ id: d.id, ...d.data() })); const unread = n.filter(i => !i.isRead).length; renderNotifications(n, unread); }); };
-        const renderNotifications = (n, unread) => { const c = document.getElementById('notifications-container'); if(!c) return; c.innerHTML = `<button id="notifications-btn" class="relative p-2"><svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.4-1.4a2 2 0 01-1.4-1.4V11a6 6 0 00-12 0v3.2a2 2 0 01-1.4 1.4L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"></path></svg>${unread > 0 ? `<span class="absolute top-0 right-0 bg-red-500 text-white text-xs rounded-full h-4 w-4 flex items-center justify-center">${unread}</span>` : ''}</button><div id="notifications-dropdown" class="hidden absolute right-0 mt-2 w-80 card-bg rounded-md shadow-lg z-20"><div class="p-4 font-bold">Уведомления</div><div class="max-h-96 overflow-y-auto">${n.length ? n.map(i => `<div class="p-4 border-t ${!i.isRead ? 'bg-primary/10':''}"><p>${i.title}</p></div>`).join(''):'<p class="p-4">Пусто.</p>'}</div></div>`; c.querySelector('#notifications-btn').onclick = () => {c.querySelector('#notifications-dropdown').classList.toggle('hidden'); if(unread > 0) {const b = writeBatch(db); n.filter(i => !i.isRead).forEach(i => b.update(doc(db,'notifications',i.id),{isRead:true})); b.commit();}}; };
+        const renderNotifications = (n, unread) => { const c = document.getElementById('notifications-container'); if(!c) return; c.innerHTML = `<button id="notifications-btn" class="relative p-2"><svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.4-1.4a2 2 0 01-1.4-1.4V11a6 6 0 00-12 0v3.2a2 2 0 01-1.4 1.4L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"></path></svg>${unread > 0 ? `<span class="absolute top-0 right-0 bg-red-500 text-white text-xs rounded-full h-4 w-4 flex items-center justify-center">${unread}</span>` : ''}</button><div id="notifications-dropdown" class="hidden absolute right-0 mt-2 w-80 card-bg rounded-md shadow-lg z-20"><div class="p-4 font-bold">Уведомления</div><div class="max-h-96 overflow-y-auto">${n.length ? n.map(i => `<div class="p-4 border-t ${!i.isRead ? 'bg-primary/10':''}"><p>${i.title}</p></div>`).join(''):'<p class="p-4">Пусто.</p>'}</div></div>`; c.querySelector('#notifications-btn').onclick = (e) => { e.stopPropagation(); c.querySelector('#notifications-dropdown').classList.toggle('hidden'); if(unread > 0) {const b = writeBatch(db); n.filter(i => !i.isRead).forEach(i => b.update(doc(db,'notifications',i.id),{isRead:true})); b.commit();}}; };
         const setupWishlistListener = () => { if (!currentUser) return; onSnapshot(doc(db, "users", currentUser.uid), d => { userWishlist = d.data()?.wishlist || []; applyFiltersAndSort(); }); };
         const loadAdminList = (coll, title, render, btn) => { const el = document.getElementById('admin-tab-content'); if(!el) return; el.innerHTML = `<div class="flex justify-between items-center mb-6"><h3 class="text-2xl font-bold">${title}</h3><div>${btn || ''}</div></div><div id="admin-list-container" class="space-y-3"></div>`; onSnapshot(query(collection(db, coll)), s => { const listEl = document.getElementById('admin-list-container'); if(listEl) listEl.innerHTML = s.docs.map(d => render(d.id, d.data())).join('') || '<p>Пусто</p>'; }); };
         const loadAdminPurchases = () => { const el = document.getElementById('admin-tab-content'); if(!el) return; el.innerHTML = `<h3 class="text-2xl font-bold">Покупки</h3><div id="admin-list-container" class="space-y-3 mt-4"></div>`; onSnapshot(query(collection(db, "purchases"), orderBy("createdAt", "desc")), s => { const listEl = document.getElementById('admin-list-container'); if(listEl) listEl.innerHTML = s.docs.map(d => renderAdminPurchaseItem(d.id, d.data())).join(''); }); };
         const renderAdminProductItem = (id, d) => `<div class="card-bg p-4 rounded flex justify-between items-center border border-custom"><div><p>${d.name}</p></div><div><button class="edit-btn text-blue-400 mr-4" data-id="${id}" data-type="product">Ред.</button><button class="delete-btn text-red-500" data-collection="products" data-id="${id}">Удл.</button></div></div>`;
         const loadAdminChatsList = (activeChatUserId) => { const el = document.getElementById('admin-tab-content'); if(!el) return; el.innerHTML = `<div class="flex gap-4 h-full"><div id="chat-list-sidebar" class="w-1/3 border-r pr-2 overflow-y-auto"></div><div id="chat-view" class="w-2/3"></div></div>`; const sidebar = document.getElementById('chat-list-sidebar'); onSnapshot(query(collection(db, "userChats"), orderBy("lastActivity", "desc")), s => { if(sidebar) sidebar.innerHTML = s.docs.filter(d=>d.id !== ADMIN_UID).map(d => `<a href="#admin/chats/${d.id}" class="block p-2 rounded ${activeChatUserId === d.id ? 'bg-primary text-white' : ''}">${d.data().partnerName || 'User'}</a>`).join(''); }); if(activeChatUserId) { const chatView = document.getElementById('chat-view'); if(chatView) renderChatInterface(chatView, `${activeChatUserId}_${ADMIN_UID}`, 'Чат', ADMIN_UID); } };
         const renderChatInterface = (cont, chatId, title, currentId) => { cont.innerHTML = `<div class="max-w-4xl mx-auto card-bg border rounded-lg h-full flex flex-col"><div class="p-4 font-bold border-b">${title}</div><div id="messages-container" class="p-4 flex-grow overflow-y-auto flex flex-col space-y-4"></div><div class="p-4 border-t flex gap-2"><input id="chat-message-input" class="flex-grow p-2 border rounded input-bg"><button id="send-chat-message" data-chat-id="${chatId}" data-sender-id="${currentId}" class="btn-primary px-6 rounded-lg">Отправить</button></div></div>`; const msgCont = document.getElementById('messages-container'); onSnapshot(query(collection(db, `chats/${chatId}/messages`), orderBy("createdAt", "asc")), s => { if(msgCont) { msgCont.innerHTML = s.docs.map(d => `<div class="flex items-end gap-2 ${d.data().senderId === currentId ? 'flex-row-reverse' : ''}"><div class="px-4 py-2 rounded-lg ${d.data().senderId === currentId ? 'bg-primary text-white' : 'bg-gray-200 dark:bg-gray-700'}">${d.data().text}</div></div>`).join(''); msgCont.scrollTop = msgCont.scrollHeight; } }); };
+        const loadAdminReviews = () => {
+            const el = document.getElementById('admin-tab-content');
+            if(!el) return;
+            el.innerHTML = `<div class="flex justify-between items-center mb-6"><h3 class="text-2xl font-bold">Отзывы</h3><button id="add-review-btn" class="btn-primary px-4 py-2 rounded-lg">Добавить отзыв</button></div><div id="reviews-list" class="space-y-4"></div>`;
+            document.getElementById('add-review-btn').onclick = () => showAdminReviewForm();
+            onSnapshot(query(collection(db, "reviews"), orderBy("createdAt", "desc")), s => {
+                const listEl = document.getElementById('reviews-list');
+                if(listEl) listEl.innerHTML = s.docs.map(d => renderAdminReviewItem(d.id, d.data())).join('') || '<p>Отзывов пока нет.</p>';
+            });
+        };
+        const renderAdminReviewItem = (id, r) => {
+            return `<div class="card-bg p-4 rounded border border-custom">
+                <div class="flex justify-between">
+                    <p><strong>${r.productName}</strong> - ${'⭐'.repeat(r.rating)}</p>
+                    <button class="delete-btn text-red-500" data-collection="reviews" data-id="${id}">Удалить</button>
+                </div>
+                <p class="mt-2 italic">"${r.text}"</p>
+                <p class="text-sm text-gray-400 mt-1">От: ${r.userName} (${new Date(r.createdAt.seconds * 1000).toLocaleDateString()})</p>
+            </div>`;
+        };
+        const showAdminReviewForm = async () => {
+            const productOptions = allProducts.map(p => `<option value="${p.id}">${p.name}</option>`).join('');
+            const onSave = async m => {
+                const productId = m.querySelector('#review-product-select').value;
+                const rating = m.querySelector('input[name="admin-rating"]:checked')?.value;
+                const text = m.querySelector('#review-text').value;
+                const userName = m.querySelector('#review-user-name').value;
+                if (!productId || !rating || !userName) {
+                    showToast('Заполните все поля', true);
+                    return false;
+                }
+                const product = allProducts.find(p => p.id === productId);
+                await addDoc(collection(db, 'reviews'), {
+                    productId,
+                    productName: product.name,
+                    rating: parseInt(rating),
+                    text,
+                    userId: 'admin',
+                    userName,
+                    createdAt: serverTimestamp()
+                });
+                showToast('Отзыв добавлен!');
+                return true;
+            };
+            const formHtml = `<div class="space-y-4">
+                <div>
+                    <label class="block text-sm">Товар</label>
+                    <select id="review-product-select" class="w-full modern-input">${productOptions}</select>
+                </div>
+                 <div>
+                    <label class="block text-sm">Имя пользователя</label>
+                    <input id="review-user-name" class="w-full modern-input" value="Администратор">
+                </div>
+                <div>
+                    <label class="block text-sm">Оценка</label>
+                    <div class="star-rating">
+                        <input type="radio" id="admin-star5" name="admin-rating" value="5" /><label for="admin-star5" title="5 звезд">★</label>
+                        <input type="radio" id="admin-star4" name="admin-rating" value="4" /><label for="admin-star4" title="4 звезды">★</label>
+                        <input type="radio" id="admin-star3" name="admin-rating" value="3" /><label for="admin-star3" title="3 звезды">★</label>
+                        <input type="radio" id="admin-star2" name="admin-rating" value="2" /><label for="admin-star2" title="2 звезды">★</label>
+                        <input type="radio" id="admin-star1" name="admin-rating" value="1" /><label for="admin-star1" title="1 звезда">★</label>
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-sm">Текст отзыва</label>
+                    <textarea id="review-text" class="w-full modern-input" rows="3"></textarea>
+                </div>
+            </div>`;
+            showModal('Добавить отзыв', formHtml, onSave, 'Добавить');
+        };
+        const showReviewForm = (purchaseId, productId) => {
+            const onSave = async m => {
+                const rating = m.querySelector('input[name="rating"]:checked')?.value;
+                const text = m.querySelector('#review-text').value;
+                if (!rating) {
+                    showToast('Пожалуйста, поставьте оценку', true);
+                    return false;
+                }
+                const product = allProducts.find(p => p.id === productId);
+                await addDoc(collection(db, 'reviews'), {
+                    productId,
+                    productName: product.name,
+                    rating: parseInt(rating),
+                    text,
+                    userId: currentUser.uid,
+                    userName: currentUser.displayName,
+                    createdAt: serverTimestamp()
+                });
+                await updateDoc(doc(db, 'purchases', purchaseId), { review: { rating: parseInt(rating), text } });
+                showToast('Спасибо за ваш отзыв!');
+                return true;
+            };
+            const formHtml = `<div class="space-y-4">
+                <p>Пожалуйста, оцените вашу покупку.</p>
+                <div class="star-rating">
+                    <input type="radio" id="star5" name="rating" value="5" /><label for="star5" title="5 звезд">★</label>
+                    <input type="radio" id="star4" name="rating" value="4" /><label for="star4" title="4 звезды">★</label>
+                    <input type="radio" id="star3" name="rating" value="3" /><label for="star3" title="3 звезды">★</label>
+                    <input type="radio" id="star2" name="rating" value="2" /><label for="star2" title="2 звезды">★</label>
+                    <input type="radio" id="star1" name="rating" value="1" /><label for="star1" title="1 звезда">★</label>
+                </div>
+                <textarea id="review-text" class="w-full modern-input" rows="3" placeholder="Ваш комментарий (необязательно)"></textarea>
+            </div>`;
+            showModal('Оставить отзыв', formHtml, onSave, 'Отправить');
+        };
     </script>
 </body>
 </html>
