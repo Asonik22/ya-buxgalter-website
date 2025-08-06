@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Asonik | Store</title>
+    <title id="site-title">Asonik | Store</title>
     <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🛒</text></svg>" />
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -96,6 +96,14 @@
         .btn-primary:hover {
             background-color: var(--primary-hover);
         }
+        .btn-danger {
+            background-color: #ef4444;
+            color: white;
+            transition: background-color 0.2s;
+        }
+        .btn-danger:hover {
+            background-color: #dc2626;
+        }
         .modern-input {
             background-color: var(--bg);
             border: 1px solid var(--border);
@@ -129,7 +137,7 @@
             <div class="flex justify-between items-center h-16">
                 <a href="#main" class="flex items-center gap-3 text-2xl font-bold nav-link">
                     <img id="store-logo" src="" alt="logo" class="h-8 w-8 rounded-full hidden">
-                    <span class="logo-text">Asonik | Store</span>
+                    <span id="site-name-display" class="logo-text">Asonik | Store</span>
                 </a>
                 
                 <nav class="hidden md:flex items-center space-x-6">
@@ -141,9 +149,8 @@
                 </nav>
 
                 <div class="flex items-center space-x-2 md:space-x-4">
-                    <button id="balance-btn" class="hidden items-center gap-2 px-4 py-2 rounded-full bg-primary/10 hover:bg-primary/20 border border-primary/30 transition-all">
-                        <svg class="h-5 w-5 text-primary" viewBox="0 0 20 20" fill="currentColor"><path d="M4 4a2 2 0 00-2 2v1h16V6a2 2 0 00-2-2H4z"></path><path fill-rule="evenodd" d="M18 9H2v5a2 2 0 002 2h12a2 2 0 002-2V9zM4 13a1 1 0 011-1h1a1 1 0 110 2H5a1 1 0 01-1-1zm5-1a1 1 0 100 2h1a1 1 0 100-2H9z" clip-rule="evenodd"></path></svg>
-                        <span id="user-balance-display" class="font-semibold text-sm text-primary">0</span>
+                    <button id="balance-btn" class="hidden items-center justify-center w-10 h-10 rounded-full bg-primary/10 hover:bg-primary/20 border border-primary/30 transition-all">
+                        <svg class="h-6 w-6 text-primary" viewBox="0 0 20 20" fill="currentColor"><path d="M4 4a2 2 0 00-2 2v1h16V6a2 2 0 00-2-2H4z"></path><path fill-rule="evenodd" d="M18 9H2v5a2 2 0 002 2h12a2 2 0 002-2V9zM4 13a1 1 0 011-1h1a1 1 0 110 2H5a1 1 0 01-1-1zm5-1a1 1 0 100 2h1a1 1 0 100-2H9z" clip-rule="evenodd"></path></svg>
                     </button>
                     <div id="currency-switcher" class="hidden md:block"></div>
                     <div id="lang-switcher" class="hidden md:block"></div>
@@ -181,7 +188,7 @@
     
     <!-- Footer -->
     <footer class="container mx-auto px-4 py-6 mt-8 border-t border-custom"><div id="social-links-container" class="flex justify-center items-center gap-6"></div></footer>
-    <div class="text-center text-sm text-gray-500 py-4">© Asonik | Store 2025</div>
+    <div class="text-center text-sm text-gray-500 py-4">© <span id="footer-site-name">Asonik | Store</span> 2025</div>
     
     <!-- Modals Container -->
     <div id="modals-container"></div>
@@ -242,7 +249,7 @@
             const balanceBtn = document.getElementById('balance-btn');
             if (user) {
                 const userRef = doc(db, "users", user.uid);
-                onSnapshot(userRef, docSnap => { if (docSnap.exists()) { const data = docSnap.data(); appState.balance = data.balance || 0; appState.balanceHistory = (data.balanceHistory || []).sort((a,b) => new Date(b.date) - new Date(a.date)); updateBalanceDisplay(); }});
+                onSnapshot(userRef, docSnap => { if (docSnap.exists()) { const data = docSnap.data(); appState.balance = data.balance || 0; appState.balanceHistory = (data.balanceHistory || []).sort((a,b) => new Date(b.date) - new Date(a.date)); }});
                 await setDoc(userRef, { displayName: user.displayName, email: user.email, photoURL: user.photoURL, lastSeen: serverTimestamp(), uid: user.uid }, { merge: true });
                 setupNotificationsListener();
                 setupWishlistListener();
@@ -271,12 +278,18 @@
             try { 
                 const settingsDoc = await getDoc(doc(db, "storeSettings", "config")); 
                 if (settingsDoc.exists()) { 
-                    const { logoUrl, socialLinks, appDownload, themeColors } = settingsDoc.data(); 
+                    const { logoUrl, socialLinks, appDownload, themeColors, siteName, adBanner } = settingsDoc.data(); 
                     const logoEl = document.getElementById('store-logo'); 
                     if (logoUrl) { logoEl.src = logoUrl; logoEl.classList.remove('hidden'); } else { logoEl.classList.add('hidden'); } 
+                    if (siteName) {
+                        document.getElementById('site-title').textContent = siteName;
+                        document.getElementById('site-name-display').textContent = siteName;
+                        document.getElementById('footer-site-name').textContent = siteName;
+                    }
                     renderSocialLinks(socialLinks); 
                     if (themeColors) applyCustomTheme(themeColors);
                     appState.appDownload = appDownload || {}; 
+                    appState.adBanner = adBanner || {};
                 } 
             } catch (e) { console.error("Error loading store settings:", e); } 
         }
@@ -328,7 +341,15 @@
         }
         
         // --- MAIN PAGE ---
-        const loadMainPage = () => { const el = document.getElementById('main-page-content-wrapper'); el.innerHTML = `<div id="ads-container"></div><h1 class="text-4xl font-bold text-center mb-8" data-lang-key="catalog_title"></h1><div class="mb-8 p-4 card-bg rounded-lg shadow-md flex items-center border border-custom"><input id="search-input" type="text" data-lang-placeholder="search_placeholder" class="w-full pl-4 pr-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary input-bg"></div><div id="products-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6"></div>`; const searchInput = document.getElementById('search-input'); if(searchInput) searchInput.addEventListener('input', applyFiltersAndSort); loadProducts(); };
+        const loadMainPage = () => { 
+            const el = document.getElementById('main-page-content-wrapper'); 
+            const banner = appState.adBanner;
+            const bannerHTML = banner?.imageUrl ? `<a href="${banner.linkUrl || '#'}" target="_blank" class="block mb-8"><img src="${banner.imageUrl}" class="w-full rounded-lg shadow-lg"></a>` : '';
+            el.innerHTML = `${bannerHTML}<h1 class="text-4xl font-bold text-center mb-8" data-lang-key="catalog_title"></h1><div class="mb-8 p-4 card-bg rounded-lg shadow-md flex items-center border border-custom"><input id="search-input" type="text" data-lang-placeholder="search_placeholder" class="w-full pl-4 pr-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary input-bg"></div><div id="products-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6"></div>`; 
+            const searchInput = document.getElementById('search-input'); 
+            if(searchInput) searchInput.addEventListener('input', applyFiltersAndSort); 
+            loadProducts(); 
+        };
         const loadProducts = () => onSnapshot(query(collection(db, "products"), orderBy("createdAt", "desc")), s => { allProducts = s.docs.map(d => ({ id: d.id, ...d.data() })); applyFiltersAndSort(); });
         const applyFiltersAndSort = () => { let filtered = [...allProducts]; const term = document.getElementById('search-input')?.value.toLowerCase(); if (term) filtered = filtered.filter(p => p.name.toLowerCase().includes(term)); const grid = document.getElementById('products-grid'); if (!grid) return; grid.innerHTML = filtered.length ? filtered.map(p => renderProductCard(p)).join('') : `<p class="col-span-full text-center">Товары не найдены.</p>`; translatePage(); };
         
@@ -372,7 +393,7 @@
             const statusMap = { 'Выполнен': 'completed', 'Ожидает оплаты': 'pending', 'Ожидает подтверждения': 'pending', 'Отклонен': 'rejected', 'Отменен': 'cancelled' };
             const statusClass = statusMap[p.status] || 'pending';
             let buttons = '';
-            if(p.status === 'Ожидает оплаты') { buttons += `<button class="upload-proof-btn btn-primary text-sm px-3 py-1 rounded-md" data-id="${id}">Загрузить чек</button><button class="cancel-purchase-btn bg-gray-500 text-white text-sm px-3 py-1 rounded-md ml-2" data-id="${id}">Отменить</button>`; } 
+            if(p.status === 'Ожидает оплаты') { buttons += `<button class="upload-proof-btn btn-primary text-sm px-3 py-1 rounded-md" data-id="${id}">Загрузить чек</button><button class="cancel-purchase-btn btn-danger text-sm px-3 py-1 rounded-md ml-2" data-id="${id}">Отменить</button>`; } 
             if(p.status === 'Выполнен' && !p.isTopUp) { buttons += `<button class="contact-seller-btn btn-primary text-sm px-3 py-1 rounded-md ml-2" data-code="${p.orderId}">Получить товар</button>`; } 
             return `<div class="card-bg p-4 sm:p-6 rounded-lg border border-custom flex flex-col sm:flex-row gap-4 items-start shadow-md">
                 <img src="${p.items[0].imageUrl || 'https://placehold.co/128x128'}" class="w-full sm:w-32 h-32 sm:h-auto flex-shrink-0 object-cover rounded-md">
@@ -457,7 +478,7 @@
         
         // --- ADMIN FORMS (RE-DESIGNED) ---
         async function showProductForm(pId) {
-            let p = {name:'',description:'',price:0,imageUrl:'',isPrivateSeller:false};
+            let p = {name:'',description:'',price:0,imageUrl:'',productStatus:'official'};
             if(pId){const d=await getDoc(doc(db,'products',pId)); if(d.exists()) p=d.data();}
             
             const onSave = async m => {
@@ -470,7 +491,7 @@
                     description: m.querySelector('#p-desc').value, 
                     price: parseFloat(m.querySelector('#p-price').value) || 0, 
                     imageUrl: url, 
-                    isPrivateSeller: m.querySelector('#p-private').checked, 
+                    productStatus: m.querySelector('input[name="product-status"]:checked').value,
                     createdAt: p.createdAt || serverTimestamp(),
                     updatedAt: serverTimestamp()
                 };
@@ -501,13 +522,34 @@
                         <input type="file" id="p-image-file" class="w-full text-sm file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-primary/10 file:text-primary hover:file:bg-primary/20">
                         ${p.imageUrl ? `<img src="${p.imageUrl}" class="mt-2 w-24 h-24 object-cover rounded-md">` : ''}
                     </div>
-                    <div class="flex items-center">
-                        <input type="checkbox" id="p-private" ${p.isPrivateSeller?'checked':''} class="h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary">
-                        <label for="p-private" class="ml-2 block text-sm">Частный продавец</label>
+                    <div>
+                        <label class="block text-sm font-medium mb-2">Статус товара
+                            <button type="button" id="status-info-btn" class="ml-2 text-primary">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 inline-block" viewBox="0 0 20 20" fill="currentColor">
+                                    <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd" />
+                                </svg>
+                            </button>
+                        </label>
+                        <div class="flex gap-4">
+                            <label class="flex items-center">
+                                <input type="radio" name="product-status" value="official" ${p.productStatus === 'official' ? 'checked' : ''} class="h-4 w-4 text-primary focus:ring-primary border-gray-300">
+                                <span class="ml-2">Официальный товар</span>
+                            </label>
+                            <label class="flex items-center">
+                                <input type="radio" name="product-status" value="private" ${p.productStatus === 'private' ? 'checked' : ''} class="h-4 w-4 text-primary focus:ring-primary border-gray-300">
+                                <span class="ml-2">Частный продавец</span>
+                            </label>
+                        </div>
                     </div>
                 </div>`;
-
-            showModal(pId ? 'Редактировать товар' : 'Добавить товар', formHTML, onSave, 'Сохранить');
+            
+            const modal = showModal(pId ? 'Редактировать товар' : 'Добавить товар', formHTML, onSave, 'Сохранить');
+            modal.querySelector('#status-info-btn').onclick = () => {
+                showModal('Информация о статусах', `
+                    <p><strong>Официальный товар:</strong> Это товар, который продается непосредственно от имени нашего магазина. Мы несем полную ответственность за его качество и предоставляем гарантию.</p>
+                    <p class="mt-4"><strong>Частный продавец:</strong> Товар выставляется на продажу сторонним лицом. Магазин выступает в роли площадки и не несет ответственности за данный товар.</p>
+                `);
+            };
         }
 
         // --- CUSTOMIZATION ---
@@ -515,6 +557,22 @@
             const el = document.getElementById('admin-tab-content'); 
             const settings = (await getDoc(doc(db, "storeSettings", "config"))).data() || {};
             el.innerHTML = `<div class="space-y-8">
+                 <div>
+                    <h3 class="text-xl font-bold mb-2">Общие настройки</h3>
+                    <label class="block text-sm">Название сайта</label>
+                    <input id="site-name-input" class="w-full modern-input mt-1" value="${settings.siteName || 'Asonik | Store'}">
+                    <button id="save-site-name-btn" class="btn-primary px-4 py-2 rounded-lg mt-2">Сохранить название</button>
+                </div>
+                <hr class="border-custom">
+                <div>
+                    <h3 class="text-xl font-bold mb-2">Рекламный баннер</h3>
+                     <label class="block text-sm">Изображение баннера</label>
+                    <input type="file" id="ad-banner-upload-input" class="w-full text-sm file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-primary/10 file:text-primary hover:file:bg-primary/20 mt-1">
+                    <label class="block text-sm mt-2">Ссылка (куда ведет баннер)</label>
+                    <input id="ad-banner-link-input" class="w-full modern-input mt-1" value="${settings.adBanner?.linkUrl || ''}" placeholder="https://example.com">
+                    <button id="save-ad-banner-btn" class="btn-primary px-4 py-2 rounded-lg mt-2">Сохранить баннер</button>
+                </div>
+                <hr class="border-custom">
                 <div>
                     <h3 class="text-xl font-bold mb-2">Настройка темы</h3>
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -618,7 +676,39 @@
                     }, 'Отклонить');
                 }
 
-                if(closest('.add-balance-btn') || closest('.remove-balance-btn')) { const btn = closest('button'); const isAdding = btn.classList.contains('add-balance-btn'); const amountInput = btn.parentElement.querySelector('.user-balance-input'); const amount = parseFloat(amountInput.value); if(amount > 0) { confirmAction(`${isAdding ? 'Добавить' : 'Снять'} ${formatPrice(amount)} с баланса пользователя?`, async () => { await updateDoc(doc(db, "users", btn.dataset.uid), { balance: increment(isAdding ? amount : -amount), balanceHistory: arrayUnion({ type: isAdding ? 'topup' : 'deduction', amount: isAdding ? amount : -amount, date: new Date().toISOString(), reason: 'Админ' }) }); showToast('Баланс изменен'); amountInput.value = ''; }); }}
+                if (closest('.add-balance-btn') || closest('.remove-balance-btn') || closest('.annul-balance-btn')) {
+                    const btn = closest('button');
+                    const uid = btn.dataset.uid;
+                    const amountInput = btn.parentElement.querySelector('.user-balance-input');
+                    
+                    if (btn.classList.contains('annul-balance-btn')) {
+                        confirmAction(`Вы уверены, что хотите обнулить баланс этого пользователя?`, async () => {
+                            const userDoc = await getDoc(doc(db, "users", uid));
+                            const currentBalance = userDoc.data().balance || 0;
+                            await updateDoc(doc(db, "users", uid), { 
+                                balance: 0,
+                                balanceHistory: arrayUnion({ type: 'deduction', amount: -currentBalance, date: new Date().toISOString(), reason: 'Админ (Обнуление)' })
+                            });
+                            showToast('Баланс обнулен');
+                        });
+                        return;
+                    }
+
+                    const isAdding = btn.classList.contains('add-balance-btn');
+                    const amount = parseFloat(amountInput.value);
+                    if (!isNaN(amount) && amount > 0) {
+                        confirmAction(`${isAdding ? 'Добавить' : 'Снять'} ${formatPrice(amount)} с баланса пользователя?`, async () => {
+                            await updateDoc(doc(db, "users", uid), { 
+                                balance: increment(isAdding ? amount : -amount), 
+                                balanceHistory: arrayUnion({ type: isAdding ? 'topup' : 'deduction', amount: isAdding ? amount : -amount, date: new Date().toISOString(), reason: 'Админ' }) 
+                            });
+                            showToast('Баланс изменен');
+                            amountInput.value = '';
+                        });
+                    } else {
+                        showToast('Введите корректную сумму', true);
+                    }
+                }
                 if (target.id === 'save-theme-btn') {
                     const themeColors = {
                         primaryLight: document.getElementById('primary-light-picker').value,
@@ -630,10 +720,85 @@
                     applyCustomTheme(themeColors);
                     showToast('Тема сохранена!');
                 }
+                if (target.id === 'save-site-name-btn') {
+                    const newName = document.getElementById('site-name-input').value;
+                    if (newName) {
+                        await setDoc(doc(db, "storeSettings", "config"), { siteName: newName }, { merge: true });
+                        showToast('Название сайта сохранено!');
+                        loadStoreSettings(); // Reload settings to apply changes
+                    }
+                }
+                if (target.id === 'save-ad-banner-btn') {
+                    const file = document.getElementById('ad-banner-upload-input').files[0];
+                    const linkUrl = document.getElementById('ad-banner-link-input').value;
+                    let imageUrl = appState.adBanner?.imageUrl;
+                    if (file) {
+                        imageUrl = await uploadImage(file);
+                    }
+                    if (imageUrl) {
+                        await setDoc(doc(db, "storeSettings", "config"), { adBanner: { imageUrl, linkUrl } }, { merge: true });
+                        showToast('Баннер сохранен!');
+                        loadStoreSettings();
+                    } else {
+                        showToast('Сначала загрузите изображение', true);
+                    }
+                }
             });
         }
         
-        // --- OTHER FUNCTIONS (FAQ, Profile, etc. - mostly unchanged but available) ---
+        // --- ALL OTHER FUNCTIONS ---
+        // These functions had ReferenceErrors, so they are defined here.
+        const showProofUploadModal = async (purchaseId) => {
+            const purchaseDocRef = doc(db, "purchases", purchaseId);
+            const purchaseSnap = await getDoc(purchaseDocRef);
+            if (!purchaseSnap.exists()) {
+                showToast("Заказ не найден", true);
+                return;
+            }
+            const purchase = purchaseSnap.data();
+            const paymentMethod = paymentMethods.find(m => m.id === purchase.paymentMethodId);
+            if (!paymentMethod) {
+                showToast("Способ оплаты не найден", true);
+                return;
+            }
+
+            const onSave = async (modal) => {
+                const fileInput = modal.querySelector('#proof-file-input');
+                const file = fileInput.files[0];
+                if (!file) {
+                    showToast("Пожалуйста, выберите файл", true);
+                    return false; // Prevent modal from closing
+                }
+                const imageUrl = await uploadImage(file);
+                if (imageUrl) {
+                    await updateDoc(purchaseDocRef, {
+                        paymentProofUrl: imageUrl,
+                        status: 'Ожидает подтверждения'
+                    });
+                    showToast("Чек успешно загружен!");
+                    return true; // Close modal
+                } else {
+                    showToast("Ошибка загрузки изображения", true);
+                    return false;
+                }
+            };
+
+            const modalContent = `
+                <div>
+                    <p>Пожалуйста, переведите <strong>${formatPrice(purchase.finalPrice)}</strong> на следующие реквизиты:</p>
+                    <p class="font-semibold">${paymentMethod.name}</p>
+                    <p class="my-2 p-2 bg-gray-200 dark:bg-gray-700 rounded font-mono">${paymentMethod.requisites}</p>
+                    <p class="mt-4">После оплаты, загрузите чек (скриншот) подтверждающий перевод.</p>
+                    <input type="file" id="proof-file-input" class="w-full modern-input mt-2" accept="image/*">
+                </div>
+            `;
+            showModal("Загрузка чека", modalContent, onSave, "Отправить чек");
+        };
+        const renderAdminPaymentItem = (id, d) => `<div class="card-bg p-4 rounded flex justify-between items-center border border-custom"><div><img src="${d.logoUrl}" class="h-8 inline-block mr-4"><p class="inline-block">${d.name}</p></div><div class="flex items-center gap-4"><input type="checkbox" class="toggle-payment-btn" data-id="${id}" ${d.isEnabled ? 'checked' : ''}><button class="edit-btn" data-id="${id}" data-type="payment">Ред.</button><button class="delete-btn text-red-500" data-collection="paymentMethods" data-id="${id}">Удл.</button></div></div>`;
+        const renderAdminSocialLinks = (links) => { const cont = document.getElementById('social-links-admin'); if(!cont) return; cont.innerHTML = (links||[]).map(l => `<div class="flex items-center gap-2 p-2 card-bg rounded"><span>${l.name}</span><button class="delete-social-link-btn text-red-500" data-id="${l.id}">Удалить</button></div>`).join(''); };
+        const renderAdminFaqItem = (id, d) => `<div class="card-bg p-4 rounded flex justify-between items-center border border-custom"><div><p>${d.question}</p></div><div><button class="edit-btn text-blue-400 mr-4" data-id="${id}" data-type="faq">Ред.</button><button class="delete-btn text-red-500" data-collection="faq" data-id="${id}">Удл.</button></div></div>`;
+        const renderAdminPromoItem = (id, d) => `<div class="card-bg p-4 rounded border border-custom">Код: <strong>${d.code}</strong>, Скидка: ${d.discount}%, Исп: ${d.uses||0}/${d.limit} <button class="delete-btn text-red-500 ml-4" data-collection="promocodes" data-id="${id}">Удл.</button></div>`;
+        const loadAdminDownloadPage = async () => { const el = document.getElementById('admin-tab-content'); const appData = (await getDoc(doc(db, "storeSettings", "config"))).data()?.appDownload || {}; el.innerHTML = `<h3>Страница "Скачать"</h3><div class="max-w-xl space-y-4"><div><label>Описание</label><textarea id="download-description" class="w-full p-2 border rounded input-bg">${appData.description || ''}</textarea></div><div><label>Ссылка .exe</label><input id="download-exe-link" class="w-full p-2 border rounded" value="${appData.exeLink || ''}"></div><div><label>Ссылка .apk</label><input id="download-apk-link" class="w-full p-2 border rounded" value="${appData.apkLink || ''}"></div><button id="save-download-settings-btn" class="btn-primary p-2 rounded">Сохранить</button></div>`; };
         const loadFaq = () => { const cont = document.getElementById('faq-content'); if(!cont) return; cont.innerHTML = `<div class="max-w-4xl mx-auto"><h1 class="text-4xl font-bold text-center mb-12" data-lang-key="faq_title"></h1><div id="faq-list" class="space-y-4"></div></div>`; const list = document.getElementById('faq-list'); onSnapshot(collection(db, "faq"), s => { list.innerHTML = s.docs.map(d => { const i = d.data(); return `<div class="card-bg rounded-lg shadow border border-custom"><button class="faq-question w-full text-left p-6 font-bold flex justify-between items-center text-lg"><span>${i.question}</span><svg class="faq-icon w-6 h-6 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" /></svg></button><div class="faq-answer"><p class="p-6 pt-0">${i.answer}</p></div></div>` }).join(''); }); };
         const loadProfilePage = () => { const el = document.getElementById('profile-content'); if (!el || !currentUser) return; el.innerHTML = `<h1 class="text-4xl font-bold text-center mb-8" data-lang-key="profile_title"></h1><div class="max-w-3xl mx-auto card-bg p-8 rounded-2xl shadow-lg"><div class="flex flex-col md:flex-row items-center gap-8"><div class="flex flex-col items-center"><img id="profile-avatar" src="${currentUser.photoURL || 'https://placehold.co/128x128'}" class="w-32 h-32 rounded-full mb-4 object-cover"><input type="file" id="avatar-upload" class="hidden" accept="image/*"><button id="change-avatar-btn" class="text-sm text-primary hover:underline">Сменить</button></div><div class="flex-grow w-full"><h2 class="text-3xl font-bold">${currentUser.displayName}</h2><input id="profile-name" class="w-full p-2 border-b-2 bg-transparent focus:outline-none focus:border-primary" value="${currentUser.displayName || ''}"><div class="mt-8 flex gap-4"><button id="save-profile-btn" class="flex-grow btn-primary px-6 py-3 rounded-lg">Сохранить</button><button id="logout-btn-profile" class="flex-grow bg-red-500 text-white px-6 py-3 rounded-lg">Выйти</button></div></div></div></div>`; };
         const loadDownloadPage = () => { const el = document.getElementById('download-content'); const data = appState.appDownload || {}; el.innerHTML = `<div class="max-w-xl mx-auto card-bg p-8 rounded-lg text-center"><h1 class="text-4xl font-bold mb-4" data-lang-key="download_title"></h1><p class="mb-6">${data.description || 'Ссылки не настроены'}</p><div class="flex flex-col gap-4">${data.exeLink ? `<a href="${data.exeLink}" class="w-full px-6 py-3 btn-primary rounded-md">Windows (.exe)</a>` : ''}${data.apkLink ? `<a href="${data.apkLink}" class="w-full px-6 py-3 btn-primary rounded-md">Android (.apk)</a>` : ''}</div></div>`; translatePage(); };
@@ -643,7 +808,7 @@
         const updateCartCount = () => { const el = document.getElementById('cart-count'); if (!el) return; el.textContent = cart.length; el.classList.toggle('hidden', cart.length === 0); };
         const renderCartPage = () => { const el = document.getElementById('cart-content'); el.innerHTML = `<h1 class="text-4xl font-bold text-center mb-8" data-lang-key="cart_title"></h1>`; if (cart.length === 0) { el.innerHTML += '<p class="text-center">Ваша корзина пуста.</p>'; return; } let total = cart.reduce((s, i) => s + (i.price || 0), 0); el.innerHTML += `<div class="space-y-4">${cart.map((i, idx) => `<div class="card-bg p-4 rounded-lg flex justify-between items-center"><div class="flex items-center gap-4"><img src="${i.imageUrl||''}" class="w-16 h-16 rounded object-cover"><p>${i.name}</p></div><div class="flex items-center gap-4"><span>${formatPrice(i.price)}</span><button class="remove-from-cart-btn text-red-500 font-bold text-xl" data-index="${idx}">&times;</button></div></div>`).join('')}</div><div class="mt-6 pt-4 border-t border-custom flex justify-end items-center gap-4"><span class="text-2xl font-bold">Итого: ${formatPrice(total)}</span><button id="checkout-cart-btn" class="px-8 py-3 btn-primary rounded-lg">Оформить заказ</button></div>`; };
         const loadAdminUsers = () => {const el = document.getElementById('admin-tab-content'); if(!el) return; el.innerHTML = `<h3 class="text-2xl font-bold">Пользователи</h3><div id="users-list" class="space-y-3 mt-4"></div>`; onSnapshot(query(collection(db, "users")), s => { const userListEl = document.getElementById('users-list'); if(userListEl) userListEl.innerHTML = s.docs.map(d => renderAdminUserItem(d.data())).join(''); }); };
-        const renderAdminUserItem = u => `<div class="card-bg p-4 rounded flex justify-between items-center border border-custom"><div><p>${u.displayName} (${u.email})</p><p class="text-xs text-gray-400">UID: ${u.uid}</p><p>Баланс: ${formatPrice(u.balance || 0)}</p></div><div class="flex items-center gap-2"><input type="number" class="user-balance-input w-24 p-1 rounded bg-transparent border" placeholder="Сумма"><button class="add-balance-btn bg-green-500 text-white p-1 rounded" data-uid="${u.uid}">+</button><button class="remove-balance-btn bg-red-500 text-white p-1 rounded" data-uid="${u.uid}">-</button></div></div>`;
+        const renderAdminUserItem = u => `<div class="card-bg p-4 rounded flex flex-col md:flex-row justify-between items-start md:items-center border border-custom gap-4"><div><p>${u.displayName} (${u.email})</p><p class="text-xs text-gray-400">UID: ${u.uid}</p><p>Баланс: ${formatPrice(u.balance || 0)}</p></div><div class="flex items-center gap-2"><input type="number" class="user-balance-input w-24 p-2 rounded bg-transparent border" placeholder="Сумма"><button class="add-balance-btn bg-green-500 text-white p-2 rounded-md" data-uid="${u.uid}">➕</button><button class="remove-balance-btn bg-yellow-500 text-white p-2 rounded-md" data-uid="${u.uid}">➖</button><button class="annul-balance-btn bg-red-500 text-white p-2 rounded-md" data-uid="${u.uid}">Обнулить</button></div></div>`;
         async function uploadImage(file) { const fd = new FormData(); fd.append('image', file); try { const res = await fetch(`https://api.imgbb.com/1/upload?key=${IMGBB_API_KEY}`, { method: 'POST', body: fd }); const r = await res.json(); if (r.success) return r.data.url; else throw new Error(r.error.message); } catch (e) { alert('Ошибка: ' + e.message); return null; } }
         const initSwitchers = () => { const cur = document.getElementById('currency-switcher'), lang = document.getElementById('lang-switcher'); if(cur) { cur.innerHTML = `<select id="currency-select" class="p-2 border rounded input-bg text-sm"><option>UZS</option><option>RUB</option><option>USD</option></select>`; cur.querySelector('select').value = appState.currency; } if(lang) { lang.innerHTML = `<select id="lang-select" class="p-2 border rounded input-bg text-sm"><option>RU</option><option>UZ</option></select>`; lang.querySelector('select').value = appState.lang; } };
         const setupNotificationsListener = () => { const c = document.getElementById('notifications-container'); if (!currentUser || !c) return; onSnapshot(query(collection(db, "notifications"), where("userId", "==", currentUser.uid), orderBy("createdAt", "desc")), s => { const n = s.docs.map(d => ({ id: d.id, ...d.data() })); const unread = n.filter(i => !i.isRead).length; renderNotifications(n, unread); }); };
