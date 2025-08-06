@@ -11,20 +11,19 @@
     <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
     <style>
-        /* ОБНОВЛЕНИЕ ДИЗАЙНА: Настоящая фиолетовая тема */
         :root {
             --bg-light: #f3e5f5; 
             --text-light: #1f2937; 
             --card-bg-light: #ffffff; 
-            --primary-light: #673ab7; /* Насыщенный фиолетовый */
-            --primary-hover-light: #512da8; /* Темнее для наведения */
+            --primary-light: #673ab7;
+            --primary-hover-light: #512da8;
             --border-light: #d1c4e9;
-            --logo-text-light: #4527a0; 
+            --logo-text-light: #4527a0;
 
             --bg-dark: #1a102c; 
             --text-dark: #e5e7eb; 
             --card-bg-dark: #23153c; 
-            --primary-dark: #9575cd; /* Светлый фиолетовый для темной темы */
+            --primary-dark: #9575cd;
             --primary-hover-dark: #b39ddb;
             --border-dark: #311b92;
             --logo-text-dark: #d1c4e9;
@@ -43,8 +42,6 @@
         body { font-family: 'Manrope', sans-serif; background-color: var(--bg); color: var(--text); transition: background-color 0.3s, color 0.3s; }
         .logo-text { color: var(--logo-text); }
         .product-card, button, a { transition: all 0.2s ease-in-out; }
-        .product-card:hover { transform: translateY(-4px); box-shadow: 0 8px 25px rgba(102, 102, 255, 0.1); }
-        html.dark .product-card:hover { box-shadow: 0 8px 25px rgba(0,0,0,0.3); }
         .bg-primary { background-color: var(--primary); }
         .hover\:bg-primary-hover:hover { background-color: var(--primary-hover); }
         .text-primary { color: var(--primary); }
@@ -57,19 +54,11 @@
         .faq-answer { display: grid; grid-template-rows: 0fr; transition: grid-template-rows 0.3s ease-out; }
         .faq-question.open + .faq-answer { grid-template-rows: 1fr; }
         .payment-option.selected { border-color: var(--primary); box-shadow: 0 0 0 2px var(--primary); }
-        .toggle-switch { position: relative; display: inline-block; width: 44px; height: 24px; }
-        .toggle-switch input { opacity: 0; width: 0; height: 0; }
-        .toggle-slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #9CA3AF; transition: .4s; border-radius: 24px; }
-        html.dark .toggle-slider { background-color: #4a5568; }
-        .toggle-slider:before { position: absolute; content: ""; height: 16px; width: 16px; left: 4px; bottom: 4px; background-color: white; transition: .4s; border-radius: 50%; }
-        input:checked + .toggle-slider { background-color: var(--primary); }
-        input:checked + .toggle-slider:before { transform: translateX(20px); }
         #mobile-menu { transition: opacity 0.3s ease-in-out; }
         #mobile-menu-panel { transition: transform 0.3s ease-in-out; }
         .admin-tabs { display: flex; flex-wrap: wrap; border-bottom: 1px solid var(--border); margin-bottom: 1.5rem; }
-        .admin-tabs .admin-tab-btn { padding: 0.75rem 1.25rem; border-radius: 0.5rem 0.5rem 0 0; margin-right: 0.5rem; margin-bottom: -1px; background-color: var(--card-bg); color: var(--text); font-weight: 600; transition: all 0.2s ease-in-out; border: 1px solid transparent; border-bottom: none; }
+        .admin-tabs .admin-tab-btn { padding: 0.75rem 1.25rem; border-radius: 0.5rem 0.5rem 0 0; margin-right: 0.5rem; margin-bottom: -1px; background-color: var(--card-bg); color: var(--text); font-weight: 600; border: 1px solid transparent; border-bottom: none; }
         .admin-tabs .admin-tab-btn.active { background-color: var(--primary); color: white; border-color: var(--border); border-bottom-color: var(--primary); box-shadow: 0 -2px 8px rgba(0,0,0,0.05); }
-        .admin-tabs .admin-tab-btn:hover:not(.active) { background-color: var(--bg); color: var(--primary-hover); }
     </style>
 </head>
 <body>
@@ -84,16 +73,16 @@
                 
                 <nav class="hidden md:flex items-center space-x-6">
                     <a href="#main" class="nav-link text-gray-600 dark:text-gray-300 hover:text-primary" data-lang-key="nav_main">Главная</a>
-                    <a href="#chats" id="nav-chats-link" class="nav-link text-gray-600 dark:text-gray-300 hover:text-primary" data-lang-key="nav_chats">Чаты</a>
+                    <a href="#chats" class="nav-link text-gray-600 dark:text-gray-300 hover:text-primary" data-lang-key="nav_chats">Чаты</a>
                     <a href="#faq" class="nav-link text-gray-600 dark:text-gray-300 hover:text-primary" data-lang-key="nav_faq">FAQ</a>
                     <a href="#purchases" class="nav-link text-gray-600 dark:text-gray-300 hover:text-primary" data-lang-key="nav_purchases">Мои покупки</a>
                     <a href="#download" class="nav-link text-gray-600 dark:text-gray-300 hover:text-primary" data-lang-key="nav_download">Скачать приложение</a>
                 </nav>
 
                 <div class="flex items-center space-x-2 md:space-x-4">
-                    <button id="balance-btn" class="hidden items-center gap-2 px-3 py-2 text-sm font-semibold rounded-md bg-primary/20 text-primary hover:bg-primary/30">
-                        <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20"><path d="M10 4a2 2 0 100 4 2 2 0 000-4zM2 6a8 8 0 1116 0H2zm8 12a2 2 0 100-4 2 2 0 000 4z"></path></svg>
-                        <span id="user-balance-display">0 UZS</span>
+                     <button id="balance-btn" class="hidden items-center gap-2 px-3 py-1.5 rounded-full bg-primary/10 hover:bg-primary/20 border border-primary/30">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-primary" fill="currentColor" viewBox="0 0 20 20"><path d="M10.894 2.553a1 1 0 00-1.789 0l-7 12.25A1 1 0 003 16h14a1 1 0 00.894-1.447l-7-12.25zM10 14a1 1 0 100-2 1 1 0 000 2z"></path></svg>
+                        <span id="user-balance-display" class="font-semibold text-sm text-primary">0</span>
                     </button>
                     <div id="currency-switcher" class="hidden md:block"></div>
                     <div id="lang-switcher" class="hidden md:block"></div>
@@ -102,10 +91,7 @@
                     <a href="#wishlist" class="relative p-2 text-gray-600 dark:text-gray-400 nav-link"><svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 016.364 0L12 7.636l1.318-1.318a4.5 4.5 0 016.364 6.364L12 20.364l-7.682-7.682a4.5 4.5 0 010-6.364z"></path></svg></a>
                     <a href="#cart" class="relative p-2 text-gray-600 dark:text-gray-400 nav-link"><svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"></path></svg><span id="cart-count" class="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-4 w-4 flex items-center justify-center hidden">0</span></a>
                     <div id="auth-container" class="relative"></div>
-
-                    <button id="mobile-menu-btn" class="md:hidden p-2 rounded-md text-gray-500 dark:text-gray-400">
-                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16m-7 6h7"></path></svg>
-                    </button>
+                    <button id="mobile-menu-btn" class="md:hidden p-2 rounded-md text-gray-500 dark:text-gray-400"><svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16m-7 6h7"></path></svg></button>
                 </div>
             </div>
         </div>
@@ -113,48 +99,31 @@
 
     <div id="mobile-menu" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 opacity-0">
         <div id="mobile-menu-panel" class="fixed top-0 right-0 h-full w-64 card-bg shadow-lg p-6 transform translate-x-full">
-            <button id="mobile-menu-close-btn" class="absolute top-4 right-4 p-2 text-2xl text-gray-500 dark:text-gray-400">&times;</button>
+            <button id="mobile-menu-close-btn" class="absolute top-4 right-4 p-2 text-2xl">&times;</button>
             <nav id="mobile-nav-links" class="flex flex-col space-y-6 text-xl mt-12 text-center">
-                 <a href="#main" class="nav-link hover:text-primary" data-lang-key="nav_main">Главная</a>
-                 <a href="#chats" class="nav-link hover:text-primary" data-lang-key="nav_chats">Чаты</a>
-                 <a href="#faq" class="nav-link hover:text-primary" data-lang-key="nav_faq">FAQ</a>
-                 <a href="#purchases" class="nav-link hover:text-primary" data-lang-key="nav_purchases">Мои покупки</a>
-                 <a href="#download" class="nav-link hover:text-primary" data-lang-key="nav_download">Скачать приложение</a>
+                 <a href="#main" class="nav-link hover:text-primary" data-lang-key="nav_main"></a>
+                 <a href="#chats" class="nav-link hover:text-primary" data-lang-key="nav_chats"></a>
+                 <a href="#faq" class="nav-link hover:text-primary" data-lang-key="nav_faq"></a>
+                 <a href="#purchases" class="nav-link hover:text-primary" data-lang-key="nav_purchases"></a>
+                 <a href="#download" class="nav-link hover:text-primary" data-lang-key="nav_download"></a>
             </nav>
         </div>
     </div>
 
-
     <main class="container mx-auto px-4 py-8">
-        <div data-page="main" class="active">
-            <div id="main-page-content-wrapper">
-                <div id="ads-container"></div>
-                <h1 class="text-4xl font-bold text-center mb-8" data-lang-key="catalog_title">Каталог товаров</h1>
-                <div class="mb-8 p-4 card-bg rounded-lg shadow-md flex flex-col md:flex-row gap-4 items-center border border-custom">
-                    <input id="search-input" type="text" data-lang-placeholder="search_placeholder" placeholder="Поиск по названию..." class="w-full md:flex-grow pl-4 pr-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary input-bg">
-                </div>
-                <div id="products-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6"></div>
-            </div>
-        </div>
-
+        <div data-page="main"><div id="main-page-content-wrapper"></div></div>
         <div data-page="chats"><div id="chats-content"></div></div>
         <div data-page="faq"><div id="faq-content"></div></div>
-        <div data-page="purchases"><div id="purchases-content"><p class="text-center">Загрузка ваших покупок...</p></div></div>
-        <div data-page="wishlist"><h1 class="text-4xl font-bold text-center mb-8">Избранное</h1><div id="wishlist-content"></div></div>
+        <div data-page="purchases"><div id="purchases-content"></div></div>
+        <div data-page="wishlist"><div id="wishlist-content"></div></div>
         <div data-page="admin"><div id="admin-content"></div></div>
-        <div data-page="cart"><h1 class="text-4xl font-bold text-center mb-8" data-lang-key="cart_title">Корзина</h1><div id="cart-content"></div></div>
+        <div data-page="cart"><div id="cart-content"></div></div>
         <div data-page="profile"><div id="profile-content"></div></div>
         <div data-page="download"><div id="download-content"></div></div>
     </main>
     
-    <footer id="main-footer" class="container mx-auto px-4 py-6 mt-8 border-t border-custom">
-        <div id="social-links-container" class="flex justify-center items-center gap-6"></div>
-    </footer>
-
-    <div class="text-center text-sm text-gray-500 dark:text-gray-400 py-4">
-        © Asonik Store 2025
-    </div>
-
+    <footer class="container mx-auto px-4 py-6 mt-8 border-t border-custom"><div id="social-links-container" class="flex justify-center items-center gap-6"></div></footer>
+    <div class="text-center text-sm text-gray-500 py-4">© Asonik Store 2025</div>
     <div id="modals-container"></div>
 
     <script type="module">
@@ -162,169 +131,73 @@
         import { getAuth, onAuthStateChanged, GoogleAuthProvider, signInWithPopup, signOut, updateProfile } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
         import { getFirestore, doc, getDoc, setDoc, addDoc, collection, getDocs, onSnapshot, updateDoc, deleteDoc, query, where, serverTimestamp, orderBy, increment, writeBatch, arrayUnion, arrayRemove, enableIndexedDbPersistence } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-        // --- CONFIG ---
-        const firebaseConfig = {
-            apiKey: "AIzaSyDim7T4GqxZK4zM9tBDLkcGTSveVOaUbMY",
-            authDomain: "asonikstore-v3.firebaseapp.com",
-            projectId: "asonikstore-v3",
-            storageBucket: "asonikstore-v3.appspot.com",
-            messagingSenderId: "1018442222532",
-            appId: "1:1018442222532:web:9b78f7be6c5c02bb327291",
-        };
+        const firebaseConfig = { apiKey: "AIzaSyDim7T4GqxZK4zM9tBDLkcGTSveVOaUbMY", authDomain: "asonikstore-v3.firebaseapp.com", projectId: "asonikstore-v3", storageBucket: "asonikstore-v3.appspot.com", messagingSenderId: "1018442222532", appId: "1:1018442222532:web:9b78f7be6c5c02bb327291" };
         const IMGBB_API_KEY = '96bf3f29606f1989bb5a450ad3770cce'; 
         const ADMIN_UID = 'MrjXzJnZYbb6jb65B4f4aYDTVBt2';
         const TELEGRAM_USERNAME = 'asonikofficial';
 
-        // --- INITIALIZATION ---
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
         const db = getFirestore(app);
+        enableIndexedDbPersistence(db).catch(err => console.warn("Persistence disabled", err.code));
 
-        enableIndexedDbPersistence(db)
-            .catch((err) => console.warn("Persistence disabled", err.code));
+        let currentUser = null, isAdmin = false, allProducts = [], paymentMethods = [], userWishlist = [], cart = JSON.parse(localStorage.getItem('asonik_cart')) || [];
+        const appState = { currency: localStorage.getItem('asonik_currency') || 'UZS', lang: localStorage.getItem('asonik_lang') || 'RU', rates: { UZS: 1, RUB: 0.0073, USD: 0.000078 }, balance: 0, balanceHistory: [] };
+        const translations = { RU: { nav_main: 'Главная', nav_chats: 'Чаты', nav_faq: 'FAQ', nav_purchases: 'Мои покупки', nav_download: 'Скачать', catalog_title: 'Каталог товаров', search_placeholder: 'Поиск...', faq_title: 'Часто задаваемые вопросы', purchases_title: 'Мои покупки', cart_title: 'Корзина', profile_title: 'Профиль', buy_button: 'Купить', download_title: 'Скачать приложение', customization_title: 'Кастомизация', logo_title: 'Логотип' }, UZ: { nav_main: 'Asosiy', nav_chats: 'Chatlar', nav_faq: 'FAQ', nav_purchases: 'Xaridlarim', nav_download: 'Yuklab olish', catalog_title: 'Mahsulotlar', search_placeholder: 'Qidirish...', faq_title: 'Ko\'p so\'raladigan savollar', purchases_title: 'Xaridlarim', cart_title: 'Savatcha', profile_title: 'Profil', buy_button: 'Sotib olish', download_title: 'Ilovani yuklab olish', customization_title: 'Moslashtirish', logo_title: 'Do\'kon logotipi' } };
+        
+        const t = key => translations[appState.lang]?.[key] || key;
+        const translatePage = () => { document.querySelectorAll('[data-lang-key]').forEach(el => el.textContent = t(el.dataset.langKey)); document.querySelectorAll('[data-lang-placeholder]').forEach(el => el.placeholder = t(el.dataset.langPlaceholder)); };
 
-        // --- STATE ---
-        let currentUser = null;
-        let isAdmin = false;
-        let allProducts = [];
-        let paymentMethods = [];
-        let userWishlist = [];
-        let cart = JSON.parse(localStorage.getItem('asonik_cart')) || [];
-        const appState = {
-            currency: localStorage.getItem('asonik_currency') || 'UZS',
-            lang: localStorage.getItem('asonik_lang') || 'RU',
-            rates: { UZS: 1, RUB: 0.0073, USD: 0.000078 },
-            balance: 0,
-            balanceHistory: []
-        };
-
-        // --- TRANSLATIONS ---
-        const translations = {
-            RU: {
-                nav_main: 'Главная', nav_chats: 'Чаты', nav_faq: 'FAQ', nav_purchases: 'Мои покупки', nav_download: 'Скачать приложение',
-                catalog_title: 'Каталог товаров', search_placeholder: 'Поиск по названию...',
-                faq_title: 'Часто задаваемые вопросы', purchases_title: 'Мои покупки', cart_title: 'Корзина', profile_title: 'Профиль',
-                buy_button: 'Купить',
-                download_title: 'Скачать приложение',
-                customization_title: 'Кастомизация',
-                logo_title: 'Логотип магазина'
-            },
-            UZ: {
-                nav_main: 'Asosiy', nav_chats: 'Chatlar', nav_faq: 'FAQ', nav_purchases: 'Xaridlarim', nav_download: 'Ilovani yuklab olish',
-                catalog_title: 'Mahsulotlar katalogi', search_placeholder: 'Nomi bo\'yicha qidirish...',
-                faq_title: 'Ko\'p so\'raladigan savollar', purchases_title: 'Mening xaridlarim', cart_title: 'Savatcha', profile_title: 'Profil',
-                buy_button: 'Sotib olish',
-                download_title: 'Ilovani yuklab olish',
-                customization_title: 'Moslashtirish',
-                logo_title: 'Do\'kon logotipi'
-            }
-        };
-        function t(key) { return (translations[appState.lang] && translations[appState.lang][key]) || key; }
-        function translatePage() {
-            document.querySelectorAll('[data-lang-key]').forEach(el => { el.textContent = t(el.dataset.langKey); });
-            document.querySelectorAll('[data-lang-placeholder]').forEach(el => { el.placeholder = t(el.dataset.langPlaceholder); });
-        }
-
-        // --- LIFECYCLE ---
-        document.addEventListener('DOMContentLoaded', () => {
-            initTheme();
-            initSwitchers();
-            setupEventListeners();
-            updateCartCount();
-            
-            onAuthStateChanged(auth, async (user) => {
-                await Promise.all([
-                    loadPaymentMethods(), 
-                    loadStoreSettings(),
-                ]);
-                await initializeAppState(user);
-            });
-        });
+        document.addEventListener('DOMContentLoaded', () => { initTheme(); initSwitchers(); setupEventListeners(); updateCartCount(); onAuthStateChanged(auth, async user => { await Promise.all([loadPaymentMethods(), loadStoreSettings()]); await initializeAppState(user); }); });
 
         async function initializeAppState(user) {
             currentUser = user;
-            isAdmin = user ? user.uid === ADMIN_UID : false;
+            isAdmin = user?.uid === ADMIN_UID;
             const balanceBtn = document.getElementById('balance-btn');
-
             if (user) {
                 const userRef = doc(db, "users", user.uid);
-                onSnapshot(userRef, (docSnap) => {
-                    if (docSnap.exists()) {
-                        const data = docSnap.data();
-                        appState.balance = data.balance || 0;
-                        appState.balanceHistory = (data.balanceHistory || []).sort((a, b) => new Date(b.date) - new Date(a.date));
-                        updateBalanceDisplay();
-                    }
-                });
-
+                onSnapshot(userRef, docSnap => { if (docSnap.exists()) { const data = docSnap.data(); appState.balance = data.balance || 0; appState.balanceHistory = (data.balanceHistory || []).sort((a,b) => new Date(b.date) - new Date(a.date)); updateBalanceDisplay(); }});
                 await setDoc(userRef, { displayName: user.displayName, email: user.email, photoURL: user.photoURL, lastSeen: serverTimestamp() }, { merge: true });
                 setupNotificationsListener();
                 setupWishlistListener();
-                if(balanceBtn) balanceBtn.classList.remove('hidden');
-
+                balanceBtn?.classList.remove('hidden');
+                balanceBtn?.classList.add('flex');
             } else {
-                 document.getElementById('notifications-container').innerHTML = '';
-                 userWishlist = [];
-                 appState.balance = 0;
-                 appState.balanceHistory = [];
-                 if(balanceBtn) balanceBtn.classList.add('hidden');
+                document.getElementById('notifications-container').innerHTML = '';
+                userWishlist = [];
+                appState.balance = 0;
+                balanceBtn?.classList.add('hidden');
+                balanceBtn?.classList.remove('flex');
             }
             updateAuthUI();
             handleRouting();
         }
 
+        const formatPrice = (price, currency = appState.currency) => new Intl.NumberFormat('ru-RU', { style: 'currency', currency, minimumFractionDigits: 0 }).format(price * (appState.rates[currency] || 1));
+        const generateCode = () => 'A' + Math.random().toString(36).substring(2, 9).toUpperCase();
+        const showToast = (message, isError = false) => { const el = document.createElement('div'); el.className = `fixed bottom-5 right-5 text-white py-2 px-4 rounded-lg shadow-lg z-50 ${isError ? 'bg-red-500' : 'bg-green-500'}`; el.textContent = message; document.body.appendChild(el); setTimeout(() => el.remove(), 3000); };
+        const showModal = (title, content, onSave, btnText = 'Подтвердить') => { const modal = document.createElement('div'); modal.className = 'fixed inset-0 z-50 flex items-center justify-center modal-backdrop'; modal.innerHTML = `<div class="card-bg rounded-lg shadow-xl w-11/12 md:w-2/3 lg:w-1/2 p-6 max-h-[90vh] overflow-y-auto"><div class="flex justify-between items-center mb-4"><h2 class="text-2xl font-bold">${title}</h2><button class="close-modal-btn text-2xl">&times;</button></div><div>${content}</div>${onSave ? `<div class="mt-6 flex justify-end gap-4"><button class="close-modal-btn px-6 py-2 rounded-lg">Отмена</button><button class="save-modal-btn bg-primary text-white px-6 py-2 rounded-lg">${btnText}</button></div>` : ''}</div>`; document.getElementById('modals-container').appendChild(modal); modal.querySelectorAll('.close-modal-btn').forEach(b => b.onclick = () => modal.remove()); if (onSave) modal.querySelector('.save-modal-btn').onclick = async () => { if (await onSave(modal) !== false) modal.remove(); }; return modal; };
+        const confirmAction = (msg, onConfirm) => showModal('Подтвердите', `<p>${msg}</p>`, () => onConfirm(), 'Да, уверен');
 
-        // --- UTILS ---
-        function formatPrice(price, currency = appState.currency) {
-            const convertedPrice = price * (appState.rates[currency] || 1);
-            return new Intl.NumberFormat('ru-RU', { style: 'currency', currency: currency, minimumFractionDigits: 0 }).format(convertedPrice);
-        }
-        function generateUniqueCode() { return 'A' + Math.random().toString(36).substring(2, 9).toUpperCase(); }
-        function showToast(message, isError = false) { const toast = document.createElement('div'); toast.className = `fixed bottom-5 right-5 text-white py-2 px-4 rounded-lg shadow-lg z-50 ${isError ? 'bg-red-500' : 'bg-green-500'}`; toast.textContent = message; document.body.appendChild(toast); setTimeout(() => toast.remove(), 3000); }
-        function showModal(title, content, onSave, saveButtonText = 'Подтвердить') { const modalId = `modal-${Date.now()}`; const modal = document.createElement('div'); modal.id = modalId; modal.className = 'fixed inset-0 z-50 flex items-center justify-center modal-backdrop'; modal.innerHTML = `<div class="card-bg rounded-lg shadow-xl w-11/12 md:w-2/3 lg:w-1/2 p-6 max-h-[90vh] overflow-y-auto"><div class="flex justify-between items-center mb-4"><h2 class="text-2xl font-bold">${title}</h2><button class="close-modal-btn text-2xl">&times;</button></div><div>${content}</div>${onSave ? `<div class="mt-6 flex justify-end gap-4"><button class="close-modal-btn px-6 py-2 rounded-lg">Отмена</button><button class="save-modal-btn bg-primary text-white px-6 py-2 rounded-lg">${saveButtonText}</button></div>` : ''}</div>`; document.getElementById('modals-container').appendChild(modal); modal.querySelectorAll('.close-modal-btn').forEach(btn => btn.onclick = () => modal.remove()); if (onSave) { const saveBtn = modal.querySelector('.save-modal-btn'); saveBtn.onclick = async () => { const shouldClose = await onSave(modal); if (shouldClose !== false) modal.remove(); }; } return modal; }
-        const confirmAction = (message, onConfirm) => showModal('Подтвердите действие', `<p>${message}</p>`, () => { onConfirm(); return true; }, 'Да, уверен');
+        async function loadStoreSettings() { try { const settingsDoc = await getDoc(doc(db, "storeSettings", "config")); if (settingsDoc.exists()) { const { logoUrl, socialLinks, appDownload } = settingsDoc.data(); const logoEl = document.getElementById('store-logo'); if (logoUrl) { logoEl.src = logoUrl; logoEl.classList.remove('hidden'); } else { logoEl.classList.add('hidden'); } renderSocialLinks(socialLinks); appState.appDownload = appDownload || {}; } } catch (e) { console.error("Error loading store settings:", e); } }
+        const loadPaymentMethods = () => new Promise(res => onSnapshot(query(collection(db, "paymentMethods"), orderBy("order", "asc")), s => { paymentMethods = s.docs.map(d => ({ id: d.id, ...d.data() })); res(); }, e => { console.error(e); res(); }));
+        const renderSocialLinks = (links) => { const cont = document.getElementById('social-links-container'); if (!cont || !links?.length) { if(cont) cont.innerHTML = ''; return; } cont.innerHTML = links.map(l => `<a href="${l.url}" target="_blank" class="text-gray-500 hover:text-primary"><img src="${l.imageUrl}" alt="${l.name}" class="w-6 h-6 object-contain"></a>`).join(''); };
 
-
-        // --- DATA FETCHING ---
-        async function loadStoreSettings() {
-            try {
-                const settingsDoc = await getDoc(doc(db, "storeSettings", "config"));
-                if (settingsDoc.exists()) {
-                    const { logoUrl, socialLinks, appDownload } = settingsDoc.data();
-                    const logoEl = document.getElementById('store-logo');
-                    if (logoUrl) { logoEl.src = logoUrl; logoEl.classList.remove('hidden'); }
-                    else { logoEl.classList.add('hidden'); }
-                    renderSocialLinks(socialLinks);
-                    appState.appDownload = appDownload || {};
-                }
-            } catch (error) { console.error("Could not load store settings:", error); }
-        }
-        function loadPaymentMethods() { return new Promise(resolve => { const q = query(collection(db, "paymentMethods"), orderBy("order", "asc")); onSnapshot(q, (snapshot) => { paymentMethods = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })); resolve(); }, (error) => { console.error("Error loading payment methods", error); resolve(); }); }); }
-        async function loadAdvertisements() { const container = document.getElementById('ads-container'); if (!container) return; const q = query(collection(db, "advertisements"), where("isActive", "==", true)); const snapshot = await getDocs(q); if(snapshot.empty) { container.innerHTML = ''; return; } const ad = snapshot.docs[0].data(); container.innerHTML = `<div class="mb-8"><a href="${ad.link}" target="_blank" class="block w-full ad-banner-container"><img src="${ad.imageUrl}" alt="Реклама" class="w-full h-auto max-h-48 object-cover rounded-lg shadow-md" onerror="this.onerror=null; this.style.display='none';"></a></div>`; }
-        function renderSocialLinks(links) {
-            const container = document.getElementById('social-links-container');
-            if (!container || !links || links.length === 0) { if(container) container.innerHTML = ''; return; }
-            const defaultIconMap = { telegram: `<svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24"><path d="M9.78 18.65l.28-4.23 7.68-6.92c.34-.31-.07-.46-.52-.19L7.74 13.3 3.64 12c-.88-.25-.89-.86.2-1.3l15.97-6.16c.73-.33 1.43.18 1.15 1.3l-2.72 12.57c-.28 1.13-1.04 1.4-1.74 1.02l-4.84-3.56-2.31 2.24c-.25.24-.45.44-.8.44z"/></svg>`, default: `<svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"></path></svg>` };
-            container.innerHTML = links.map(link => `<a href="${link.url}" target="_blank" class="text-gray-500 hover:text-primary dark:text-gray-400" title="${link.name}">${link.imageUrl ? `<img src="${link.imageUrl}" alt="${link.name}" class="w-6 h-6 object-contain">` : (defaultIconMap[link.name.toLowerCase()] || defaultIconMap.default)}</a>`).join('');
-        }
-
-        // --- ROUTING ---
         function handleRouting() {
             const hash = window.location.hash || '#main';
             let [page, subpage] = (hash.substring(1) || 'main').split('/');
             document.querySelectorAll('[data-page]').forEach(p => p.classList.remove('active'));
             const activePage = document.querySelector(`[data-page="${page}"]`);
-            if (activePage) { activePage.classList.add('active'); loadPageContent(page, subpage); }
-            else { document.querySelector(`[data-page="main"]`).classList.add('active'); loadPageContent('main'); }
+            if (activePage) { activePage.classList.add('active'); loadPageContent(page, subpage); } else { document.querySelector(`[data-page="main"]`).classList.add('active'); loadPageContent('main'); }
             translatePage();
         }
-        async function loadPageContent(page, subpage) { 
+        function loadPageContent(page, subpage) {
             const protectedPages = ['purchases', 'chats', 'profile', 'admin', 'wishlist'];
-            if (protectedPages.includes(page) && !currentUser) { const contentEl = document.querySelector(`[data-page="${page}"] > div`); if (contentEl) { const title = t(page+'_title') || ''; contentEl.innerHTML = `<h1 class="text-4xl font-bold text-center mb-8">${title}</h1><p class="text-center">Пожалуйста, <a href="#" id="login-redirect" class="text-primary underline">войдите</a>, чтобы просмотреть эту страницу.</p>`; } return; }
+            if (protectedPages.includes(page) && !currentUser) { const el = document.querySelector(`[data-page="${page}"] > div`); if (el) el.innerHTML = `<h1 class="text-4xl font-bold text-center">${t(page+'_title')}</h1><p class="text-center">Пожалуйста, <a href="#" id="login-redirect" class="text-primary underline">войдите</a>.</p>`; return; }
             switch(page) {
-                case 'main': await loadMainPage(); break; 
+                case 'main': loadMainPage(); break; 
                 case 'faq': loadFaq(); break;
-                case 'admin': await loadAdminPanel(subpage || 'products'); break; 
+                case 'admin': loadAdminPanel(subpage || 'products'); break; 
                 case 'cart': renderCartPage(); break;
                 case 'chats': loadChatsPage(subpage); break;
                 case 'purchases': loadPurchasesPage(); break;
@@ -333,375 +206,150 @@
                 case 'download': loadDownloadPage(); break;
             }
         }
-
-        // --- PAGE LOADERS ---
-        async function loadMainPage() { await loadAdvertisements(); loadProducts(); }
-        function loadProducts() { onSnapshot(query(collection(db, "products")), (snapshot) => { allProducts = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })); applyFiltersAndSort(); }); }
-        function applyFiltersAndSort() { let filtered = [...allProducts]; const searchTerm = document.getElementById('search-input').value.toLowerCase(); if (searchTerm) filtered = filtered.filter(p => p.name.toLowerCase().includes(searchTerm)); filtered.sort((a, b) => (b.createdAt?.toMillis() || 0) - (a.createdAt?.toMillis() || 0)); const productsGrid = document.getElementById('products-grid'); if (!productsGrid) return; productsGrid.innerHTML = ''; if (filtered.length === 0) { productsGrid.innerHTML = `<p class="col-span-full text-center">Товары не найдены.</p>`; return; } filtered.forEach(product => productsGrid.appendChild(renderProductCard(product))); translatePage(); }
         
-        function renderProductCard(product) {
-            const card = document.createElement('div');
-            card.className = "card-bg product-card rounded-lg shadow-lg flex flex-col justify-between border border-custom overflow-hidden";
-            card.dataset.productId = product.id;
-            const isWishlisted = userWishlist.includes(product.id);
-            const privateSellerBadge = product.isPrivateSeller ? `<div class="absolute top-2 right-12 bg-yellow-500 text-white w-8 h-8 rounded-full flex items-center justify-center cursor-help" title="Товар от частного лица"><svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clip-rule="evenodd" /></svg></div>` : '';
-
-            card.innerHTML = `
+        const loadMainPage = () => { const el = document.getElementById('main-page-content-wrapper'); el.innerHTML = `<div id="ads-container"></div><h1 class="text-4xl font-bold text-center mb-8" data-lang-key="catalog_title"></h1><div class="mb-8 p-4 card-bg rounded-lg shadow-md flex items-center border border-custom"><input id="search-input" type="text" data-lang-placeholder="search_placeholder" class="w-full pl-4 pr-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary input-bg"></div><div id="products-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6"></div>`; const searchInput = document.getElementById('search-input'); if(searchInput) searchInput.addEventListener('input', applyFiltersAndSort); loadProducts(); };
+        const loadProducts = () => onSnapshot(query(collection(db, "products")), s => { allProducts = s.docs.map(d => ({ id: d.id, ...d.data() })); applyFiltersAndSort(); });
+        const applyFiltersAndSort = () => { let filtered = [...allProducts]; const term = document.getElementById('search-input')?.value.toLowerCase(); if (term) filtered = filtered.filter(p => p.name.toLowerCase().includes(term)); filtered.sort((a,b) => (b.createdAt?.toMillis()||0) - (a.createdAt?.toMillis()||0)); const grid = document.getElementById('products-grid'); if (!grid) return; grid.innerHTML = filtered.length ? filtered.map(p => renderProductCard(p)).join('') : `<p class="col-span-full text-center">Товары не найдены.</p>`; translatePage(); };
+        
+        const renderProductCard = (p) => {
+            const privateBadge = p.isPrivateSeller ? `<div class="absolute top-2 right-12 bg-yellow-500 text-white w-8 h-8 rounded-full flex items-center justify-center cursor-help" title="Частное лицо"><svg class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clip-rule="evenodd" /></svg></div>` : '';
+            return `<div class="card-bg product-card rounded-lg shadow-lg flex flex-col justify-between border border-custom overflow-hidden" data-product-id="${p.id}">
                 <div class="relative">
-                    <img src="${product.imageUrl || 'https://placehold.co/600x400/673ab7/ffffff?text=No+Image'}" onerror="this.onerror=null; this.src='https://placehold.co/600x400/673ab7/ffffff?text=${encodeURIComponent(product.name)}';" class="w-full h-48 object-cover">
-                    <div class="absolute top-2 right-2">
-                        <button class="wishlist-btn p-2 rounded-full ${isWishlisted ? 'bg-red-500/80 text-white' : 'bg-black/30 text-white'}" data-product-id="${product.id}">
-                             <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M3.172 5.172a4 4 0 015.656 0L10 6.343l1.172-1.171a4 4 0 115.656 5.656L10 17.657l-6.828-6.829a4 4 0 010-5.656z" clip-rule="evenodd"></path></svg>
-                        </button>
-                    </div>
-                    ${privateSellerBadge}
+                    <img src="${p.imageUrl || 'https://placehold.co/600x400/673ab7/ffffff?text=No+Image'}" class="w-full h-48 object-cover">
+                    <div class="absolute top-2 right-2"><button class="wishlist-btn p-2 rounded-full ${userWishlist.includes(p.id) ? 'bg-red-500/80' : 'bg-black/30'} text-white" data-product-id="${p.id}"><svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M3.172 5.172a4 4 0 015.656 0L10 6.343l1.172-1.171a4 4 0 115.656 5.656L10 17.657l-6.828-6.829a4 4 0 010-5.656z" clip-rule="evenodd"></path></svg></button></div>
+                    ${privateBadge}
                 </div>
-                <div class="p-4 flex-grow">
-                    <h3 class="text-lg font-semibold truncate">${product.name}</h3>
-                    <p class="text-gray-600 dark:text-gray-400 mt-1 text-sm h-10 overflow-hidden">${product.description}</p>
-                    <p class="text-2xl font-bold text-primary mt-2">${formatPrice(product.price || 0)}</p>
-                </div>
-                <div class="p-4 pt-2 border-t border-custom flex items-center gap-2">
-                    <button class="add-to-cart-btn p-2 rounded-md hover:bg-gray-100 dark:hover:bg-gray-700" data-product-id='${product.id}' title="В корзину"><svg class="w-6 h-6 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"></path></svg></button>
-                    <button class="buy-now-btn flex-grow bg-primary text-white py-2 px-4 rounded-lg hover:bg-primary-hover font-semibold" data-product-id="${product.id}" data-lang-key="buy_button">Купить</button>
-                </div>`;
-            return card;
-        }
+                <div class="p-4 flex-grow"><h3 class="text-lg font-semibold truncate">${p.name}</h3><p class="text-gray-600 dark:text-gray-400 mt-1 text-sm h-10 overflow-hidden">${p.description}</p><p class="text-2xl font-bold text-primary mt-2">${formatPrice(p.price || 0)}</p></div>
+                <div class="p-4 pt-2 border-t border-custom flex items-center gap-2"><button class="add-to-cart-btn p-2 rounded-md hover:bg-gray-100 dark:hover:bg-gray-700" data-product-id="${p.id}" title="В корзину"><svg class="w-6 h-6 pointer-events-none" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"></path></svg></button><button class="buy-now-btn flex-grow bg-primary text-white py-2 px-4 rounded-lg hover:bg-primary-hover font-semibold" data-product-id="${p.id}" data-lang-key="buy_button"></button></div>
+            </div>`;
+        };
 
-        function loadFaq() {
-            const contentEl = document.getElementById('faq-content'); if(!contentEl) return;
-            contentEl.innerHTML = `<div class="max-w-4xl mx-auto"><h1 class="text-4xl font-bold text-center mb-12" data-lang-key="faq_title">Часто задаваемые вопросы</h1><div id="faq-list" class="space-y-4"></div></div>`;
-            const listEl = document.getElementById('faq-list');
-            onSnapshot(collection(db, "faq"), (snapshot) => { if(!listEl) return; listEl.innerHTML = ''; snapshot.forEach(doc => { const item = doc.data(); const faqItem = document.createElement('div'); faqItem.className = 'card-bg rounded-lg shadow overflow-hidden border border-custom'; faqItem.innerHTML = `<button class="faq-question w-full text-left p-6 font-bold flex justify-between items-center text-lg"><span>${item.question}</span><span class="text-primary text-2xl">+</span></button><div class="faq-answer"><div class="overflow-hidden"><p class="p-6 pt-0 text-gray-600 dark:text-gray-300">${item.answer}</p></div></div>`; listEl.appendChild(faqItem); }); });
-        }
-        
-        function loadProfilePage() { const contentEl = document.getElementById('profile-content'); if (!contentEl || !currentUser) return; contentEl.innerHTML = `<h1 class="text-4xl font-bold text-center mb-8" data-lang-key="profile_title">Профиль</h1><div class="max-w-3xl mx-auto card-bg p-8 rounded-2xl shadow-lg border border-custom"><div class="flex flex-col md:flex-row items-center md:items-start gap-8"><div class="flex flex-col items-center"><img id="profile-avatar" src="${currentUser.photoURL || 'https://placehold.co/128x128'}" alt="avatar" class="w-32 h-32 rounded-full mb-4 object-cover border-4 border-primary/50" onerror="this.onerror=null; this.src='https://placehold.co/128x128/9575cd/ffffff?text=User';"><input type="file" id="avatar-upload" class="hidden" accept="image/*"><button id="change-avatar-btn" class="text-sm text-primary hover:underline">Сменить аватар</button></div><div class="flex-grow w-full"><h2 class="text-3xl font-bold mb-6">${currentUser.displayName || 'Пользователь'}</h2><div class="space-y-4"><div class="flex items-center gap-3"><input id="profile-name" class="w-full p-2 border-b-2 border-custom bg-transparent focus:outline-none focus:border-primary" value="${currentUser.displayName || ''}"></div><div class="flex items-center gap-3"><input class="w-full p-2 border-b-2 border-custom bg-transparent" value="${currentUser.email}" disabled></div></div><div class="mt-8 flex gap-4"><button id="save-profile-btn" class="flex-grow bg-primary text-white px-6 py-3 rounded-lg hover:bg-primary-hover font-semibold">Сохранить</button><button id="logout-btn-profile" class="flex-grow bg-red-500 text-white px-6 py-3 rounded-lg hover:bg-red-600 font-semibold">Выйти</button></div></div></div></div>`; }
-        
-        function loadDownloadPage() { const contentEl = document.getElementById('download-content'); if(!contentEl) return; const appData = appState.appDownload || {}; contentEl.innerHTML = `<div class="max-w-xl mx-auto card-bg p-8 rounded-lg shadow-lg text-center"><h1 class="text-4xl font-bold mb-4" data-lang-key="download_title">${t('download_title')}</h1><p class="text-gray-600 dark:text-gray-400 mb-6">${appData.description || 'Настройте описание в админ-панели.'}</p><div class="flex flex-col gap-4">${appData.exeLink ? `<a href="${appData.exeLink}" class="w-full px-6 py-3 bg-primary text-white rounded-md hover:bg-primary-hover font-semibold">Скачать для Windows (.exe)</a>` : ''}${appData.apkLink ? `<a href="${appData.apkLink}" class="w-full px-6 py-3 bg-primary text-white rounded-md hover:bg-primary-hover font-semibold">Скачать для Android (.apk)</a>` : ''}${!appData.exeLink && !appData.apkLink ? `<p class="text-red-500">Ссылки не настроены.</p>` : ''}</div></div>`; translatePage(); }
+        const loadFaq = () => { const cont = document.getElementById('faq-content'); if(!cont) return; cont.innerHTML = `<div class="max-w-4xl mx-auto"><h1 class="text-4xl font-bold text-center mb-12" data-lang-key="faq_title"></h1><div id="faq-list" class="space-y-4"></div></div>`; const list = document.getElementById('faq-list'); onSnapshot(collection(db, "faq"), s => { list.innerHTML = s.docs.map(d => { const i = d.data(); return `<div class="card-bg rounded-lg shadow border border-custom"><button class="faq-question w-full text-left p-6 font-bold flex justify-between items-center text-lg"><span>${i.question}</span><span class="text-primary text-2xl">+</span></button><div class="faq-answer"><p class="p-6 pt-0">${i.answer}</p></div></div>` }).join(''); }); };
+        const loadProfilePage = () => { const el = document.getElementById('profile-content'); if (!el || !currentUser) return; el.innerHTML = `<h1 class="text-4xl font-bold text-center mb-8" data-lang-key="profile_title"></h1><div class="max-w-3xl mx-auto card-bg p-8 rounded-2xl shadow-lg"><div class="flex flex-col md:flex-row items-center gap-8"><div class="flex flex-col items-center"><img id="profile-avatar" src="${currentUser.photoURL || 'https://placehold.co/128x128'}" class="w-32 h-32 rounded-full mb-4 object-cover"><input type="file" id="avatar-upload" class="hidden" accept="image/*"><button id="change-avatar-btn" class="text-sm text-primary hover:underline">Сменить</button></div><div class="flex-grow w-full"><h2 class="text-3xl font-bold">${currentUser.displayName}</h2><input id="profile-name" class="w-full p-2 border-b-2 bg-transparent focus:outline-none focus:border-primary" value="${currentUser.displayName || ''}"><div class="mt-8 flex gap-4"><button id="save-profile-btn" class="flex-grow bg-primary text-white px-6 py-3 rounded-lg">Сохранить</button><button id="logout-btn-profile" class="flex-grow bg-red-500 text-white px-6 py-3 rounded-lg">Выйти</button></div></div></div></div>`; };
+        const loadDownloadPage = () => { const el = document.getElementById('download-content'); const data = appState.appDownload || {}; el.innerHTML = `<div class="max-w-xl mx-auto card-bg p-8 rounded-lg text-center"><h1 class="text-4xl font-bold mb-4" data-lang-key="download_title"></h1><p class="mb-6">${data.description || 'Ссылки не настроены'}</p><div class="flex flex-col gap-4">${data.exeLink ? `<a href="${data.exeLink}" class="w-full px-6 py-3 bg-primary text-white rounded-md">Windows (.exe)</a>` : ''}${data.apkLink ? `<a href="${data.apkLink}" class="w-full px-6 py-3 bg-primary text-white rounded-md">Android (.apk)</a>` : ''}</div></div>`; translatePage(); };
+        const loadChatsPage = (subpage) => { const el = document.getElementById('chats-content'); if (!el || !currentUser) return; if(isAdmin) { loadAdminChatsList(subpage); return; } el.innerHTML = `<h1 class="text-4xl font-bold text-center mb-8" data-lang-key="nav_chats"></h1><div class="text-center max-w-lg mx-auto card-bg p-8 rounded-lg shadow-lg"><button id="start-chat-btn" class="w-full px-6 py-3 bg-primary text-white rounded-md">Связаться с нами</button></div>`; };
+        const loadWishlistPage = () => { const el = document.getElementById('wishlist-content'); const prods = allProducts.filter(p => userWishlist.includes(p.id)); el.innerHTML = `<h1 class="text-4xl font-bold text-center mb-8">Избранное</h1>` + (prods.length ? `<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">${prods.map(p => renderProductCard(p)).join('')}</div>` : '<p class="text-center">Пусто.</p>'); };
 
-        // --- CHAT SYSTEM ---
-        function loadChatsPage(activeChatUserId) {
-             const contentEl = document.getElementById('chats-content'); if (!contentEl || !currentUser) return;
-             if(isAdmin) { loadAdminChatsList(activeChatUserId); return; }
-             contentEl.innerHTML = `<h1 class="text-4xl font-bold text-center mb-8" data-lang-key="nav_chats">Чаты</h1><div class="text-center max-w-lg mx-auto card-bg p-8 rounded-lg shadow-lg"><h2 class="text-2xl font-bold mb-4">Поддержка</h2><p class="mb-6 text-gray-400">Если есть вопросы, нажмите кнопку ниже, чтобы начать чат с администрацией.</p><button id="start-chat-btn" class="w-full px-6 py-3 bg-primary text-white rounded-md hover:bg-primary-hover font-semibold">Связаться с администрацией</button></div>`;
-        }
-        async function openUserChat() {
-            const chatId = `${currentUser.uid}_${ADMIN_UID}`;
-            await setDoc(doc(db, "userChats", currentUser.uid), { lastActivity: serverTimestamp(), partnerId: ADMIN_UID, partnerName: "Администрация" }, { merge: true });
-            await setDoc(doc(db, "userChats", ADMIN_UID), { lastActivity: serverTimestamp(), partnerId: currentUser.uid, partnerName: currentUser.displayName || "User" }, { merge: true });
-            renderChatInterface(document.getElementById('chats-content'), chatId, "Чат с администрацией", currentUser.uid);
-        }
-        function renderChatInterface(container, chatId, title, currentUserId) {
-            container.innerHTML = `<div class="max-w-4xl mx-auto card-bg border border-custom rounded-lg shadow"><div class="p-4 font-bold border-b border-custom">${title}</div><div id="messages-container" class="p-4 h-96 overflow-y-auto flex flex-col space-y-4"></div><div class="p-4 border-t border-custom flex gap-2"><input id="chat-message-input" class="flex-grow p-2 border rounded input-bg focus:outline-none focus:ring-2 focus:ring-primary" placeholder="Сообщение..."><button id="send-chat-message" data-chat-id="${chatId}" data-sender-id="${currentUserId}" class="bg-primary text-white px-6 py-2 rounded-lg">Отправить</button></div></div>`;
-            const messagesContainer = document.getElementById('messages-container');
-            const q = query(collection(db, `chats/${chatId}/messages`), orderBy("createdAt", "asc"));
-            onSnapshot(q, snapshot => { if (!messagesContainer) return; messagesContainer.innerHTML = ''; snapshot.forEach(doc => { const msg = doc.data(); const isMe = msg.senderId === currentUserId; const messageEl = document.createElement('div'); messageEl.className = `flex items-end gap-2 ${isMe ? 'flex-row-reverse' : ''}`; messageEl.innerHTML = `<div class="px-4 py-2 rounded-lg max-w-sm ${isMe ? 'bg-primary text-white' : 'bg-gray-200 dark:bg-gray-700'}"><p>${msg.text}</p></div>`; messagesContainer.appendChild(messageEl); }); messagesContainer.scrollTop = messagesContainer.scrollHeight; });
-        }
-        async function sendChatMessage(chatId, senderId, text) { if (!text || !senderId) return; const [user1, user2] = chatId.split('_'); await updateDoc(doc(db, 'userChats', user1), { lastActivity: serverTimestamp() }); await updateDoc(doc(db, 'userChats', user2), { lastActivity: serverTimestamp() }); await addDoc(collection(db, `chats/${chatId}/messages`), { text, senderId, createdAt: serverTimestamp() }); }
-
-        // --- CART & PURCHASES ---
-        function addToCart(productId) { const product = allProducts.find(p => p.id === productId); if(product) { const cartItem = { id: product.id, name: product.name, price: product.price, imageUrl: product.imageUrl }; cart.push(cartItem); localStorage.setItem('asonik_cart', JSON.stringify(cart)); updateCartCount(); showToast('Добавлено в корзину'); } }
-        function updateCartCount() { const countEl = document.getElementById('cart-count'); if (!countEl) return; if (cart.length > 0) { countEl.textContent = cart.length; countEl.classList.remove('hidden'); } else { countEl.classList.add('hidden'); } }
-        function renderCartPage() { const contentEl = document.getElementById('cart-content'); if (cart.length === 0) { contentEl.innerHTML = '<p class="text-center">Ваша корзина пуста.</p>'; return; } let total = cart.reduce((sum, item) => sum + (item.price || 0), 0); contentEl.innerHTML = `<div class="space-y-4">${cart.map((item, index) => `<div class="card-bg p-4 rounded-lg shadow flex justify-between items-center"><div class="flex items-center gap-4"><img src="${item.imageUrl || 'https://placehold.co/64x64'}" class="w-16 h-16 rounded-md object-cover"><p class="font-bold">${item.name}</p></div><div class="flex items-center gap-4"><span class="font-bold">${formatPrice(item.price || 0)}</span><button class="remove-from-cart-btn text-red-500 text-2xl" data-index="${index}">&times;</button></div></div>`).join('')}</div><div class="mt-6 pt-4 border-t border-custom flex justify-end items-center gap-4"><span class="text-2xl font-bold">Итого: ${formatPrice(total)}</span><button id="checkout-cart-btn" class="px-8 py-3 bg-primary text-white rounded-lg hover:bg-primary-hover font-semibold">Оформить</button></div>`; }
+        const openUserChat = async () => { const chatId = `${currentUser.uid}_${ADMIN_UID}`; await setDoc(doc(db, "userChats", currentUser.uid), { partnerId: ADMIN_UID, partnerName: "Администрация", lastActivity: serverTimestamp() }, { merge: true }); renderChatInterface(document.getElementById('chats-content'), chatId, "Чат с администрацией", currentUser.uid); };
+        const renderChatInterface = (cont, chatId, title, currentId) => { cont.innerHTML = `<div class="max-w-4xl mx-auto card-bg border rounded-lg"><div class="p-4 font-bold border-b">${title}</div><div id="messages-container" class="p-4 h-96 overflow-y-auto flex flex-col space-y-4"></div><div class="p-4 border-t flex gap-2"><input id="chat-message-input" class="flex-grow p-2 border rounded input-bg"><button id="send-chat-message" data-chat-id="${chatId}" data-sender-id="${currentId}" class="bg-primary text-white px-6 rounded-lg">Отправить</button></div></div>`; const msgCont = document.getElementById('messages-container'); onSnapshot(query(collection(db, `chats/${chatId}/messages`), orderBy("createdAt", "asc")), s => { msgCont.innerHTML = s.docs.map(d => `<div class="flex items-end gap-2 ${d.data().senderId === currentId ? 'flex-row-reverse' : ''}"><div class="px-4 py-2 rounded-lg ${d.data().senderId === currentId ? 'bg-primary text-white' : 'bg-gray-200 dark:bg-gray-700'}">${d.data().text}</div></div>`).join(''); msgCont.scrollTop = msgCont.scrollHeight; }); };
+        const sendChatMessage = async (chatId, senderId, text) => { if (!text) return; const [u1, u2] = chatId.split('_'); await updateDoc(doc(db, 'userChats', u1), { lastActivity: serverTimestamp() }); await updateDoc(doc(db, 'userChats', u2), { lastActivity: serverTimestamp() }); await addDoc(collection(db, `chats/${chatId}/messages`), { text, senderId, createdAt: serverTimestamp() }); };
         
-        async function loadPurchasesPage() {
-            const contentEl = document.getElementById('purchases-content'); if (!currentUser) return;
-            contentEl.innerHTML = `<h1 class="text-4xl font-bold text-center mb-8" data-lang-key="purchases_title">Мои покупки</h1><div id="purchases-list" class="space-y-6"></div>`;
-            const listEl = document.getElementById('purchases-list');
-            const q = query(collection(db, "purchases"), where("userId", "==", currentUser.uid), orderBy("createdAt", "desc"));
-            onSnapshot(q, (snapshot) => {
-                if (snapshot.empty) { listEl.innerHTML = '<div class="text-center card-bg p-8 rounded-lg shadow-md"><p>Покупок нет.</p></div>'; return; }
-                listEl.innerHTML = '';
-                snapshot.forEach(doc => {
-                    const p = doc.data(); const item = document.createElement('div');
-                    item.className = 'card-bg p-4 sm:p-6 rounded-lg shadow-md border border-custom flex flex-col sm:flex-row gap-6';
-                    let statusColor, statusText;
-                    switch(p.status) {
-                        case 'Выполнен': statusColor = 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200'; statusText = 'Выполнен'; break;
-                        case 'Отклонен': statusColor = 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200'; statusText = p.status; break;
-                        default: statusColor = 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200'; statusText = p.status;
-                    }
-                    const productImageUrl = p.items && p.items[0] ? p.items[0].imageUrl : 'https://placehold.co/128x128';
-                    const actionButton = p.status === 'Выполнен' ? `<button class="contact-seller-btn w-full px-4 py-2 font-semibold bg-primary text-white rounded-md hover:bg-primary-hover" data-code="${p.orderId}">Получить товар</button>` : '';
-                    item.innerHTML = `<div class="w-full sm:w-32 h-32 sm:h-auto flex-shrink-0"><img src="${productImageUrl}" class="w-full h-full object-cover rounded-md"></div><div class="flex-grow"><div class="flex justify-between items-start mb-2"><h3 class="text-xl font-bold">${p.productName}</h3><span class="text-xs font-bold px-2 py-1 rounded-full ${statusColor}">${statusText}</span></div><div class="text-sm text-gray-600 dark:text-gray-400 space-y-2"><p><strong>Дата:</strong> ${new Date(p.createdAt.seconds * 1000).toLocaleString()}</p><p><strong>Код:</strong> <span class="font-mono bg-gray-200 dark:bg-gray-700 px-2 py-1 rounded">${p.orderId}</span></p><p><strong>Оплата:</strong> ${p.paymentMethod}</p>${p.rejectionReason ? `<p class="text-red-500"><strong>Причина:</strong> ${p.rejectionReason}</p>` : ''}</div></div><div class="flex flex-col justify-center items-center gap-2 sm:w-40 flex-shrink-0 border-t sm:border-t-0 sm:border-l border-custom pt-4 sm:pt-0 sm:pl-6 mt-4 sm:mt-0">${actionButton}</div>`;
-                    listEl.appendChild(item);
-                });
-            });
-        }
-        
-        function loadWishlistPage() { const contentEl = document.getElementById('wishlist-content'); if(!contentEl) return; const wishlistProducts = allProducts.filter(p => userWishlist.includes(p.id)); if (wishlistProducts.length === 0) { contentEl.innerHTML = '<p class="text-center">Список желаний пуст.</p>'; return; } contentEl.innerHTML = '<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6"></div>'; const grid = contentEl.querySelector('div'); wishlistProducts.forEach(product => grid.appendChild(renderProductCard(product))); }
+        const addToCart = pId => { const p = allProducts.find(p => p.id === pId); if(p) { cart.push({ id: p.id, name: p.name, price: p.price, imageUrl: p.imageUrl }); localStorage.setItem('asonik_cart', JSON.stringify(cart)); updateCartCount(); showToast('В корзине'); } };
+        const updateCartCount = () => { const el = document.getElementById('cart-count'); if (!el) return; el.textContent = cart.length; el.classList.toggle('hidden', cart.length === 0); };
+        const renderCartPage = () => { const el = document.getElementById('cart-content'); el.innerHTML = `<h1 class="text-4xl font-bold text-center mb-8" data-lang-key="cart_title"></h1>`; if (cart.length === 0) { el.innerHTML += '<p class="text-center">Пусто.</p>'; return; } let total = cart.reduce((s, i) => s + (i.price || 0), 0); el.innerHTML += `<div class="space-y-4">${cart.map((i, idx) => `<div class="card-bg p-4 rounded-lg flex justify-between items-center"><div class="flex items-center gap-4"><img src="${i.imageUrl||''}" class="w-16 h-16 rounded object-cover"><p>${i.name}</p></div><div class="flex items-center gap-4"><span>${formatPrice(i.price)}</span><button class="remove-from-cart-btn text-red-500" data-index="${idx}">&times;</button></div></div>`).join('')}</div><div class="mt-6 pt-4 border-t flex justify-end items-center gap-4"><span class="text-2xl font-bold">Итого: ${formatPrice(total)}</span><button id="checkout-cart-btn" class="px-8 py-3 bg-primary text-white rounded-lg">Оформить</button></div>`; };
+        const loadPurchasesPage = () => { const el = document.getElementById('purchases-content'); if (!currentUser) return; el.innerHTML = `<h1 class="text-4xl font-bold text-center mb-8" data-lang-key="purchases_title"></h1><div id="purchases-list" class="space-y-6"></div>`; onSnapshot(query(collection(db, "purchases"), where("userId", "==", currentUser.uid), orderBy("createdAt", "desc")), s => { document.getElementById('purchases-list').innerHTML = s.docs.map(d => renderPurchaseItem(d.data())).join('') || '<p class="text-center">Пусто.</p>'; }); };
+        const renderPurchaseItem = p => `<div class="card-bg p-4 sm:p-6 rounded-lg border flex flex-col sm:flex-row gap-6"><img src="${p.items[0].imageUrl}" class="w-full sm:w-32 h-32 sm:h-auto flex-shrink-0 object-cover rounded"><div class="flex-grow"><h3 class="font-bold">${p.productName}</h3><p><strong>Статус:</strong> ${p.status}</p><p><strong>Код:</strong> ${p.orderId}</p>${p.rejectionReason ? `<p><strong>Причина:</strong> ${p.rejectionReason}</p>`:''}${p.status === 'Выполнен' && !p.isTopUp ? `<button class="contact-seller-btn mt-2 px-4 py-2 bg-primary text-white rounded" data-code="${p.orderId}">Получить</button>`:''}${p.status === 'Выполнен' && p.isTopUp ? `<p class="text-green-500">Баланс пополнен</p>`: ''}</div></div>`;
 
-        // --- PURCHASE FLOW & MODALS ---
         async function showCheckoutModal(items, total) {
-            if (!currentUser) { showModal('Требуется вход', '<p>Для покупки нужно войти в аккаунт.</p>', () => signInWithGoogle(), 'Войти через Google'); return; }
-            
-            const productName = items.length > 1 ? `${items.length} товаров` : items[0].name;
-            const canPayWithBalance = appState.balance >= total;
-
-            const modalContent = `
-                <p class="mb-4">Вы покупаете: <strong>${productName}</strong> на сумму <strong>${formatPrice(total)}</strong></p>
-                <div class="space-y-2">
-                     <button class="payment-option w-full p-4 border rounded-lg flex items-center justify-center gap-3 ${canPayWithBalance ? 'cursor-pointer hover:border-primary' : 'opacity-50 cursor-not-allowed'}" data-method="balance" ${!canPayWithBalance ? 'disabled' : ''}>
-                        <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 20 20"><path d="M10 4a2 2 0 100 4 2 2 0 000-4zM2 6a8 8 0 1116 0H2zm8 12a2 2 0 100-4 2 2 0 000 4z"></path></svg>
-                        <span>Списать с баланса (${formatPrice(appState.balance)})</span>
-                    </button>
-                    <p class="text-center text-xs text-gray-500 my-1">или</p>
-                    <button class="payment-option w-full p-4 border rounded-lg cursor-pointer hover:border-primary flex items-center justify-center gap-3" data-method="external">
-                       <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H4a3 3 0 00-3 3v8a3 3 0 003 3z" /></svg>
-                       <span>Оплатить напрямую</span>
-                    </button>
-                </div>
-            `;
-            const modal = showModal(`Оформление покупки`, modalContent, null);
-
-            modal.querySelectorAll('.payment-option').forEach(btn => {
-                btn.onclick = async () => {
-                    const method = btn.dataset.method;
-                    modal.remove(); 
-                    if (method === 'balance') {
-                         await processBalancePurchase(items, total);
-                    } else if (method === 'external') {
-                         await showExternalPaymentModal(items, total);
-                    }
-                }
-            });
+            if (!currentUser) { showModal('Вход', '<p>Для покупки войдите в аккаунт.</p>', () => signInWithGoogle(), 'Войти'); return; }
+            let currentTotal = total;
+            const onSave = async m => { const promoInput = m.querySelector('#promo-input'); const code = promoInput.value.toUpperCase().trim(); if (!code) return false; const promoDoc = await getDoc(doc(db, "promocodes", code)); if (promoDoc.exists()) { const promoData = promoDoc.data(); if ((promoData.uses || 0) < promoData.limit) { const discount = promoData.discount/100; currentTotal = total * (1 - discount); m.querySelector('#total-price-display').textContent = formatPrice(currentTotal); showToast(`Промокод применен! Скидка ${promoData.discount}%`); await updateDoc(promoDoc.ref, { uses: increment(1) }); } else { showToast('Промокод не действителен', true); } } else { showToast('Неверный промокод', true); } return false; };
+            const modal = showModal(`Покупка`, `<p>Товар: <strong>${items[0].name}</strong></p><p>Сумма: <strong id="total-price-display">${formatPrice(currentTotal)}</strong></p><div class="space-y-2 mt-4"><button class="payment-option w-full p-4 border rounded-lg flex items-center justify-center gap-3" data-method="balance" ${appState.balance < currentTotal ? 'disabled' : ''}>Списать с баланса (${formatPrice(appState.balance)})</button><button class="payment-option w-full p-4 border rounded-lg" data-method="external">Оплатить напрямую</button></div><div class="mt-4 flex gap-2"><input id="promo-input" class="w-full p-2 border rounded input-bg" placeholder="Промокод..."><button id="apply-promo-btn" class="p-2 bg-gray-500 text-white rounded">Применить</button></div>`, onSave, 'Применить');
+            modal.querySelector('.save-modal-btn').classList.add('hidden');
+            modal.querySelector('#apply-promo-btn').onclick = () => onSave(modal);
+            modal.querySelectorAll('.payment-option').forEach(btn => btn.onclick = async () => { const method = btn.dataset.method; modal.remove(); if (method === 'balance') await processBalancePurchase(items, currentTotal); else await showExternalPaymentModal(items, currentTotal); });
         }
+        const processBalancePurchase = async (items, total) => { await updateDoc(doc(db, "users", currentUser.uid), { balance: increment(-total), balanceHistory: arrayUnion({ type: 'purchase', amount: -total, product: items[0].name, date: new Date().toISOString() }) }); await addDoc(collection(db, "purchases"), { userId: currentUser.uid, userEmail: currentUser.email, orderId: generateCode(), items, productName: items[0].name, status: 'Выполнен', paymentMethod: 'Баланс', finalPrice: total, createdAt: serverTimestamp() }); if (items.length > 1) { cart = []; localStorage.setItem('asonik_cart', '[]'); updateCartCount(); } showToast('Покупка совершена!'); window.location.hash = '#purchases'; };
+        const showExternalPaymentModal = async (items, total) => { const methods = paymentMethods.filter(p => p.isEnabled); if (!methods.length) { showModal('Ошибка', '<p>Способы оплаты не настроены.</p>'); return; } const onSave = async m => { const selected = m.querySelector('.payment-option.selected'); if (!selected) { alert("Выберите способ оплаты."); return false; } const pRef = await addDoc(collection(db, "purchases"), { userId: currentUser.uid, orderId: generateCode(), items, productName: items[0].name, status: 'Ожидает оплаты', paymentMethodId: selected.dataset.methodId, finalPrice: total, createdAt: serverTimestamp() }); if (items.length > 1) { cart = []; localStorage.setItem('asonik_cart', '[]'); updateCartCount(); } window.location.hash = '#purchases'; showProofUploadModal(pRef.id); return true; }; const modal = showModal('Выберите способ', `<div class="grid grid-cols-2 gap-4">${methods.map(p => `<button data-method-id="${p.id}" class="payment-option flex flex-col items-center p-2 border-2 rounded-lg h-24"><img src="${p.logoUrl}" class="h-12 object-contain"><span class="text-sm">${p.name}</span></button>`).join('')}</div>`, onSave, 'К оплате'); modal.querySelectorAll('.payment-option').forEach(btn => btn.onclick = () => { modal.querySelectorAll('.payment-option').forEach(b => b.classList.remove('selected')); btn.classList.add('selected'); }); };
+        const showProofUploadModal = async pId => { const pDoc = await getDoc(doc(db, "purchases", pId)); if (!pDoc.exists()) return; const purchase = pDoc.data(); const method = paymentMethods.find(p => p.id === purchase.paymentMethodId); if (!method) return; const onSave = async m => { const file = m.querySelector('#proof-upload').files[0]; if (!file) { alert("Загрузите чек."); return false; } const url = await uploadImage(file); if (url) { await updateDoc(pDoc.ref, { paymentProofUrl: url, status: 'Ожидает подтверждения' }); showToast("Чек загружен!"); return true; } else { alert("Ошибка загрузки."); return false; } }; showModal('Загрузка чека', `<div><p>Переведите <strong>${formatPrice(purchase.finalPrice)}</strong> на ${method.name}:</p><p class="font-mono p-2 bg-gray-200 dark:bg-gray-700 rounded">${method.requisites}</p><input type="file" id="proof-upload" accept="image/*" required></div>`, onSave, 'Отправить'); };
+        const showContactModal = code => showModal('Связь', `<p>Для получения товара, свяжитесь с нами в Telegram, указав код: <strong>${code}</strong></p>`, () => { window.open(`https://t.me/${TELEGRAM_USERNAME}?text=Заказ ${code}`, '_blank'); return true; }, 'Перейти в Telegram');
+
+        const updateBalanceDisplay = () => { const el = document.getElementById('user-balance-display'); if (el) el.textContent = formatPrice(appState.balance); };
+        const showBalanceModal = () => { const history = appState.balanceHistory.map(i => `<li class="flex justify-between p-2 rounded ${i.type === 'topup' ? 'bg-green-500/10' : 'bg-red-500/10'}"><span>${i.type === 'topup' ? 'Пополнение' : `Покупка`}</span><span class="${i.type === 'topup' ? 'text-green-500' : 'text-red-500'}">${formatPrice(i.amount)}</span></li>`).join(''); showModal('Баланс', `<div class="text-center mb-4"><p>Текущий баланс</p><p class="text-4xl font-bold">${formatPrice(appState.balance)}</p></div><div><input id="topup-amount" type="number" class="w-full p-2 border rounded input-bg" placeholder="Сумма пополнения (UZS)"></div><div class="mt-4"><h3 class="font-semibold">История</h3><ul class="space-y-2 max-h-48 overflow-y-auto">${history || '<p>Пусто</p>'}</ul></div>`, async m => { const amount = parseFloat(m.querySelector('#topup-amount').value); if (!amount || amount <= 0) return false; m.remove(); showBalanceTopUpPaymentModal(amount); return false; }, 'Пополнить'); };
+        const showBalanceTopUpPaymentModal = async amount => { const methods = paymentMethods.filter(p => p.isEnabled); if (!methods.length) return; const onSave = async m => { const selected = m.querySelector('.payment-option.selected'); if (!selected) return false; const pData = { userId: currentUser.uid, userEmail: currentUser.email, orderId: generateCode(), items: [{ name: `Пополнение на ${formatPrice(amount)}`}], productName: "Пополнение баланса", status: 'Ожидает оплаты', paymentMethodId: selected.dataset.methodId, finalPrice: amount, createdAt: serverTimestamp(), isTopUp: true }; const pRef = await addDoc(collection(db, "purchases"), pData); window.location.hash = '#purchases'; showProofUploadModal(pRef.id); return true; }; const modal = showModal(`Пополнение на ${formatPrice(amount)}`, `<div class="grid grid-cols-2 gap-4">${methods.map(p => `<button data-method-id="${p.id}" class="payment-option flex flex-col items-center p-2 border-2 rounded-lg h-24"><img src="${p.logoUrl}" class="h-12 object-contain"><span class="text-sm">${p.name}</span></button>`).join('')}</div>`, onSave, 'К оплате'); modal.querySelectorAll('.payment-option').forEach(btn => btn.onclick = () => { modal.querySelectorAll('.payment-option').forEach(b => b.classList.remove('selected')); btn.classList.add('selected'); }); };
         
-        async function processBalancePurchase(items, total) {
-            const userRef = doc(db, "users", currentUser.uid);
-            await updateDoc(userRef, { balance: increment(-total), balanceHistory: arrayUnion({ type: 'purchase', amount: -total, product: items[0].name, date: new Date().toISOString() }) });
-            const purchaseData = { userId: currentUser.uid, userEmail: currentUser.email, orderId: generateUniqueCode(), items: items, productName: items.length > 1 ? `${items.length} товаров` : items[0].name, status: 'Выполнен', paymentMethod: 'Баланс', finalPrice: total, createdAt: serverTimestamp() };
-            await addDoc(collection(db, "purchases"), purchaseData);
-            if (items.length > 1) { cart = []; localStorage.setItem('asonik_cart', JSON.stringify(cart)); updateCartCount(); }
-            showToast('Покупка совершена!');
-            window.location.hash = '#purchases';
-        }
+        async function loadAdminPanel(subpage) { if (!isAdmin) return; const el = document.getElementById('admin-content'); const tabs = [{ id: 'products', name: 'Товары' }, { id: 'purchases', name: 'Покупки' }, { id: 'payment', name: 'Оплата' }, { id: 'customization', name: 'Кастомизация' }, { id: 'faq', name: 'FAQ' }, {id: 'promocodes', name: 'Промокоды'}, { id: 'chats', name: 'Чаты' }, { id: 'download', name: 'Приложение' }]; el.innerHTML = `<h2 class="text-3xl font-bold mb-6">Админ-панель</h2><nav class="admin-tabs mb-6">${tabs.map(t => `<a href="#admin/${t.id}" class="admin-tab-btn ${subpage === t.id ? 'active' : ''}" data-tab="${t.id}">${t.name}</a>`).join('')}</nav><div id="admin-tab-content" class="card-bg p-6 rounded-lg min-h-[60vh]"></div>`; loadAdminTab(subpage); }
+        const loadAdminTab = subpage => { switch(subpage) { case 'products': loadAdminList('products', 'Товары', renderAdminProductItem, `<button id="add-product-btn" class="bg-green-500 text-white px-4 py-2 rounded">Добавить</button>`); break; case 'faq': loadAdminList('faq', 'FAQ', renderAdminFaqItem, `<button id="add-faq-btn" class="bg-green-500 text-white px-4 py-2 rounded">Добавить</button>`); break; case 'purchases': loadAdminPurchases(); break; case 'payment': loadAdminList('paymentMethods', 'Способы оплаты', renderAdminPaymentItem, `<button id="add-payment-btn" class="bg-green-500 text-white px-4 py-2 rounded">Добавить</button>`); break; case 'promocodes': loadAdminList('promocodes', 'Промокоды', renderAdminPromoItem, `<button id="add-promo-btn" class="bg-green-500 text-white px-4 py-2 rounded">Добавить</button>`); break; case 'customization': loadCustomizationPage(); break; case 'chats': loadAdminChatsList(window.location.hash.split('/')[2]); break; case 'download': loadAdminDownloadPage(); break; } };
+        const loadAdminList = (coll, title, render, btn) => { const el = document.getElementById('admin-tab-content'); el.innerHTML = `<div class="flex justify-between items-center mb-6"><h3 class="text-2xl font-bold">${title}</h3><div>${btn || ''}</div></div><div id="admin-list-container" class="space-y-3"></div>`; onSnapshot(query(collection(db, coll)), s => { document.getElementById('admin-list-container').innerHTML = s.docs.map(d => render(d.id, d.data())).join('') || '<p>Пусто</p>'; }); };
+        const loadAdminPurchases = () => { const el = document.getElementById('admin-tab-content'); el.innerHTML = `<h3 class="text-2xl font-bold">Покупки</h3><div id="admin-list-container" class="space-y-3"></div>`; onSnapshot(query(collection(db, "purchases"), orderBy("createdAt", "desc")), s => { document.getElementById('admin-list-container').innerHTML = s.docs.map(d => renderAdminPurchaseItem(d.id, d.data())).join(''); }); };
+        const renderAdminProductItem = (id, d) => `<div class="card-bg p-4 rounded flex justify-between items-center"><div><p>${d.name}</p></div><div><button class="edit-btn text-blue-400 mr-4" data-id="${id}" data-type="product">Ред.</button><button class="delete-btn text-red-500" data-collection="products" data-id="${id}">Удл.</button></div></div>`;
+        const renderAdminFaqItem = (id, d) => `<div class="card-bg p-4 rounded flex justify-between items-center"><div><p>${d.question}</p></div><div><button class="edit-btn text-blue-400 mr-4" data-id="${id}" data-type="faq">Ред.</button><button class="delete-btn text-red-500" data-collection="faq" data-id="${id}">Удл.</button></div></div>`;
+        const renderAdminPaymentItem = (id, d) => `<div class="card-bg p-4 rounded flex justify-between items-center"><div><p>${d.name}</p></div><div class="flex items-center gap-4"><input type="checkbox" class="toggle-payment-btn" data-id="${id}" ${d.isEnabled ? 'checked' : ''}><button class="edit-btn" data-id="${id}" data-type="payment">Ред.</button><button class="delete-btn" data-collection="paymentMethods" data-id="${id}">Удл.</button></div></div>`;
+        const renderAdminPromoItem = (id, d) => `<div class="card-bg p-4 rounded">Код: <strong>${d.code}</strong>, Скидка: ${d.discount}%, Исп: ${d.uses||0}/${d.limit} <button class="delete-btn text-red-500 ml-4" data-collection="promocodes" data-id="${id}">Удл.</button></div>`;
+        const renderAdminPurchaseItem = (id, p) => { let actions; if (p.status === 'Ожидает подтверждения') { if (p.isTopUp) actions = `<button class="approve-topup-btn bg-green-500 text-white p-2" data-id="${id}" data-user-id="${p.userId}" data-amount="${p.finalPrice}">Подтвердить пополнение</button>`; else actions = `<button class="approve-purchase-btn bg-green-500 text-white p-2" data-id="${id}">Подтвердить</button>`; actions += `<button class="reject-purchase-btn bg-red-500 text-white p-2 ml-2" data-id="${id}">Отклонить</button>`; } return `<div class="card-bg p-4 rounded"><p>${p.productName} (${p.userEmail}) - ${p.status}</p>${p.paymentProofUrl ? `<a href="${p.paymentProofUrl}" target="_blank">Чек</a>`:''}<div class="mt-2">${actions||''}</div></div>`; };
+        const loadAdminChatsList = (activeChatUserId) => { const el = document.getElementById('admin-tab-content'); el.innerHTML = `<h3 class="text-2xl font-bold">Чаты</h3><div class="flex gap-4"><div id="chat-list-sidebar" class="w-1/3 border-r pr-2"></div><div id="chat-view" class="w-2/3"></div></div>`; const sidebar = document.getElementById('chat-list-sidebar'); onSnapshot(query(collection(db, "userChats"), orderBy("lastActivity", "desc")), s => { sidebar.innerHTML = s.docs.filter(d=>d.id !== ADMIN_UID).map(d => `<a href="#admin/chats/${d.id}" class="block p-2 rounded ${activeChatUserId === d.id ? 'bg-primary text-white' : ''}">${d.data().partnerName || 'User'}</a>`).join(''); }); if(activeChatUserId) renderChatInterface(document.getElementById('chat-view'), `${activeChatUserId}_${ADMIN_UID}`, 'Чат', ADMIN_UID); };
+        const loadCustomizationPage = async () => { const el = document.getElementById('admin-tab-content'); const settings = (await getDoc(doc(db, "storeSettings", "config"))).data() || {}; el.innerHTML = `<div class="space-y-6"><div><h3>Логотип</h3><input type="file" id="logo-upload-input"><button id="save-logo-btn" class="bg-primary text-white p-2 rounded">Сохранить лого</button></div><div><h3>Соц. сети</h3><div id="social-links-admin"></div><button id="add-social-link-btn" class="bg-green-500 text-white p-2 rounded">Добавить</button></div></div>`; renderAdminSocialLinks(settings.socialLinks);};
+        const renderAdminSocialLinks = (links) => { const cont = document.getElementById('social-links-admin'); if(!cont) return; cont.innerHTML = (links||[]).map(l => `<div class="flex items-center gap-2 p-2 card-bg rounded"><span>${l.name}</span><button class="delete-social-link-btn text-red-500" data-id="${l.id}">Удалить</button></div>`).join(''); };
+        const loadAdminDownloadPage = async () => { const el = document.getElementById('admin-tab-content'); const appData = (await getDoc(doc(db, "storeSettings", "config"))).data()?.appDownload || {}; el.innerHTML = `<h3>Страница "Скачать"</h3><div class="max-w-xl space-y-4"><div><label>Описание</label><textarea id="download-description" class="w-full p-2 border rounded input-bg">${appData.description || ''}</textarea></div><div><label>Ссылка .exe</label><input id="download-exe-link" class="w-full p-2 border rounded" value="${appData.exeLink || ''}"></div><div><label>Ссылка .apk</label><input id="download-apk-link" class="w-full p-2 border rounded" value="${appData.apkLink || ''}"></div><button id="save-download-settings-btn" class="bg-primary text-white p-2 rounded">Сохранить</button></div>`; };
 
-        async function showExternalPaymentModal(items, total) {
-            const enabledMethods = paymentMethods.filter(p => p.isEnabled);
-            if (enabledMethods.length === 0) { showModal('Ошибка', '<p>Способы оплаты не настроены.</p>'); return; }
-            const methodsHtml = enabledMethods.map(p => `<button data-method-id="${p.id}" class="payment-option flex flex-col items-center justify-center gap-2 p-2 border-2 border-custom rounded-lg text-center h-24"><img src="${p.logoUrl}" class="h-12 object-contain" onerror="this.onerror=null; this.style.display='none';"><span class="text-sm font-semibold">${p.name}</span></button>`).join('');
-            const onSave = async(m) => {
-                const selectedOption = m.querySelector('.payment-option.selected');
-                if (!selectedOption) { alert("Выберите способ оплаты."); return false; }
-                const paymentMethodId = selectedOption.dataset.methodId;
-                const orderId = generateUniqueCode();
-                const purchaseData = { userId: currentUser.uid, userEmail: currentUser.email, orderId: orderId, items: items, productName: items.length > 1 ? `${items.length} товаров` : items[0].name, status: 'Ожидает оплаты', paymentMethodId: paymentMethodId, finalPrice: total, createdAt: serverTimestamp() };
-                const purchaseRef = await addDoc(collection(db, "purchases"), purchaseData);
-                if (items.length > 1) { cart = []; localStorage.setItem('asonik_cart', JSON.stringify(cart)); updateCartCount(); }
-                window.location.hash = '#purchases';
-                showProofUploadModal(purchaseRef.id);
-                return true;
-            };
-            const modal = showModal('Выберите способ оплаты', `<div class="grid grid-cols-2 gap-4">${methodsHtml}</div>`, onSave, 'Подтвердить и перейти к оплате');
-            modal.querySelectorAll('.payment-option').forEach(btn => btn.onclick = () => { modal.querySelectorAll('.payment-option').forEach(b => b.classList.remove('selected')); btn.classList.add('selected'); });
-        }
-
-        async function showProofUploadModal(purchaseId) {
-            const purchaseDoc = await getDoc(doc(db, "purchases", purchaseId));
-            if (!purchaseDoc.exists()) return;
-            const purchase = purchaseDoc.data();
-            const method = paymentMethods.find(p => p.id === purchase.paymentMethodId);
-            if (!method) return;
-            const paymentInstructions = `<p>Переведите <span class="font-bold">${formatPrice(purchase.finalPrice)}</span> на ${method.name}:</p><p class="font-mono text-lg my-2 p-2 bg-gray-200 dark:bg-gray-700 rounded">${method.requisites}</p>${method.qrCodeUrl ? `<img src="${method.qrCodeUrl}" class="w-48 h-48 border border-custom rounded-lg mx-auto" onerror="this.onerror=null; this.style.display='none';">` : ''}`;
-            const onSave = async (m) => {
-                const proofFile = m.querySelector('#proof-upload').files[0];
-                if (!proofFile) { alert("Загрузите чек."); return false; }
-                const proofUrl = await uploadImage(proofFile);
-                if (proofUrl) { await updateDoc(doc(db, "purchases", purchaseId), { paymentProofUrl: proofUrl, status: 'Ожидает подтверждения' }); showToast("Чек загружен!"); return true; }
-                else { alert("Ошибка загрузки чека."); return false; }
-            };
-            const modal = showModal('Загрузка чека', `<div class="space-y-4">${paymentInstructions}<hr class="border-custom"><p class="font-bold">Загрузите скриншот чека:</p><input type="file" id="proof-upload" class="w-full p-2 border rounded input-bg" accept="image/*" required></div>`, onSave, 'Отправить чек');
-        }
-
-        function showContactModal(orderId) { showModal('Связь с продавцом', `<p>Для получения товара, свяжитесь с нами в Telegram, указав код заказа: <strong class="text-primary font-mono">${orderId}</strong></p>`, () => { window.open(`https://t.me/${TELEGRAM_USERNAME}?text=Здравствуйте, заказ ${orderId}`, '_blank'); return true; }, 'Перейти в Telegram'); }
+        async function uploadImage(file) { const fd = new FormData(); fd.append('image', file); try { const res = await fetch(`https://api.imgbb.com/1/upload?key=${IMGBB_API_KEY}`, { method: 'POST', body: fd }); const r = await res.json(); if (r.success) return r.data.url; else throw new Error(r.error.message); } catch (e) { alert('Ошибка: ' + e.message); return null; } }
+        async function showProductForm(pId) { let p = {name:'',description:'',price:0,imageUrl:'',isPrivateSeller:false}; if(pId){const d=await getDoc(doc(db,'products',pId)); if(d.exists()) p=d.data();} const onSave = async m => { const file = m.querySelector('#p-image-file').files[0]; let url=p.imageUrl; if(file) url=await uploadImage(file); const data={name:m.querySelector('#p-name').value, description:m.querySelector('#p-desc').value, price:parseFloat(m.querySelector('#p-price').value)||0, imageUrl:url, isPrivateSeller:m.querySelector('#p-private').checked, createdAt:p.createdAt||serverTimestamp()}; await (pId ? setDoc(doc(db,'products',pId),data) : addDoc(collection(db,'products'),data)); return true; }; showModal(pId?'Ред.':'Добавить',`<div><input id="p-name" value="${p.name}" placeholder="Название"><input id="p-desc" value="${p.description}" placeholder="Описание"><input id="p-price" type="number" value="${p.price}" placeholder="Цена"><input type="file" id="p-image-file"><label><input type="checkbox" id="p-private" ${p.isPrivateSeller?'checked':''}>Частное лицо</label></div>`,onSave); }
+        async function showFaqForm(id){let d={q:'',a:''};if(id){const s=await getDoc(doc(db,'faq',id));if(s.exists())d=s.data();} const onSave=async m=>{const q=m.querySelector('#q').value,a=m.querySelector('#a').value;if(!q||!a)return false; await (id?setDoc(doc(db,'faq',id),{q,a}):addDoc(collection(db,'faq'),{q,a}));return true;}; showModal(id?'Ред.':'Добавить','<div><input id="q" value="'+d.question+'" placeholder="Вопрос"><input id="a" value="'+d.answer+'" placeholder="Ответ"></div>',onSave); }
+        async function showPaymentMethodForm(id){let d={name:'',reqs:'',logo:'',order:0,isEnabled:true};if(id){const s=await getDoc(doc(db,'paymentMethods',id));if(s.exists())d=s.data();} const onSave=async m=>{const f=m.querySelector('#logo').files[0];let url=d.logoUrl;if(f)url=await uploadImage(f);const data={name:m.querySelector('#name').value,requisites:m.querySelector('#reqs').value,logoUrl:url,order:parseInt(m.querySelector('#order').value)||0,isEnabled:d.isEnabled};await(id?setDoc(doc(db,'paymentMethods',id),data,{merge:true}):addDoc(collection(db,'paymentMethods'),data));return true;}; showModal(id?'Ред.':'Добавить',`<div><input id="name" value="${d.name}" placeholder="Название"><input id="reqs" value="${d.requisites}" placeholder="Реквизиты"><input type="file" id="logo"><input type="number" id="order" value="${d.order}" placeholder="Порядок"></div>`,onSave);}
+        async function showPromoForm(id){let d={code:'',discount:10,limit:100,uses:0};if(id){const s=await getDoc(doc(db,'promocodes',id));if(s.exists())d=s.data();} const onSave=async m=>{const data={code:m.querySelector('#code').value.toUpperCase(),discount:parseInt(m.querySelector('#discount').value),limit:parseInt(m.querySelector('#limit').value),uses:d.uses};if(!data.code)return false; await setDoc(doc(db,'promocodes',data.code),data,{merge:true});return true;}; showModal(id?'Ред.':'Добавить',`<div><input id="code" value="${d.code}" placeholder="Код"><input id="discount" type="number" value="${d.discount}" placeholder="Скидка %"><input id="limit" type="number" value="${d.limit}" placeholder="Лимит"></div>`,onSave);}
         
-        // --- BALANCE SYSTEM ---
-        function updateBalanceDisplay() {
-            const display = document.getElementById('user-balance-display');
-            if (display) display.textContent = formatPrice(appState.balance);
-        }
-
-        function showBalanceModal() {
-            let historyHTML = appState.balanceHistory.map(item => `<li class="flex justify-between items-center p-2 rounded ${item.type === 'topup' ? 'bg-green-500/10' : 'bg-red-500/10'}"><span>${item.type === 'topup' ? 'Пополнение' : `Покупка: ${item.product}`}</span><span class="font-semibold ${item.type === 'topup' ? 'text-green-500' : 'text-red-500'}">${formatPrice(item.amount)}</span></li>`).join('');
-            if (!historyHTML) historyHTML = `<p class="text-center text-gray-500">История пуста.</p>`;
-
-            showModal('Управление балансом', `<div class="text-center mb-4"><p class="text-lg">Текущий баланс</p><p class="text-4xl font-bold">${formatPrice(appState.balance)}</p></div><div class="space-y-4"><div><label class="font-semibold">Сумма пополнения (UZS)</label><input id="topup-amount" type="number" class="w-full p-2 border rounded input-bg mt-1" placeholder="Введите сумму"></div><div><h3 class="font-semibold mb-2">История операций</h3><ul class="space-y-2 max-h-48 overflow-y-auto">${historyHTML}</ul></div></div>`, 
-            async (m) => {
-                const amount = parseFloat(m.querySelector('#topup-amount').value);
-                if (!amount || amount <= 0) { alert('Введите сумму.'); return false; }
-                m.remove(); // Закрываем модалку баланса
-                showBalanceTopUpPaymentModal(amount); // Открываем модалку выбора оплаты
-                return false; // Не закрывать автоматически
-            }, 'Пополнить');
-        }
-
-        async function showBalanceTopUpPaymentModal(amount) {
-            const enabledMethods = paymentMethods.filter(p => p.isEnabled);
-            if (enabledMethods.length === 0) { showModal('Ошибка', '<p>Способы оплаты не настроены.</p>'); return; }
-            const methodsHtml = enabledMethods.map(p => `<button data-method-id="${p.id}" class="payment-option flex flex-col items-center justify-center gap-2 p-2 border-2 border-custom rounded-lg text-center h-24"><img src="${p.logoUrl}" class="h-12 object-contain" onerror="this.onerror=null; this.style.display='none';"><span class="text-sm font-semibold">${p.name}</span></button>`).join('');
-            const onSave = async(m) => {
-                const selectedOption = m.querySelector('.payment-option.selected');
-                if (!selectedOption) { alert("Выберите способ оплаты."); return false; }
-                const paymentMethodId = selectedOption.dataset.methodId;
-                // Создаем "покупку" для пополнения баланса, чтобы админ мог ее проверить
-                const topUpPurchaseData = { userId: currentUser.uid, userEmail: currentUser.email, orderId: generateUniqueCode(), items: [{ name: `Пополнение баланса на ${formatPrice(amount)}`}], productName: "Пополнение баланса", status: 'Ожидает оплаты', paymentMethodId: paymentMethodId, finalPrice: amount, createdAt: serverTimestamp(), isTopUp: true };
-                const purchaseRef = await addDoc(collection(db, "purchases"), topUpPurchaseData);
-                window.location.hash = '#purchases'; // Переводим на страницу покупок, где будет висеть пополнение
-                showProofUploadModal(purchaseRef.id);
-                return true;
-            };
-            const modal = showModal(`Пополнение баланса на ${formatPrice(amount)}`, `<div class="grid grid-cols-2 gap-4">${methodsHtml}</div>`, onSave, 'Подтвердить и перейти к оплате');
-            modal.querySelectorAll('.payment-option').forEach(btn => btn.onclick = () => { modal.querySelectorAll('.payment-option').forEach(b => b.classList.remove('selected')); btn.classList.add('selected'); });
-        }
-
-
-        // --- ADMIN PANEL ---
-        async function loadAdminPanel(subpage = 'products') { 
-            if (!isAdmin) return;
-            const adminContent = document.getElementById('admin-content');
-            const tabs = [ { id: 'products', name: 'Товары' }, { id: 'purchases', name: 'Покупки' }, { id: 'payment', name: 'Оплата' }, { id: 'customization', name: 'Кастомизация' }, { id: 'faq', name: 'FAQ' }, { id: 'chats', name: 'Чаты' }, { id: 'download', name: 'Приложение' }, ];
-            adminContent.innerHTML = `<h2 class="text-3xl font-bold mb-6">Админ-панель</h2><nav class="admin-tabs mb-6">${tabs.map(tab => `<a href="#admin/${tab.id}" class="admin-tab-btn ${subpage === tab.id ? 'active' : ''}" data-tab="${tab.id}">${tab.name}</a>`).join('')}</nav><div id="admin-tab-content" class="card-bg p-6 rounded-lg shadow-lg border border-custom min-h-[60vh]"></div>`;
-            await loadAdminTab(subpage); 
-        }
-        async function loadAdminTab(tab) { 
-            const contentEl = document.getElementById('admin-tab-content'); if(!contentEl) return;
-            if (tab === 'products') loadAdminList('products', 'Товары', renderAdminProductItem, `<button id="add-product-btn" class="bg-green-500 text-white px-4 py-2 rounded-lg hover:bg-green-600">Добавить товар</button>`);
-            if (tab === 'faq') loadAdminList('faq', 'Управление FAQ', renderAdminFaqItem, `<button id="add-faq-btn" class="bg-green-500 text-white px-4 py-2 rounded-lg hover:bg-green-600">Добавить FAQ</button>`);
-            if (tab === 'purchases') loadAdminPurchases();
-            if (tab === 'payment') loadAdminList('paymentMethods', 'Способы оплаты', renderAdminPaymentItem, `<button id="add-payment-btn" class="bg-green-500 text-white px-4 py-2 rounded-lg hover:bg-green-600">Добавить способ</button>`);
-            if (tab === 'customization') await loadCustomizationPage(); 
-            if (tab === 'chats') await loadAdminChatsList(window.location.hash.split('/')[2]);
-            if (tab === 'download') await loadAdminDownloadPage();
-        }
-        function loadAdminList(collectionName, title, renderFunction, buttonHtml = '') { const contentEl = document.getElementById('admin-tab-content'); contentEl.innerHTML = `<div class="flex justify-between items-center mb-6"><h3 class="text-2xl font-bold">${title}</h3><div>${buttonHtml}</div></div><div id="admin-list-container" class="space-y-3"></div>`; const listEl = document.getElementById('admin-list-container'); onSnapshot(query(collection(db, collectionName)), (snapshot) => { if(!listEl) return; listEl.innerHTML = snapshot.empty ? '<p>Пусто.</p>' : ''; snapshot.forEach(doc => listEl.appendChild(renderFunction(doc.id, doc.data()))); }); }
+        const initTheme = () => { const btn = document.getElementById('theme-toggle'); if(!btn) return; const apply = t => { if(t==='dark') document.documentElement.classList.add('dark'); else document.documentElement.classList.remove('dark');}; apply(localStorage.getItem('color-theme')||'light'); btn.onclick=() => {const n = document.documentElement.classList.contains('dark') ? 'light' : 'dark'; localStorage.setItem('color-theme',n); apply(n);};};
+        const updateAuthUI = () => { const c = document.getElementById('auth-container'); if(!c) return; if (currentUser) { c.innerHTML = `<div class="relative"><button id="profile-btn" class="flex items-center gap-2"><img src="${currentUser.photoURL||''}" class="w-8 h-8 rounded-full object-cover"><svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd"></path></svg></button><div id="profile-menu" class="hidden absolute right-0 mt-2 w-52 card-bg rounded-md shadow-lg z-10"><a href="#profile" class="nav-link block px-4 py-2">Профиль</a>${isAdmin ? `<a href="#admin" class="nav-link block px-4 py-2">Админ-панель</a>` : ''}<a href="#" id="logout-btn" class="block px-4 py-2 text-red-500">Выйти</a></div></div>`;} else { c.innerHTML = `<button id="google-login-btn" class="px-4 py-2 bg-primary text-white rounded-md">Войти</button>`; } };
+        const signInWithGoogle = () => { const p = new GoogleAuthProvider(); signInWithPopup(auth, p).catch(e => showToast("Ошибка: " + e.message, true)); };
+        const initSwitchers = () => { const cur = document.getElementById('currency-switcher'), lang = document.getElementById('lang-switcher'); if(cur) { cur.innerHTML = `<select id="currency-select" class="p-2 border rounded input-bg text-sm"><option>UZS</option><option>RUB</option><option>USD</option></select>`; cur.querySelector('select').value = appState.currency; } if(lang) { lang.innerHTML = `<select id="lang-select" class="p-2 border rounded input-bg text-sm"><option>RU</option><option>UZ</option></select>`; lang.querySelector('select').value = appState.lang; } };
+        const setupNotificationsListener = () => { const c = document.getElementById('notifications-container'); if (!currentUser || !c) return; onSnapshot(query(collection(db, "notifications"), where("userId", "==", currentUser.uid), orderBy("createdAt", "desc")), s => { const n = s.docs.map(d => ({ id: d.id, ...d.data() })); const unread = n.filter(i => !i.isRead).length; renderNotifications(n, unread); }); };
+        const renderNotifications = (n, unread) => { const c = document.getElementById('notifications-container'); if(!c) return; c.innerHTML = `<button id="notifications-btn" class="relative p-2"><svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.4-1.4a2 2 0 01-1.4-1.4V11a6 6 0 00-12 0v3.2a2 2 0 01-1.4 1.4L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"></path></svg>${unread > 0 ? `<span class="absolute top-0 right-0 bg-red-500 text-white text-xs rounded-full h-4 w-4 flex items-center justify-center">${unread}</span>` : ''}</button><div id="notifications-dropdown" class="hidden absolute right-0 mt-2 w-80 card-bg rounded-md shadow-lg z-20"><div class="p-4 font-bold">Уведомления</div><div class="max-h-96 overflow-y-auto">${n.length ? n.map(i => `<div class="p-4 border-t ${!i.isRead ? 'bg-primary/10':''}"><p>${i.title}</p></div>`).join(''):'<p class="p-4">Пусто.</p>'}</div></div>`; c.querySelector('#notifications-btn').onclick = () => {c.querySelector('#notifications-dropdown').classList.toggle('hidden'); if(unread > 0) {const b = writeBatch(db); n.filter(i => !i.isRead).forEach(i => b.update(doc(db,'notifications',i.id),{isRead:true})); b.commit();}}; };
+        const setupWishlistListener = () => { if (!currentUser) return; onSnapshot(doc(db, "users", currentUser.uid), d => { userWishlist = d.data()?.wishlist || []; applyFiltersAndSort(); }); };
         
-        function renderAdminProductItem(id, data) { const item = document.createElement('div'); item.className = 'card-bg p-4 rounded-lg shadow flex justify-between items-center border border-custom'; item.innerHTML = `<div class="flex items-center gap-4"><img src="${data.imageUrl || 'https://placehold.co/64x64'}" class="w-12 h-12 rounded-md object-cover"><p class="font-semibold">${data.name}</p></div><div><button class="edit-btn text-blue-400 hover:text-blue-300 mr-4" data-id="${id}" data-type="product">Ред.</button><button class="delete-btn text-red-500 hover:text-red-400" data-collection="products" data-id="${id}">Удл.</button></div>`; return item; }
-        function renderAdminFaqItem(id, data) { const item = document.createElement('div'); item.className = 'card-bg p-4 rounded-lg shadow flex justify-between items-center border-custom'; item.innerHTML = `<span>${data.question}</span><div><button class="edit-btn text-blue-400 mr-4" data-id="${id}" data-type="faq">Ред.</button><button class="delete-btn text-red-500" data-collection="faq" data-id="${id}">Удл.</button></div>`; return item; }
-        function renderAdminPaymentItem(id, data) { const item = document.createElement('div'); item.className = 'card-bg p-4 rounded-lg shadow flex justify-between items-center border border-custom'; item.innerHTML = `<div class="flex items-center gap-4 flex-grow"><img src="${data.logoUrl || 'https://placehold.co/64x64'}" class="w-12 h-12 rounded-md object-contain"><p class="font-semibold">${data.name}</p></div><div class="flex items-center gap-4"><label class="toggle-switch"><input type="checkbox" class="toggle-payment-btn" data-id="${id}" ${data.isEnabled ? 'checked' : ''}><span class="toggle-slider"></span></label><button class="edit-btn text-blue-400" data-id="${id}" data-type="payment">Ред.</button><button class="delete-btn text-red-500" data-collection="paymentMethods" data-id="${id}">Удл.</button></div>`; return item; }
-        
-        function renderAdminPurchaseItem(id, p) {
-            const item = document.createElement('div');
-            item.className = 'card-bg p-4 rounded-lg shadow flex justify-between items-center border border-custom';
-            let actionButtonsHTML;
-            if (p.isTopUp) { // Это пополнение баланса
-                 actionButtonsHTML = p.status === 'Ожидает подтверждения' ? `<button class="approve-topup-btn flex-1 px-4 py-2 text-sm font-semibold bg-green-500 text-white rounded-md hover:bg-green-600" data-id="${id}" data-user-id="${p.userId}" data-amount="${p.finalPrice}">Подтвердить пополнение</button>` : '';
-            } else { // Это обычная покупка
-                actionButtonsHTML = p.status === 'Ожидает подтверждения' ? `<button class="approve-purchase-btn flex-1 px-4 py-2 text-sm font-semibold bg-green-500 text-white" data-id="${id}">Подтвердить</button>` : '';
-            }
-             if (p.status === 'Ожидает подтверждения') {
-                 actionButtonsHTML += `<button class="reject-purchase-btn flex-1 px-4 py-2 text-sm font-semibold bg-red-500 text-white rounded-md hover:bg-red-600 ml-2" data-id="${id}">Отклонить</button>`;
-             }
-            item.innerHTML = `<div class="grid grid-cols-1 md:grid-cols-3 gap-4 w-full"><div class="md:col-span-2"><p><strong>${p.productName}</strong> (<span class="font-bold">${formatPrice(p.finalPrice, 'UZS')}</span>)</p><p><strong>Пользователь:</strong> ${p.userEmail}</p><p><strong>Статус:</strong> <span class="font-semibold">${p.status}</span></p>${p.paymentProofUrl ? `<a href="${p.paymentProofUrl}" target="_blank" class="text-primary underline">Чек</a>` : ''}</div><div class="flex flex-col gap-2 items-start justify-center">${actionButtonsHTML}</div></div>`;
-            return item;
-        }
-
-        function loadAdminPurchases() { const contentEl = document.getElementById('admin-tab-content'); contentEl.innerHTML = `<h3 class="text-2xl font-bold mb-6">Проверка покупок</h3><div id="admin-list-container" class="space-y-3"></div>`; const listEl = document.getElementById('admin-list-container'); onSnapshot(query(collection(db, "purchases"), orderBy("createdAt", "desc")), (snapshot) => { listEl.innerHTML = ''; snapshot.forEach(doc => listEl.appendChild(renderAdminPurchaseItem(doc.id, doc.data()))); }); }
-        
-        async function loadAdminChatsList(activeChatUserId) { const contentEl = document.getElementById('admin-tab-content'); contentEl.innerHTML = `<h3 class="text-2xl font-bold mb-6">Чаты</h3><div class="flex flex-col md:flex-row gap-4 h-[70vh]"><div id="chat-list-sidebar" class="w-full md:w-1/3 border-r border-custom overflow-y-auto pr-2"></div><div id="chat-view" class="w-full md:w-2/3"></div></div>`; const sidebar = document.getElementById('chat-list-sidebar'); const q = query(collection(db, "userChats"), orderBy("lastActivity", "desc")); onSnapshot(q, async (snapshot) => { sidebar.innerHTML = ''; for (const chatDoc of snapshot.docs) { if (chatDoc.id === ADMIN_UID) continue; const chatData = chatDoc.data(); const item = document.createElement('a'); item.href = `#admin/chats/${chatDoc.id}`; item.className = `block p-3 rounded-lg mb-2 ${activeChatUserId === chatDoc.id ? 'bg-primary text-white' : 'hover:bg-gray-100 dark:hover:bg-gray-700'}`; item.textContent = chatData.partnerName || 'User'; sidebar.appendChild(item); } }); if(activeChatUserId) { const chatId = `${activeChatUserId}_${ADMIN_UID}`; const userDoc = await getDoc(doc(db, "users", activeChatUserId)); const userName = userDoc.exists() ? userDoc.data().displayName : 'User'; renderChatInterface(document.getElementById('chat-view'), chatId, `Чат с: ${userName}`, ADMIN_UID); } else { document.getElementById('chat-view').innerHTML = '<p class="text-center">Выберите чат.</p>'; } }
-        
-        async function loadCustomizationPage() { const contentEl = document.getElementById('admin-tab-content'); contentEl.innerHTML = `<h3 class="text-2xl font-bold mb-6" data-lang-key="customization_title">Кастомизация</h3><div class="space-y-8"><div class="card-bg p-6 rounded-lg shadow border border-custom"><h4 class="font-bold text-lg mb-4" data-lang-key="logo_title">Логотип</h4><input type="file" id="logo-upload-input" class="w-full text-sm"/><img id="logo-preview" src="" class="w-24 h-24 object-contain mt-2 hidden"><button id="save-customization-btn" class="mt-4 px-6 py-2 bg-primary text-white rounded-lg">Сохранить</button></div></div>`; const settingsDoc = await getDoc(doc(db, "storeSettings", "config")); if (settingsDoc.exists() && settingsDoc.data().logoUrl) { const preview = document.getElementById('logo-preview'); preview.src = settingsDoc.data().logoUrl; preview.classList.remove('hidden'); } }
-        async function loadAdminDownloadPage() { const contentEl = document.getElementById('admin-tab-content'); if(!contentEl) return; const appData = (await getDoc(doc(db, "storeSettings", "config"))).data()?.appDownload || {}; contentEl.innerHTML = `<h3 class="text-2xl font-bold mb-6">Страница "Скачать"</h3><div class="max-w-xl space-y-4"><div><label class="block text-sm font-medium mb-1">Описание</label><textarea id="download-description" class="w-full p-2 border rounded input-bg">${appData.description || ''}</textarea></div><div><label class="block text-sm font-medium mb-1">Ссылка на .exe</label><input id="download-exe-link" class="w-full p-2 border rounded input-bg" value="${appData.exeLink || ''}"></div><div><label class="block text-sm font-medium mb-1">Ссылка на .apk</label><input id="download-apk-link" class="w-full p-2 border rounded input-bg" value="${appData.apkLink || ''}"></div><button id="save-download-settings-btn" class="px-6 py-2 bg-primary text-white rounded-lg">Сохранить</button></div>`; }
-
-
-        async function showProductForm(productId) {
-            let p = { name: '', description: '', price: 0, imageUrl: '', isPrivateSeller: false };
-            if (productId) { const docSnap = await getDoc(doc(db, 'products', productId)); if (docSnap.exists()) p = { id: docSnap.id, ...docSnap.data() }; }
-            const onSave = async (m) => { const imageFile = m.querySelector('#p-image-file').files[0]; let imageUrl = p.imageUrl; if(imageFile) imageUrl = await uploadImage(imageFile); if(imageFile && !imageUrl) return false; const data = { name: m.querySelector('#p-name').value, description: m.querySelector('#p-desc').value, price: parseFloat(m.querySelector('#p-price').value) || 0, imageUrl, isPrivateSeller: m.querySelector('#p-private').checked, createdAt: p.createdAt || serverTimestamp() }; await (productId ? setDoc(doc(db, 'products', productId), data) : addDoc(collection(db, 'products'), data)); return true; };
-            showModal(productId ? 'Редактировать товар' : 'Добавить товар', `<div class="space-y-4"><input id="p-name" class="w-full p-2 border rounded input-bg" placeholder="Название" value="${p.name}"><textarea id="p-desc" class="w-full p-2 border rounded input-bg" placeholder="Описание">${p.description}</textarea><input id="p-price" type="number" class="w-full p-2 border rounded input-bg" placeholder="Цена (UZS)" value="${p.price}"><label>Изображение:</label><input type="file" id="p-image-file"><img id="p-image-preview" src="${p.imageUrl}" class="w-32 h-32 object-cover ${p.imageUrl ? '' : 'hidden'}"><label class="flex items-center gap-2"><input type="checkbox" id="p-private" ${p.isPrivateSeller ? 'checked' : ''}> Частное лицо</label></div>`, onSave);
-        }
-        async function showFaqForm(faqId) { let faqData = { question: '', answer: '' }; if (faqId) { const docSnap = await getDoc(doc(db, 'faq', faqId)); if (docSnap.exists()) faqData = { id: docSnap.id, ...docSnap.data() }; } showModal(faqId ? 'Редактировать FAQ' : 'Добавить FAQ', `<div class="space-y-4"><input id="faq-question-input" class="w-full p-2 border rounded input-bg" placeholder="Вопрос" value="${faqData.question}"><textarea id="faq-answer-input" class="w-full p-2 border rounded input-bg" placeholder="Ответ">${faqData.answer}</textarea></div>`, async (m) => { const question = m.querySelector('#faq-question-input').value; const answer = m.querySelector('#faq-answer-input').value; if (!question || !answer) { alert('Заполните все поля.'); return false; } await (faqId ? setDoc(doc(db, 'faq', faqId), { question, answer }, { merge: true }) : addDoc(collection(db, 'faq'), { question, answer })); return true; }); }
-        async function showPaymentMethodForm(methodId) { let p = { name: '', requisites: '', logoUrl: '', qrCodeUrl: '', order: 0, isEnabled: true }; if (methodId) { const docSnap = await getDoc(doc(db, 'paymentMethods', methodId)); if (docSnap.exists()) p = { id: docSnap.id, ...docSnap.data() }; } const onSave = async (m) => { const logoFile = m.querySelector('#p-logo-file').files[0]; let logoUrl = p.logoUrl; if (logoFile) logoUrl = await uploadImage(logoFile); const data = { name: m.querySelector('#p-name').value, requisites: m.querySelector('#p-requisites').value, logoUrl, order: parseInt(m.querySelector('#p-order').value) || 0, isEnabled: p.isEnabled, }; await (methodId ? setDoc(doc(db, 'paymentMethods', methodId), data, { merge: true }) : addDoc(collection(db, 'paymentMethods'), data)); return true; }; showModal(methodId ? 'Редактировать' : 'Добавить способ', `<div class="space-y-4"><input id="p-name" class="w-full p-2 border rounded input-bg" placeholder="Название" value="${p.name}"><textarea id="p-requisites" class="w-full p-2 border rounded input-bg" placeholder="Реквизиты">${p.requisites}</textarea><input type="file" id="p-logo-file"><input id="p-order" type="number" class="w-full p-2 border rounded input-bg" placeholder="Порядок" value="${p.order}"></div>`, onSave); }
-
-        async function uploadImage(file) { const formData = new FormData(); formData.append('image', file); try { const response = await fetch(`https://api.imgbb.com/1/upload?key=${IMGBB_API_KEY}`, { method: 'POST', body: formData }); const result = await response.json(); if (result.success) return result.data.url; else throw new Error(result.error.message); } catch (error) { alert('Ошибка загрузки: ' + error.message); return null; } }
-
-        // --- EVENT LISTENERS ---
         function setupEventListeners() {
             window.addEventListener('hashchange', handleRouting);
+            document.body.addEventListener('change', async e => {
+                const { target } = e;
+                if (target.id === 'currency-select') { appState.currency = target.value; localStorage.setItem('asonik_currency', target.value); handleRouting(); }
+                if (target.id === 'lang-select') { appState.lang = target.value; localStorage.setItem('asonik_lang', target.value); handleRouting(); }
+                if (target.matches('.toggle-payment-btn')) await updateDoc(doc(db, "paymentMethods", target.dataset.id), { isEnabled: target.checked });
+            });
             document.body.addEventListener('click', async e => {
-                const target = e.target;
-                const closest = (selector) => target.closest(selector);
-
-                if (closest('.nav-link')) { e.preventDefault(); window.location.hash = new URL(closest('.nav-link').href).hash; return; }
-                if (closest('.admin-tab-btn')) { e.preventDefault(); window.location.hash = `admin/${closest('.admin-tab-btn').dataset.tab}`; return; }
-                if (target.id === 'login-redirect' || target.id === 'google-login-btn') signInWithGoogle();
+                const { target } = e;
+                const closest = sel => target.closest(sel);
+                if (closest('.nav-link')) { e.preventDefault(); window.location.hash = new URL(closest('.nav-link').href).hash; }
+                if (closest('.admin-tab-btn')) { e.preventDefault(); window.location.hash = `admin/${closest('.admin-tab-btn').dataset.tab}`; }
+                if (target.id === 'google-login-btn' || target.id === 'login-redirect') signInWithGoogle();
                 if (target.id === 'logout-btn' || target.id === 'logout-btn-profile') signOut(auth);
                 if (target.id === 'balance-btn') showBalanceModal();
-                if (closest('.buy-now-btn')) showCheckoutModal([allProducts.find(p => p.id === closest('.buy-now-btn').dataset.productId)], allProducts.find(p => p.id === closest('.buy-now-btn').dataset.productId).price);
+                if (closest('.buy-now-btn')) showCheckoutModal([allProducts.find(p => p.id === closest('.buy-now-btn').dataset.productId)].filter(Boolean), allProducts.find(p => p.id === closest('.buy-now-btn').dataset.productId)?.price || 0);
                 if (closest('.add-to-cart-btn')) addToCart(closest('.add-to-cart-btn').dataset.productId);
                 if (closest('.remove-from-cart-btn')) { cart.splice(closest('.remove-from-cart-btn').dataset.index, 1); localStorage.setItem('asonik_cart', JSON.stringify(cart)); renderCartPage(); updateCartCount(); }
-                if (target.id === 'checkout-cart-btn') showCheckoutModal(cart, cart.reduce((sum, item) => sum + (item.price || 0), 0));
+                if (target.id === 'checkout-cart-btn') showCheckoutModal(cart, cart.reduce((s, i) => s + (i.price || 0), 0));
                 if (closest('.faq-question')) closest('.faq-question').classList.toggle('open');
                 if (closest('.contact-seller-btn')) showContactModal(closest('.contact-seller-btn').dataset.code);
                 if (target.id === 'start-chat-btn') openUserChat();
                 if (target.id === 'send-chat-message') { const text = document.getElementById('chat-message-input').value.trim(); sendChatMessage(target.dataset.chatId, target.dataset.senderId, text); document.getElementById('chat-message-input').value = ''; }
                 if (closest('#profile-btn')) { e.stopPropagation(); document.getElementById('profile-menu')?.classList.toggle('hidden'); }
                 if (target.id === 'change-avatar-btn') document.getElementById('avatar-upload').click();
-                if (target.id === 'save-profile-btn') { const newName = document.getElementById('profile-name').value; await updateProfile(currentUser, { displayName: newName }); await setDoc(doc(db, "users", currentUser.uid), { displayName: newName }, { merge: true }); showToast('Профиль обновлен'); }
-                if (closest('.wishlist-btn')) { if(!currentUser) { showToast('Войдите в аккаунт'); return; } const btn = closest('.wishlist-btn'); const productId = btn.dataset.productId; const userRef = doc(db, 'users', currentUser.uid); if (userWishlist.includes(productId)) { await updateDoc(userRef, { wishlist: arrayRemove(productId) }); } else { await updateDoc(userRef, { wishlist: arrayUnion(productId) }); } }
-
-                // Admin buttons
-                if (target.id === 'add-product-btn') await showProductForm();
-                if (target.id === 'add-faq-btn') await showFaqForm();
-                if (target.id === 'add-payment-btn') await showPaymentMethodForm();
-                const editBtn = closest('.edit-btn');
-                if (editBtn) { const { id, type } = editBtn.dataset; if (type === 'product') await showProductForm(id); if (type === 'faq') await showFaqForm(id); if (type === 'payment') await showPaymentMethodForm(id); }
-                if (closest('.delete-btn')) { confirmAction('Уверены?', async () => { await deleteDoc(doc(db, closest('.delete-btn').dataset.collection, closest('.delete-btn').dataset.id)); }); }
-                if (closest('.approve-purchase-btn')) { await updateDoc(doc(db, "purchases", closest('.approve-purchase-btn').dataset.id), { status: 'Выполнен' }); }
-                if (closest('.reject-purchase-btn')) { showModal('Причина отклонения', `<input id="rejection-reason" class="w-full p-2 border rounded input-bg" placeholder="Причина...">`, async (m) => { const reason = m.querySelector('#rejection-reason').value.trim(); await updateDoc(doc(db, "purchases", closest('.reject-purchase-btn').dataset.id), { status: 'Отклонен', rejectionReason: reason }); return true; }, 'Отклонить'); }
-                if (closest('.approve-topup-btn')) { const btn = closest('.approve-topup-btn'); await updateDoc(doc(db, "users", btn.dataset.userId), { balance: increment(parseFloat(btn.dataset.amount)) }); await updateDoc(doc(db, "purchases", btn.dataset.id), { status: 'Выполнен' }); showToast('Баланс пополнен'); }
-                if (target.id === 'save-customization-btn') { const logoFile = document.getElementById('logo-upload-input').files[0]; if (logoFile) { const logoUrl = await uploadImage(logoFile); if(logoUrl) await setDoc(doc(db, "storeSettings", "config"), { logoUrl }, { merge: true }); } showToast('Сохранено'); }
-                if (target.id === 'save-download-settings-btn') { const appDownloadData = { description: document.getElementById('download-description').value, exeLink: document.getElementById('download-exe-link').value, apkLink: document.getElementById('download-apk-link').value }; await setDoc(doc(db, "storeSettings", "config"), { appDownload: appDownloadData }, { merge: true }); showToast('Сохранено'); }
+                if (target.id === 'save-profile-btn') { const newName = document.getElementById('profile-name').value; await updateProfile(currentUser, { displayName: newName }); await setDoc(doc(db, "users", currentUser.uid), { displayName: newName }, { merge: true }); showToast('Сохранено'); }
+                if (closest('.wishlist-btn')) { if(!currentUser) return; const btn = closest('.wishlist-btn'); await updateDoc(doc(db, 'users', currentUser.uid), { wishlist: userWishlist.includes(btn.dataset.productId) ? arrayRemove(btn.dataset.productId) : arrayUnion(btn.dataset.productId) }); }
+                if (target.id === 'add-product-btn') showProductForm();
+                if (target.id === 'add-faq-btn') showFaqForm();
+                if (target.id === 'add-payment-btn') showPaymentMethodForm();
+                if (target.id === 'add-promo-btn') showPromoForm();
+                if (closest('.edit-btn')) { const { id, type } = closest('.edit-btn').dataset; if(type==='product') showProductForm(id); if(type==='faq') showFaqForm(id); if(type==='payment') showPaymentMethodForm(id); }
+                if (closest('.delete-btn')) confirmAction('Удалить?', async () => await deleteDoc(doc(db, closest('.delete-btn').dataset.collection, closest('.delete-btn').dataset.id)));
+                if (closest('.approve-purchase-btn')) await updateDoc(doc(db, "purchases", closest('.approve-purchase-btn').dataset.id), { status: 'Выполнен' });
+                if (closest('.reject-purchase-btn')) showModal('Причина', `<input id="rejection-reason" class="w-full p-2 border rounded">`, async m => { await updateDoc(doc(db, "purchases", closest('.reject-purchase-btn').dataset.id), { status: 'Отклонен', rejectionReason: m.querySelector('input').value }); return true; }, 'Отклонить');
+                if (closest('.approve-topup-btn')) { const btn = closest('.approve-topup-btn'); await updateDoc(doc(db, "users", btn.dataset.userId), { balance: increment(parseFloat(btn.dataset.amount)), balanceHistory: arrayUnion({ type: 'topup', amount: parseFloat(btn.dataset.amount), date: new Date().toISOString() }) }); await updateDoc(doc(db, "purchases", btn.dataset.id), { status: 'Выполнен' }); }
+                if (target.id === 'save-logo-btn') { const file = document.getElementById('logo-upload-input').files[0]; if (file) { const url = await uploadImage(file); if(url) await setDoc(doc(db, "storeSettings", "config"), { logoUrl: url }, { merge: true }); } showToast('Сохранено'); }
+                if (target.id === 'save-download-settings-btn') { await setDoc(doc(db, "storeSettings", "config"), { appDownload: { description: document.getElementById('download-description').value, exeLink: document.getElementById('download-exe-link').value, apkLink: document.getElementById('download-apk-link').value } }, { merge: true }); showToast('Сохранено'); }
+                if(target.id === 'add-social-link-btn') showSocialLinkForm();
+                if(closest('.delete-social-link-btn')) { const id = closest('.delete-social-link-btn').dataset.id; const s = (await getDoc(doc(db, "storeSettings", "config"))).data(); const links = s.socialLinks.filter(l => l.id !== id); await updateDoc(doc(db, "storeSettings", "config"), { socialLinks: links }); }
             });
-
-             document.body.addEventListener('change', async e => {
-                const target = e.target;
-                if (target.id === 'currency-select') { appState.currency = target.value; localStorage.setItem('asonik_currency', target.value); handleRouting(); }
-                if (target.id === 'lang-select') { appState.lang = target.value; localStorage.setItem('asonik_lang', target.value); handleRouting(); }
-                if (target.matches('.toggle-payment-btn')) { await updateDoc(doc(db, "paymentMethods", target.dataset.id), { isEnabled: target.checked }); }
-            });
-
-            document.getElementById('search-input').addEventListener('input', applyFiltersAndSort);
-            const mobileMenu = document.getElementById('mobile-menu'), mobileMenuPanel = document.getElementById('mobile-menu-panel');
-            document.getElementById('mobile-menu-btn').addEventListener('click', () => { mobileMenu.classList.remove('hidden'); setTimeout(() => { mobileMenu.classList.remove('opacity-0'); mobileMenuPanel.classList.remove('translate-x-full'); }, 10); });
-            const closeMobileMenu = () => { mobileMenu.classList.add('opacity-0'); mobileMenuPanel.classList.add('translate-x-full'); setTimeout(() => mobileMenu.classList.add('hidden'), 300); }
-            document.getElementById('mobile-menu-close-btn').addEventListener('click', closeMobileMenu);
-            document.getElementById('mobile-nav-links').addEventListener('click', (e) => { if(e.target.classList.contains('nav-link')) closeMobileMenu(); });
+            const mobMenu = document.getElementById('mobile-menu'), mobPanel = document.getElementById('mobile-menu-panel');
+            const closeMobMenu = () => { mobMenu.classList.add('opacity-0'); mobPanel.classList.add('translate-x-full'); setTimeout(() => mobMenu.classList.add('hidden'), 300); };
+            document.getElementById('mobile-menu-btn').onclick = () => { mobMenu.classList.remove('hidden'); setTimeout(() => { mobMenu.classList.remove('opacity-0'); mobPanel.classList.remove('translate-x-full'); }, 10); };
+            document.getElementById('mobile-menu-close-btn').onclick = closeMobMenu;
+            document.getElementById('mobile-nav-links').onclick = e => { if(e.target.classList.contains('nav-link')) closeMobMenu(); };
         }
 
-        // --- THEME, AUTH, SWITCHERS, NOTIFICATIONS ---
-        function initTheme() {
-            const themeToggleBtn = document.getElementById('theme-toggle'); if (!themeToggleBtn) return;
-            const moonIcon = `<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"></path></svg>`;
-            const sunIcon = `<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M12 12a5 5 0 100-10 5 5 0 000 10z"></path></svg>`;
-            const applyTheme = (theme) => { if (theme === 'dark') { document.documentElement.classList.add('dark'); themeToggleBtn.innerHTML = sunIcon; } else { document.documentElement.classList.remove('dark'); themeToggleBtn.innerHTML = moonIcon; } };
-            const currentTheme = localStorage.getItem('color-theme') || (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
-            applyTheme(currentTheme);
-            themeToggleBtn.onclick = () => { const newTheme = document.documentElement.classList.contains('dark') ? 'light' : 'dark'; localStorage.setItem('color-theme', newTheme); applyTheme(newTheme); };
+        async function showSocialLinkForm() {
+            const onSave = async m => {
+                const name = m.querySelector('#social-name').value;
+                const url = m.querySelector('#social-url').value;
+                const file = m.querySelector('#social-image').files[0];
+                if(!name || !url || !file) return false;
+                const imageUrl = await uploadImage(file);
+                if(!imageUrl) return false;
+                const settingsRef = doc(db, "storeSettings", "config");
+                await updateDoc(settingsRef, { socialLinks: arrayUnion({ id: ''+Date.now(), name, url, imageUrl }) });
+                return true;
+            };
+            showModal('Добавить соц. сеть', '<div><input id="social-name" placeholder="Название"><input id="social-url" placeholder="URL"><input type="file" id="social-image"></div>', onSave);
         }
-        function updateAuthUI() { 
-            const container = document.getElementById('auth-container'); if(!container) return; 
-            if (currentUser) { container.innerHTML = `<div class="relative"><button id="profile-btn" class="flex items-center gap-2"><img src="${currentUser.photoURL || 'https://placehold.co/32x32'}" alt="Профиль" class="w-8 h-8 rounded-full object-cover"></button><div id="profile-menu" class="hidden absolute right-0 mt-2 w-52 card-bg rounded-md shadow-lg border border-custom z-10"><div class="px-4 py-2 border-b border-custom"><p class="font-semibold truncate">${currentUser.displayName}</p></div><a href="#profile" class="nav-link block px-4 py-2 text-sm hover:bg-gray-100 dark:hover:bg-gray-700">Профиль</a>${isAdmin ? `<a href="#admin" class="nav-link block px-4 py-2 text-sm hover:bg-gray-100 dark:hover:bg-gray-700">Админка</a>` : ''}<div class="border-t border-custom"></div><a href="#" id="logout-btn" class="block px-4 py-2 text-sm text-red-500 hover:bg-gray-100 dark:hover:bg-gray-700">Выйти</a></div></div>`; }
-            else { container.innerHTML = `<button id="google-login-btn" class="px-4 py-2 bg-primary text-white rounded-md hover:bg-primary-hover font-semibold">Войти</button>`; } 
-        }
-        function signInWithGoogle() { const provider = new GoogleAuthProvider(); signInWithPopup(auth, provider).catch(error => showToast("Ошибка входа: " + error.message, true)); } 
-        function initSwitchers() {
-            const currencySwitcher = document.getElementById('currency-switcher');
-            const langSwitcher = document.getElementById('lang-switcher');
-            if(currencySwitcher) { currencySwitcher.innerHTML = `<select id="currency-select" class="p-2 border border-custom rounded-lg focus:outline-none focus:ring-2 focus:ring-primary input-bg text-sm"><option>UZS</option><option>RUB</option><option>USD</option></select>`; currencySwitcher.querySelector('select').value = appState.currency; }
-            if(langSwitcher) { langSwitcher.innerHTML = `<select id="lang-select" class="p-2 border border-custom rounded-lg focus:outline-none focus:ring-2 focus:ring-primary input-bg text-sm"><option>RU</option><option>UZ</option></select>`; langSwitcher.querySelector('select').value = appState.lang; }
-        }
-        function setupNotificationsListener() {
-            const container = document.getElementById('notifications-container'); if (!currentUser || !container) { if (container) container.innerHTML = ''; return; }
-            const q = query(collection(db, "notifications"), where("userId", "==", currentUser.uid), orderBy("createdAt", "desc"));
-            onSnapshot(q, (snapshot) => { const notifications = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })); const unreadCount = notifications.filter(n => !n.isRead).length; renderNotifications(notifications, unreadCount); });
-        }
-        function renderNotifications(notifications, unreadCount) {
-             const container = document.getElementById('notifications-container'); if(!container) return;
-             container.innerHTML = `<button id="notifications-btn" class="relative p-2 text-gray-500 dark:text-gray-400"><svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"></path></svg>${unreadCount > 0 ? `<span class="absolute top-0 right-0 bg-red-500 text-white text-xs rounded-full h-4 w-4 flex items-center justify-center">${unreadCount}</span>` : ''}</button><div id="notifications-dropdown" class="hidden absolute right-0 mt-2 w-80 card-bg rounded-md shadow-lg border border-custom z-20"><div class="p-4 font-bold border-b border-custom">Уведомления</div><div class="max-h-96 overflow-y-auto">${notifications.length > 0 ? notifications.map(n => `<div class="p-4 border-b border-custom ${!n.isRead ? 'bg-primary/10' : ''}"><p class="font-semibold">${n.title}</p>${n.body ? `<p class="text-sm text-gray-400">${n.body}</p>` : ''}</div>`).join('') : '<p class="p-4 text-center text-sm text-gray-400">Пусто.</p>'}</div></div>`;
-             container.querySelector('#notifications-btn').addEventListener('click', () => { container.querySelector('#notifications-dropdown').classList.toggle('hidden'); if(unreadCount > 0) { const batch = writeBatch(db); notifications.filter(n => !n.isRead).forEach(n => batch.update(doc(db, 'notifications', n.id), { isRead: true })); batch.commit(); } });
-        }
-        function setupWishlistListener() { if (!currentUser) return; onSnapshot(doc(db, "users", currentUser.uid), (doc) => { userWishlist = doc.data()?.wishlist || []; if(window.location.hash.startsWith('#main') || window.location.hash === '') { applyFiltersAndSort(); } if(window.location.hash === '#wishlist') { loadWishlistPage(); } }); }
+
     </script>
 </body>
 </html>
