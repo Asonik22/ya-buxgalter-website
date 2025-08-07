@@ -88,18 +88,29 @@
         .admin-tabs .admin-tab-btn:hover:not(.active) { background-color: var(--card-bg); color: var(--primary-hover); }
         
         /* General UI improvements */
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            padding: 0.75rem 1.25rem;
+            border-radius: 0.5rem;
+            font-weight: 600;
+            transition: all 0.2s;
+            cursor: pointer;
+        }
         .btn-primary {
             background-color: var(--primary);
             color: white;
-            transition: background-color 0.2s;
         }
         .btn-primary:hover {
             background-color: var(--primary-hover);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
         }
         .btn-danger {
             background-color: #ef4444;
             color: white;
-            transition: background-color 0.2s;
         }
         .btn-danger:hover {
             background-color: #dc2626;
@@ -142,7 +153,8 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            transition: opacity 0.3s;
+            transition: opacity 0.5s ease-out;
+            opacity: 1;
         }
         .spinner {
             width: 56px;
@@ -158,9 +170,33 @@
                 transform: rotate(1turn);
             }
         }
+        .tooltip {
+            position: relative;
+            display: inline-block;
+        }
+        .tooltip .tooltiptext {
+            visibility: hidden;
+            width: 220px;
+            background-color: #555;
+            color: #fff;
+            text-align: center;
+            border-radius: 6px;
+            padding: 5px;
+            position: absolute;
+            z-index: 1;
+            bottom: 125%;
+            left: 50%;
+            margin-left: -110px;
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+        .tooltip:hover .tooltiptext {
+            visibility: visible;
+            opacity: 1;
+        }
     </style>
 </head>
-<body class="antialiased opacity-0 transition-opacity duration-300">
+<body class="antialiased opacity-0 transition-opacity duration-500">
 
     <div id="loading-overlay">
         <div class="spinner"></div>
@@ -184,7 +220,7 @@
                 </nav>
 
                 <div class="flex items-center space-x-2 md:space-x-4">
-                    <button id="balance-btn" class="hidden items-center gap-2 px-4 py-2 rounded-full bg-primary/10 hover:bg-primary/20 border border-primary/30 transition-all">
+                    <button id="balance-btn" class="hidden btn bg-primary/10 hover:bg-primary/20 border border-primary/30">
                         <svg class="h-5 w-5 text-primary" viewBox="0 0 20 20" fill="currentColor"><path d="M4 4a2 2 0 00-2 2v1h16V6a2 2 0 00-2-2H4z"></path><path fill-rule="evenodd" d="M18 9H2v5a2 2 0 002 2h12a2 2 0 002-2V9zM4 13a1 1 0 011-1h1a1 1 0 110 2H5a1 1 0 01-1-1zm5-1a1 1 0 100 2h1a1 1 0 100-2H9z" clip-rule="evenodd"></path></svg>
                         <span class="font-semibold text-sm">Баланс</span>
                         <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd"></path></svg>
@@ -283,7 +319,7 @@
                 setTimeout(() => {
                     document.getElementById('loading-overlay').style.display = 'none';
                     document.body.classList.remove('opacity-0');
-                }, 300);
+                }, 500);
             }); 
         });
 
@@ -298,13 +334,13 @@
                 setupNotificationsListener();
                 setupWishlistListener();
                 balanceBtn?.classList.remove('hidden');
-                balanceBtn?.classList.add('flex');
+                balanceBtn?.classList.add('btn');
             } else {
                 document.getElementById('notifications-container').innerHTML = '';
                 userWishlist = [];
                 appState.balance = 0;
                 balanceBtn?.classList.add('hidden');
-                balanceBtn?.classList.remove('flex');
+                balanceBtn?.classList.remove('btn');
             }
             updateAuthUI();
             handleRouting();
@@ -314,7 +350,7 @@
         const formatPrice = (price, currency = appState.currency) => new Intl.NumberFormat('ru-RU', { style: 'currency', currency, minimumFractionDigits: 0 }).format(price * (appState.rates[currency] || 1));
         const generateCode = () => 'A' + Math.random().toString(36).substring(2, 9).toUpperCase();
         const showToast = (message, isError = false) => { const el = document.createElement('div'); el.className = `fixed bottom-5 right-5 text-white py-2 px-4 rounded-lg shadow-lg z-50 ${isError ? 'bg-red-500' : 'bg-green-500'}`; el.textContent = message; document.body.appendChild(el); setTimeout(() => el.remove(), 3000); };
-        const showModal = (title, content, onSave, btnText = 'Подтвердить') => { const modal = document.createElement('div'); modal.className = 'fixed inset-0 z-50 flex items-center justify-center modal-backdrop'; modal.innerHTML = `<div class="card-bg rounded-lg shadow-xl w-11/12 md:w-2/3 lg:w-1/2 p-6 max-h-[90vh] overflow-y-auto"><div class="flex justify-between items-center mb-4"><h2 class="text-2xl font-bold">${title}</h2><button class="close-modal-btn text-2xl">&times;</button></div><div>${content}</div>${onSave ? `<div class="mt-6 flex justify-end gap-4"><button class="close-modal-btn px-6 py-2 rounded-lg">Отмена</button><button class="save-modal-btn btn-primary px-6 py-2 rounded-lg">${btnText}</button></div>` : ''}</div>`; document.getElementById('modals-container').appendChild(modal); modal.querySelectorAll('.close-modal-btn').forEach(b => b.onclick = () => modal.remove()); if (onSave) modal.querySelector('.save-modal-btn').onclick = async () => { if (await onSave(modal) !== false) modal.remove(); }; return modal; };
+        const showModal = (title, content, onSave, btnText = 'Подтвердить') => { const modal = document.createElement('div'); modal.className = 'fixed inset-0 z-50 flex items-center justify-center modal-backdrop'; modal.innerHTML = `<div class="card-bg rounded-lg shadow-xl w-11/12 md:w-2/3 lg:w-1/2 p-6 max-h-[90vh] overflow-y-auto"><div class="flex justify-between items-center mb-4"><h2 class="text-2xl font-bold">${title}</h2><button class="close-modal-btn text-2xl">&times;</button></div><div>${content}</div>${onSave ? `<div class="mt-6 flex justify-end gap-4"><button class="close-modal-btn btn">Отмена</button><button class="save-modal-btn btn btn-primary">${btnText}</button></div>` : ''}</div>`; document.getElementById('modals-container').appendChild(modal); modal.querySelectorAll('.close-modal-btn').forEach(b => b.onclick = () => modal.remove()); if (onSave) modal.querySelector('.save-modal-btn').onclick = async () => { if (await onSave(modal) !== false) modal.remove(); }; return modal; };
         const confirmAction = (msg, onConfirm) => showModal('Подтвердите', `<p>${msg}</p>`, () => { onConfirm(); return true; }, 'Да, уверен');
 
         // --- DATA LOADING ---
@@ -432,31 +468,148 @@
         };
         
         const renderProductCard = (p) => {
-            const statusIcon = p.productStatus === 'official' 
-                ? `<div class="absolute top-2 left-2 bg-blue-500 text-white w-8 h-8 rounded-full flex items-center justify-center cursor-help" title="Официальный товар"><svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M6.267 3.455a3.066 3.066 0 001.745-.723 3.066 3.066 0 013.976 0 3.066 3.066 0 001.745.723 3.066 3.066 0 012.812 2.812c.051.643.304 1.254.723 1.745a3.066 3.066 0 010 3.976 3.066 3.066 0 00-.723 1.745 3.066 3.066 0 01-2.812 2.812 3.066 3.066 0 00-1.745.723 3.066 3.066 0 01-3.976 0 3.066 3.066 0 00-1.745-.723 3.066 3.066 0 01-2.812-2.812 3.066 3.066 0 00-.723-1.745 3.066 3.066 0 010-3.976 3.066 3.066 0 00.723-1.745 3.066 3.066 0 012.812-2.812zm7.44 5.252a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" /></svg></div>`
-                : `<div class="absolute top-2 left-2 bg-yellow-500 text-white w-8 h-8 rounded-full flex items-center justify-center cursor-help" title="Частный продавец"><svg class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clip-rule="evenodd" /></svg></div>`;
+            const statusText = p.productStatus === 'official' ? 'Официальный магазин' : 'Частное лицо';
+            const statusTooltip = p.productStatus === 'official' 
+                ? 'Это товар, который продается непосредственно от имени нашего магазина. Мы несем полную ответственность за его качество и предоставляем гарантию.'
+                : 'Товар выставляется на продажу сторонним лицом. Магазин выступает в роли площадки и не несет ответственности за данный товар.';
+
             const pinnedIcon = p.isPinned ? `<div class="absolute top-2 right-12 bg-red-500 text-white w-8 h-8 rounded-full flex items-center justify-center" title="Закреплено"><svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M5.05 3.636a1 1 0 011.414 0L10 7.172l3.536-3.536a1 1 0 111.414 1.414L11.414 8.586l3.536 3.535a1 1 0 11-1.414 1.414L10 10.414l-3.536 3.536a1 1 0 01-1.414-1.414L8.586 8.586 5.05 5.05a1 1 0 010-1.414z" clip-rule="evenodd" /></svg></div>` : '';
             const hasVariations = p.variations && p.variations.length > 0;
             const buyButton = hasVariations
-                ? `<a href="#product/${p.id}" class="nav-link flex-grow btn-primary text-center py-2 px-4 rounded-lg font-semibold">Выбрать опцию</a>`
-                : `<button class="buy-now-btn flex-grow btn-primary py-2 px-4 rounded-lg font-semibold" data-product-id="${p.id}" data-lang-key="buy_button"></button>`;
+                ? `<a href="#product/${p.id}" class="nav-link flex-grow btn btn-primary text-center">Выбрать опцию</a>`
+                : `<button class="buy-now-btn flex-grow btn btn-primary" data-product-id="${p.id}" data-lang-key="buy_button"></button>`;
 
             return `<div class="card-bg rounded-lg shadow-lg flex flex-col justify-between border border-custom overflow-hidden transition-all duration-300 hover:shadow-2xl hover:-translate-y-1" data-product-id="${p.id}">
                 <div class="relative">
-                    <img src="${p.imageUrl || 'https://placehold.co/600x400/673ab7/ffffff?text=No+Image'}" class="w-full h-48 object-cover">
+                    <a href="#product/${p.id}" class="nav-link">
+                        <img src="${p.imageUrl || 'https://placehold.co/600x400/673ab7/ffffff?text=No+Image'}" class="w-full h-48 object-cover">
+                    </a>
                     <div class="absolute top-2 right-2"><button class="wishlist-btn p-2 rounded-full ${userWishlist.includes(p.id) ? 'bg-red-500/80' : 'bg-black/30'} text-white" data-product-id="${p.id}"><svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M3.172 5.172a4 4 0 015.656 0L10 6.343l1.172-1.171a4 4 0 115.656 5.656L10 17.657l-6.828-6.829a4 4 0 010-5.656z" clip-rule="evenodd"></path></svg></button></div>
-                    ${statusIcon}
                     ${pinnedIcon}
                 </div>
-                <div class="p-4 flex-grow"><h3 class="text-lg font-semibold truncate">${p.name}</h3><p class="text-gray-600 dark:text-gray-400 mt-1 text-sm h-10 overflow-hidden">${p.description}</p><p class="text-2xl font-bold text-primary mt-2">${formatPrice(p.price || 0)}</p></div>
-                <div class="p-4 pt-2 border-t border-custom flex items-center gap-2"><button class="add-to-cart-btn p-2 rounded-md hover:bg-gray-100 dark:hover:bg-gray-700" data-product-id="${p.id}" title="В корзину"><svg class="w-6 h-6 pointer-events-none" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"></path></svg></button>${buyButton}</div>
+                <div class="p-4 flex-grow">
+                    <h3 class="text-lg font-semibold truncate">${p.name}</h3>
+                    <p class="text-gray-600 dark:text-gray-400 mt-1 text-sm h-10 overflow-hidden">${p.description}</p>
+                    <div class="mt-2 text-sm text-gray-500 flex items-center gap-2">
+                        <span>${statusText}</span>
+                        <div class="tooltip">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-gray-400" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd" /></svg>
+                            <span class="tooltiptext">${statusTooltip}</span>
+                        </div>
+                    </div>
+                    <p class="text-2xl font-bold text-primary mt-2">${formatPrice(p.price || 0)}</p>
+                </div>
+                <div class="p-4 pt-2 border-t border-custom flex items-center gap-2">
+                    <button class="add-to-cart-btn p-2 rounded-md hover:bg-gray-100 dark:hover:bg-gray-700" data-product-id="${p.id}" title="В корзину"><svg class="w-6 h-6 pointer-events-none" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"></path></svg></button>
+                    ${buyButton}
+                </div>
             </div>`;
         };
         
+        // --- PRODUCT DETAIL PAGE ---
+        const loadProductDetailPage = async (productId) => {
+            const contentContainer = document.getElementById('product-detail-content');
+            if (!productId) {
+                contentContainer.innerHTML = `<p class="text-center">Товар не найден.</p>`;
+                return;
+            }
+            try {
+                const productDoc = await getDoc(doc(db, "products", productId));
+                if (!productDoc.exists()) {
+                    contentContainer.innerHTML = `<p class="text-center">Товар не найден.</p>`;
+                    return;
+                }
+                const product = { id: productDoc.id, ...productDoc.data() };
+                
+                let variationsHTML = '';
+                if (product.variations && product.variations.length > 0) {
+                    variationsHTML = `
+                        <div class="mt-6">
+                            <h3 class="text-xl font-semibold mb-4">Выберите опцию:</h3>
+                            <div class="space-y-4">
+                                ${product.variations.map((v, index) => `
+                                    <div class="variation-option p-4 border-2 rounded-lg cursor-pointer" data-index="${index}">
+                                        <div class="flex justify-between items-center">
+                                            <div class="flex items-center gap-4">
+                                                ${v.imageUrl ? `<img src="${v.imageUrl}" class="w-16 h-16 rounded-md object-cover">` : ''}
+                                                <div>
+                                                    <h4 class="font-bold text-lg">${v.name}</h4>
+                                                    <p class="text-sm text-gray-500">${v.description || ''}</p>
+                                                </div>
+                                            </div>
+                                            <p class="text-xl font-bold text-primary">${formatPrice(v.price)}</p>
+                                        </div>
+                                    </div>
+                                `).join('')}
+                            </div>
+                        </div>
+                    `;
+                }
+
+                contentContainer.innerHTML = `
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-8 lg:gap-12">
+                        <div>
+                            <img id="main-product-image" src="${product.imageUrl || 'https://placehold.co/600x600'}" class="w-full rounded-lg shadow-lg object-cover">
+                        </div>
+                        <div>
+                            <h1 id="main-product-name" class="text-4xl font-extrabold mb-2">${product.name}</h1>
+                            <p id="main-product-price" class="text-3xl font-bold text-primary mb-4">${formatPrice(product.price)}</p>
+                            <p id="main-product-desc" class="text-gray-600 dark:text-gray-400 mb-6">${product.description}</p>
+                            ${variationsHTML}
+                            <div class="mt-8">
+                                <button id="detail-buy-btn" class="w-full btn btn-primary text-lg">Купить</button>
+                            </div>
+                        </div>
+                    </div>
+                `;
+
+                let selectedVariation = null;
+                if (product.variations && product.variations.length > 0) {
+                     // Hide base product price if variations exist
+                    document.getElementById('main-product-price').classList.add('hidden');
+
+                    contentContainer.querySelectorAll('.variation-option').forEach(option => {
+                        option.addEventListener('click', () => {
+                            contentContainer.querySelectorAll('.variation-option').forEach(el => el.classList.remove('selected'));
+                            option.classList.add('selected');
+                            selectedVariation = product.variations[parseInt(option.dataset.index)];
+                            
+                            // Update main display with variation info
+                            document.getElementById('main-product-name').textContent = `${product.name} - ${selectedVariation.name}`;
+                            document.getElementById('main-product-price').textContent = formatPrice(selectedVariation.price);
+                            document.getElementById('main-product-price').classList.remove('hidden');
+                            if(selectedVariation.imageUrl) {
+                                document.getElementById('main-product-image').src = selectedVariation.imageUrl;
+                            }
+                            if(selectedVariation.description) {
+                                document.getElementById('main-product-desc').textContent = selectedVariation.description;
+                            }
+                        });
+                    });
+                }
+
+                document.getElementById('detail-buy-btn').addEventListener('click', () => {
+                    if (product.variations && product.variations.length > 0) {
+                        if (selectedVariation) {
+                            showCheckoutModal([{...product, ...selectedVariation, name: `${product.name} - ${selectedVariation.name}`}], selectedVariation.price);
+                        } else {
+                            showToast('Пожалуйста, выберите опцию', true);
+                        }
+                    } else {
+                        showCheckoutModal([product], product.price);
+                    }
+                });
+
+            } catch (error) {
+                console.error("Error loading product detail:", error);
+                contentContainer.innerHTML = `<p class="text-center text-red-500">Ошибка загрузки товара.</p>`;
+            }
+        };
+
         // --- PURCHASES & CHECKOUT ---
         async function showCheckoutModal(items, total) {
             if (!currentUser) { showModal('Вход', '<p>Для покупки войдите в аккаунт.</p>', () => signInWithGoogle(), 'Войти'); return; }
-            if (appState.balance < 0) { showModal('Ошибка', '<p>У вас отрицательный баланс. Пожалуйста, пополните счет перед совершением покупок.</p>'); return; }
+            if (appState.balance < 0) { showModal('Отрицательный баланс', '<p>У вас отрицательный баланс. Пожалуйста, пополните счет перед совершением покупок.</p>'); return; }
             if (!items.length) { showToast('Корзина пуста', true); return; }
 
             let currentTotal = total; let appliedPromo = null;
@@ -473,7 +626,7 @@
             const onSave = async m => { const code = m.querySelector('#promo-input').value.toUpperCase().trim(); if (!code) return false; const promoDoc = await getDoc(doc(db, "promocodes", code)); if (promoDoc.exists()) { const promoData = promoDoc.data(); if ((promoData.uses || 0) < promoData.limit) { currentTotal = total * (1 - (promoData.discount/100)); appliedPromo = {code, ...promoData}; m.querySelector('#total-price-display').textContent = formatPrice(currentTotal); showToast(`Промокод применен!`); } else { showToast('Промокод не действителен', true); } } else { showToast('Неверный промокод', true); } return false; };
             const modal = showModal(`Оформление заказа`, `<p>Товар: <strong>${items.length > 1 ? `${items.length} товаров` : items[0].name}</strong></p><p>Сумма: <strong id="total-price-display">${formatPrice(currentTotal)}</strong></p>
                 <div class="space-y-2 mt-4">${paymentButtonsHTML}</div>
-                <div class="mt-4 flex gap-2"><input id="promo-input" class="w-full modern-input" placeholder="Промокод..."><button id="apply-promo-btn" class="p-2 bg-gray-500 text-white rounded-lg">Применить</button></div>`, onSave, 'Применить');
+                <div class="mt-4 flex gap-2"><input id="promo-input" class="w-full modern-input" placeholder="Промокод..."><button id="apply-promo-btn" class="btn bg-gray-500 text-white">Применить</button></div>`, onSave, 'Применить');
             modal.querySelector('.save-modal-btn').classList.add('hidden');
             modal.querySelector('#apply-promo-btn').onclick = () => onSave(modal);
             modal.querySelectorAll('.payment-option').forEach(btn => btn.onclick = async () => { 
@@ -500,7 +653,7 @@
                 orderId: generateCode(), 
                 items, 
                 productName: items.length > 1 ? `${items.length} товаров` : items[0].name, 
-                status: 'Завершен', 
+                status: 'Выполнен', // Changed from 'Завершен' to 'Выполнен'
                 paymentMethod: 'Баланс', 
                 finalPrice: total, 
                 promoCode: promo?.code || null, 
@@ -530,9 +683,9 @@
             const statusMap = { 'Выполнен': 'completed', 'Ожидает оплаты': 'pending', 'Ожидает подтверждения': 'pending', 'Отклонен': 'rejected', 'Отменен': 'cancelled', 'Завершен': 'completed' };
             const statusClass = statusMap[p.status] || 'pending';
             let buttons = '';
-            if(p.status === 'Ожидает оплаты') { buttons += `<button class="upload-proof-btn btn-primary text-sm px-3 py-1 rounded-md" data-id="${id}">Загрузить чек</button><button class="cancel-purchase-btn btn-danger text-sm px-3 py-1 rounded-md ml-2" data-id="${id}">Отменить</button>`; } 
-            if(p.status === 'Выполнен' && !p.isTopUp) { buttons += `<button class="contact-seller-btn btn-primary text-sm px-3 py-1 rounded-md ml-2" data-code="${p.orderId}">Получить товар</button><button class="complete-order-btn bg-green-500 text-white text-sm px-3 py-1 rounded-md ml-2" data-id="${id}">Завершить заказ</button>`; }
-            if(p.status === 'Завершен' && !p.isTopUp && !p.review) { buttons += `<button class="leave-review-btn btn-primary text-sm px-3 py-1 rounded-md ml-2" data-id="${id}" data-product-id="${p.items[0].id}">Оставить отзыв</button>`; }
+            if(p.status === 'Ожидает оплаты') { buttons += `<button class="upload-proof-btn btn btn-primary text-sm" data-id="${id}">Загрузить чек</button><button class="cancel-purchase-btn btn btn-danger text-sm ml-2" data-id="${id}">Отменить</button>`; } 
+            if(p.status === 'Выполнен' && !p.isTopUp) { buttons += `<button class="contact-seller-btn btn btn-primary text-sm ml-2" data-code="${p.orderId}">Получить товар</button><button class="complete-order-btn bg-green-500 text-white text-sm btn ml-2" data-id="${id}">Завершить заказ</button>`; }
+            if(p.status === 'Завершен' && !p.isTopUp && !p.review) { buttons += `<button class="leave-review-btn btn btn-primary text-sm ml-2" data-id="${id}" data-product-id="${p.items[0].id}">Оставить отзыв</button>`; }
 
             return `<div class="card-bg p-4 sm:p-6 rounded-lg border border-custom flex flex-col sm:flex-row gap-4 items-start shadow-md">
                 <img src="${p.items[0].imageUrl || 'https://placehold.co/128x128'}" class="w-full sm:w-32 h-32 sm:h-auto flex-shrink-0 object-cover rounded-md">
@@ -587,12 +740,12 @@
             if (!container) return; // Guard against null container
             switch(subpage) { 
                 case 'users': loadAdminUsers(); break; 
-                case 'products': loadAdminList('products', 'Товары', renderAdminProductItem, `<button id="add-product-btn" class="btn-primary px-4 py-2 rounded-lg">Добавить товар</button>`); break; 
-                case 'faq': loadAdminList('faq', 'FAQ', renderAdminFaqItem, `<button id="add-faq-btn" class="btn-primary px-4 py-2 rounded-lg">Добавить</button>`); break; 
+                case 'products': loadAdminList('products', 'Товары', renderAdminProductItem, `<button id="add-product-btn" class="btn btn-primary">Добавить товар</button>`); break; 
+                case 'faq': loadAdminList('faq', 'FAQ', renderAdminFaqItem, `<button id="add-faq-btn" class="btn btn-primary">Добавить</button>`); break; 
                 case 'purchases': loadAdminPurchases(); break; 
                 case 'reviews': loadAdminReviews(); break;
-                case 'payment': loadAdminList('paymentMethods', 'Способы оплаты', renderAdminPaymentItem, `<button id="add-payment-btn" class="btn-primary px-4 py-2 rounded-lg">Добавить</button>`); break; 
-                case 'promocodes': loadAdminList('promocodes', 'Промокоды', renderAdminPromoItem, `<button id="add-promo-btn" class="btn-primary px-4 py-2 rounded-lg">Добавить</button>`); break; 
+                case 'payment': loadAdminList('paymentMethods', 'Способы оплаты', renderAdminPaymentItem, `<button id="add-payment-btn" class="btn btn-primary">Добавить</button>`); break; 
+                case 'promocodes': loadAdminList('promocodes', 'Промокоды', renderAdminPromoItem, `<button id="add-promo-btn" class="btn btn-primary">Добавить</button>`); break; 
                 case 'customization': loadCustomizationPage(); break; 
                 case 'chats': loadAdminChatsList(window.location.hash.split('/')[2]); break; 
                 case 'download': loadAdminDownloadPage(); break; 
@@ -625,7 +778,7 @@
         // --- ADMIN FORMS (RE-DESIGNED) ---
         async function showProductForm(pId) {
             let p = {name:'',description:'',price:0,imageUrl:'',productStatus:'official', isPinned: false, variations: []};
-            if(pId){const d=await getDoc(doc(db,'products',pId)); if(d.exists()) p=d.data();}
+            if(pId){const d=await getDoc(doc(db,'products',pId)); if(d.exists()) p={...d.data(), id: d.id};}
             
             const onSave = async m => {
                 const file = m.querySelector('#p-image-file').files[0];
@@ -675,7 +828,7 @@
                         <textarea id="p-desc" class="w-full modern-input" rows="4" placeholder="Подробное описание товара...">${p.description||''}</textarea>
                     </div>
                     <div>
-                        <label for="p-price" class="block text-sm font-medium mb-1">Цена (в UZS)</label>
+                        <label for="p-price" class="block text-sm font-medium mb-1">Базовая цена (в UZS)</label>
                         <input id="p-price" type="number" value="${p.price||0}" class="w-full modern-input" placeholder="0">
                     </div>
                     <div>
@@ -697,7 +850,7 @@
                                 <span class="ml-2">Официальный товар</span>
                             </label>
                             <label class="flex items-center">
-                                <input type="radio" name="product-status" value="private" ${p.productStatus === 'private' ? 'checked' : ''} class="h-4 w-4 text-primary focus:ring-primary border-gray-300">
+                                <input type="radio" name="product-status" value="private" ${p.productStatus === 'private' || !p.productStatus ? 'checked' : ''} class="h-4 w-4 text-primary focus:ring-primary border-gray-300">
                                 <span class="ml-2">Частный продавец</span>
                             </label>
                         </div>
@@ -707,23 +860,24 @@
                         <label for="p-pinned" class="ml-2 block text-sm">Закрепить товар (будет первым в списке)</label>
                     </div>
                     <hr class="border-custom">
-                    <h4 class="font-bold">Вариации</h4>
+                    <h4 class="font-bold">Вариации товара</h4>
                     <div id="variations-container" class="space-y-4"></div>
-                    <button type="button" id="add-variation-btn" class="mt-2 p-2 bg-gray-500 text-white rounded-lg">+ Добавить вариацию</button>
+                    <button type="button" id="add-variation-btn" class="mt-2 btn bg-gray-500 text-white text-sm">+ Добавить вариацию</button>
                 </div>`;
             
             const modal = showModal(pId ? 'Редактировать товар' : 'Добавить товар', formHTML, onSave, 'Сохранить');
             
             const renderVariation = (v = {}) => {
                 const el = document.createElement('div');
-                el.className = 'variation-item grid grid-cols-2 gap-4 border p-4 rounded-lg';
+                el.className = 'variation-item border p-4 rounded-lg space-y-3';
                 el.dataset.imgurl = v.imageUrl || '';
                 el.innerHTML = `
-                    <div class="col-span-2"><input class="v-name w-full modern-input" value="${v.name||''}" placeholder="Название (50 гемов)"></div>
-                    <div><input type="number" class="v-price w-full modern-input" value="${v.price||0}" placeholder="Цена"></div>
-                    <div><input type="file" class="v-image text-xs w-full"></div>
-                    <div class="col-span-2"><textarea class="v-desc w-full modern-input" placeholder="Описание вариации">${v.description||''}</textarea></div>
-                    <div class="col-span-2 text-right"><button type="button" class="remove-variation-btn btn-danger px-3 py-1 rounded-lg">Удалить</button></div>
+                    <input class="v-name w-full modern-input" value="${v.name||''}" placeholder="Название вариации (например, 50 гемов)">
+                    <input type="number" class="v-price w-full modern-input" value="${v.price||0}" placeholder="Цена вариации">
+                    <textarea class="v-desc w-full modern-input" placeholder="Краткое описание вариации">${v.description||''}</textarea>
+                    <input type="file" class="v-image text-xs w-full file:mr-2 file:py-1 file:px-2 file:rounded-full file:border-0 file:text-xs file:font-semibold file:bg-primary/10 file:text-primary hover:file:bg-primary/20">
+                    ${v.imageUrl ? `<img src="${v.imageUrl}" class="mt-2 w-16 h-16 object-cover rounded-md">` : ''}
+                    <div class="text-right"><button type="button" class="remove-variation-btn btn btn-danger px-3 py-1 text-sm">Удалить</button></div>
                 `;
                 modal.querySelector('#variations-container').appendChild(el);
             };
@@ -752,7 +906,7 @@
                     <h3 class="text-xl font-bold mb-2">Общие настройки</h3>
                     <label class="block text-sm">Название сайта</label>
                     <input id="site-name-input" class="w-full modern-input mt-1" value="${settings.siteName || 'Asonik | Store'}">
-                    <button id="save-site-name-btn" class="btn-primary px-4 py-2 rounded-lg mt-2">Сохранить название</button>
+                    <button id="save-site-name-btn" class="btn btn-primary mt-2">Сохранить название</button>
                 </div>
                 <hr class="border-custom">
                 <div>
@@ -761,7 +915,7 @@
                     <input type="file" id="ad-banner-upload-input" class="w-full text-sm file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-primary/10 file:text-primary hover:file:bg-primary/20 mt-1">
                     <label class="block text-sm mt-2">Ссылка (куда ведет баннер)</label>
                     <input id="ad-banner-link-input" class="w-full modern-input mt-1" value="${settings.adBanner?.linkUrl || ''}" placeholder="https://example.com">
-                    <button id="save-ad-banner-btn" class="btn-primary px-4 py-2 rounded-lg mt-2">Сохранить баннер</button>
+                    <button id="save-ad-banner-btn" class="btn btn-primary mt-2">Сохранить баннер</button>
                 </div>
                 <hr class="border-custom">
                 <div>
@@ -782,19 +936,19 @@
                             <input type="color" id="bg-dark-picker" value="${settings.themeColors?.bgDark || '#1a102c'}">
                         </div>
                     </div>
-                    <button id="save-theme-btn" class="btn-primary px-4 py-2 rounded-lg mt-4">Сохранить тему</button>
-                    <button id="reset-theme-btn" class="bg-gray-500 text-white px-4 py-2 rounded-lg mt-4 ml-2">Сбросить</button>
+                    <button id="save-theme-btn" class="btn btn-primary mt-4">Сохранить тему</button>
+                    <button id="reset-theme-btn" class="btn bg-gray-500 text-white mt-4 ml-2">Сбросить</button>
                 </div>
                 <hr class="border-custom">
                 <div>
                     <h3 class="text-xl font-bold">Логотип</h3>
-                    <input type="file" id="logo-upload-input" class="mt-2"><button id="save-logo-btn" class="btn-primary p-2 rounded-lg ml-2">Сохранить лого</button>
+                    <input type="file" id="logo-upload-input" class="mt-2"><button id="save-logo-btn" class="btn btn-primary ml-2">Сохранить лого</button>
                 </div>
                 <hr class="border-custom">
                 <div>
                     <h3 class="text-xl font-bold">Социальные сети</h3>
                     <div id="social-links-admin" class="space-y-2 mt-2"></div>
-                    <button id="add-social-link-btn" class="bg-green-500 text-white p-2 rounded-lg mt-2">Добавить ссылку</button>
+                    <button id="add-social-link-btn" class="btn bg-green-500 text-white mt-2">Добавить ссылку</button>
                 </div>
             </div>`; 
             renderAdminSocialLinks(settings.socialLinks);
@@ -827,7 +981,7 @@
                 apply(n);
             };
         };
-        const updateAuthUI = () => { const c = document.getElementById('auth-container'); if(!c) return; if (currentUser) { c.innerHTML = `<div class="relative"><button id="profile-btn" class="flex items-center gap-2"><img src="${currentUser.photoURL||'https://placehold.co/32x32'}" class="w-8 h-8 rounded-full object-cover"><svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd"></path></svg></button><div id="profile-menu" class="hidden absolute right-0 mt-2 w-52 card-bg rounded-md shadow-lg z-10"><a href="#profile" class="nav-link block px-4 py-2">Профиль</a>${isAdmin ? `<a href="#admin" class="nav-link block px-4 py-2">Админ-панель</a>` : ''}<a href="#" id="logout-btn" class="block px-4 py-2 text-red-500">Выйти</a></div></div>`;} else { c.innerHTML = `<button id="google-login-btn" class="px-4 py-2 btn-primary rounded-md">Войти</button>`; } };
+        const updateAuthUI = () => { const c = document.getElementById('auth-container'); if(!c) return; if (currentUser) { c.innerHTML = `<div class="relative"><button id="profile-btn" class="flex items-center gap-2"><img src="${currentUser.photoURL||'https://placehold.co/32x32'}" class="w-8 h-8 rounded-full object-cover"><svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd"></path></svg></button><div id="profile-menu" class="hidden absolute right-0 mt-2 w-52 card-bg rounded-md shadow-lg z-10"><a href="#profile" class="nav-link block px-4 py-2">Профиль</a>${isAdmin ? `<a href="#admin" class="nav-link block px-4 py-2">Админ-панель</a>` : ''}<a href="#" id="logout-btn" class="block px-4 py-2 text-red-500">Выйти</a></div></div>`;} else { c.innerHTML = `<button id="google-login-btn" class="btn btn-primary">Войти</button>`; } };
         const signInWithGoogle = () => { const p = new GoogleAuthProvider(); signInWithPopup(auth, p).catch(e => showToast("Ошибка: " + e.message, true)); };
         
         // --- EVENT LISTENERS ---
@@ -859,7 +1013,19 @@
                 if(closest('.cancel-purchase-btn')) confirmAction('Вы уверены, что хотите отменить заказ?', async () => await updateDoc(doc(db, "purchases", closest('.cancel-purchase-btn').dataset.id), { status: 'Отменен' }));
                 if(closest('.upload-proof-btn')) showProofUploadModal(closest('.upload-proof-btn').dataset.id);
                 if (closest('#profile-btn')) { e.stopPropagation(); document.getElementById('profile-menu')?.classList.toggle('hidden'); }
-                if (closest('.wishlist-btn')) { if(!currentUser) return; const btn = closest('.wishlist-btn'); await updateDoc(doc(db, 'users', currentUser.uid), { wishlist: userWishlist.includes(btn.dataset.productId) ? arrayRemove(btn.dataset.productId) : arrayUnion(btn.dataset.productId) }); }
+                if (closest('.wishlist-btn')) { 
+                    if(!currentUser) {
+                        showToast('Пожалуйста, войдите, чтобы добавлять в избранное.');
+                        return;
+                    } 
+                    const btn = closest('.wishlist-btn'); 
+                    const productId = btn.dataset.productId;
+                    const userRef = doc(db, 'users', currentUser.uid);
+                    await updateDoc(userRef, { wishlist: userWishlist.includes(productId) ? arrayRemove(productId) : arrayUnion(productId) }); 
+                    // Visual feedback
+                    btn.classList.toggle('bg-red-500/80');
+                    btn.classList.toggle('bg-black/30');
+                }
                 if (target.id === 'add-product-btn') showProductForm();
                 if (closest('.edit-btn')) { const { id, type } = closest('.edit-btn').dataset; if(type==='product') showProductForm(id); }
                 if (closest('.delete-btn')) confirmAction('Вы уверены, что хотите удалить этот элемент?', async () => await deleteDoc(doc(db, closest('.delete-btn').dataset.collection, closest('.delete-btn').dataset.id)));
@@ -992,7 +1158,6 @@
         }
         
         // --- ALL OTHER FUNCTIONS ---
-        // These functions had ReferenceErrors, so they are defined here.
         const showProofUploadModal = async (purchaseId) => {
             const purchaseDocRef = doc(db, "purchases", purchaseId);
             const purchaseSnap = await getDoc(purchaseDocRef);
@@ -1043,31 +1208,199 @@
         const renderAdminSocialLinks = (links) => { const cont = document.getElementById('social-links-admin'); if(!cont) return; cont.innerHTML = (links||[]).map(l => `<div class="flex items-center gap-2 p-2 card-bg rounded"><span>${l.name}</span><button class="delete-social-link-btn text-red-500" data-id="${l.id}">Удалить</button></div>`).join(''); };
         const renderAdminFaqItem = (id, d) => `<div class="card-bg p-4 rounded flex justify-between items-center border border-custom"><div><p>${d.question}</p></div><div><button class="edit-btn text-blue-400 mr-4" data-id="${id}" data-type="faq">Ред.</button><button class="delete-btn text-red-500" data-collection="faq" data-id="${id}">Удл.</button></div></div>`;
         const renderAdminPromoItem = (id, d) => `<div class="card-bg p-4 rounded border border-custom">Код: <strong>${d.code}</strong>, Скидка: ${d.discount}%, Исп: ${d.uses||0}/${d.limit} <button class="delete-btn text-red-500 ml-4" data-collection="promocodes" data-id="${id}">Удл.</button></div>`;
-        const loadAdminDownloadPage = async () => { const el = document.getElementById('admin-tab-content'); const appData = (await getDoc(doc(db, "storeSettings", "config"))).data()?.appDownload || {}; el.innerHTML = `<h3>Страница "Скачать"</h3><div class="max-w-xl space-y-4"><div><label>Описание</label><textarea id="download-description" class="w-full p-2 border rounded input-bg">${appData.description || ''}</textarea></div><div><label>Ссылка .exe</label><input id="download-exe-link" class="w-full p-2 border rounded" value="${appData.exeLink || ''}"></div><div><label>Ссылка .apk</label><input id="download-apk-link" class="w-full p-2 border rounded" value="${appData.apkLink || ''}"></div><button id="save-download-settings-btn" class="btn-primary p-2 rounded">Сохранить</button></div>`; };
+        const loadAdminDownloadPage = async () => { const el = document.getElementById('admin-tab-content'); const appData = (await getDoc(doc(db, "storeSettings", "config"))).data()?.appDownload || {}; el.innerHTML = `<h3>Страница "Скачать"</h3><div class="max-w-xl space-y-4"><div><label>Описание</label><textarea id="download-description" class="w-full p-2 border rounded input-bg">${appData.description || ''}</textarea></div><div><label>Ссылка .exe</label><input id="download-exe-link" class="w-full p-2 border rounded" value="${appData.exeLink || ''}"></div><div><label>Ссылка .apk</label><input id="download-apk-link" class="w-full p-2 border rounded" value="${appData.apkLink || ''}"></div><button id="save-download-settings-btn" class="btn btn-primary">Сохранить</button></div>`; };
         const loadFaq = () => { const cont = document.getElementById('faq-content'); if(!cont) return; cont.innerHTML = `<div class="max-w-4xl mx-auto"><h1 class="text-4xl font-bold text-center mb-12" data-lang-key="faq_title"></h1><div id="faq-list" class="space-y-4"></div></div>`; const list = document.getElementById('faq-list'); onSnapshot(collection(db, "faq"), s => { list.innerHTML = s.docs.map(d => { const i = d.data(); return `<div class="card-bg rounded-lg shadow border border-custom"><button class="faq-question w-full text-left p-6 font-bold flex justify-between items-center text-lg"><span>${i.question}</span><svg class="faq-icon w-6 h-6 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" /></svg></button><div class="faq-answer"><p class="p-6 pt-0">${i.answer}</p></div></div>` }).join(''); }); };
-        const loadProfilePage = () => { const el = document.getElementById('profile-content'); if (!el || !currentUser) return; el.innerHTML = `<h1 class="text-4xl font-bold text-center mb-8" data-lang-key="profile_title"></h1><div class="max-w-3xl mx-auto card-bg p-8 rounded-2xl shadow-lg"><div class="flex flex-col md:flex-row items-center gap-8"><div class="flex flex-col items-center"><img id="profile-avatar" src="${currentUser.photoURL || 'https://placehold.co/128x128'}" class="w-32 h-32 rounded-full mb-4 object-cover"><input type="file" id="avatar-upload" class="hidden" accept="image/*"><button id="change-avatar-btn" class="text-sm text-primary hover:underline">Сменить</button></div><div class="flex-grow w-full"><h2 class="text-3xl font-bold">${currentUser.displayName}</h2><input id="profile-name" class="w-full p-2 border-b-2 bg-transparent focus:outline-none focus:border-primary" value="${currentUser.displayName || ''}"><div class="mt-8 flex gap-4"><button id="save-profile-btn" class="flex-grow btn-primary px-6 py-3 rounded-lg">Сохранить</button><button id="logout-btn-profile" class="flex-grow bg-red-500 text-white px-6 py-3 rounded-lg">Выйти</button></div></div></div></div>`; };
-        const loadDownloadPage = () => { const el = document.getElementById('download-content'); const data = appState.appDownload || {}; el.innerHTML = `<div class="max-w-xl mx-auto card-bg p-8 rounded-lg text-center"><h1 class="text-4xl font-bold mb-4" data-lang-key="download_title"></h1><p class="mb-6">${data.description || 'Ссылки не настроены'}</p><div class="flex flex-col gap-4">${data.exeLink ? `<a href="${data.exeLink}" class="w-full px-6 py-3 btn-primary rounded-md">Windows (.exe)</a>` : ''}${data.apkLink ? `<a href="${data.apkLink}" class="w-full px-6 py-3 btn-primary rounded-md">Android (.apk)</a>` : ''}</div></div>`; translatePage(); };
-        const loadChatsPage = (subpage) => { const el = document.getElementById('chats-content'); if (!el || !currentUser) return; if(isAdmin) { loadAdminChatsList(subpage); return; } el.innerHTML = `<h1 class="text-4xl font-bold text-center mb-8" data-lang-key="nav_chats"></h1><div class="text-center max-w-lg mx-auto card-bg p-8 rounded-lg shadow-lg"><button id="start-chat-btn" class="w-full px-6 py-3 btn-primary rounded-md">Связаться с нами</button></div>`; };
-        const loadWishlistPage = () => { const el = document.getElementById('wishlist-content'); const prods = allProducts.filter(p => userWishlist.includes(p.id)); el.innerHTML = `<h1 class="text-4xl font-bold text-center mb-8">Избранное</h1>` + (prods.length ? `<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">${prods.map(p => renderProductCard(p)).join('')}</div>` : '<p class="text-center">Пусто.</p>'); };
+        const loadProfilePage = async () => { 
+            const el = document.getElementById('profile-content'); 
+            if (!el || !currentUser) return; 
+            const userDoc = await getDoc(doc(db, "users", currentUser.uid));
+            const userData = userDoc.data() || {};
+            
+            const purchasesQuery = query(collection(db, "purchases"), where("userId", "==", currentUser.uid), orderBy("createdAt", "desc"));
+            const purchasesSnapshot = await getDocs(purchasesQuery);
+            const purchasesHistoryHTML = purchasesSnapshot.docs.map(d => renderPurchaseItem(d.id, d.data())).join('') || '<p class="text-center text-gray-500 mt-4">У вас еще нет покупок.</p>';
+
+            el.innerHTML = `
+                <h1 class="text-4xl font-bold text-center mb-8" data-lang-key="profile_title"></h1>
+                <div class="max-w-4xl mx-auto card-bg p-8 rounded-2xl shadow-lg space-y-8">
+                    <div class="flex flex-col md:flex-row items-center gap-8">
+                        <div class="flex flex-col items-center">
+                            <img id="profile-avatar" src="${currentUser.photoURL || 'https://placehold.co/128x128'}" class="w-32 h-32 rounded-full mb-4 object-cover shadow-md">
+                            <input type="file" id="avatar-upload" class="hidden" accept="image/*">
+                            <button id="change-avatar-btn" class="text-sm text-primary hover:underline">Сменить фото</button>
+                        </div>
+                        <div class="flex-grow w-full space-y-4">
+                             <div>
+                                <label for="profile-firstname" class="block text-sm font-medium text-gray-400">Имя</label>
+                                <input id="profile-firstname" class="w-full p-2 border-b-2 bg-transparent focus:outline-none focus:border-primary text-xl" value="${userData.firstName || ''}">
+                            </div>
+                             <div>
+                                <label for="profile-lastname" class="block text-sm font-medium text-gray-400">Фамилия</label>
+                                <input id="profile-lastname" class="w-full p-2 border-b-2 bg-transparent focus:outline-none focus:border-primary text-xl" value="${userData.lastName || ''}">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="mt-8 flex gap-4">
+                        <button id="save-profile-btn" class="flex-grow btn btn-primary">Сохранить</button>
+                        <button id="logout-btn-profile" class="flex-grow btn btn-danger">Выйти</button>
+                    </div>
+                    <div>
+                        <h2 class="text-2xl font-bold mt-12 mb-6 border-b pb-2">История покупок</h2>
+                        <div class="space-y-6">${purchasesHistoryHTML}</div>
+                    </div>
+                </div>`;
+            
+            document.getElementById('save-profile-btn').onclick = async () => {
+                const firstName = document.getElementById('profile-firstname').value;
+                const lastName = document.getElementById('profile-lastname').value;
+                await updateDoc(doc(db, "users", currentUser.uid), { firstName, lastName });
+                showToast('Профиль обновлен!');
+            };
+        };
+        const loadDownloadPage = () => { const el = document.getElementById('download-content'); const data = appState.appDownload || {}; el.innerHTML = `<div class="max-w-xl mx-auto card-bg p-8 rounded-lg text-center"><h1 class="text-4xl font-bold mb-4" data-lang-key="download_title"></h1><p class="mb-6">${data.description || 'Ссылки не настроены'}</p><div class="flex flex-col gap-4">${data.exeLink ? `<a href="${data.exeLink}" class="w-full btn btn-primary">Windows (.exe)</a>` : ''}${data.apkLink ? `<a href="${data.apkLink}" class="w-full btn btn-primary">Android (.apk)</a>` : ''}</div></div>`; translatePage(); };
+        const loadChatsPage = async (subpage) => { 
+            const el = document.getElementById('chats-content'); 
+            if (!el || !currentUser) return; 
+            if(isAdmin) { 
+                loadAdminChatsList(subpage); 
+                return; 
+            }
+            // Logic for regular user chat initialization
+            const chatId = `${currentUser.uid}_${ADMIN_UID}`;
+            const chatRef = doc(db, "userChats", currentUser.uid);
+
+            await setDoc(chatRef, {
+                lastActivity: serverTimestamp(),
+                partnerId: ADMIN_UID,
+                partnerName: "Поддержка", // Admin's name
+                userName: currentUser.displayName,
+                userId: currentUser.uid,
+                unread: false // User marks their own chat as read when opening
+            }, { merge: true });
+
+            el.innerHTML = `<h1 class="text-4xl font-bold text-center mb-8" data-lang-key="nav_chats"></h1>`;
+            renderChatInterface(el, chatId, 'Чат с поддержкой', currentUser.uid);
+        };
+        const loadWishlistPage = () => { 
+            const el = document.getElementById('wishlist-content'); 
+            const prods = allProducts.filter(p => userWishlist.includes(p.id)); 
+            el.innerHTML = `<h1 class="text-4xl font-bold text-center mb-8">Избранное</h1>` + 
+            (prods.length 
+                ? `<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">${prods.map(p => {
+                    // Adding a wrapper with a close button for the wishlist item
+                    return `<div class="relative group">
+                                ${renderProductCard(p)}
+                                <button class="absolute top-0 right-0 m-2 p-1 bg-white/80 rounded-full text-red-500 opacity-0 group-hover:opacity-100 transition-opacity wishlist-remove-btn-icon" data-product-id="${p.id}" style="transform: translate(50%, -50%);">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                                </button>
+                            </div>`;
+                }).join('')}</div>` 
+                : '<p class="text-center">Здесь будут товары, которые вы добавили в избранное.</p>'); 
+        };
         const addToCart = pId => { const p = allProducts.find(p => p.id === pId); if(p) { cart.push({ id: p.id, name: p.name, price: p.price, imageUrl: p.imageUrl }); localStorage.setItem('asonik_cart', JSON.stringify(cart)); updateCartCount(); showToast('Добавлено в корзину'); } };
         const updateCartCount = () => { const el = document.getElementById('cart-count'); if (!el) return; el.textContent = cart.length; el.classList.toggle('hidden', cart.length === 0); };
-        const renderCartPage = () => { const el = document.getElementById('cart-content'); el.innerHTML = `<h1 class="text-4xl font-bold text-center mb-8" data-lang-key="cart_title"></h1>`; if (cart.length === 0) { el.innerHTML += '<p class="text-center">Ваша корзина пуста.</p>'; return; } let total = cart.reduce((s, i) => s + (i.price || 0), 0); el.innerHTML += `<div class="space-y-4">${cart.map((i, idx) => `<div class="card-bg p-4 rounded-lg flex justify-between items-center"><div class="flex items-center gap-4"><img src="${i.imageUrl||''}" class="w-16 h-16 rounded object-cover"><p>${i.name}</p></div><div class="flex items-center gap-4"><span>${formatPrice(i.price)}</span><button class="remove-from-cart-btn text-red-500 font-bold text-xl" data-index="${idx}">&times;</button></div></div>`).join('')}</div><div class="mt-6 pt-4 border-t border-custom flex justify-end items-center gap-4"><span class="text-2xl font-bold">Итого: ${formatPrice(total)}</span><button id="checkout-cart-btn" class="px-8 py-3 btn-primary rounded-lg">Оформить заказ</button></div>`; };
+        const renderCartPage = () => { const el = document.getElementById('cart-content'); el.innerHTML = `<h1 class="text-4xl font-bold text-center mb-8" data-lang-key="cart_title"></h1>`; if (cart.length === 0) { el.innerHTML += '<p class="text-center">Ваша корзина пуста.</p>'; return; } let total = cart.reduce((s, i) => s + (i.price || 0), 0); el.innerHTML += `<div class="space-y-4">${cart.map((i, idx) => `<div class="card-bg p-4 rounded-lg flex justify-between items-center"><div class="flex items-center gap-4"><img src="${i.imageUrl||''}" class="w-16 h-16 rounded object-cover"><p>${i.name}</p></div><div class="flex items-center gap-4"><span>${formatPrice(i.price)}</span><button class="remove-from-cart-btn text-red-500 font-bold text-xl" data-index="${idx}">&times;</button></div></div>`).join('')}</div><div class="mt-6 pt-4 border-t border-custom flex justify-end items-center gap-4"><span class="text-2xl font-bold">Итого: ${formatPrice(total)}</span><button id="checkout-cart-btn" class="btn btn-primary">Оформить заказ</button></div>`; };
         const loadAdminUsers = () => {const el = document.getElementById('admin-tab-content'); if(!el) return; el.innerHTML = `<h3 class="text-2xl font-bold">Пользователи</h3><div id="users-list" class="space-y-3 mt-4"></div>`; onSnapshot(query(collection(db, "users")), s => { const userListEl = document.getElementById('users-list'); if(userListEl) userListEl.innerHTML = s.docs.map(d => renderAdminUserItem(d.data())).join(''); }); };
         const renderAdminUserItem = u => `<div class="card-bg p-4 rounded flex flex-col md:flex-row justify-between items-start md:items-center border border-custom gap-4"><div><p>${u.displayName} (${u.email})</p><p class="text-xs text-gray-400">UID: ${u.uid}</p><p>Баланс: ${formatPrice(u.balance || 0)}</p></div><div class="flex items-center gap-2"><input type="number" class="user-balance-input w-24 p-2 rounded bg-transparent border" placeholder="Сумма"><button class="add-balance-btn bg-green-500 text-white p-2 rounded-md" data-uid="${u.uid}">➕</button><button class="remove-balance-btn bg-yellow-500 text-white p-2 rounded-md" data-uid="${u.uid}">➖</button><button class="annul-balance-btn bg-red-500 text-white p-2 rounded-md" data-uid="${u.uid}">Обнулить</button></div></div>`;
         async function uploadImage(file) { const fd = new FormData(); fd.append('image', file); try { const res = await fetch(`https://api.imgbb.com/1/upload?key=${IMGBB_API_KEY}`, { method: 'POST', body: fd }); const r = await res.json(); if (r.success) return r.data.url; else throw new Error(r.error.message); } catch (e) { alert('Ошибка: ' + e.message); return null; } }
         const initSwitchers = () => { const cur = document.getElementById('currency-switcher'), lang = document.getElementById('lang-switcher'); if(cur) { cur.innerHTML = `<select id="currency-select" class="p-2 border rounded input-bg text-sm"><option>UZS</option><option>RUB</option><option>USD</option></select>`; cur.querySelector('select').value = appState.currency; } if(lang) { lang.innerHTML = `<select id="lang-select" class="p-2 border rounded input-bg text-sm"><option>RU</option><option>UZ</option></select>`; lang.querySelector('select').value = appState.lang; } };
         const setupNotificationsListener = () => { const c = document.getElementById('notifications-container'); if (!currentUser || !c) return; onSnapshot(query(collection(db, "notifications"), where("userId", "==", currentUser.uid), orderBy("createdAt", "desc")), s => { const n = s.docs.map(d => ({ id: d.id, ...d.data() })); const unread = n.filter(i => !i.isRead).length; renderNotifications(n, unread); }); };
         const renderNotifications = (n, unread) => { const c = document.getElementById('notifications-container'); if(!c) return; c.innerHTML = `<button id="notifications-btn" class="relative p-2"><svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.4-1.4a2 2 0 01-1.4-1.4V11a6 6 0 00-12 0v3.2a2 2 0 01-1.4 1.4L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"></path></svg>${unread > 0 ? `<span class="absolute top-0 right-0 bg-red-500 text-white text-xs rounded-full h-4 w-4 flex items-center justify-center">${unread}</span>` : ''}</button><div id="notifications-dropdown" class="hidden absolute right-0 mt-2 w-80 card-bg rounded-md shadow-lg z-20"><div class="p-4 font-bold">Уведомления</div><div class="max-h-96 overflow-y-auto">${n.length ? n.map(i => `<div class="p-4 border-t ${!i.isRead ? 'bg-primary/10':''}"><p>${i.title}</p></div>`).join(''):'<p class="p-4">Пусто.</p>'}</div></div>`; c.querySelector('#notifications-btn').onclick = (e) => { e.stopPropagation(); c.querySelector('#notifications-dropdown').classList.toggle('hidden'); if(unread > 0) {const b = writeBatch(db); n.filter(i => !i.isRead).forEach(i => b.update(doc(db,'notifications',i.id),{isRead:true})); b.commit();}}; };
-        const setupWishlistListener = () => { if (!currentUser) return; onSnapshot(doc(db, "users", currentUser.uid), d => { userWishlist = d.data()?.wishlist || []; applyFiltersAndSort(); }); };
+        const setupWishlistListener = () => { 
+            if (!currentUser) {
+                userWishlist = [];
+                applyFiltersAndSort(); // Re-render products without wishlist highlights
+                return;
+            }; 
+            onSnapshot(doc(db, "users", currentUser.uid), d => { 
+                userWishlist = d.data()?.wishlist || []; 
+                applyFiltersAndSort(); // Re-render products with updated wishlist data
+                loadWishlistPage(); // Also update the wishlist page if it's active
+            }); 
+        };
         const loadAdminList = (coll, title, render, btn) => { const el = document.getElementById('admin-tab-content'); if(!el) return; el.innerHTML = `<div class="flex justify-between items-center mb-6"><h3 class="text-2xl font-bold">${title}</h3><div>${btn || ''}</div></div><div id="admin-list-container" class="space-y-3"></div>`; onSnapshot(query(collection(db, coll)), s => { const listEl = document.getElementById('admin-list-container'); if(listEl) listEl.innerHTML = s.docs.map(d => render(d.id, d.data())).join('') || '<p>Пусто</p>'; }); };
         const loadAdminPurchases = () => { const el = document.getElementById('admin-tab-content'); if(!el) return; el.innerHTML = `<h3 class="text-2xl font-bold">Покупки</h3><div id="admin-list-container" class="space-y-3 mt-4"></div>`; onSnapshot(query(collection(db, "purchases"), orderBy("createdAt", "desc")), s => { const listEl = document.getElementById('admin-list-container'); if(listEl) listEl.innerHTML = s.docs.map(d => renderAdminPurchaseItem(d.id, d.data())).join(''); }); };
-        const renderAdminProductItem = (id, d) => `<div class="card-bg p-4 rounded flex justify-between items-center border border-custom"><div><p>${d.name}</p></div><div><button class="edit-btn text-blue-400 mr-4" data-id="${id}" data-type="product">Ред.</button><button class="delete-btn text-red-500" data-collection="products" data-id="${id}">Удл.</button></div></div>`;
-        const loadAdminChatsList = (activeChatUserId) => { const el = document.getElementById('admin-tab-content'); if(!el) return; el.innerHTML = `<div class="flex gap-4 h-full"><div id="chat-list-sidebar" class="w-1/3 border-r pr-2 overflow-y-auto"></div><div id="chat-view" class="w-2/3"></div></div>`; const sidebar = document.getElementById('chat-list-sidebar'); onSnapshot(query(collection(db, "userChats"), orderBy("lastActivity", "desc")), s => { if(sidebar) sidebar.innerHTML = s.docs.filter(d=>d.id !== ADMIN_UID).map(d => `<a href="#admin/chats/${d.id}" class="block p-2 rounded ${activeChatUserId === d.id ? 'bg-primary text-white' : ''}">${d.data().partnerName || 'User'}</a>`).join(''); }); if(activeChatUserId) { const chatView = document.getElementById('chat-view'); if(chatView) renderChatInterface(chatView, `${activeChatUserId}_${ADMIN_UID}`, 'Чат', ADMIN_UID); } };
-        const renderChatInterface = (cont, chatId, title, currentId) => { cont.innerHTML = `<div class="max-w-4xl mx-auto card-bg border rounded-lg h-full flex flex-col"><div class="p-4 font-bold border-b">${title}</div><div id="messages-container" class="p-4 flex-grow overflow-y-auto flex flex-col space-y-4"></div><div class="p-4 border-t flex gap-2"><input id="chat-message-input" class="flex-grow p-2 border rounded input-bg"><button id="send-chat-message" data-chat-id="${chatId}" data-sender-id="${currentId}" class="btn-primary px-6 rounded-lg">Отправить</button></div></div>`; const msgCont = document.getElementById('messages-container'); onSnapshot(query(collection(db, `chats/${chatId}/messages`), orderBy("createdAt", "asc")), s => { if(msgCont) { msgCont.innerHTML = s.docs.map(d => `<div class="flex items-end gap-2 ${d.data().senderId === currentId ? 'flex-row-reverse' : ''}"><div class="px-4 py-2 rounded-lg ${d.data().senderId === currentId ? 'bg-primary text-white' : 'bg-gray-200 dark:bg-gray-700'}">${d.data().text}</div></div>`).join(''); msgCont.scrollTop = msgCont.scrollHeight; } }); };
+        const renderAdminProductItem = (id, d) => `
+            <div class="card-bg p-4 rounded flex justify-between items-center border border-custom">
+                <div class="flex items-center gap-4">
+                    <img src="${d.imageUrl || 'https://placehold.co/64x64'}" class="w-16 h-16 object-cover rounded-md">
+                    <p class="font-semibold">${d.name}</p>
+                </div>
+                <div class="flex items-center gap-2">
+                    <button class="edit-btn btn bg-blue-500 text-white text-sm" data-id="${id}" data-type="product">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
+                        <span>Ред.</span>
+                    </button>
+                    <button class="delete-btn btn btn-danger text-sm" data-collection="products" data-id="${id}">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                        <span>Удалить</span>
+                    </button>
+                </div>
+            </div>`;
+        const loadAdminChatsList = (activeChatUserId) => { 
+            const el = document.getElementById('admin-tab-content'); 
+            if(!el) return; 
+            el.innerHTML = `<div class="flex gap-4 h-[75vh]"><div id="chat-list-sidebar" class="w-1/3 border-r pr-2 overflow-y-auto"></div><div id="chat-view" class="w-2/3 flex flex-col"></div></div>`; 
+            const sidebar = document.getElementById('chat-list-sidebar'); 
+            onSnapshot(query(collection(db, "userChats"), orderBy("lastActivity", "desc")), s => { 
+                if(sidebar) sidebar.innerHTML = s.docs.filter(d=>d.id !== ADMIN_UID).map(d => {
+                    const data = d.data();
+                    return `<a href="#admin/chats/${d.id}" class="block p-3 rounded-lg transition-colors ${activeChatUserId === d.id ? 'bg-primary text-white' : 'hover:bg-gray-100 dark:hover:bg-gray-700'}">${data.userName || 'User'}</a>`
+                }).join(''); 
+            }); 
+            if(activeChatUserId) { 
+                const chatView = document.getElementById('chat-view'); 
+                if(chatView) {
+                    const chatId = `${activeChatUserId}_${ADMIN_UID}`;
+                    renderChatInterface(chatView, chatId, 'Чат с пользователем', ADMIN_UID); 
+                }
+            } else {
+                const chatView = document.getElementById('chat-view');
+                if(chatView) chatView.innerHTML = `<div class="flex-grow flex items-center justify-center text-gray-500"><p>Выберите чат для просмотра</p></div>`;
+            }
+        };
+        const renderChatInterface = (cont, chatId, title, currentId) => { 
+            cont.innerHTML = `
+                <div class="p-4 font-bold border-b">${title}</div>
+                <div id="messages-container" class="p-4 flex-grow overflow-y-auto flex flex-col space-y-4"></div>
+                <div class="p-4 border-t flex gap-2">
+                    <input id="chat-message-input" class="flex-grow modern-input">
+                    <button id="send-chat-message" class="btn btn-primary">Отправить</button>
+                </div>`; 
+            
+            const msgCont = document.getElementById('messages-container'); 
+            const sendBtn = document.getElementById('send-chat-message');
+            const msgInput = document.getElementById('chat-message-input');
+            
+            const sendMessage = async () => {
+                const text = msgInput.value.trim();
+                if (text) {
+                    const [userUid, adminUid] = chatId.split('_');
+                    await addDoc(collection(db, `chats/${chatId}/messages`), {
+                        text,
+                        senderId: currentId,
+                        createdAt: serverTimestamp()
+                    });
+                    // Update last activity for sorting
+                    await setDoc(doc(db, 'userChats', userUid), { lastActivity: serverTimestamp() }, { merge: true });
+                    msgInput.value = '';
+                }
+            };
+
+            sendBtn.onclick = sendMessage;
+            msgInput.onkeyup = (e) => { if (e.key === 'Enter') sendMessage(); };
+
+            onSnapshot(query(collection(db, `chats/${chatId}/messages`), orderBy("createdAt", "asc")), s => { 
+                if(msgCont) { 
+                    msgCont.innerHTML = s.docs.map(d => `<div class="flex items-end gap-2 ${d.data().senderId === currentId ? 'self-end' : 'self-start'}"><div class="px-4 py-2 rounded-lg ${d.data().senderId === currentId ? 'bg-primary text-white' : 'bg-gray-200 dark:bg-gray-700'}">${d.data().text}</div></div>`).join(''); 
+                    msgCont.scrollTop = msgCont.scrollHeight; 
+                } 
+            }); 
+        };
         const loadAdminReviews = () => {
             const el = document.getElementById('admin-tab-content');
             if(!el) return;
-            el.innerHTML = `<div class="flex justify-between items-center mb-6"><h3 class="text-2xl font-bold">Отзывы</h3><button id="add-review-btn" class="btn-primary px-4 py-2 rounded-lg">Добавить отзыв</button></div><div id="reviews-list" class="space-y-4"></div>`;
+            el.innerHTML = `<div class="flex justify-between items-center mb-6"><h3 class="text-2xl font-bold">Отзывы</h3><button id="add-review-btn" class="btn btn-primary">Добавить отзыв</button></div><div id="reviews-list" class="space-y-4"></div>`;
             document.getElementById('add-review-btn').onclick = () => showAdminReviewForm();
             onSnapshot(query(collection(db, "reviews"), orderBy("createdAt", "desc")), s => {
                 const listEl = document.getElementById('reviews-list');
