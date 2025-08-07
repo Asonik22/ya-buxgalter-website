@@ -132,9 +132,39 @@
         .star-rating input { display: none; }
         .star-rating label { font-size: 2rem; color: #ccc; cursor: pointer; transition: color 0.2s; }
         .star-rating input:checked ~ label, .star-rating label:hover, .star-rating label:hover ~ label { color: #f59e0b; }
+
+        /* Loading Spinner */
+        #loading-overlay {
+            position: fixed;
+            inset: 0;
+            background-color: var(--bg);
+            z-index: 100;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: opacity 0.3s;
+        }
+        .spinner {
+            width: 56px;
+            height: 56px;
+            border-radius: 50%;
+            border: 8px solid;
+            border-color: var(--border);
+            border-right-color: var(--primary);
+            animation: spinner-d3wgkg 1s infinite linear;
+        }
+        @keyframes spinner-d3wgkg {
+            to {
+                transform: rotate(1turn);
+            }
+        }
     </style>
 </head>
-<body class="antialiased">
+<body class="antialiased opacity-0 transition-opacity duration-300">
+
+    <div id="loading-overlay">
+        <div class="spinner"></div>
+    </div>
 
     <!-- Header -->
     <header class="card-bg shadow-md sticky top-0 z-40 border-b border-custom">
@@ -183,6 +213,7 @@
     <!-- Main Content -->
     <main class="container mx-auto px-4 py-8">
         <div data-page="main" class="active"><div id="main-page-content-wrapper"></div></div>
+        <div data-page="product"><div id="product-detail-content"></div></div>
         <div data-page="chats"><div id="chats-content"></div></div>
         <div data-page="faq"><div id="faq-content"></div></div>
         <div data-page="purchases"><div id="purchases-content"></div></div>
@@ -247,6 +278,12 @@
             onAuthStateChanged(auth, async user => { 
                 await Promise.all([loadPaymentMethods(), loadStoreSettings()]); 
                 await initializeAppState(user); 
+                // Hide loader and show content after initialization
+                document.getElementById('loading-overlay').style.opacity = '0';
+                setTimeout(() => {
+                    document.getElementById('loading-overlay').style.display = 'none';
+                    document.body.classList.remove('opacity-0');
+                }, 300);
             }); 
         });
 
@@ -336,6 +373,7 @@
 
             switch(page) {
                 case 'main': loadMainPage(); break; 
+                case 'product': loadProductDetailPage(subpage); break;
                 case 'faq': loadFaq(); break;
                 case 'admin': loadAdminPanel(subpage || 'users'); break; 
                 case 'cart': renderCartPage(); break;
@@ -398,6 +436,10 @@
                 ? `<div class="absolute top-2 left-2 bg-blue-500 text-white w-8 h-8 rounded-full flex items-center justify-center cursor-help" title="Официальный товар"><svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M6.267 3.455a3.066 3.066 0 001.745-.723 3.066 3.066 0 013.976 0 3.066 3.066 0 001.745.723 3.066 3.066 0 012.812 2.812c.051.643.304 1.254.723 1.745a3.066 3.066 0 010 3.976 3.066 3.066 0 00-.723 1.745 3.066 3.066 0 01-2.812 2.812 3.066 3.066 0 00-1.745.723 3.066 3.066 0 01-3.976 0 3.066 3.066 0 00-1.745-.723 3.066 3.066 0 01-2.812-2.812 3.066 3.066 0 00-.723-1.745 3.066 3.066 0 010-3.976 3.066 3.066 0 00.723-1.745 3.066 3.066 0 012.812-2.812zm7.44 5.252a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" /></svg></div>`
                 : `<div class="absolute top-2 left-2 bg-yellow-500 text-white w-8 h-8 rounded-full flex items-center justify-center cursor-help" title="Частный продавец"><svg class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clip-rule="evenodd" /></svg></div>`;
             const pinnedIcon = p.isPinned ? `<div class="absolute top-2 right-12 bg-red-500 text-white w-8 h-8 rounded-full flex items-center justify-center" title="Закреплено"><svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M5.05 3.636a1 1 0 011.414 0L10 7.172l3.536-3.536a1 1 0 111.414 1.414L11.414 8.586l3.536 3.535a1 1 0 11-1.414 1.414L10 10.414l-3.536 3.536a1 1 0 01-1.414-1.414L8.586 8.586 5.05 5.05a1 1 0 010-1.414z" clip-rule="evenodd" /></svg></div>` : '';
+            const hasVariations = p.variations && p.variations.length > 0;
+            const buyButton = hasVariations
+                ? `<a href="#product/${p.id}" class="nav-link flex-grow btn-primary text-center py-2 px-4 rounded-lg font-semibold">Выбрать опцию</a>`
+                : `<button class="buy-now-btn flex-grow btn-primary py-2 px-4 rounded-lg font-semibold" data-product-id="${p.id}" data-lang-key="buy_button"></button>`;
 
             return `<div class="card-bg rounded-lg shadow-lg flex flex-col justify-between border border-custom overflow-hidden transition-all duration-300 hover:shadow-2xl hover:-translate-y-1" data-product-id="${p.id}">
                 <div class="relative">
@@ -407,7 +449,7 @@
                     ${pinnedIcon}
                 </div>
                 <div class="p-4 flex-grow"><h3 class="text-lg font-semibold truncate">${p.name}</h3><p class="text-gray-600 dark:text-gray-400 mt-1 text-sm h-10 overflow-hidden">${p.description}</p><p class="text-2xl font-bold text-primary mt-2">${formatPrice(p.price || 0)}</p></div>
-                <div class="p-4 pt-2 border-t border-custom flex items-center gap-2"><button class="add-to-cart-btn p-2 rounded-md hover:bg-gray-100 dark:hover:bg-gray-700" data-product-id="${p.id}" title="В корзину"><svg class="w-6 h-6 pointer-events-none" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"></path></svg></button><button class="buy-now-btn flex-grow btn-primary py-2 px-4 rounded-lg font-semibold" data-product-id="${p.id}" data-lang-key="buy_button"></button></div>
+                <div class="p-4 pt-2 border-t border-custom flex items-center gap-2"><button class="add-to-cart-btn p-2 rounded-md hover:bg-gray-100 dark:hover:bg-gray-700" data-product-id="${p.id}" title="В корзину"><svg class="w-6 h-6 pointer-events-none" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"></path></svg></button>${buyButton}</div>
             </div>`;
         };
         
@@ -582,7 +624,7 @@
         
         // --- ADMIN FORMS (RE-DESIGNED) ---
         async function showProductForm(pId) {
-            let p = {name:'',description:'',price:0,imageUrl:'',productStatus:'official', isPinned: false};
+            let p = {name:'',description:'',price:0,imageUrl:'',productStatus:'official', isPinned: false, variations: []};
             if(pId){const d=await getDoc(doc(db,'products',pId)); if(d.exists()) p=d.data();}
             
             const onSave = async m => {
@@ -590,6 +632,19 @@
                 let url=p.imageUrl;
                 if(file) url=await uploadImage(file);
                 
+                const variations = [];
+                for(const v of m.querySelectorAll('.variation-item')) {
+                    const vImgFile = v.querySelector('.v-image').files[0];
+                    let vImgUrl = v.dataset.imgurl || '';
+                    if(vImgFile) vImgUrl = await uploadImage(vImgFile);
+                    variations.push({
+                        name: v.querySelector('.v-name').value, 
+                        price: parseFloat(v.querySelector('.v-price').value), 
+                        description: v.querySelector('.v-desc').value, 
+                        imageUrl: vImgUrl
+                    });
+                }
+
                 const data={
                     name: m.querySelector('#p-name').value, 
                     description: m.querySelector('#p-desc').value, 
@@ -597,6 +652,7 @@
                     imageUrl: url, 
                     productStatus: m.querySelector('input[name="product-status"]:checked').value,
                     isPinned: m.querySelector('#p-pinned').checked,
+                    variations: variations,
                     createdAt: p.createdAt || serverTimestamp(),
                     updatedAt: serverTimestamp()
                 };
@@ -627,7 +683,7 @@
                         <input type="file" id="p-image-file" class="w-full text-sm file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-primary/10 file:text-primary hover:file:bg-primary/20">
                         ${p.imageUrl ? `<img src="${p.imageUrl}" class="mt-2 w-24 h-24 object-cover rounded-md">` : ''}
                     </div>
-                    <div>
+                     <div>
                         <label class="block text-sm font-medium mb-2">Статус товара
                             <button type="button" id="status-info-btn" class="ml-2 text-primary">
                                 <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 inline-block" viewBox="0 0 20 20" fill="currentColor">
@@ -650,14 +706,40 @@
                         <input type="checkbox" id="p-pinned" ${p.isPinned ? 'checked' : ''} class="h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary">
                         <label for="p-pinned" class="ml-2 block text-sm">Закрепить товар (будет первым в списке)</label>
                     </div>
+                    <hr class="border-custom">
+                    <h4 class="font-bold">Вариации</h4>
+                    <div id="variations-container" class="space-y-4"></div>
+                    <button type="button" id="add-variation-btn" class="mt-2 p-2 bg-gray-500 text-white rounded-lg">+ Добавить вариацию</button>
                 </div>`;
             
             const modal = showModal(pId ? 'Редактировать товар' : 'Добавить товар', formHTML, onSave, 'Сохранить');
-            modal.querySelector('#status-info-btn').onclick = () => {
-                showModal('Информация о статусах', `
-                    <p><strong>Официальный товар:</strong> Это товар, который продается непосредственно от имени нашего магазина. Мы несем полную ответственность за его качество и предоставляем гарантию.</p>
-                    <p class="mt-4"><strong>Частный продавец:</strong> Товар выставляется на продажу сторонним лицом. Магазин выступает в роли площадки и не несет ответственности за данный товар.</p>
-                `);
+            
+            const renderVariation = (v = {}) => {
+                const el = document.createElement('div');
+                el.className = 'variation-item grid grid-cols-2 gap-4 border p-4 rounded-lg';
+                el.dataset.imgurl = v.imageUrl || '';
+                el.innerHTML = `
+                    <div class="col-span-2"><input class="v-name w-full modern-input" value="${v.name||''}" placeholder="Название (50 гемов)"></div>
+                    <div><input type="number" class="v-price w-full modern-input" value="${v.price||0}" placeholder="Цена"></div>
+                    <div><input type="file" class="v-image text-xs w-full"></div>
+                    <div class="col-span-2"><textarea class="v-desc w-full modern-input" placeholder="Описание вариации">${v.description||''}</textarea></div>
+                    <div class="col-span-2 text-right"><button type="button" class="remove-variation-btn btn-danger px-3 py-1 rounded-lg">Удалить</button></div>
+                `;
+                modal.querySelector('#variations-container').appendChild(el);
+            };
+
+            (p.variations || []).forEach(renderVariation);
+            modal.querySelector('#add-variation-btn').onclick = () => renderVariation();
+            modal.onclick = e => {
+                if (e.target.classList.contains('remove-variation-btn')) {
+                    e.target.closest('.variation-item').remove();
+                }
+                if (e.target.closest('#status-info-btn')) {
+                     showModal('Информация о статусах', `
+                        <p><strong>Официальный товар:</strong> Это товар, который продается непосредственно от имени нашего магазина. Мы несем полную ответственность за его качество и предоставляем гарантию.</p>
+                        <p class="mt-4"><strong>Частный продавец:</strong> Товар выставляется на продажу сторонним лицом. Магазин выступает в роли площадки и не несет ответственности за данный товар.</p>
+                    `);
+                }
             };
         }
 
