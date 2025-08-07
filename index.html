@@ -264,7 +264,9 @@
             UZ: { nav_main: 'Asosiy', nav_chats: 'Chatlar', nav_faq: 'FAQ', nav_purchases: 'Xaridlarim', nav_download: 'Ilovani yuklab olish', catalog_title: 'Mahsulotlar', search_placeholder: 'Qidirish...', faq_title: 'Ko\'p so\'raladigan savollar', purchases_title: 'Xaridlarim', cart_title: 'Savatcha', profile_title: 'Profil', buy_button: 'Sotib olish' } 
         };
         
-        // --- CORE FUNCTIONS & UTILITIES ---
+        // --- FUNCTION DEFINITIONS ---
+        // All functions are defined here first to avoid ReferenceError issues.
+
         const t = key => translations[appState.lang]?.[key] || key;
         const translatePage = () => { document.querySelectorAll('[data-lang-key]').forEach(el => el.textContent = t(el.dataset.langKey)); document.querySelectorAll('[data-lang-placeholder]').forEach(el => el.placeholder = t(el.dataset.langPlaceholder)); };
         const formatPrice = (price, currency = appState.currency) => new Intl.NumberFormat('ru-RU', { style: 'currency', currency, minimumFractionDigits: 0 }).format(price * (appState.rates[currency] || 1));
@@ -272,96 +274,7 @@
         const showToast = (message, isError = false) => { const el = document.createElement('div'); el.className = `fixed bottom-5 right-5 text-white py-2 px-4 rounded-lg shadow-lg z-50 ${isError ? 'bg-red-500' : 'bg-green-500'}`; el.textContent = message; document.body.appendChild(el); setTimeout(() => el.remove(), 3000); };
         const showModal = (title, content, onSave, btnText = 'Подтвердить') => { const modal = document.createElement('div'); modal.className = 'fixed inset-0 z-50 flex items-center justify-center modal-backdrop'; modal.innerHTML = `<div class="card-bg rounded-lg shadow-xl w-11/12 md:w-2/3 lg:w-1/2 p-6 max-h-[90vh] overflow-y-auto"><div class="flex justify-between items-center mb-4"><h2 class="text-2xl font-bold">${title}</h2><button class="close-modal-btn text-2xl">&times;</button></div><div>${content}</div>${onSave ? `<div class="mt-6 flex justify-end gap-4"><button class="close-modal-btn btn">Отмена</button><button class="save-modal-btn btn btn-primary">${btnText}</button></div>` : ''}</div>`; document.getElementById('modals-container').appendChild(modal); modal.querySelectorAll('.close-modal-btn').forEach(b => b.onclick = () => modal.remove()); if (onSave) modal.querySelector('.save-modal-btn').onclick = async () => { if (await onSave(modal) !== false) modal.remove(); }; return modal; };
         const confirmAction = (msg, onConfirm) => showModal('Подтвердите', `<p>${msg}</p>`, () => { onConfirm(); return true; }, 'Да, уверен');
-        
-        // --- PAGE LOAD FUNCTIONS (DEFINED EARLY TO PREVENT ERRORS) ---
-        
-        // This section will contain all page loading and rendering functions.
-        // They are defined here at the top of the script to ensure they are available
-        // when the DOMContentLoaded event fires and routing begins.
-        
-        let loadMainPage, loadProductDetailPage, loadFaq, loadAdminPanel, renderCartPage, loadChatsPage, 
-            loadPurchasesPage, loadWishlistPage, loadProfilePage, loadDownloadPage, loadPageContent,
-            renderProductCard, applyFiltersAndSort, loadProducts, showCheckoutModal, processBalancePurchase,
-            showExternalPaymentModal, renderPurchaseItem, showContactModal, showBalanceModal, 
-            showBalanceTopUpPaymentModal, loadAdminTab, renderAdminPurchaseItem, showProductForm,
-            loadCustomizationPage, applyCustomTheme, loadAdminUsers, renderAdminUserItem,
-            loadAdminList, renderAdminProductItem, loadAdminPurchases, loadAdminReviews, renderAdminReviewItem,
-            showAdminReviewForm, showReviewForm, loadAdminChatsList, renderChatInterface,
-            loadAdminDownloadPage, renderAdminPromoItem, renderAdminFaqItem, renderAdminSocialLinks,
-            renderAdminPaymentItem;
 
-        // --- MAIN INITIALIZATION LOGIC ---
-
-        document.addEventListener('DOMContentLoaded', () => { 
-            try {
-                initTheme(); 
-                setupEventListeners(); 
-                updateCartCount(); 
-                onAuthStateChanged(auth, async user => { 
-                    try {
-                        await Promise.all([loadPaymentMethods(), loadStoreSettings()]); 
-                        await initializeAppState(user); 
-                    } catch (authError) {
-                        console.error("Error during auth state change handling:", authError);
-                    } finally {
-                        document.getElementById('loading-overlay').style.opacity = '0';
-                        setTimeout(() => {
-                            document.getElementById('loading-overlay').style.display = 'none';
-                            document.body.classList.remove('opacity-0');
-                        }, 500);
-                    }
-                }); 
-            } catch (e) {
-                console.error("Critical error on DOMContentLoaded:", e);
-                // Fallback to show an error message instead of a white screen
-                document.body.innerHTML = '<div style="text-align: center; padding-top: 50px; font-family: sans-serif;"><h1>Произошла ошибка</h1><p>Не удалось загрузить сайт. Пожалуйста, попробуйте обновить страницу.</p></div>';
-                document.body.classList.remove('opacity-0');
-                document.getElementById('loading-overlay').style.display = 'none';
-            }
-        });
-
-        async function initializeAppState(user) {
-            currentUser = user;
-            isAdmin = user?.uid === ADMIN_UID;
-            if (user) {
-                const userRef = doc(db, "users", user.uid);
-                onSnapshot(userRef, docSnap => { 
-                    if (docSnap.exists()) { 
-                        const data = docSnap.data(); 
-                        appState.balance = data.balance || 0; 
-                        appState.balanceHistory = (data.balanceHistory || []).sort((a,b) => new Date(b.date) - new Date(a.date)); 
-                        const balanceAmountEl = document.getElementById('balance-amount-dropdown');
-                        if (balanceAmountEl) {
-                            balanceAmountEl.textContent = formatPrice(appState.balance);
-                        }
-                    }
-                });
-                
-                const userDoc = await getDoc(userRef);
-                if (!userDoc.exists() || !userDoc.data().nickname) {
-                    const defaultNickname = `Пользователь${user.uid.substring(0, 5)}`;
-                    await setDoc(userRef, { 
-                        displayName: user.displayName, 
-                        email: user.email, 
-                        photoURL: user.photoURL, 
-                        lastSeen: serverTimestamp(), 
-                        uid: user.uid,
-                        nickname: defaultNickname
-                    }, { merge: true });
-                }
-
-                setupNotificationsListener();
-                setupWishlistListener();
-            } else {
-                document.getElementById('notifications-container').innerHTML = '';
-                userWishlist = [];
-                appState.balance = 0;
-            }
-            await updateAuthUI();
-            handleRouting();
-        }
-        
-        // --- DATA LOADING ---
         async function loadStoreSettings() { 
             try { 
                 const settingsDoc = await getDoc(doc(db, "storeSettings", "config")); 
@@ -382,9 +295,7 @@
             } catch (e) { console.error("Error loading store settings:", e); } 
         }
         const loadPaymentMethods = () => new Promise(res => onSnapshot(query(collection(db, "paymentMethods"), orderBy("order", "asc")), s => { paymentMethods = s.docs.map(d => ({ id: d.id, ...d.data() })); res(); }, e => { console.error(e); res(); }));
-        renderSocialLinks = (links) => { const cont = document.getElementById('social-links-container'); if (!cont || !links?.length) { if(cont) cont.innerHTML = ''; return; } cont.innerHTML = links.map(l => `<a href="${l.url}" target="_blank" class="text-gray-500 hover:text-primary"><img src="${l.imageUrl}" alt="${l.name}" class="w-6 h-6 object-contain"></a>`).join(''); };
-
-        // --- ROUTING & PAGE LOADING ---
+        
         function handleRouting() {
             const hash = window.location.hash || '#main';
             let [page, subpage] = (hash.substring(1) || 'main').split('/');
@@ -402,6 +313,7 @@
             }
             translatePage();
         }
+
         loadPageContent = (page, subpage) => {
             const protectedPages = ['purchases', 'chats', 'profile', 'admin', 'wishlist'];
             const contentContainer = document.querySelector(`[data-page="${page}"] > div`);
@@ -430,7 +342,6 @@
             }
         }
         
-        // --- MAIN PAGE ---
         loadMainPage = () => { 
             const el = document.getElementById('main-page-content-wrapper'); 
             if (!el) return;
@@ -534,7 +445,6 @@
             </div>`;
         };
         
-        // --- PRODUCT DETAIL PAGE ---
         loadProductDetailPage = async (productId) => {
             const contentContainer = document.getElementById('product-detail-content');
             if (!productId) {
@@ -632,7 +542,6 @@
             }
         };
 
-        // --- PURCHASES & CHECKOUT ---
         showCheckoutModal = async (items, total) => {
             if (!currentUser) { showModal('Вход', '<p>Для покупки войдите в аккаунт.</p>', () => signInWithGoogle(), 'Войти'); return; }
             if (appState.balance < 0) { showModal('Отрицательный баланс', '<p>У вас отрицательный баланс. Пожалуйста, пополните счет перед совершением покупок.</p>'); return; }
@@ -998,7 +907,7 @@
                     btn.innerHTML='☀️';
                 } else {
                     document.documentElement.classList.remove('dark'); 
-                    btn.innerHTML='🌙';
+                    btn.innerHTML='�';
                 }
             }; 
             apply(localStorage.getItem('color-theme')||'light'); 
@@ -1534,3 +1443,4 @@
     </script>
 </body>
 </html>
+�
