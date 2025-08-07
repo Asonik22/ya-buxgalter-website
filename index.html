@@ -221,8 +221,7 @@
 
                 <div class="flex items-center space-x-2 md:space-x-4">
                     <button id="balance-btn" class="hidden btn bg-primary/10 hover:bg-primary/20 border border-primary/30">
-                        <svg class="h-5 w-5 text-primary" viewBox="0 0 20 20" fill="currentColor"><path d="M4 4a2 2 0 00-2 2v1h16V6a2 2 0 00-2-2H4z"></path><path fill-rule="evenodd" d="M18 9H2v5a2 2 0 002 2h12a2 2 0 002-2V9zM4 13a1 1 0 011-1h1a1 1 0 110 2H5a1 1 0 01-1-1zm5-1a1 1 0 100 2h1a1 1 0 100-2H9z" clip-rule="evenodd"></path></svg>
-                        <span class="font-semibold text-sm">Баланс</span>
+                        <span class="font-semibold text-sm">Баланс: <span id="balance-amount">0</span></span>
                         <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd"></path></svg>
                     </button>
                     <div id="currency-switcher" class="hidden md:block"></div>
@@ -300,7 +299,7 @@
             balance: 0, 
             balanceHistory: [] 
         };
-        const translations = { RU: { nav_main: 'Главная', nav_chats: 'Чаты', nav_faq: 'FAQ', nav_purchases: 'Мои покупки', nav_download: 'Скачать', catalog_title: 'Каталог товаров', search_placeholder: 'Поиск...', faq_title: 'Часто задаваемые вопросы', purchases_title: 'Мои покупки', cart_title: 'Корзина', profile_title: 'Профиль', buy_button: 'Купить', download_title: 'Скачать приложение' }, UZ: { nav_main: 'Asosiy', nav_chats: 'Chatlar', nav_faq: 'FAQ', nav_purchases: 'Xaridlarim', nav_download: 'Yuklab olish', catalog_title: 'Mahsulotlar', search_placeholder: 'Qidirish...', faq_title: 'Ko\'p so\'raladigan savollar', purchases_title: 'Xaridlarim', cart_title: 'Savatcha', profile_title: 'Profil', buy_button: 'Sotib olish', download_title: 'Ilovani yuklab olish' } };
+        const translations = { RU: { nav_main: 'Главная', nav_chats: 'Чаты', nav_faq: 'FAQ', nav_purchases: 'Мои покупки', nav_download: 'Скачать приложение', catalog_title: 'Каталог товаров', search_placeholder: 'Поиск...', faq_title: 'Часто задаваемые вопросы', purchases_title: 'Мои покупки', cart_title: 'Корзина', profile_title: 'Профиль', buy_button: 'Купить' }, UZ: { nav_main: 'Asosiy', nav_chats: 'Chatlar', nav_faq: 'FAQ', nav_purchases: 'Xaridlarim', nav_download: 'Ilovani yuklab olish', catalog_title: 'Mahsulotlar', search_placeholder: 'Qidirish...', faq_title: 'Ko\'p so\'raladigan savollar', purchases_title: 'Xaridlarim', cart_title: 'Savatcha', profile_title: 'Profil', buy_button: 'Sotib olish' } };
         
         // --- CORE FUNCTIONS ---
         const t = key => translations[appState.lang]?.[key] || key;
@@ -329,8 +328,31 @@
             const balanceBtn = document.getElementById('balance-btn');
             if (user) {
                 const userRef = doc(db, "users", user.uid);
-                onSnapshot(userRef, docSnap => { if (docSnap.exists()) { const data = docSnap.data(); appState.balance = data.balance || 0; appState.balanceHistory = (data.balanceHistory || []).sort((a,b) => new Date(b.date) - new Date(a.date)); }});
-                await setDoc(userRef, { displayName: user.displayName, email: user.email, photoURL: user.photoURL, lastSeen: serverTimestamp(), uid: user.uid }, { merge: true });
+                onSnapshot(userRef, docSnap => { 
+                    if (docSnap.exists()) { 
+                        const data = docSnap.data(); 
+                        appState.balance = data.balance || 0; 
+                        appState.balanceHistory = (data.balanceHistory || []).sort((a,b) => new Date(b.date) - new Date(a.date)); 
+                        const balanceAmountEl = document.getElementById('balance-amount');
+                        if (balanceAmountEl) {
+                            balanceAmountEl.textContent = formatPrice(appState.balance);
+                        }
+                    }
+                });
+                
+                const userDoc = await getDoc(userRef);
+                const userData = userDoc.data() || {};
+                const defaultNickname = `Пользователь${user.uid.substring(0, 5)}`;
+                
+                await setDoc(userRef, { 
+                    displayName: user.displayName, 
+                    email: user.email, 
+                    photoURL: user.photoURL, 
+                    lastSeen: serverTimestamp(), 
+                    uid: user.uid,
+                    nickname: userData.nickname || defaultNickname
+                }, { merge: true });
+
                 setupNotificationsListener();
                 setupWishlistListener();
                 balanceBtn?.classList.remove('hidden');
@@ -468,10 +490,26 @@
         };
         
         const renderProductCard = (p) => {
-            const statusText = p.productStatus === 'official' ? 'Официальный магазин' : 'Частное лицо';
+            let statusHTML = '';
             const statusTooltip = p.productStatus === 'official' 
                 ? 'Это товар, который продается непосредственно от имени нашего магазина. Мы несем полную ответственность за его качество и предоставляем гарантию.'
                 : 'Товар выставляется на продажу сторонним лицом. Магазин выступает в роли площадки и не несет ответственности за данный товар.';
+
+            if (p.productStatus === 'official') {
+                statusHTML = `<div class="mt-2 text-sm text-green-600 flex items-center gap-2">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" /></svg>
+                                <span>Официальный магазин</span>
+                              </div>`;
+            } else {
+                 statusHTML = `<div class="mt-2 text-sm text-gray-500 flex items-center gap-2">
+                                <span>Частное лицо</span>
+                                <div class="tooltip">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-gray-400" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd" /></svg>
+                                    <span class="tooltiptext">${statusTooltip}</span>
+                                </div>
+                              </div>`;
+            }
+
 
             const pinnedIcon = p.isPinned ? `<div class="absolute top-2 right-12 bg-red-500 text-white w-8 h-8 rounded-full flex items-center justify-center" title="Закреплено"><svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M5.05 3.636a1 1 0 011.414 0L10 7.172l3.536-3.536a1 1 0 111.414 1.414L11.414 8.586l3.536 3.535a1 1 0 11-1.414 1.414L10 10.414l-3.536 3.536a1 1 0 01-1.414-1.414L8.586 8.586 5.05 5.05a1 1 0 010-1.414z" clip-rule="evenodd" /></svg></div>` : '';
             const hasVariations = p.variations && p.variations.length > 0;
@@ -490,13 +528,7 @@
                 <div class="p-4 flex-grow">
                     <h3 class="text-lg font-semibold truncate">${p.name}</h3>
                     <p class="text-gray-600 dark:text-gray-400 mt-1 text-sm h-10 overflow-hidden">${p.description}</p>
-                    <div class="mt-2 text-sm text-gray-500 flex items-center gap-2">
-                        <span>${statusText}</span>
-                        <div class="tooltip">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-gray-400" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd" /></svg>
-                            <span class="tooltiptext">${statusTooltip}</span>
-                        </div>
-                    </div>
+                    ${statusHTML}
                     <p class="text-2xl font-bold text-primary mt-2">${formatPrice(p.price || 0)}</p>
                 </div>
                 <div class="p-4 pt-2 border-t border-custom flex items-center gap-2">
@@ -653,7 +685,7 @@
                 orderId: generateCode(), 
                 items, 
                 productName: items.length > 1 ? `${items.length} товаров` : items[0].name, 
-                status: 'Выполнен', // Changed from 'Завершен' to 'Выполнен'
+                status: 'Выполнен', 
                 paymentMethod: 'Баланс', 
                 finalPrice: total, 
                 promoCode: promo?.code || null, 
@@ -661,7 +693,6 @@
                 review: null
             });
 
-            // Increment purchase count for each product
             items.forEach(item => {
                 const productRef = doc(db, "products", item.id);
                 batch.update(productRef, { purchaseCount: increment(1) });
@@ -684,7 +715,7 @@
             const statusClass = statusMap[p.status] || 'pending';
             let buttons = '';
             if(p.status === 'Ожидает оплаты') { buttons += `<button class="upload-proof-btn btn btn-primary text-sm" data-id="${id}">Загрузить чек</button><button class="cancel-purchase-btn btn btn-danger text-sm ml-2" data-id="${id}">Отменить</button>`; } 
-            if(p.status === 'Выполнен' && !p.isTopUp) { buttons += `<button class="contact-seller-btn btn btn-primary text-sm ml-2" data-code="${p.orderId}">Получить товар</button><button class="complete-order-btn bg-green-500 text-white text-sm btn ml-2" data-id="${id}">Завершить заказ</button>`; }
+            if(p.status === 'Выполнен' && !p.isTopUp) { buttons += `<button class="contact-seller-btn btn btn-primary text-sm ml-2" data-code="${p.orderId}">Получить товар</button>`; }
             if(p.status === 'Завершен' && !p.isTopUp && !p.review) { buttons += `<button class="leave-review-btn btn btn-primary text-sm ml-2" data-id="${id}" data-product-id="${p.items[0].id}">Оставить отзыв</button>`; }
 
             return `<div class="card-bg p-4 sm:p-6 rounded-lg border border-custom flex flex-col sm:flex-row gap-4 items-start shadow-md">
@@ -754,9 +785,11 @@
         const renderAdminPurchaseItem = (id, p) => { 
             let actions = '';
             if (p.status === 'Ожидает подтверждения') { 
-                actions = `<button class="approve-purchase-btn bg-green-500 hover:bg-green-600 text-white px-3 py-1 text-sm rounded-md" data-id="${id}" data-user-id="${p.userId}" data-amount="${p.finalPrice}" data-is-topup="${p.isTopUp || false}">Подтвердить</button>
+                actions = `<button class="approve-purchase-btn bg-green-500 hover:bg-green-600 text-white px-3 py-1 text-sm rounded-md" data-id="${id}">Подтвердить</button>
                            <button class="reject-purchase-btn bg-red-500 hover:bg-red-600 text-white px-3 py-1 text-sm rounded-md ml-2" data-id="${id}">Отклонить</button>`; 
-            } 
+            } else if (p.status === 'Выполнен' && !p.isTopUp) {
+                actions = `<button class="finish-purchase-btn bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 text-sm rounded-md" data-id="${id}">Завершить</button>`;
+            }
             return `<div class="card-bg p-4 rounded-lg flex flex-col md:flex-row justify-between items-start md:items-center border border-custom gap-4">
                 <img src="${p.items[0].imageUrl || 'https://placehold.co/64x64'}" class="w-16 h-16 object-cover rounded-md flex-shrink-0">
                 <div class="flex-grow">
@@ -981,7 +1014,7 @@
                 apply(n);
             };
         };
-        const updateAuthUI = () => { const c = document.getElementById('auth-container'); if(!c) return; if (currentUser) { c.innerHTML = `<div class="relative"><button id="profile-btn" class="flex items-center gap-2"><img src="${currentUser.photoURL||'https://placehold.co/32x32'}" class="w-8 h-8 rounded-full object-cover"><svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd"></path></svg></button><div id="profile-menu" class="hidden absolute right-0 mt-2 w-52 card-bg rounded-md shadow-lg z-10"><a href="#profile" class="nav-link block px-4 py-2">Профиль</a>${isAdmin ? `<a href="#admin" class="nav-link block px-4 py-2">Админ-панель</a>` : ''}<a href="#" id="logout-btn" class="block px-4 py-2 text-red-500">Выйти</a></div></div>`;} else { c.innerHTML = `<button id="google-login-btn" class="btn btn-primary">Войти</button>`; } };
+        const updateAuthUI = () => { const c = document.getElementById('auth-container'); if(!c) return; if (currentUser) { c.innerHTML = `<div class="relative"><button id="profile-btn" class="flex items-center gap-2"><img src="${currentUser.photoURL||'https://placehold.co/32x32'}" class="w-8 h-8 rounded-full object-cover"><span class="hidden md:inline">${currentUser.displayName}</span><svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd"></path></svg></button><div id="profile-menu" class="hidden absolute right-0 mt-2 w-52 card-bg rounded-md shadow-lg z-10"><a href="#profile" class="nav-link block px-4 py-2">Профиль</a>${isAdmin ? `<a href="#admin" class="nav-link block px-4 py-2">Админ-панель</a>` : ''}<a href="#" id="logout-btn" class="block px-4 py-2 text-red-500">Выйти</a></div></div>`;} else { c.innerHTML = `<button id="google-login-btn" class="btn btn-primary">Войти</button>`; } };
         const signInWithGoogle = () => { const p = new GoogleAuthProvider(); signInWithPopup(auth, p).catch(e => showToast("Ошибка: " + e.message, true)); };
         
         // --- EVENT LISTENERS ---
@@ -1022,51 +1055,28 @@
                     const productId = btn.dataset.productId;
                     const userRef = doc(db, 'users', currentUser.uid);
                     await updateDoc(userRef, { wishlist: userWishlist.includes(productId) ? arrayRemove(productId) : arrayUnion(productId) }); 
-                    // Visual feedback
                     btn.classList.toggle('bg-red-500/80');
                     btn.classList.toggle('bg-black/30');
                 }
                 if (target.id === 'add-product-btn') showProductForm();
                 if (closest('.edit-btn')) { const { id, type } = closest('.edit-btn').dataset; if(type==='product') showProductForm(id); }
                 if (closest('.delete-btn')) confirmAction('Вы уверены, что хотите удалить этот элемент?', async () => await deleteDoc(doc(db, closest('.delete-btn').dataset.collection, closest('.delete-btn').dataset.id)));
-                if (closest('.complete-order-btn')) { await updateDoc(doc(db, "purchases", closest('.complete-order-btn').dataset.id), { status: 'Завершен' }); showToast('Заказ завершен!'); }
                 if (closest('.leave-review-btn')) { showReviewForm(closest('.leave-review-btn').dataset.id, closest('.leave-review-btn').dataset.productId); }
                 
                 if (closest('.approve-purchase-btn')) {
                     const btn = closest('.approve-purchase-btn');
-                    const { id, userId, amount, isTopup } = btn.dataset;
-                    const batch = writeBatch(db);
-                    
-                    if (isTopup === 'true') {
-                        const purchaseDoc = await getDoc(doc(db, "purchases", id));
-                        const purchaseData = purchaseDoc.data();
-                        const paymentMethod = paymentMethods.find(m => m.id === purchaseData.paymentMethodId);
-                        const userRef = doc(db, "users", userId);
-                        batch.update(userRef, { 
-                            balance: increment(parseFloat(amount)), 
-                            balanceHistory: arrayUnion({ 
-                                type: 'topup', 
-                                amount: parseFloat(amount), 
-                                date: new Date().toISOString(),
-                                method: paymentMethod?.name || 'Внешний платеж'
-                            }) 
-                        });
-                    }
-                    
-                    const purchaseRef = doc(db, "purchases", id);
-                    batch.update(purchaseRef, { status: 'Выполнен' });
-                    
-                    // Increment purchase count
-                    const purchaseDoc = await getDoc(purchaseRef);
-                    const items = purchaseDoc.data().items;
-                    items.forEach(item => {
-                        const productRef = doc(db, "products", item.id);
-                        batch.update(productRef, { purchaseCount: increment(1) });
-                    });
-
-                    await batch.commit();
+                    const { id } = btn.dataset;
+                    await updateDoc(doc(db, "purchases", id), { status: 'Выполнен' });
                     showToast('Заказ подтвержден!');
                 }
+                
+                if (closest('.finish-purchase-btn')) {
+                    const btn = closest('.finish-purchase-btn');
+                    const { id } = btn.dataset;
+                    await updateDoc(doc(db, "purchases", id), { status: 'Завершен' });
+                    showToast('Заказ завершен!');
+                }
+
 
                 if (closest('.reject-purchase-btn')) {
                     const purchaseId = closest('.reject-purchase-btn').dataset.id;
@@ -1238,10 +1248,15 @@
                                 <label for="profile-lastname" class="block text-sm font-medium text-gray-400">Фамилия</label>
                                 <input id="profile-lastname" class="w-full p-2 border-b-2 bg-transparent focus:outline-none focus:border-primary text-xl" value="${userData.lastName || ''}">
                             </div>
+                            <div>
+                                <label for="profile-nickname" class="block text-sm font-medium text-gray-400">Никнейм</label>
+                                <input id="profile-nickname" class="w-full p-2 border-b-2 bg-transparent focus:outline-none focus:border-primary text-xl" value="${userData.nickname || ''}">
+                            </div>
                         </div>
                     </div>
                     <div class="mt-8 flex gap-4">
                         <button id="save-profile-btn" class="flex-grow btn btn-primary">Сохранить</button>
+                        <button id="reset-profile-btn" class="btn bg-yellow-500 text-white">Сбросить</button>
                         <button id="logout-btn-profile" class="flex-grow btn btn-danger">Выйти</button>
                     </div>
                     <div>
@@ -1253,8 +1268,24 @@
             document.getElementById('save-profile-btn').onclick = async () => {
                 const firstName = document.getElementById('profile-firstname').value;
                 const lastName = document.getElementById('profile-lastname').value;
-                await updateDoc(doc(db, "users", currentUser.uid), { firstName, lastName });
+                const nickname = document.getElementById('profile-nickname').value;
+                await updateDoc(doc(db, "users", currentUser.uid), { firstName, lastName, nickname });
                 showToast('Профиль обновлен!');
+            };
+
+            document.getElementById('reset-profile-btn').onclick = () => {
+                confirmAction('Вы уверены, что хотите сбросить профиль? Имя, фамилия, никнейм и фото будут удалены.', async () => {
+                    const defaultNickname = `Пользователь${currentUser.uid.substring(0, 5)}`;
+                    await updateDoc(doc(db, "users", currentUser.uid), {
+                        firstName: '',
+                        lastName: '',
+                        nickname: defaultNickname,
+                        photoURL: '' // Assuming Google photoURL is not what we want to keep
+                    });
+                    await updateProfile(auth.currentUser, { photoURL: '' });
+                    showToast('Профиль сброшен!');
+                    loadProfilePage(); // Reload to show changes
+                });
             };
         };
         const loadDownloadPage = () => { const el = document.getElementById('download-content'); const data = appState.appDownload || {}; el.innerHTML = `<div class="max-w-xl mx-auto card-bg p-8 rounded-lg text-center"><h1 class="text-4xl font-bold mb-4" data-lang-key="download_title"></h1><p class="mb-6">${data.description || 'Ссылки не настроены'}</p><div class="flex flex-col gap-4">${data.exeLink ? `<a href="${data.exeLink}" class="w-full btn btn-primary">Windows (.exe)</a>` : ''}${data.apkLink ? `<a href="${data.apkLink}" class="w-full btn btn-primary">Android (.apk)</a>` : ''}</div></div>`; translatePage(); };
@@ -1287,7 +1318,6 @@
             el.innerHTML = `<h1 class="text-4xl font-bold text-center mb-8">Избранное</h1>` + 
             (prods.length 
                 ? `<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">${prods.map(p => {
-                    // Adding a wrapper with a close button for the wishlist item
                     return `<div class="relative group">
                                 ${renderProductCard(p)}
                                 <button class="absolute top-0 right-0 m-2 p-1 bg-white/80 rounded-full text-red-500 opacity-0 group-hover:opacity-100 transition-opacity wishlist-remove-btn-icon" data-product-id="${p.id}" style="transform: translate(50%, -50%);">
@@ -1309,13 +1339,13 @@
         const setupWishlistListener = () => { 
             if (!currentUser) {
                 userWishlist = [];
-                applyFiltersAndSort(); // Re-render products without wishlist highlights
+                applyFiltersAndSort(); 
                 return;
             }; 
             onSnapshot(doc(db, "users", currentUser.uid), d => { 
                 userWishlist = d.data()?.wishlist || []; 
-                applyFiltersAndSort(); // Re-render products with updated wishlist data
-                loadWishlistPage(); // Also update the wishlist page if it's active
+                applyFiltersAndSort(); 
+                loadWishlistPage(); 
             }); 
         };
         const loadAdminList = (coll, title, render, btn) => { const el = document.getElementById('admin-tab-content'); if(!el) return; el.innerHTML = `<div class="flex justify-between items-center mb-6"><h3 class="text-2xl font-bold">${title}</h3><div>${btn || ''}</div></div><div id="admin-list-container" class="space-y-3"></div>`; onSnapshot(query(collection(db, coll)), s => { const listEl = document.getElementById('admin-list-container'); if(listEl) listEl.innerHTML = s.docs.map(d => render(d.id, d.data())).join('') || '<p>Пусто</p>'; }); };
@@ -1381,7 +1411,6 @@
                         senderId: currentId,
                         createdAt: serverTimestamp()
                     });
-                    // Update last activity for sorting
                     await setDoc(doc(db, 'userChats', userUid), { lastActivity: serverTimestamp() }, { merge: true });
                     msgInput.value = '';
                 }
