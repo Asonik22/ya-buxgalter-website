@@ -195,13 +195,15 @@
             display: inline-flex;
             align-items: center;
             gap: 0.3rem;
+            color: white; /* Default text color */
         }
-        .status-badge.pending { background-color: #f59e0b; color: white; }
-        .status-badge.completed, .status-badge.finished { background-color: #10b981; color: white; }
-        .status-badge.rejected, .status-badge.cancelled { background-color: #ef4444; color: white; }
+        .status-badge.pending { background-color: #f59e0b; } /* Orange for pending */
+        .status-badge.completed, .status-badge.finished { background-color: #10b981; } /* Green for completed */
+        .status-badge.rejected, .status-badge.cancelled { background-color: #ef4444; } /* Red for rejected/cancelled */
 
-        /* Mobile image fix */
-        #store-logo, .product-card-img {
+
+        /* Mobile image fix & object-fit */
+        #store-logo, .product-card-img, #main-product-image, #profile-avatar {
             object-fit: cover;
         }
         
@@ -211,7 +213,6 @@
             box-shadow: 0 0 0 3px color-mix(in srgb, var(--primary) 40%, transparent);
             border-width: 2px;
         }
-
     </style>
 </head>
 <body class="antialiased opacity-0 transition-opacity duration-500">
@@ -220,7 +221,7 @@
         <div class="spinner"></div>
     </div>
 
-    <header class="bg-transparent sticky top-0 z-40">
+    <header class="sticky top-0 z-40">
       <div class="container mx-auto px-4">
         <div class="mt-4 card-bg shadow-lg rounded-xl border border-custom/50 flex justify-between items-center h-16 px-4">
             <a href="#main" class="flex items-center gap-3 text-2xl font-bold nav-link rounded-lg">
@@ -304,6 +305,7 @@
         // --- GLOBAL STATE ---
         let currentUser = null, isAdmin = false, allProducts = [], paymentMethods = [], userWishlist = [], cart = JSON.parse(localStorage.getItem('asonik_cart')) || [];
         let allUsers = [];
+        let balanceHistoryFiltered = [];
         const appState = { 
             currency: localStorage.getItem('asonik_currency') || 'UZS', 
             lang: localStorage.getItem('asonik_lang') || 'RU', 
@@ -570,7 +572,7 @@
                 contentContainer.innerHTML = `
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-8 lg:gap-12">
                         <div>
-                            <img id="main-product-image" src="${product.imageUrl || 'https://placehold.co/600x600'}" class="w-full rounded-lg shadow-lg object-cover">
+                            <img id="main-product-image" src="${product.imageUrl || 'https://placehold.co/600x600'}" class="w-full rounded-lg shadow-lg">
                         </div>
                         <div>
                             <h1 id="main-product-name" class="text-4xl font-extrabold mb-2">${product.name}</h1>
@@ -745,25 +747,71 @@
 
         // --- BALANCE MANAGEMENT ---
         function showBalanceModal() { 
-            const history = appState.balanceHistory.map(i => {
-                let text = '';
-                if (i.type === 'topup') text = i.reason === 'Админ' ? 'Начислено администрацией' : `Пополнение (${i.method || '...'})`;
-                else if (i.type === 'purchase') text = `Покупка: ${i.product}`;
-                else if (i.type === 'deduction') text = i.reason === 'Админ' ? 'Снято администрацией' : 'Списание';
-                else text = i.type;
-                return `<li class="flex justify-between p-2 rounded ${i.amount > 0 ? 'bg-green-500/10' : 'bg-red-500/10'}">
-                    <span>${text}</span>
-                    <span class="${i.amount > 0 ? 'text-green-500' : 'text-red-500'} font-semibold">${formatPrice(i.amount)}</span>
-                </li>`;
-            }).join(''); 
-            showModal('Баланс', `<div class="text-center mb-4"><p>Текущий баланс</p><p id="modal-balance-display" class="text-4xl font-bold">${formatPrice(appState.balance)}</p></div><div><input id="topup-amount" type="number" class="w-full modern-input" placeholder="Сумма пополнения (UZS)"></div><div class="mt-4"><h3 class="font-semibold mb-2">История операций</h3><ul class="space-y-2 max-h-48 overflow-y-auto">${history || '<p>История пуста.</p>'}</ul></div>`, async m => { const amount = parseFloat(m.querySelector('#topup-amount').value); if (!amount || amount <= 0) return false; m.remove(); showBalanceTopUpPaymentModal(amount); return false; }, 'Пополнить'); 
+            const onSave = async m => { const amount = parseFloat(m.querySelector('#topup-amount').value); if (!amount || amount <= 0) return false; m.remove(); showBalanceTopUpPaymentModal(amount); return false; };
+            const modalHTML = `
+                <div class="text-center mb-6">
+                    <p class="text-gray-400">Текущий баланс</p>
+                    <p id="modal-balance-display" class="text-4xl font-bold">${formatPrice(appState.balance)}</p>
+                </div>
+                <div class="flex gap-2">
+                    <input id="topup-amount" type="number" class="w-full modern-input" placeholder="Сумма пополнения (UZS)">
+                    <button id="topup-btn" class="btn btn-primary">Пополнить</button>
+                </div>
+                <hr class="border-custom my-6">
+                <div>
+                    <div class="flex justify-between items-center mb-4">
+                        <h3 class="font-semibold text-lg">История операций</h3>
+                        <input id="history-filter" class="modern-input text-sm w-1/2" placeholder="Фильтр (покупка, пополнение...)">
+                    </div>
+                    <ul id="balance-history-list" class="space-y-2 max-h-60 overflow-y-auto pr-2">
+                        ${renderBalanceHistory(appState.balanceHistory)}
+                    </ul>
+                </div>`;
+            
+            const modal = showModal('Баланс', modalHTML, null);
+            document.getElementById('topup-btn').onclick = () => onSave(modal);
+            document.getElementById('history-filter').oninput = (e) => {
+                const term = e.target.value.toLowerCase();
+                balanceHistoryFiltered = appState.balanceHistory.filter(i => {
+                    const text = getBalanceHistoryText(i).toLowerCase();
+                    return text.includes(term);
+                });
+                document.getElementById('balance-history-list').innerHTML = renderBalanceHistory(balanceHistoryFiltered);
+            };
+
             onSnapshot(doc(db, "users", currentUser.uid), docSnap => {
                 const balanceDisplay = document.getElementById('modal-balance-display');
                 if (balanceDisplay) {
-                    balanceDisplay.textContent = formatPrice(docSnap.data().balance || 0);
+                    const data = docSnap.data();
+                    appState.balance = data.balance || 0;
+                    appState.balanceHistory = (data.balanceHistory || []).sort((a,b) => new Date(b.date) - new Date(a.date));
+                    balanceDisplay.textContent = formatPrice(appState.balance);
+                    document.getElementById('balance-history-list').innerHTML = renderBalanceHistory(appState.balanceHistory);
                 }
             });
         };
+        
+        function getBalanceHistoryText(item) {
+             if (item.type === 'topup') return item.reason === 'Админ' ? 'Начислено администрацией' : `Пополнение (${item.method || '...'})`;
+             else if (item.type === 'purchase') return `Покупка: ${item.product}`;
+             else if (item.type === 'deduction') return item.reason === 'Админ' ? 'Снято администрацией' : 'Списание';
+             return item.type;
+        }
+
+        function renderBalanceHistory(historyItems) {
+            if (!historyItems.length) return '<p class="text-center text-gray-500">История пуста.</p>';
+            return historyItems.map(i => {
+                const text = getBalanceHistoryText(i);
+                return `<li class="flex justify-between items-center p-3 rounded-lg ${i.amount > 0 ? 'bg-green-500/10' : 'bg-red-500/10'}">
+                    <div>
+                        <span class="font-medium">${text}</span>
+                        <p class="text-xs text-gray-400">${new Date(i.date).toLocaleString()}</p>
+                    </div>
+                    <span class="${i.amount > 0 ? 'text-green-500' : 'text-red-500'} font-semibold text-lg">${formatPrice(i.amount)}</span>
+                </li>`;
+            }).join('');
+        }
+
         async function showBalanceTopUpPaymentModal(amount, callback) { const methods = paymentMethods.filter(p => p.isEnabled); if (!methods.length) return; const onSave = async m => { const selected = m.querySelector('.payment-option.selected'); if (!selected) { showToast('Пожалуйста, выберите способ оплаты', true); return false; } const pData = { userId: currentUser.uid, userEmail: currentUser.email, orderId: generateCode(), items: [{ name: `Пополнение на ${formatPrice(amount)}`, imageUrl:''}], productName: "Пополнение баланса", status: 'Ожидает оплаты', paymentMethodId: selected.dataset.methodId, finalPrice: amount, createdAt: serverTimestamp(), isTopUp: true }; const pRef = await addDoc(collection(db, "purchases"), pData); window.location.hash = '#purchases'; showProofUploadModal(pRef.id); if (callback) callback(); return true; }; const modal = showModal(`Пополнение на ${formatPrice(amount)}`, `<div class="grid grid-cols-2 gap-4">${methods.map(p => `<button data-method-id="${p.id}" class="payment-option flex flex-col items-center p-2 border-2 rounded-lg h-24 transition-all"><img src="${p.logoUrl}" class="h-12 object-contain"><span class="text-sm">${p.name}</span></button>`).join('')}</div>`, onSave, 'К оплате'); modal.querySelectorAll('.payment-option').forEach(btn => btn.onclick = () => { modal.querySelectorAll('.payment-option').forEach(b => b.classList.remove('selected')); btn.classList.add('selected'); }); };
         
         // --- ADMIN PANEL ---
@@ -1128,6 +1176,18 @@
                     }, 'Отклонить');
                 }
 
+                 if (closest('.ban-user-btn')) {
+                    const uid = closest('.ban-user-btn').dataset.uid;
+                    const userRef = doc(db, 'users', uid);
+                    const userDoc = await getDoc(userRef);
+                    const isBanned = userDoc.data().isBanned || false;
+                    confirmAction(`Вы уверены, что хотите ${isBanned ? 'разбанить' : 'забанить'} этого пользователя?`, async () => {
+                        await updateDoc(userRef, { isBanned: !isBanned });
+                        showToast(`Пользователь ${isBanned ? 'разбанен' : 'забанен'}`);
+                    });
+                }
+
+
                 if (closest('.add-balance-btn') || closest('.remove-balance-btn') || closest('.annul-balance-btn')) {
                     const btn = closest('button');
                     const uid = btn.dataset.uid;
@@ -1292,7 +1352,7 @@
                 <div class="max-w-4xl mx-auto card-bg p-8 rounded-2xl shadow-lg space-y-8">
                     <div class="flex flex-col md:flex-row items-center gap-8">
                         <div class="flex flex-col items-center">
-                            <img id="profile-avatar" src="${currentUser.photoURL || 'https://placehold.co/128x128'}" class="w-32 h-32 rounded-full mb-4 object-cover shadow-md">
+                            <img id="profile-avatar" src="${currentUser.photoURL || 'https://placehold.co/128x128'}" class="w-32 h-32 rounded-full mb-4 shadow-md">
                             <input type="file" id="avatar-upload" class="hidden" accept="image/*">
                             <button id="change-avatar-btn" class="text-sm text-primary hover:underline">Сменить фото</button>
                         </div>
@@ -1435,7 +1495,7 @@
 
         function renderAdminUserItem(u) {
             const isBanned = u.isBanned || false;
-            return `<div class="card-bg p-4 rounded flex flex-col md:flex-row justify-between items-start md:items-center border border-custom gap-4"><div><p>${u.displayName} (${u.email})</p><p class="text-xs text-gray-400">UID: ${u.uid}</p><p>Баланс: ${formatPrice(u.balance || 0)}</p></div><div class="flex items-center gap-2 flex-wrap"><input type="number" class="user-balance-input w-24 p-2 rounded bg-transparent border" placeholder="Сумма"><button class="add-balance-btn bg-green-500 text-white p-2 rounded-md" data-uid="${u.uid}">➕</button><button class="remove-balance-btn bg-yellow-500 text-white p-2 rounded-md" data-uid="${u.uid}">➖</button><button class="annul-balance-btn bg-red-500 text-white p-2 rounded-md" data-uid="${u.uid}">Обнулить</button><button class="ban-user-btn ${isBanned ? 'bg-green-600' : 'bg-red-600'} text-white p-2 rounded-md" data-uid="${u.uid}">${isBanned ? 'Разбанить' : 'Забанить'}</button></div></div>`;
+            return `<div class="card-bg p-4 rounded flex flex-col md:flex-row justify-between items-start md:items-center border border-custom gap-4"><div><p>${u.displayName} (${u.email})</p><p class="text-xs text-gray-400">UID: ${u.uid}</p><p>Баланс: ${formatPrice(u.balance || 0)}</p></div><div class="flex items-center gap-2 flex-wrap"><input type="number" class="user-balance-input w-24 p-2 rounded bg-transparent border" placeholder="Сумма"><button class="add-balance-btn bg-green-500 text-white p-2 rounded-md" data-uid="${u.uid}">➕</button><button class="remove-balance-btn bg-yellow-500 text-white p-2 rounded-md" data-uid="${u.uid}">➖</button><button class="annul-balance-btn bg-red-500 text-white p-2 rounded-md" data-uid="${u.uid}">Обнулить</button><button class="ban-user-btn ${isBanned ? 'bg-blue-500' : 'bg-red-700'} text-white p-2 rounded-md" data-uid="${u.uid}">${isBanned ? 'Разбанить' : 'Забанить'}</button></div></div>`;
         }
         async function uploadImage(file, path = 'images') {
             const storageRef = ref(storage, `${path}/${Date.now()}_${file.name}`);
@@ -1501,7 +1561,7 @@
                 if (promo.id) {
                     await setDoc(doc(db, 'promocodes', promo.id), data, { merge: true });
                 } else {
-                    await addDoc(collection(db, 'promocodes'), data);
+                    await setDoc(doc(db, 'promocodes', data.code), data); // Use code as ID for new promos
                 }
                 showToast('Промокод сохранен!');
                 return true;
@@ -1510,7 +1570,7 @@
             const productOptions = allProducts.map(p => `<option value="${p.id}" ${promo.productId === p.id ? 'selected' : ''}>${p.name}</option>`).join('');
 
             const formHTML = `<div class="space-y-4">
-                <div><label>Код</label><input id="promo-code" class="w-full modern-input" value="${promo.code}"></div>
+                <div><label>Код</label><input id="promo-code" class="w-full modern-input" value="${promo.code}" ${promo.id ? 'readonly' : ''}></div>
                 <div><label>Скидка (%)</label><input type="number" id="promo-discount" class="w-full modern-input" value="${promo.discount}"></div>
                 <div><label>Лимит использований</label><input type="number" id="promo-limit" class="w-full modern-input" value="${promo.limit}"></div>
                 <div><label>Применить к товару (необязательно)</label><select id="promo-product" class="w-full modern-input"><option value="">Для всех товаров</option>${productOptions}</select></div>
