@@ -200,6 +200,7 @@
         .status-badge.pending { background-color: #f59e0b; } /* Orange for pending */
         .status-badge.completed, .status-badge.finished { background-color: #10b981; } /* Green for completed */
         .status-badge.rejected, .status-badge.cancelled { background-color: #ef4444; } /* Red for rejected/cancelled */
+        .status-badge.processing { background-color: #3b82f6; } /* Blue for processing automation */
 
 
         /* Mobile image fix & object-fit */
@@ -212,6 +213,11 @@
             border-color: var(--primary) !important;
             box-shadow: 0 0 0 3px color-mix(in srgb, var(--primary) 40%, transparent);
             border-width: 2px;
+        }
+         .variation-option.disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            background-color: color-mix(in srgb, var(--card-bg) 50%, #888);
         }
     </style>
 </head>
@@ -241,6 +247,7 @@
                 <button id="balance-btn" class="hidden btn bg-primary/10 hover:bg-primary/20 border border-custom/50">
                     <svg class="h-5 w-5 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H4a3 3 0 00-3 3v8a3 3 0 003 3z"></path></svg>
                     <span id="balance-amount" class="font-semibold text-sm">0</span>
+                    <svg class="w-4 h-4 opacity-70" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd"></path></svg>
                 </button>
                 <button id="theme-toggle" class="p-2 rounded-full hover:bg-black/10 dark:hover:bg-white/10"></button>
                 <a href="#cart" class="relative p-2 nav-link rounded-full"><svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"></path></svg><span id="cart-count" class="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-4 w-4 flex items-center justify-center hidden">0</span></a>
@@ -550,8 +557,9 @@
                         <div class="mt-6">
                             <h3 class="text-xl font-semibold mb-4">Выберите опцию:</h3>
                             <div class="space-y-4">
-                                ${product.variations.map((v, index) => `
-                                    <div class="variation-option p-4 border rounded-lg cursor-pointer transition-all" data-index="${index}">
+                                ${product.variations.map((v, index) => {
+                                    const disabledClass = v.isOutOfStock ? 'disabled' : '';
+                                    return `<div class="variation-option p-4 border rounded-lg cursor-pointer transition-all ${disabledClass}" data-index="${index}">
                                         <div class="flex justify-between items-center">
                                             <div class="flex items-center gap-4">
                                                 ${v.imageUrl ? `<img src="${v.imageUrl}" class="w-16 h-16 rounded-md object-cover">` : ''}
@@ -562,8 +570,8 @@
                                             </div>
                                             <p class="text-xl font-bold text-primary">${formatPrice(v.price)}</p>
                                         </div>
-                                    </div>
-                                `).join('')}
+                                    </div>`
+                                }).join('')}
                             </div>
                         </div>
                     `;
@@ -592,6 +600,8 @@
 
                     contentContainer.querySelectorAll('.variation-option').forEach(option => {
                         option.addEventListener('click', () => {
+                            if(option.classList.contains('disabled')) return;
+
                             contentContainer.querySelectorAll('.variation-option').forEach(el => el.classList.remove('selected'));
                             option.classList.add('selected');
                             selectedVariation = product.variations[parseInt(option.dataset.index)];
@@ -599,7 +609,7 @@
                             document.getElementById('main-product-name').textContent = `${product.name} - ${selectedVariation.name}`;
                             document.getElementById('main-product-price').textContent = formatPrice(selectedVariation.price);
                             document.getElementById('main-product-price').classList.remove('hidden');
-                            if(selectedVariation.imageUrl) {
+                            if(selectedVariation.imageUrl && selectedVariation.updateMainImage) {
                                 document.getElementById('main-product-image').src = selectedVariation.imageUrl;
                             }
                             if(selectedVariation.description) {
@@ -612,7 +622,14 @@
                 document.getElementById('detail-buy-btn').addEventListener('click', () => {
                     if (product.variations && product.variations.length > 0) {
                         if (selectedVariation) {
-                            showCheckoutModal([{...product, ...selectedVariation, name: `${product.name} - ${selectedVariation.name}`}], selectedVariation.price);
+                             const fullProductData = {
+                                ...product,
+                                ...selectedVariation,
+                                name: `${product.name} - ${selectedVariation.name}`,
+                                // Make sure 'id' is from the main product
+                                id: product.id
+                            };
+                            showCheckoutModal([fullProductData], selectedVariation.price);
                         } else {
                             showToast('Пожалуйста, выберите опцию', true);
                         }
@@ -721,11 +738,15 @@
         async function showExternalPaymentModal(items, total, promo) { const cards = paymentMethods.filter(p=>p.isEnabled && p.type==='card'), wallets = paymentMethods.filter(p=>p.isEnabled && p.type==='ewallet'); if (!cards.length && !wallets.length) { showModal('Ошибка', '<p>Способы оплаты не настроены.</p>'); return; } const onSave = async m => { const selected = m.querySelector('.payment-option.selected'); if (!selected) { showToast('Пожалуйста, выберите способ оплаты.', true); return false; } const pRef = await addDoc(collection(db, "purchases"), { userId: currentUser.uid, orderId: generateCode(), items, productName: items.length > 1 ? `${items.length} товаров`: items[0].name, status: 'Ожидает оплаты', paymentMethodId: selected.dataset.methodId, finalPrice: total, promoCode: promo?.code || null, createdAt: serverTimestamp(), review: null }); if (items.length > 1) { cart = []; localStorage.setItem('asonik_cart', '[]'); updateCartCount(); } window.location.hash = '#purchases'; showProofUploadModal(pRef.id); return true; }; const modal = showModal('Выберите способ', `<div class="space-y-4">${cards.length ? `<div><h3 class="font-bold mb-2 border-b pb-1">Банковские карты</h3><div class="grid grid-cols-2 gap-4">${cards.map(p => `<button data-method-id="${p.id}" class="payment-option flex flex-col items-center p-2 border-2 rounded-lg h-24 transition-all"><img src="${p.logoUrl}" class="h-12 object-contain"><span class="text-sm">${p.name}</span></button>`).join('')}</div></div>`:''}${wallets.length ? `<div><h3 class="font-bold mb-2 border-b pb-1">Электронные кошельки</h3><div class="grid grid-cols-2 gap-4">${wallets.map(p => `<button data-method-id="${p.id}" class="payment-option flex flex-col items-center p-2 border-2 rounded-lg h-24 transition-all"><img src="${p.logoUrl}" class="h-12 object-contain"><span class="text-sm">${p.name}</span></button>`).join('')}</div></div>`:''}</div>`, onSave, 'К оплате'); modal.querySelectorAll('.payment-option').forEach(btn => btn.onclick = () => { modal.querySelectorAll('.payment-option').forEach(b => b.classList.remove('selected')); btn.classList.add('selected'); }); };
         function loadPurchasesPage() { const el = document.getElementById('purchases-content'); if (!currentUser) return; el.innerHTML = `<h1 class="text-4xl font-bold text-center mb-8" data-lang-key="purchases_title"></h1><div id="purchases-list" class="space-y-6"></div>`; onSnapshot(query(collection(db, "purchases"), where("userId", "==", currentUser.uid), orderBy("createdAt", "desc")), s => { const container = document.getElementById('purchases-list'); if (container) container.innerHTML = s.docs.map(d => renderPurchaseItem(d.id, d.data())).join('') || '<p class="text-center">Здесь будут ваши покупки.</p>'; }); };
         function renderPurchaseItem(id, p) {
-            const statusMap = { 'Выполнен': {class: 'completed', text: 'Выполнен', icon: 'M5 13l4 4L19 7'}, 'Завершен': {class: 'finished', text: 'Завершен', icon: 'M5 13l4 4L19 7'}, 'Ожидает оплаты': {class: 'pending', text: 'Ожидает оплаты', icon: 'M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z'}, 'Ожидает подтверждения': {class: 'pending', text: 'Ожидает подтверждения', icon: 'M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z'}, 'Отклонен': {class: 'rejected', text: 'Отклонен', icon: 'M6 18L18 6M6 6l12 12'}, 'Отменен': {class: 'cancelled', text: 'Отменен', icon: 'M6 18L18 6M6 6l12 12'} };
+            const statusMap = { 'Выполнен': {class: 'completed', text: 'Выполнен', icon: 'M5 13l4 4L19 7'}, 'Завершен': {class: 'finished', text: 'Завершен', icon: 'M5 13l4 4L19 7'}, 'Ожидает оплаты': {class: 'pending', text: 'Ожидает оплаты', icon: 'M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z'}, 'Ожидает подтверждения': {class: 'pending', text: 'Ожидает подтверждения', icon: 'M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z'}, 'Отклонен': {class: 'rejected', text: 'Отклонен', icon: 'M6 18L18 6M6 6l12 12'}, 'Отменен': {class: 'cancelled', text: 'Отменен', icon: 'M6 18L18 6M6 6l12 12'}, 'В обработке': {class: 'processing', text: 'В обработке', icon: 'M4 4v5h5'} };
             const statusInfo = statusMap[p.status] || {class: 'pending', text: p.status, icon: 'M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z'};
             let buttons = '';
+            const purchasedItem = p.items[0]; // Assuming one item per purchase for automation logic
+
             if(p.status === 'Ожидает оплаты') { buttons += `<button class="upload-proof-btn btn btn-primary text-sm" data-id="${id}">Загрузить чек</button><button class="cancel-purchase-btn btn btn-danger text-sm ml-2" data-id="${id}">Отменить</button>`; } 
-            if(p.status === 'Выполнен' && !p.isTopUp) { buttons += `<button class="contact-seller-btn btn btn-primary text-sm ml-2" data-code="${p.orderId}">Получить товар</button>`; }
+            if(p.status === 'Выполнен' && !p.isTopUp) { 
+                 buttons += `<button class="get-item-btn btn btn-primary text-sm ml-2" data-purchase-id="${id}">Получить товар</button>`; 
+            }
             if(p.status === 'Завершен' && !p.isTopUp && !p.review) { buttons += `<button class="leave-review-btn btn btn-primary text-sm ml-2" data-id="${id}" data-product-id="${p.items[0].id}">Оставить отзыв</button>`; }
 
             return `<div class="card-bg p-4 sm:p-6 rounded-lg border border-custom flex flex-col sm:flex-row gap-4 items-start shadow-md">
@@ -738,6 +759,7 @@
                     <p class="text-sm text-gray-500">Код заказа: ${p.orderId}</p>
                     <p class="text-sm text-gray-500">Дата: ${p.createdAt ? new Date(p.createdAt.seconds*1000).toLocaleString() : 'N/A'}</p>
                     <p class="text-lg font-semibold mt-1">Сумма: ${formatPrice(p.finalPrice)}</p>
+                    ${p.fulfillmentData ? `<p class="mt-2 p-2 rounded-md bg-blue-500/10 text-blue-700 dark:text-blue-300 text-sm"><strong>Предоставленные данные:</strong> ${p.fulfillmentData}</p>`:''}
                     ${p.rejectionReason ? `<p class="mt-2 p-2 rounded-md bg-red-500/10 text-red-700 dark:text-red-300 text-sm"><strong>Причина отказа:</strong> ${p.rejectionReason}</p>`:''}
                     <div class="mt-4 flex gap-2">${buttons}</div>
                 </div>
@@ -756,6 +778,7 @@
                 <div class="flex gap-2">
                     <input id="topup-amount" type="number" class="w-full modern-input" placeholder="Сумма пополнения (UZS)">
                     <button id="topup-btn" class="btn btn-primary">Пополнить</button>
+                    <button id="withdraw-btn" class="btn bg-gray-500 text-white">Вывести</button>
                 </div>
                 <hr class="border-custom my-6">
                 <div>
@@ -770,6 +793,9 @@
             
             const modal = showModal('Баланс', modalHTML, null);
             document.getElementById('topup-btn').onclick = () => onSave(modal);
+            document.getElementById('withdraw-btn').onclick = () => {
+                showModal('Вывод средств', '<div><p class="text-2xl text-center mb-4">🚧</p><p>Извините, вывод средств временно недоступен, так как сайт находится в активной разработке. Эта функция появится в ближайшее время!</p></div>', null)
+            };
             document.getElementById('history-filter').oninput = (e) => {
                 const term = e.target.value.toLowerCase();
                 balanceHistoryFiltered = appState.balanceHistory.filter(i => {
@@ -871,8 +897,8 @@
             
             const onSave = async m => {
                 const file = m.querySelector('#p-image-file').files[0];
-                let url=p.imageUrl;
-                if(file) url=await uploadImage(file);
+                let url = p.imageUrl;
+                if(file) url = await uploadImage(file);
                 
                 const variations = [];
                 for(const v of m.querySelectorAll('.variation-item')) {
@@ -883,7 +909,11 @@
                         name: v.querySelector('.v-name').value, 
                         price: parseFloat(v.querySelector('.v-price').value), 
                         description: v.querySelector('.v-desc').value, 
-                        imageUrl: vImgUrl
+                        imageUrl: vImgUrl,
+                        updateMainImage: v.querySelector('.v-update-main-image').checked,
+                        fulfillmentPrompt: v.querySelector('.v-fulfillment-prompt').value,
+                        isAutomationEnabled: v.querySelector('.v-automation-enabled').checked,
+                        isOutOfStock: v.querySelector('.v-out-of-stock').checked
                     });
                 }
 
@@ -970,7 +1000,7 @@
             
             const renderVariation = (v = {}) => {
                 const el = document.createElement('div');
-                el.className = 'variation-item border p-4 rounded-lg space-y-3';
+                el.className = 'variation-item border-2 p-4 rounded-lg space-y-3';
                 el.dataset.imgurl = v.imageUrl || '';
                 el.innerHTML = `
                     <input class="v-name w-full modern-input" value="${v.name||''}" placeholder="Название вариации (например, 50 гемов)">
@@ -978,6 +1008,22 @@
                     <textarea class="v-desc w-full modern-input" placeholder="Краткое описание вариации">${v.description||''}</textarea>
                     <input type="file" class="v-image text-xs w-full file:mr-2 file:py-1 file:px-2 file:rounded-full file:border-0 file:text-xs file:font-semibold file:bg-primary/10 file:text-primary hover:file:bg-primary/20">
                     ${v.imageUrl ? `<img src="${v.imageUrl}" class="mt-2 w-16 h-16 object-cover rounded-md">` : ''}
+                    <hr class="border-custom">
+                    <div class="flex items-center gap-2">
+                        <input type="checkbox" class="v-automation-enabled h-4 w-4 rounded border-gray-300 text-primary" ${v.isAutomationEnabled ? 'checked' : ''}>
+                        <label class="text-sm">Включить запрос данных</label>
+                    </div>
+                    <input class="v-fulfillment-prompt w-full modern-input" value="${v.fulfillmentPrompt||''}" placeholder="Текст запроса (напр. Введите ваш ID)">
+                     <hr class="border-custom">
+                    <div class="flex items-center gap-2">
+                        <input type="checkbox" class="v-update-main-image h-4 w-4 rounded border-gray-300 text-primary" ${v.updateMainImage ? 'checked' : ''}>
+                        <label class="text-sm">Менять главное фото при выборе</label>
+                    </div>
+                     <div class="flex items-center gap-2">
+                        <input type="checkbox" class="v-out-of-stock h-4 w-4 rounded border-gray-300 text-primary" ${v.isOutOfStock ? 'checked' : ''}>
+                        <label class="text-sm">Нет в наличии</label>
+                    </div>
+
                     <div class="text-right"><button type="button" class="remove-variation-btn btn btn-danger px-3 py-1 text-sm">Удалить</button></div>
                 `;
                 modal.querySelector('#variations-container').appendChild(el);
@@ -1131,7 +1177,19 @@
                 if (closest('.remove-from-cart-btn')) { cart.splice(closest('.remove-from-cart-btn').dataset.index, 1); localStorage.setItem('asonik_cart', JSON.stringify(cart)); renderCartPage(); updateCartCount(); }
                 if (target.id === 'checkout-cart-btn') showCheckoutModal(cart, cart.reduce((s, i) => s + (i.price || 0), 0));
                 if (closest('.faq-question')) closest('.faq-question').classList.toggle('open');
-                if (closest('.contact-seller-btn')) showContactModal(closest('.contact-seller-btn').dataset.code);
+                if(closest('.get-item-btn')) {
+                    const purchaseId = closest('.get-item-btn').dataset.purchaseId;
+                    const purchaseDoc = await getDoc(doc(db, 'purchases', purchaseId));
+                    if (purchaseDoc.exists()) {
+                        const purchaseData = purchaseDoc.data();
+                        const item = purchaseData.items[0];
+                        if (item.isAutomationEnabled && item.fulfillmentPrompt) {
+                            showFulfillmentModal(purchaseId, item.fulfillmentPrompt);
+                        } else {
+                            showContactModal(purchaseData.orderId);
+                        }
+                    }
+                }
                 if(closest('.cancel-purchase-btn')) confirmAction('Вы уверены, что хотите отменить заказ?', async () => await updateDoc(doc(db, "purchases", closest('.cancel-purchase-btn').dataset.id), { status: 'Отменен' }));
                 if(closest('.upload-proof-btn')) showProofUploadModal(closest('.upload-proof-btn').dataset.id);
                 if (closest('#profile-btn')) { e.stopPropagation(); document.getElementById('profile-menu')?.classList.toggle('hidden'); }
@@ -1268,6 +1326,29 @@
         }
         
         // --- ALL OTHER FUNCTIONS ---
+        function showFulfillmentModal(purchaseId, prompt) {
+            const onSave = async (modal) => {
+                const userInput = modal.querySelector('#fulfillment-input').value;
+                if (!userInput.trim()) {
+                    showToast('Пожалуйста, введите данные', true);
+                    return false;
+                }
+                await updateDoc(doc(db, 'purchases', purchaseId), {
+                    status: 'В обработке',
+                    fulfillmentData: userInput
+                });
+                showToast('Данные отправлены на обработку!');
+                return true;
+            };
+
+            const content = `
+                <p class="mb-4">${prompt}</p>
+                <input id="fulfillment-input" class="w-full modern-input" placeholder="Ваши данные...">
+            `;
+
+            showModal('Получение товара', content, onSave, 'Отправить');
+        }
+
         async function showProofUploadModal(purchaseId) {
             const purchaseDocRef = doc(db, "purchases", purchaseId);
             const purchaseSnap = await getDoc(purchaseDocRef);
@@ -1392,8 +1473,8 @@
                         await updateProfile(auth.currentUser, { photoURL });
                         await updateDoc(doc(db, "users", currentUser.uid), { photoURL });
                         showToast('Аватар обновлен!');
-                        loadProfilePage();
-                        updateAuthUI();
+                        document.getElementById('profile-avatar').src = photoURL;
+                        await updateAuthUI(); // Refresh header avatar
                     } else {
                         showToast('Ошибка загрузки фото', true);
                     }
