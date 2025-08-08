@@ -82,9 +82,9 @@
         [data-page] { display: none; }
         [data-page].active { display: block; }
 
-        .nav-link:hover {
-            background-color: var(--nav-hover-bg);
-            color: var(--nav-hover-text);
+        .main-nav-link:hover {
+            background-color: var(--primary);
+            color: white !important;
         }
 
         /* General UI improvements */
@@ -192,11 +192,11 @@
             </a>
             
             <nav class="hidden md:flex items-center space-x-2 bg-white/10 dark:bg-black/10 p-1 rounded-full">
-                <a href="#main" class="nav-link flex items-center gap-2 px-3 py-1.5 rounded-full transition-colors" data-lang-key="nav_main"></a>
-                <a href="#chats" class="nav-link flex items-center gap-2 px-3 py-1.5 rounded-full transition-colors" data-lang-key="nav_chats"></a>
-                <a href="#faq" class="nav-link flex items-center gap-2 px-3 py-1.5 rounded-full transition-colors" data-lang-key="nav_faq"></a>
-                <a href="#purchases" class="nav-link flex items-center gap-2 px-3 py-1.5 rounded-full transition-colors" data-lang-key="nav_purchases"></a>
-                <a href="#download" class="nav-link flex items-center gap-2 px-3 py-1.5 rounded-full transition-colors" data-lang-key="nav_download"></a>
+                <a href="#main" class="main-nav-link nav-link flex items-center gap-2 px-3 py-1.5 rounded-full transition-colors" data-lang-key="nav_main"></a>
+                <a href="#chats" class="main-nav-link nav-link flex items-center gap-2 px-3 py-1.5 rounded-full transition-colors" data-lang-key="nav_chats"></a>
+                <a href="#faq" class="main-nav-link nav-link flex items-center gap-2 px-3 py-1.5 rounded-full transition-colors" data-lang-key="nav_faq"></a>
+                <a href="#purchases" class="main-nav-link nav-link flex items-center gap-2 px-3 py-1.5 rounded-full transition-colors" data-lang-key="nav_purchases"></a>
+                <a href="#download" class="main-nav-link nav-link flex items-center gap-2 px-3 py-1.5 rounded-full transition-colors" data-lang-key="nav_download"></a>
             </nav>
 
             <div class="flex items-center space-x-1 sm:space-x-2">
@@ -366,8 +366,15 @@
             el.innerHTML = `${bannerHTML}
                 <h1 class="text-4xl font-bold text-center mb-8" data-lang-key="catalog_title"></h1>
                 <div class="mb-8 p-4 card-bg rounded-lg shadow-md flex flex-col md:flex-row items-center gap-4 border border-custom">
-                    <input id="search-input" type="text" data-lang-placeholder="search_placeholder" class="w-full md:w-2/3 modern-input">
-                    <select id="sort-select" class="w-full md:w-1/3 modern-input">
+                    <input id="search-input" type="text" data-lang-placeholder="search_placeholder" class="w-full md:w-1/2 modern-input">
+                    <select id="category-filter" class="w-full md:w-1/4 modern-input">
+                        <option value="all">Все категории</option>
+                        <option value="игра">Игры</option>
+                        <option value="приложение">Приложения</option>
+                        <option value="другое">Другое</option>
+                    </select>
+                    <select id="sort-select" class="w-full md:w-1/4 modern-input">
+                        <option value="order">По порядку</option>
                         <option value="newest">Сначала новые</option>
                         <option value="price_asc">Цена: по возрастанию</option>
                         <option value="price_desc">Цена: по убыванию</option>
@@ -376,6 +383,7 @@
                 </div>
                 <div id="products-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6"></div>`; 
             document.getElementById('search-input').addEventListener('input', applyFiltersAndSort); 
+            document.getElementById('category-filter').addEventListener('change', applyFiltersAndSort); 
             document.getElementById('sort-select').addEventListener('change', applyFiltersAndSort); 
             loadProducts(); 
         };
@@ -389,6 +397,14 @@
                     filtered = filtered.filter(p => p.name.toLowerCase().includes(term));
                 }
             }
+            
+            const categoryFilter = document.getElementById('category-filter');
+            if (categoryFilter) {
+                const category = categoryFilter.value;
+                if (category !== 'all') {
+                    filtered = filtered.filter(p => p.category === category);
+                }
+            }
 
             const sortSelect = document.getElementById('sort-select');
             if (sortSelect) {
@@ -397,7 +413,9 @@
                     case 'price_asc': filtered.sort((a,b) => (a.price || 0) - (b.price || 0)); break;
                     case 'price_desc': filtered.sort((a,b) => (b.price || 0) - (a.price || 0)); break;
                     case 'popular': filtered.sort((a,b) => (b.purchaseCount || 0) - (a.purchaseCount || 0)); break;
-                    default: filtered.sort((a,b) => (b.createdAt?.toMillis()||0) - (a.createdAt?.toMillis()||0)); break;
+                    case 'newest': filtered.sort((a,b) => (b.createdAt?.toMillis()||0) - (a.createdAt?.toMillis()||0)); break;
+                    case 'order': filtered.sort((a,b) => (a.order || 999) - (b.order || 999)); break;
+                    default: filtered.sort((a,b) => (a.order || 999) - (b.order || 999)); break;
                 }
             }
 
@@ -411,13 +429,13 @@
         
         function renderProductCard(p) {
             let statusHTML = '';
-            const officialTooltip = 'Это товар, который продается непосредственно от имени нашего магазина. Мы несем полную ответственность за его качество и предоставляем гарантию.';
+            const officialTooltip = 'На этот товар распространяется гарантия от нашего магазина.';
             const privateTooltip = 'Товар выставляется на продажу сторонним лицом. Магазин выступает в роли площадки и не несет ответственности за данный товар.';
 
             if (p.productStatus === 'official') {
                 statusHTML = `<div class="mt-2 text-sm text-green-600 flex items-center gap-2">
                                 <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" /></svg>
-                                <span>Официальный магазин</span>
+                                <span>Гарантированный товар</span>
                                 <div class="tooltip">
                                     <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-gray-400" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd" /></svg>
                                     <span class="tooltiptext">${officialTooltip}</span>
@@ -731,8 +749,8 @@
         
         // --- ADMIN FORMS (RE-DESIGNED) ---
         async function showProductForm(pId) {
-            let p = {name:'',description:'',price:0,imageUrl:'',productStatus:'official', isPinned: false, variations: []};
-            if(pId){const d=await getDoc(doc(db,'products',pId)); if(d.exists()) p={...d.data(), id: d.id};}
+            let p = {name:'',description:'',price:0,imageUrl:'',productStatus:'official', isPinned: false, variations: [], category: 'другое', order: Date.now()};
+            if(pId){const d=await getDoc(doc(db,'products',pId)); if(d.exists()) p={...p, ...d.data(), id: d.id};}
             
             const onSave = async m => {
                 const file = m.querySelector('#p-image-file').files[0];
@@ -760,6 +778,8 @@
                     productStatus: m.querySelector('input[name="product-status"]:checked').value,
                     isPinned: m.querySelector('#p-pinned').checked,
                     variations: variations,
+                    category: m.querySelector('#p-category').value,
+                    order: parseInt(m.querySelector('#p-order').value) || Date.now(),
                     createdAt: p.createdAt || serverTimestamp(),
                     updatedAt: serverTimestamp()
                 };
@@ -773,17 +793,33 @@
 
             const formHTML = `
                 <div class="space-y-4">
-                    <div>
-                        <label for="p-name" class="block text-sm font-medium mb-1">Название товара</label>
-                        <input id="p-name" value="${p.name||''}" class="w-full modern-input" placeholder="Например, 'Игровой аккаунт'">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label for="p-name" class="block text-sm font-medium mb-1">Название товара</label>
+                            <input id="p-name" value="${p.name||''}" class="w-full modern-input" placeholder="Например, 'Игровой аккаунт'">
+                        </div>
+                        <div>
+                            <label for="p-category" class="block text-sm font-medium mb-1">Категория</label>
+                            <select id="p-category" class="w-full modern-input">
+                                <option value="игра" ${p.category === 'игра' ? 'selected' : ''}>Игра</option>
+                                <option value="приложение" ${p.category === 'приложение' ? 'selected' : ''}>Приложение</option>
+                                <option value="другое" ${p.category === 'другое' ? 'selected' : ''}>Другое</option>
+                            </select>
+                        </div>
                     </div>
                     <div>
                         <label for="p-desc" class="block text-sm font-medium mb-1">Описание</label>
                         <textarea id="p-desc" class="w-full modern-input" rows="4" placeholder="Подробное описание товара...">${p.description||''}</textarea>
                     </div>
-                    <div>
-                        <label for="p-price" class="block text-sm font-medium mb-1">Базовая цена (в UZS)</label>
-                        <input id="p-price" type="number" value="${p.price||0}" class="w-full modern-input" placeholder="0">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label for="p-price" class="block text-sm font-medium mb-1">Базовая цена (в UZS)</label>
+                            <input id="p-price" type="number" value="${p.price||0}" class="w-full modern-input" placeholder="0">
+                        </div>
+                        <div>
+                            <label for="p-order" class="block text-sm font-medium mb-1">Порядок сортировки</label>
+                            <input id="p-order" type="number" value="${p.order||''}" class="w-full modern-input" placeholder="Чем меньше, тем выше">
+                        </div>
                     </div>
                     <div>
                         <label for="p-image-file" class="block text-sm font-medium mb-1">Изображение товара</label>
@@ -791,17 +827,11 @@
                         ${p.imageUrl ? `<img src="${p.imageUrl}" class="mt-2 w-24 h-24 object-cover rounded-md">` : ''}
                     </div>
                      <div>
-                        <label class="block text-sm font-medium mb-2">Статус товара
-                            <button type="button" id="status-info-btn" class="ml-2 text-primary">
-                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 inline-block" viewBox="0 0 20 20" fill="currentColor">
-                                    <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd" />
-                                </svg>
-                            </button>
-                        </label>
+                        <label class="block text-sm font-medium mb-2">Статус товара</label>
                         <div class="flex gap-4">
                             <label class="flex items-center">
                                 <input type="radio" name="product-status" value="official" ${p.productStatus === 'official' ? 'checked' : ''} class="h-4 w-4 text-primary focus:ring-primary border-gray-300">
-                                <span class="ml-2">Официальный товар</span>
+                                <span class="ml-2">Гарантированный товар</span>
                             </label>
                             <label class="flex items-center">
                                 <input type="radio" name="product-status" value="private" ${p.productStatus === 'private' || !p.productStatus ? 'checked' : ''} class="h-4 w-4 text-primary focus:ring-primary border-gray-300">
@@ -841,12 +871,6 @@
             modal.onclick = e => {
                 if (e.target.classList.contains('remove-variation-btn')) {
                     e.target.closest('.variation-item').remove();
-                }
-                if (e.target.closest('#status-info-btn')) {
-                     showModal('Информация о статусах', `
-                        <p><strong>Официальный товар:</strong> Это товар, который продается непосредственно от имени нашего магазина. Мы несем полную ответственность за его качество и предоставляем гарантию.</p>
-                        <p class="mt-4"><strong>Частный продавец:</strong> Товар выставляется на продажу сторонним лицом. Магазин выступает в роли площадки и не несет ответственности за данный товар.</p>
-                    `);
                 }
             };
         }
@@ -1494,7 +1518,10 @@
         async function initializeAppState(user) {
             currentUser = user;
             isAdmin = user?.uid === ADMIN_UID;
+            const balanceBtn = document.getElementById('balance-btn');
+
             if (user) {
+                balanceBtn?.classList.remove('hidden');
                 const userRef = doc(db, "users", user.uid);
                 onSnapshot(userRef, docSnap => { 
                     if (docSnap.exists()) { 
@@ -1524,6 +1551,7 @@
                 setupNotificationsListener();
                 setupWishlistListener();
             } else {
+                if(balanceBtn) balanceBtn.classList.add('hidden');
                 const notificationsContainer = document.getElementById('notifications-container');
                 if (notificationsContainer) notificationsContainer.innerHTML = '';
                 userWishlist = [];
@@ -1536,4 +1564,3 @@
     </script>
 </body>
 </html>
-
