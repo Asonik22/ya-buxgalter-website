@@ -741,8 +741,7 @@
             const statusMap = { 'Выполнен': {class: 'completed', text: 'Выполнен', icon: 'M5 13l4 4L19 7'}, 'Завершен': {class: 'finished', text: 'Завершен', icon: 'M5 13l4 4L19 7'}, 'Ожидает оплаты': {class: 'pending', text: 'Ожидает оплаты', icon: 'M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z'}, 'Ожидает подтверждения': {class: 'pending', text: 'Ожидает подтверждения', icon: 'M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z'}, 'Отклонен': {class: 'rejected', text: 'Отклонен', icon: 'M6 18L18 6M6 6l12 12'}, 'Отменен': {class: 'cancelled', text: 'Отменен', icon: 'M6 18L18 6M6 6l12 12'}, 'В обработке': {class: 'processing', text: 'В обработке', icon: 'M4 4v5h5'} };
             const statusInfo = statusMap[p.status] || {class: 'pending', text: p.status, icon: 'M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z'};
             let buttons = '';
-            const purchasedItem = p.items[0]; // Assuming one item per purchase for automation logic
-
+            
             if(p.status === 'Ожидает оплаты') { buttons += `<button class="upload-proof-btn btn btn-primary text-sm" data-id="${id}">Загрузить чек</button><button class="cancel-purchase-btn btn btn-danger text-sm ml-2" data-id="${id}">Отменить</button>`; } 
             if(p.status === 'Выполнен' && !p.isTopUp) { 
                  buttons += `<button class="get-item-btn btn btn-primary text-sm ml-2" data-purchase-id="${id}">Получить товар</button>`; 
@@ -1009,11 +1008,13 @@
                     <input type="file" class="v-image text-xs w-full file:mr-2 file:py-1 file:px-2 file:rounded-full file:border-0 file:text-xs file:font-semibold file:bg-primary/10 file:text-primary hover:file:bg-primary/20">
                     ${v.imageUrl ? `<img src="${v.imageUrl}" class="mt-2 w-16 h-16 object-cover rounded-md">` : ''}
                     <hr class="border-custom">
-                    <div class="flex items-center gap-2">
-                        <input type="checkbox" class="v-automation-enabled h-4 w-4 rounded border-gray-300 text-primary" ${v.isAutomationEnabled ? 'checked' : ''}>
-                        <label class="text-sm">Включить запрос данных</label>
+                    <div class="p-2 bg-primary/10 rounded-lg space-y-2">
+                         <div class="flex items-center gap-2">
+                            <input type="checkbox" class="v-automation-enabled h-4 w-4 rounded border-gray-300 text-primary" ${v.isAutomationEnabled ? 'checked' : ''}>
+                            <label class="text-sm font-semibold">Включить автоматизацию</label>
+                        </div>
+                        <input class="v-fulfillment-prompt w-full modern-input" value="${v.fulfillmentPrompt||''}" placeholder="Текст запроса (напр. Введите ваш ID)">
                     </div>
-                    <input class="v-fulfillment-prompt w-full modern-input" value="${v.fulfillmentPrompt||''}" placeholder="Текст запроса (напр. Введите ваш ID)">
                      <hr class="border-custom">
                     <div class="flex items-center gap-2">
                         <input type="checkbox" class="v-update-main-image h-4 w-4 rounded border-gray-300 text-primary" ${v.updateMainImage ? 'checked' : ''}>
