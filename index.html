@@ -87,7 +87,7 @@
             transition: max-height 0.3s ease-in-out;
         }
         .faq-question.open + .faq-answer {
-            max-height: 500px; /* A large enough value to show content */
+            max-height: 500px;
         }
         .faq-question .faq-icon {
             transition: transform 0.3s;
@@ -152,7 +152,7 @@
         // Firebase and App Initialization
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getAuth, onAuthStateChanged, GoogleAuthProvider, signInWithPopup, signOut, updateProfile } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, doc, getDoc, setDoc, addDoc, collection, getDocs, onSnapshot, updateDoc, deleteDoc, query, where, serverTimestamp, orderBy, increment, writeBatch, arrayUnion, arrayRemove } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { getFirestore, doc, getDoc, setDoc, addDoc, collection, getDocs, onSnapshot, updateDoc, deleteDoc, query, where, serverTimestamp, orderBy, increment, arrayUnion, arrayRemove } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
         // --- CONFIGURATION ---
         const firebaseConfig = { apiKey: "AIzaSyDim7T4GqxZK4zM9tBDLkcGTSveVOaUbMY", authDomain: "asonikstore-v3.firebaseapp.com", projectId: "asonikstore-v3", storageBucket: "asonikstore-v3.appspot.com", messagingSenderId: "1018442222532", appId: "1:1018442222532:web:9b78f7be6c5c02bb327291" };
@@ -410,6 +410,12 @@
             if (!el || !currentUser) return; 
             
             const chatId = `${currentUser.uid}_${ADMIN_UID}`;
+            await setDoc(doc(db, "userChats", currentUser.uid), {
+                lastActivity: serverTimestamp(),
+                userName: currentUser.displayName,
+                userId: currentUser.uid,
+            }, { merge: true });
+            
             el.innerHTML = `<h1 class="text-4xl font-bold text-center mb-8">Чат с поддержкой</h1>`;
             renderChatInterface(el, chatId, currentUser.uid);
         };
@@ -432,6 +438,7 @@
                 const text = msgInput.value.trim();
                 if (text) {
                     await addDoc(collection(db, `chats/${chatId}/messages`), { text, senderId: currentId, createdAt: serverTimestamp() });
+                    await updateDoc(doc(db, "userChats", currentUser.uid), { lastActivity: serverTimestamp() });
                     msgInput.value = '';
                 }
             };
@@ -493,7 +500,7 @@
             const btn = document.getElementById('theme-toggle'); 
             const apply = t => { 
                 document.documentElement.classList.toggle('dark', t === 'dark');
-                btn.innerHTML = t === 'dark' ? '☀️' : '�';
+                btn.innerHTML = t === 'dark' ? '☀️' : '🌙';
             }; 
             const currentTheme = localStorage.getItem('color-theme') || 'light';
             apply(currentTheme); 
@@ -790,4 +797,3 @@
     </script>
 </body>
 </html>
-�
