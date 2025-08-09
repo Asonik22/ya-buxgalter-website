@@ -354,7 +354,7 @@
                 const settingsDoc = await getDoc(doc(db, "storeSettings", "config")); 
                 if (settingsDoc.exists()) { 
                     const data = settingsDoc.data();
-                    const { logoUrl, socialLinks, appDownload, themeColors, siteName, adBanners, guestPromptMessage, minimumTopUpAmount } = data;
+                    const { logoUrl, socialLinks, appDownload, themeColors, siteName, adBanners, guestPromptMessage, minimumTopUpAmount, announcement } = data;
                     const logoEl = document.getElementById('store-logo'); 
                     if (logoUrl) { logoEl.src = logoUrl; logoEl.classList.remove('hidden'); } else { logoEl.classList.add('hidden'); } 
                     if (siteName) {
@@ -365,9 +365,10 @@
                     if (socialLinks) renderSocialLinks(socialLinks); 
                     if (themeColors) applyCustomTheme(themeColors);
                     appState.appDownload = appDownload || {}; 
-                    appState.adBanners = adBanners || []; // Changed to array
+                    appState.adBanners = adBanners || [];
                     appState.guestPromptMessage = guestPromptMessage || 'Пожалуйста, войдите, чтобы получить доступ ко всем функциям.';
                     appState.minimumTopUpAmount = minimumTopUpAmount || 1000;
+                    appState.announcement = announcement || {};
                 } 
             } catch (e) { console.error("Error loading store settings:", e); } 
         }
@@ -438,7 +439,13 @@
                 : ''
             ).join('');
 
-            el.innerHTML = `${bannerHTML}
+            const announcement = appState.announcement;
+            const announcementHTML = (announcement && announcement.enabled && announcement.message)
+                ? `<div class="p-4 mb-8 rounded-lg bg-primary/10 border border-primary text-primary">${announcement.message}</div>`
+                : '';
+
+
+            el.innerHTML = `${announcementHTML}${bannerHTML}
                 <h1 class="text-4xl font-bold text-center mb-8" data-lang-key="catalog_title"></h1>
                 <div class="mb-8 p-4 card-bg rounded-lg shadow-md flex flex-col md:flex-row items-center gap-4 border border-custom">
                     <input id="search-input" type="text" data-lang-placeholder="search_placeholder" class="w-full md:w-1/2 modern-input">
@@ -878,6 +885,7 @@
                 if(i.type === 'purchase'){
                     buttonHTML = `<button class="go-to-purchase-btn text-xs text-primary underline" data-product-name="${i.product}">К покупке</button>`
                 }
+                const text = getBalanceHistoryText(i);
                 return `<li class="flex justify-between items-center p-3 rounded-lg ${i.amount > 0 ? 'bg-green-500/10' : 'bg-red-500/10'}">
                     <div>
                         <span class="font-medium">${text}</span>
@@ -927,7 +935,7 @@
         async function loadAdminPanel(subpage) { 
             if (!isAdmin) return; 
             const el = document.getElementById('admin-content'); 
-            const tabs = [{ id: 'users', name: 'Пользователи', icon:'<svg class="w-5 h-5" viewBox="0 0 20 20" fill="currentColor"><path d="M9 6a3 3 0 11-6 0 3 3 0 016 0zM17 6a3 3 0 11-6 0 3 3 0 016 0zM12.93 17c.046-.327.07-.66.07-1a6.97 6.97 0 00-1.5-4.33A5 5 0 0119 16v1h-6.07zM6 11a5 5 0 015 5v1H1v-1a5 5 0 015-5z" /></svg>'}, { id: 'products', name: 'Товары', icon: '<svg class="w-5 h-5" viewBox="0 0 20 20" fill="currentColor"><path d="M5 4a2 2 0 012-2h6a2 2 0 012 2v2a2 2 0 01-2 2H7a2 2 0 01-2-2V4zM5 12a2 2 0 012-2h6a2 2 0 012 2v2a2 2 0 01-2 2H7a2 2 0 01-2-2v-2z" /></svg>'}, { id: 'purchases', name: 'Покупки', icon: '<svg class="w-5 h-5" viewBox="0 0 20 20" fill="currentColor"><path d="M3 1a1 1 0 000 2h1.22l.305 1.222a.997.997 0 00.01.042l1.358 5.43-.893.892C3.74 11.846 4.632 14 6.414 14H15a1 1 0 000-2H6.414l1-1H14a1 1 0 00.894-.553l3-6A1 1 0 0017 3H6.28l-.31-1.243A1 1 0 005 1H3zM16 16.5a1.5 1.5 0 11-3 0 1.5 1.5 0 013 0zM6.5 18a1.5 1.5 0 100-3 1.5 1.5 0 000 3z" /></svg>'}, { id: 'reviews', name: 'Отзывы', icon: '<svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" /></svg>'}, { id: 'payment', name: 'Оплата', icon: '<svg class="w-5 h-5" viewBox="0 0 20 20" fill="currentColor"><path d="M4 4a2 2 0 00-2 2v1h16V6a2 2 0 00-2-2H4z" /><path fill-rule="evenodd" d="M18 9H2v5a2 2 0 002 2h12a2 2 0 002-2V9zM4 13a1 1 0 011-1h1a1 1 0 110 2H5a1 1 0 01-1-1zm5-1a1 1 0 100 2h1a1 1 0 100-2H9z" clip-rule="evenodd" /></svg>'}, { id: 'customization', name: 'Кастомизация', icon: '<svg class="w-5 h-5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M11.49 3.17c-.38-1.56-2.6-1.56-2.98 0a1.532 1.532 0 01-2.286.948c-1.372-.836-2.942.734-1.57 1.996A1.532 1.532 0 013.17 8.51c-1.56.38-1.56 2.6 0 2.98a1.532 1.532 0 01.948 2.286c-.836 1.372.734 2.942 1.996 1.57a1.532 1.532 0 012.286.948c.38 1.56 2.6 1.56 2.98 0a1.532 1.532 0 012.286-.948c1.372.836 2.942-.734 1.57-1.996A1.532 1.532 0 0116.83 11.49c1.56-.38 1.56-2.6 0-2.98a1.532 1.532 0 01-.948-2.286c.836-1.372-.734-2.942-1.996-1.57A1.532 1.532 0 0111.49 3.17zM10 13a3 3 0 100-6 3 3 0 000 6z" clip-rule="evenodd" /></svg>'}, { id: 'faq', name: 'FAQ', icon: '<svg class="w-5 h-5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-8-3a1 1 0 00-.867.5 1 1 0 11-1.731-1A3 3 0 0113 8a3.001 3.001 0 01-2 2.83V11a1 1 0 11-2 0v-1a1 1 0 011-1 1 1 0 100-2zm0 8a1 1 0 100-2 1 1 0 000 2z" clip-rule="evenodd" /></svg>'}, {id: 'promocodes', name: 'Промокоды', icon: '<svg class="w-5 h-5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M17.707 9.293a1 1 0 010 1.414l-7 7a1 1 0 01-1.414 0l-7-7A.997.997 0 012 10V5a3 3 0 013-3h5a3 3 0 013 3v2.586l4.707 4.707zM5 6a1 1 0 100-2 1 1 0 000 2z" clip-rule="evenodd" /></svg>'}, { id: 'chats', name: 'Чаты', icon: '<svg class="w-5 h-5" viewBox="0 0 20 20" fill="currentColor"><path d="M2 5a2 2 0 012-2h7a2 2 0 012 2v4a2 2 0 01-2 2H9l-3 3v-3H4a2 2 0 01-2-2V5z" /><path d="M15 7v2a4 4 0 01-4 4H9.828l-1.766 1.767c.28.149.599.233.938.233h7a2 2 0 002-2v-4a2 2 0 00-2-2h-1.172a4 4 0 01-3.535-1.464L12 4.343V7z" /></svg>'}, { id: 'download', name: 'Приложение', icon: '<svg class="w-5 h-5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zM6.293 6.707a1 1 0 010-1.414l3-3a1 1 0 011.414 0l3 3a1 1 0 01-1.414 1.414L11 5.414V13a1 1 0 11-2 0V5.414L7.707 6.707a1 1 0 01-1.414 0z" clip-rule="evenodd" /></svg>'}]; 
+            const tabs = [{ id: 'users', name: 'Пользователи', icon:'<svg class="w-5 h-5" viewBox="0 0 20 20" fill="currentColor"><path d="M9 6a3 3 0 11-6 0 3 3 0 016 0zM17 6a3 3 0 11-6 0 3 3 0 016 0zM12.93 17c.046-.327.07-.66.07-1a6.97 6.97 0 00-1.5-4.33A5 5 0 0119 16v1h-6.07zM6 11a5 5 0 015 5v1H1v-1a5 5 0 015-5z" /></svg>'}, { id: 'products', name: 'Товары', icon: '<svg class="w-5 h-5" viewBox="0 0 20 20" fill="currentColor"><path d="M5 4a2 2 0 012-2h6a2 2 0 012 2v2a2 2 0 01-2 2H7a2 2 0 01-2-2V4zM5 12a2 2 0 012-2h6a2 2 0 012 2v2a2 2 0 01-2 2H7a2 2 0 01-2-2v-2z" /></svg>'}, { id: 'purchases', name: 'Покупки', icon: '<svg class="w-5 h-5" viewBox="0 0 20 20" fill="currentColor"><path d="M3 1a1 1 0 000 2h1.22l.305 1.222a.997.997 0 00.01.042l1.358 5.43-.893.892C3.74 11.846 4.632 14 6.414 14H15a1 1 0 000-2H6.414l1-1H14a1 1 0 00.894-.553l3-6A1 1 0 0017 3H6.28l-.31-1.243A1 1 0 005 1H3zM16 16.5a1.5 1.5 0 11-3 0 1.5 1.5 0 013 0zM6.5 18a1.5 1.5 0 100-3 1.5 1.5 0 000 3z" /></svg>'}, { id: 'reviews', name: 'Отзывы', icon: '<svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" /></svg>'}, { id: 'payment', name: 'Оплата', icon: '<svg class="w-5 h-5" viewBox="0 0 20 20" fill="currentColor"><path d="M4 4a2 2 0 00-2 2v1h16V6a2 2 0 00-2-2H4z" /><path fill-rule="evenodd" d="M18 9H2v5a2 2 0 002 2h12a2 2 0 002-2V9zM4 13a1 1 0 011-1h1a1 1 0 110 2H5a1 1 0 01-1-1zm5-1a1 1 0 100 2h1a1 1 0 100-2H9z" clip-rule="evenodd" /></svg>'}, { id: 'customization', name: 'Кастомизация', icon: '<svg class="w-5 h-5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M11.49 3.17c-.38-1.56-2.6-1.56-2.98 0a1.532 1.532 0 01-2.286.948c-1.372-.836-2.942.734-1.57 1.996A1.532 1.532 0 013.17 8.51c-1.56.38-1.56 2.6 0 2.98a1.532 1.532 0 01.948 2.286c-.836 1.372.734 2.942 1.996 1.57a1.532 1.532 0 012.286.948c.38 1.56 2.6 1.56 2.98 0a1.532 1.532 0 012.286-.948c1.372.836 2.942-.734 1.57-1.996A1.532 1.532 0 0116.83 11.49c1.56-.38 1.56-2.6 0-2.98a1.532 1.532 0 01-.948-2.286c.836-1.372-.734-2.942-1.996-1.57A1.532 1.532 0 0111.49 3.17zM10 13a3 3 0 100-6 3 3 0 000 6z" clip-rule="evenodd" /></svg>'}, { id: 'faq', name: 'FAQ', icon: '<svg class="w-5 h-5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-8-3a1 1 0 00-.867.5 1 1 0 11-1.731-1A3 3 0 0113 8a3.001 3.001 0 01-2 2.83V11a1 1 0 11-2 0v-1a1 1 0 011-1 1 1 0 100-2zm0 8a1 1 0 100-2 1 1 0 000 2z" clip-rule="evenodd" /></svg>'}, {id: 'promocodes', name: 'Промокоды', icon: '<svg class="w-5 h-5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M17.707 9.293a1 1 0 010 1.414l-7 7a1 1 0 01-1.414 0l-7-7A.997.997 0 012 10V5a3 3 0 013-3h5a3 3 0 013 3v2.586l4.707 4.707zM5 6a1 1 0 100-2 1 1 0 000 2z" clip-rule="evenodd" /></svg>'}, { id: 'chats', name: 'Чаты', icon: '<svg class="w-5 h-5" viewBox="0 0 20 20" fill="currentColor"><path d="M2 5a2 2 0 012-2h7a2 2 0 012 2v4a2 2 0 01-2 2H9l-3 3v-3H4a2 2 0 01-2-2V5z" /><path d="M15 7v2a4 4 0 01-4 4H9.828l-1.766 1.767c.28.149.599.233.938.233h7a2 2 0 002-2v-4a2 2 0 00-2-2h-1.172a4 4 0 01-3.535-1.464L12 4.343V7z" /></svg>'}, { id: 'download', name: 'Приложение', icon: '<svg class="w-5 h-5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zM6.293 6.707a1 1 0 010-1.414l3-3a1 1 0 011.414 0l3 3a1 1 0 01-1.414 1.414L11 5.414V13a1 1 0 11-2 0V5.414L7.707 6.707a1 1 0 01-1.414 0z" clip-rule="evenodd" /></svg>'}, { id: 'announcement', name: 'Объявления', icon: '<svg class="w-5 h-5" viewBox="0 0 20 20" fill="currentColor"><path d="M10 2a6 6 0 00-6 6v3.586l-1.707 1.707A1 1 0 003 15h14a1 1 0 00.707-1.707L16 11.586V8a6 6 0 00-6-6zM10 18a3 3 0 01-3-3h6a3 3 0 01-3 3z" /></svg>'}]; 
             el.innerHTML = `<h2 class="text-3xl font-bold mb-6">Админ-панель</h2><nav class="admin-tabs flex flex-wrap border-b border-custom mb-6">${tabs.map(t => `<a href="#admin/${t.id}" class="admin-tab-btn flex items-center gap-2 py-3 px-5 rounded-t-lg mr-2 mb-[-1px] bg-transparent font-semibold border border-transparent border-b-0 ${subpage === t.id ? 'active' : ''}" data-tab="${t.id}">${t.icon}<span>${t.name}</span></a>`).join('')}</nav><div id="admin-tab-content" class="card-bg p-6 rounded-lg min-h-[60vh] shadow-inner"></div>`; 
             loadAdminTab(subpage); 
         }
@@ -945,6 +953,7 @@
                 case 'customization': loadCustomizationPage(); break; 
                 case 'chats': loadAdminChatsList(window.location.hash.split('/')[2]); break; 
                 case 'download': loadAdminDownloadPage(); break; 
+                case 'announcement': loadAdminAnnouncementPage(); break;
             } 
         };
         function renderAdminPurchaseItem(id, p) { 
@@ -1144,7 +1153,10 @@
                 </div>
                 <hr class="border-custom">
                 <div>
-                    <h3 class="text-xl font-bold mb-2">Рекламный баннер</h3>
+                     <div class="flex justify-between items-center mb-2">
+                        <h3 class="text-xl font-bold">Рекламные баннеры</h3>
+                        <button id="clear-banners-btn" class="btn bg-red-600 text-white text-sm">Очистить все</button>
+                    </div>
                     <div id="banners-list" class="space-y-2"></div>
                     <button id="add-banner-btn" class="btn btn-primary mt-2">Добавить баннер</button>
                 </div>
@@ -1177,7 +1189,10 @@
                 </div>
                 <hr class="border-custom">
                 <div>
-                    <h3 class="text-xl font-bold">Социальные сети</h3>
+                    <div class="flex justify-between items-center mb-2">
+                        <h3 class="text-xl font-bold">Социальные сети</h3>
+                        <button id="clear-social-links-btn" class="btn bg-red-600 text-white text-sm">Очистить все</button>
+                    </div>
                     <div id="social-links-admin" class="space-y-2 mt-2"></div>
                     <button id="add-social-link-btn" class="btn bg-green-500 text-white mt-2">Добавить ссылку</button>
                 </div>
@@ -1237,10 +1252,7 @@
                         </div>
                     </div>`;
             } else { 
-                c.innerHTML = `<div class="p-2 text-center card-bg rounded-lg border border-custom">
-                    <p class="text-sm mb-2">${appState.guestPromptMessage}</p>
-                    <button id="google-login-btn" class="btn btn-primary w-full">Войти</button>
-                </div>`; 
+                c.innerHTML = `<button id="google-login-btn" class="btn btn-primary">Войти</button>`; 
             } 
         };
         function signInWithGoogle() { const p = new GoogleAuthProvider(); signInWithPopup(auth, p).catch(e => showToast("Ошибка: " + e.message, true)); };
@@ -1251,6 +1263,16 @@
             document.body.addEventListener('click', async e => {
                 const { target } = e;
                 const closest = sel => target.closest(sel);
+
+                // Mobile Menu
+                if (target.id === 'mobile-menu-btn') {
+                    document.getElementById('mobile-menu').classList.remove('hidden');
+                    setTimeout(() => document.getElementById('mobile-menu').classList.remove('opacity-0'), 10);
+                }
+                if (target.id === 'mobile-menu-close-btn' || !closest('#mobile-menu-panel')) {
+                    document.getElementById('mobile-menu').classList.add('opacity-0');
+                    setTimeout(() => document.getElementById('mobile-menu').classList.add('hidden'), 300);
+                }
 
                 // Auto-close dropdowns
                 if (!closest('#profile-btn') && !closest('#profile-menu')) {
@@ -1423,6 +1445,47 @@
                 if (target.id === 'add-banner-btn') {
                     showBannerForm();
                 }
+                 if (target.id === 'clear-banners-btn') {
+                    confirmAction('Вы уверены, что хотите удалить все баннеры?', async () => {
+                        await setDoc(doc(db, "storeSettings", "config"), { adBanners: [] }, { merge: true });
+                        showToast('Все баннеры удалены');
+                        loadCustomizationPage();
+                    });
+                }
+                if (closest('.delete-banner-btn')) {
+                    const index = closest('.delete-banner-btn').dataset.index;
+                    const settings = (await getDoc(doc(db, "storeSettings", "config"))).data() || {};
+                    let banners = settings.adBanners || [];
+                    banners.splice(index, 1);
+                    await setDoc(doc(db, "storeSettings", "config"), { adBanners: banners }, { merge: true });
+                    showToast('Баннер удален');
+                    loadCustomizationPage();
+                }
+                 if (target.id === 'add-social-link-btn') {
+                    showSocialLinkForm();
+                }
+                 if (target.id === 'clear-social-links-btn') {
+                    confirmAction('Вы уверены, что хотите удалить все социальные сети?', async () => {
+                        await setDoc(doc(db, "storeSettings", "config"), { socialLinks: [] }, { merge: true });
+                        showToast('Все социальные сети удалены');
+                        loadCustomizationPage();
+                    });
+                }
+                if (closest('.delete-social-link-btn')) {
+                    const id = closest('.delete-social-link-btn').dataset.id;
+                    const settings = (await getDoc(doc(db, "storeSettings", "config"))).data() || {};
+                    let links = (settings.socialLinks || []).filter(link => link.id !== id);
+                    await setDoc(doc(db, "storeSettings", "config"), { socialLinks: links }, { merge: true });
+                    showToast('Ссылка удалена');
+                    loadCustomizationPage();
+                }
+                if (target.id === 'save-announcement-btn') {
+                    const message = document.getElementById('announcement-message').value;
+                    const enabled = document.getElementById('announcement-enabled').checked;
+                    await setDoc(doc(db, "storeSettings", "config"), { announcement: { message, enabled } }, { merge: true });
+                    showToast('Объявление сохранено!');
+                    appState.announcement = { message, enabled }; // Update local state
+                }
             });
         }
         
@@ -1516,7 +1579,7 @@
             showModal("Загрузка чека", modalContent, onSave, "Отправить чек");
         };
         function renderAdminPaymentItem(id, d) { return `<div class="card-bg p-4 rounded flex justify-between items-center border border-custom"><div><img src="${d.logoUrl}" class="h-8 inline-block mr-4"><p class="inline-block">${d.name}</p></div><div class="flex items-center gap-4"><input type="checkbox" class="toggle-payment-btn" data-id="${id}" ${d.isEnabled ? 'checked' : ''}><button class="edit-btn" data-id="${id}" data-type="payment">Ред.</button><button class="delete-btn text-red-500" data-collection="paymentMethods" data-id="${id}">Удл.</button></div></div>`; }
-        function renderAdminSocialLinks(links) { const cont = document.getElementById('social-links-admin'); if(!cont) return; cont.innerHTML = (links||[]).map(l => `<div class="flex items-center gap-2 p-2 card-bg rounded"><span>${l.name}</span><button class="delete-social-link-btn text-red-500" data-id="${l.id}">Удалить</button></div>`).join(''); };
+        function renderAdminSocialLinks(links) { const cont = document.getElementById('social-links-admin'); if(!cont) return; cont.innerHTML = (links||[]).map(l => `<div class="flex items-center justify-between gap-2 p-2 card-bg rounded"><span>${l.name} (${l.url})</span><button class="delete-social-link-btn btn btn-danger text-sm" data-id="${l.id}">Удалить</button></div>`).join(''); };
         function renderAdminFaqItem(id, d) { return `<div class="card-bg p-4 rounded flex justify-between items-center border border-custom"><div><p>${d.question}</p></div><div><button class="edit-btn text-blue-400 mr-4" data-id="${id}" data-type="faq">Ред.</button><button class="delete-btn text-red-500" data-collection="faq" data-id="${id}">Удл.</button></div></div>`; }
         function renderAdminPromoItem(id, d) {
             const product = d.productId ? allProducts.find(p => p.id === d.productId) : null;
@@ -1530,6 +1593,7 @@
             </div>`;
         }
         async function loadAdminDownloadPage() { const el = document.getElementById('admin-tab-content'); const appData = (await getDoc(doc(db, "storeSettings", "config"))).data()?.appDownload || {}; el.innerHTML = `<h3>Страница "Скачать"</h3><div class="max-w-xl space-y-4"><div><label>Описание</label><textarea id="download-description" class="w-full p-2 border rounded input-bg">${appData.description || ''}</textarea></div><div><label>Ссылка .exe</label><input id="download-exe-link" class="w-full p-2 border rounded" value="${appData.exeLink || ''}"></div><div><label>Ссылка .apk</label><input id="download-apk-link" class="w-full p-2 border rounded" value="${appData.apkLink || ''}"></div><button id="save-download-settings-btn" class="btn btn-primary">Сохранить</button></div>`; };
+        async function loadAdminAnnouncementPage() { const el = document.getElementById('admin-tab-content'); const settings = (await getDoc(doc(db, "storeSettings", "config"))).data() || {}; const announcement = settings.announcement || { message: '', enabled: false }; el.innerHTML = `<h3 class="text-2xl font-bold mb-4">Объявление для всех</h3><div class="space-y-4 max-w-xl"><div><label for="announcement-message" class="block text-sm font-medium mb-1">Текст сообщения</label><textarea id="announcement-message" class="w-full modern-input" rows="4">${announcement.message}</textarea></div><div class="flex items-center"><input type="checkbox" id="announcement-enabled" ${announcement.enabled ? 'checked' : ''} class="h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary"><label for="announcement-enabled" class="ml-2 block text-sm">Включить объявление</label></div><button id="save-announcement-btn" class="btn btn-primary">Сохранить</button></div>`; };
         function loadFaq() { const cont = document.getElementById('faq-content'); if(!cont) return; cont.innerHTML = `<div class="max-w-4xl mx-auto"><h1 class="text-4xl font-bold text-center mb-12" data-lang-key="faq_title"></h1><div id="faq-list" class="space-y-4"></div></div>`; const list = document.getElementById('faq-list'); onSnapshot(collection(db, "faq"), s => { list.innerHTML = s.docs.map(d => { const i = d.data(); return `<div class="card-bg rounded-lg shadow border border-custom"><button class="faq-question w-full text-left p-6 font-bold flex justify-between items-center text-lg"><span>${i.question}</span><svg class="faq-icon w-6 h-6 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" /></svg></button><div class="faq-answer"><p class="p-6 pt-0">${i.answer}</p></div></div>` }).join(''); }); };
         async function loadProfilePage() { 
             const el = document.getElementById('profile-content'); 
@@ -1772,6 +1836,55 @@
             showModal(promo.id ? 'Редактировать промокод' : 'Добавить промокод', formHTML, onSave, 'Сохранить');
         }
 
+        function showBannerForm() {
+            const onSave = async (modal) => {
+                const imageUrl = modal.querySelector('#banner-image-url').value;
+                const linkUrl = modal.querySelector('#banner-link-url').value;
+                if (!imageUrl || !linkUrl) {
+                    showToast('Заполните все поля', true);
+                    return false;
+                }
+                const newBanner = { imageUrl, linkUrl };
+                await setDoc(doc(db, "storeSettings", "config"), { adBanners: arrayUnion(newBanner) }, { merge: true });
+                showToast('Баннер добавлен!');
+                loadCustomizationPage();
+                return true;
+            };
+            const formHTML = `<div class="space-y-4">
+                <div><label>URL изображения</label><input id="banner-image-url" class="w-full modern-input" placeholder="https://example.com/image.png"></div>
+                <div><label>URL ссылки</label><input id="banner-link-url" class="w-full modern-input" placeholder="https://example.com/product"></div>
+            </div>`;
+            showModal('Добавить баннер', formHTML, onSave, 'Добавить');
+        }
+        function renderAdminBanners(banners) {
+            const cont = document.getElementById('banners-list');
+            if (!cont) return;
+            cont.innerHTML = (banners || []).map((b, index) => `<div class="flex items-center justify-between gap-2 p-2 card-bg rounded"><span>${b.linkUrl}</span><button class="delete-banner-btn btn btn-danger text-sm" data-index="${index}">Удалить</button></div>`).join('');
+        }
+
+        function showSocialLinkForm() {
+             const onSave = async (modal) => {
+                const name = modal.querySelector('#social-name').value;
+                const url = modal.querySelector('#social-url').value;
+                const icon = modal.querySelector('#social-icon').value;
+                if (!name || !url || !icon) {
+                    showToast('Заполните все поля', true);
+                    return false;
+                }
+                const newLink = { id: `link_${Date.now()}`, name, url, icon };
+                await setDoc(doc(db, "storeSettings", "config"), { socialLinks: arrayUnion(newLink) }, { merge: true });
+                showToast('Ссылка добавлена!');
+                loadCustomizationPage();
+                return true;
+            };
+             const formHTML = `<div class="space-y-4">
+                <div><label>Название</label><input id="social-name" class="w-full modern-input" placeholder="Telegram"></div>
+                <div><label>URL</label><input id="social-url" class="w-full modern-input" placeholder="https://t.me/username"></div>
+                <div><label>SVG иконка</label><textarea id="social-icon" class="w-full modern-input" rows="3" placeholder='<path d="..."/>'></textarea></div>
+            </div>`;
+            showModal('Добавить соц.сеть', formHTML, onSave, 'Добавить');
+        }
+
         function loadAdminChatsList(activeChatUserId) { 
             const el = document.getElementById('admin-tab-content'); 
             if(!el) return; 
@@ -1974,6 +2087,18 @@
             currentUser = user;
             isAdmin = user?.uid === ADMIN_UID;
             const balanceBtn = document.getElementById('balance-btn');
+            
+            // Setup Mobile Navigation
+            const navLinksContainer = document.querySelector('#mobile-nav-links');
+            const mainNavLinks = document.querySelectorAll('nav.hidden.md\\:flex a.main-nav-link');
+            navLinksContainer.innerHTML = '';
+            mainNavLinks.forEach(link => {
+                const newLink = link.cloneNode(true);
+                newLink.classList.remove('px-3', 'py-1.5', 'rounded-full');
+                newLink.classList.add('p-4', 'text-lg');
+                navLinksContainer.appendChild(newLink);
+            });
+
 
             if (user) {
                 balanceBtn?.classList.remove('hidden');
