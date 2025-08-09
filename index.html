@@ -9,116 +9,262 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
     <style>
         :root {
-            /* Light Theme */
-            --bg-light-start: #ede9fe; --bg-light-end: #f5f3ff;
-            --text-light: #1e1b4b; --card-bg-light: #ffffff;
-            --primary-light: #7c3aed; --primary-hover-light: #6d28d9;
-            --border-light: #ddd6fe; --logo-text-light: #5b21b6;
-            --nav-hover-bg-light: #e0e7ff; --nav-hover-text-light: #1e1b4b;
-            --nav-active-bg-light: #7c3aed; --nav-active-text-light: #ffffff;
+            /* NEW Light Theme Colors with Gradient */
+            --bg-light-start: #ede9fe;
+            --bg-light-end: #f5f3ff;
+            --text-light: #1e1b4b; 
+            --card-bg-light: #ffffff; 
+            --primary-light: #7c3aed; 
+            --primary-hover-light: #6d28d9; 
+            --border-light: #ddd6fe; 
+            --logo-text-light: #5b21b6;
+            --nav-hover-bg-light: #e0e7ff;
+            --nav-hover-text-light: #1e1b4b;
+            --nav-active-bg-light: #7c3aed; /* Active nav link background */
+            --nav-active-text-light: #ffffff; /* Active nav link text */
 
-            /* Dark Theme */
-            --bg-dark-start: #1e1b4b; --bg-dark-end: #17133a;
-            --text-dark: #e0e7ff; --card-bg-dark: #282454;
-            --primary-dark: #a78bfa; --primary-hover-dark: #c4b5fd;
-            --border-dark: #4338ca; --logo-text-dark: #c7d2fe;
-            --nav-hover-bg-dark: #312e74; --nav-hover-text-dark: #e0e7ff;
-            --nav-active-bg-dark: #a78bfa; --nav-active-text-dark: #1e1b4b;
+            /* NEW Dark Theme Colors */
+            --bg-dark-start: #1e1b4b;
+            --bg-dark-end: #17133a;
+            --text-dark: #e0e7ff; 
+            --card-bg-dark: #282454; 
+            --primary-dark: #a78bfa; 
+            --primary-hover-dark: #c4b5fd; 
+            --border-dark: #4338ca; 
+            --logo-text-dark: #c7d2fe;
+            --nav-hover-bg-dark: #312e74;
+            --nav-hover-text-dark: #e0e7ff;
+            --nav-active-bg-dark: #a78bfa; /* Active nav link background */
+            --nav-active-text-dark: #1e1b4b; /* Active nav link text */
         }
 
         html.dark { 
-            --bg-start: var(--bg-dark-start); --bg-end: var(--bg-dark-end);
-            --text: var(--text-dark); --card-bg: var(--card-bg-dark);
-            --primary: var(--primary-dark); --primary-hover: var(--primary-hover-dark);
-            --border: var(--border-dark); --logo-text: var(--logo-text-dark);
-            --nav-hover-bg: var(--nav-hover-bg-dark); --nav-hover-text: var(--nav-hover-text-dark);
-            --nav-active-bg: var(--nav-active-bg-dark); --nav-active-text: var(--nav-active-text-dark);
+            --bg-start: var(--bg-dark-start);
+            --bg-end: var(--bg-dark-end);
+            --text: var(--text-dark); 
+            --card-bg: var(--card-bg-dark); 
+            --primary: var(--primary-dark); 
+            --primary-hover: var(--primary-hover-dark); 
+            --border: var(--border-dark); 
+            --logo-text: var(--logo-text-dark); 
+            --nav-hover-bg: var(--nav-hover-bg-dark);
+            --nav-hover-text: var(--nav-hover-text-dark);
+            --nav-active-bg: var(--nav-active-bg-dark);
+            --nav-active-text: var(--nav-active-text-dark);
         }
         html:not(.dark) { 
-            --bg-start: var(--bg-light-start); --bg-end: var(--bg-light-end);
-            --text: var(--text-light); --card-bg: var(--card-bg-light);
-            --primary: var(--primary-light); --primary-hover: var(--primary-hover-light);
-            --border: var(--border-light); --logo-text: var(--logo-text-light);
-            --nav-hover-bg: var(--nav-hover-bg-light); --nav-hover-text: var(--nav-hover-text-light);
-            --nav-active-bg: var(--nav-active-bg-light); --nav-active-text: var(--nav-active-text-light);
+            --bg-start: var(--bg-light-start);
+            --bg-end: var(--bg-light-end);
+            --text: var(--text-light); 
+            --card-bg: var(--card-bg-light); 
+            --primary: var(--primary-light); 
+            --primary-hover: var(--primary-hover-light); 
+            --border: var(--border-light); 
+            --logo-text: var(--logo-text-light);
+            --nav-hover-bg: var(--nav-hover-bg-light);
+            --nav-hover-text: var(--nav-hover-text-light);
+            --nav-active-bg: var(--nav-active-bg-light);
+            --nav-active-text: var(--nav-active-text-light);
         }
 
+        /* Base styles */
         body { 
             font-family: 'Manrope', sans-serif; 
             background-image: linear-gradient(120deg, var(--bg-start), var(--bg-end));
             color: var(--text); 
+            transition: background-color 0.3s, color 0.3s;
         }
         .logo-text { color: var(--logo-text); }
         .bg-primary { background-color: var(--primary); }
+        .hover\:bg-primary-hover:hover { background-color: var(--primary-hover); }
         .text-primary { color: var(--primary); }
         .border-custom { border-color: var(--border); }
         .card-bg { background-color: var(--card-bg); }
+        .input-bg { background-color: var(--card-bg); border-color: var(--border); }
         .modal-backdrop { background-color: rgba(0, 0, 0, 0.7); }
         
+        /* Page visibility */
         [data-page] { display: none; }
         [data-page].active { display: block; }
 
-        .main-nav-link.active { background-color: var(--nav-active-bg); color: var(--nav-active-text) !important; }
+        .main-nav-link:hover {
+            background-color: var(--nav-hover-bg);
+            color: var(--nav-hover-text) !important;
+        }
+        .main-nav-link.active {
+            background-color: var(--nav-active-bg);
+            color: var(--nav-active-text) !important;
+        }
 
-        .btn { display: inline-flex; align-items: center; justify-content: center; gap: 0.5rem; padding: 0.75rem 1.25rem; border-radius: 0.5rem; font-weight: 600; transition: all 0.2s; cursor: pointer; border: none; }
-        .btn-primary { background-color: var(--primary); color: white; }
-        .btn-primary:hover { background-color: var(--primary-hover); transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,0.15); }
-        .modern-input { background-color: var(--card-bg); border: 1px solid var(--border); border-radius: 0.5rem; padding: 0.75rem; }
-        .modern-input:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 0 3px color-mix(in srgb, var(--primary) 25%, transparent); }
+        /* General UI improvements */
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            padding: 0.75rem 1.25rem;
+            border-radius: 0.5rem;
+            font-weight: 600;
+            transition: all 0.2s;
+            cursor: pointer;
+            border: none;
+        }
+        .btn-primary {
+            background-color: var(--primary);
+            color: white;
+        }
+        .btn-primary:hover {
+            background-color: var(--primary-hover);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        }
+        .btn-danger {
+            background-color: #ef4444;
+            color: white;
+        }
+        .btn-danger:hover {
+             background-color: #dc2626;
+        }
+        .modern-input {
+            background-color: var(--card-bg);
+            border: 1px solid var(--border);
+            border-radius: 0.5rem;
+            padding: 0.75rem;
+            width: 100%;
+            transition: border-color 0.2s, box-shadow 0.2s;
+        }
+        .modern-input:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px color-mix(in srgb, var(--primary) 25%, transparent);
+        }
         
-        #loading-overlay { position: fixed; inset: 0; background-image: linear-gradient(120deg, var(--bg-start), var(--bg-end)); z-index: 100; display: flex; align-items: center; justify-content: center; transition: opacity 0.5s; opacity: 1; }
-        .spinner { width: 56px; height: 56px; border-radius: 50%; border: 8px solid; border-color: var(--border); border-right-color: var(--primary); animation: spinner-d3wgkg 1s infinite linear; }
-        @keyframes spinner-d3wgkg { to { transform: rotate(1turn); } }
+        /* Loading Spinner */
+        #loading-overlay {
+            position: fixed;
+            inset: 0;
+            background-image: linear-gradient(120deg, var(--bg-start), var(--bg-end));
+            z-index: 100;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: opacity 0.5s ease-out;
+            opacity: 1;
+        }
+        .spinner {
+            width: 56px;
+            height: 56px;
+            border-radius: 50%;
+            border: 8px solid;
+            border-color: var(--border);
+            border-right-color: var(--primary);
+            animation: spinner-d3wgkg 1s infinite linear;
+        }
+        @keyframes spinner-d3wgkg {
+            to {
+                transform: rotate(1turn);
+            }
+        }
+        .tooltip {
+            position: relative;
+            display: inline-flex;
+            align-items: center;
+        }
+        .tooltip .tooltiptext {
+            visibility: hidden;
+            width: 220px;
+            background-color: #333;
+            color: #fff;
+            text-align: center;
+            border-radius: 6px;
+            padding: 8px;
+            position: absolute;
+            z-index: 1;
+            bottom: 140%;
+            left: 50%;
+            margin-left: -110px;
+            opacity: 0;
+            transition: opacity 0.3s;
+            font-size: 0.8rem;
+        }
+        .tooltip:hover .tooltiptext {
+            visibility: visible;
+            opacity: 1;
+        }
+        /* Purchase Status Styles */
+        .status-badge {
+            padding: 0.25rem 0.75rem;
+            border-radius: 9999px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.3rem;
+            color: white; /* Default text color */
+        }
+        .status-badge.pending { background-color: #f59e0b; } /* Orange for pending */
+        .status-badge.completed, .status-badge.finished { background-color: #10b981; } /* Green for completed */
+        .status-badge.rejected, .status-badge.cancelled { background-color: #ef4444; } /* Red for rejected/cancelled */
+        .status-badge.processing { background-color: #3b82f6; } /* Blue for processing automation */
+
+
+        /* Mobile image fix & object-fit */
+        #store-logo, .product-card-img, #main-product-image, #profile-avatar {
+            object-fit: cover;
+        }
         
+        /* Variation and Payment Selection */
+        .variation-option.selected, .payment-option.selected {
+            border-color: var(--primary) !important;
+            box-shadow: 0 0 0 3px color-mix(in srgb, var(--primary) 40%, transparent);
+            border-width: 2px;
+        }
+         .variation-option.disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            background-color: color-mix(in srgb, var(--card-bg) 50%, #888);
+        }
+
+        /* Mobile menu transition */
         #mobile-menu { transition: opacity 0.3s; }
         #mobile-menu-panel { transition: transform 0.3s; }
         #mobile-menu.open { opacity: 1; pointer-events: auto; }
         #mobile-menu.open #mobile-menu-panel { transform: translateX(0); }
-
-        #store-logo, .product-card-img, #main-product-image, #profile-avatar, .payment-option img { object-fit: cover; }
-        
-        .payment-option.selected { border-color: var(--primary) !important; box-shadow: 0 0 0 3px color-mix(in srgb, var(--primary) 40%, transparent); border-width: 2px; }
-    
-        .faq-answer {
-            max-height: 0;
-            overflow: hidden;
-            transition: max-height 0.3s ease-in-out;
-        }
-        .faq-question.open + .faq-answer {
-            max-height: 500px;
-        }
-        .faq-question .faq-icon {
-            transition: transform 0.3s;
-        }
-        .faq-question.open .faq-icon {
-            transform: rotate(180deg);
-        }
     </style>
 </head>
 <body class="antialiased opacity-0 transition-opacity duration-500">
 
-    <div id="loading-overlay"><div class="spinner"></div></div>
+    <div id="loading-overlay">
+        <div class="spinner"></div>
+    </div>
 
     <header class="sticky top-0 z-40">
       <div class="container mx-auto px-4">
         <div class="mt-4 card-bg shadow-lg rounded-xl border border-custom/50 flex justify-between items-center h-16 px-4">
-            <a href="#main" class="flex items-center gap-3 text-xl font-bold nav-link">
-                <img id="store-logo" src="https://placehold.co/32x32/7c3aed/ffffff?text=A" alt="logo" class="h-8 w-8 rounded-full">
+            <a href="#main" class="flex items-center gap-3 text-2xl font-bold nav-link rounded-lg flex-shrink-0">
+                <img id="store-logo" src="" alt="logo" class="h-10 w-10 rounded-full hidden">
                 <span id="site-name-display" class="logo-text hidden sm:inline">Asonik | Store</span>
             </a>
             
-            <nav id="desktop-nav" class="hidden md:flex items-center space-x-1">
-                <a href="#main" class="main-nav-link nav-link px-3 py-1.5 rounded-full" data-nav-key="main">Главная</a>
-                <a href="#chats" class="main-nav-link nav-link px-3 py-1.5 rounded-full" data-nav-key="chats">Чаты</a>
-                <a href="#faq" class="main-nav-link nav-link px-3 py-1.5 rounded-full" data-nav-key="faq">FAQ</a>
-                <a href="#purchases" class="main-nav-link nav-link px-3 py-1.5 rounded-full" data-nav-key="purchases">Мои покупки</a>
+            <nav class="hidden md:flex items-center space-x-2 bg-white/10 dark:bg-black/10 p-1 rounded-full">
+                <a href="#main" class="main-nav-link nav-link flex items-center gap-2 px-3 py-1.5 rounded-full transition-colors" data-nav-key="main" data-lang-key="nav_main"></a>
+                <a href="#chats" class="main-nav-link nav-link flex items-center gap-2 px-3 py-1.5 rounded-full transition-colors" data-nav-key="chats" data-lang-key="nav_chats"></a>
+                <a href="#faq" class="main-nav-link nav-link flex items-center gap-2 px-3 py-1.5 rounded-full transition-colors" data-nav-key="faq" data-lang-key="nav_faq"></a>
+                <a href="#purchases" class="main-nav-link nav-link flex items-center gap-2 px-3 py-1.5 rounded-full transition-colors" data-nav-key="purchases" data-lang-key="nav_purchases"></a>
+                <a href="#download" class="main-nav-link nav-link flex items-center gap-2 px-3 py-1.5 rounded-full transition-colors" data-nav-key="download" data-lang-key="nav_download"></a>
             </nav>
 
-            <div class="flex items-center space-x-2">
-                <button id="balance-btn" class="hidden btn p-2"><span id="balance-amount" class="font-semibold text-sm">0</span></button>
-                <button id="theme-toggle" class="p-2 rounded-full"></button>
+            <div class="flex items-center space-x-1 sm:space-x-2">
+                <button id="balance-btn" class="hidden btn bg-primary/10 hover:bg-primary/20 border border-custom/50 px-2 sm:px-4">
+                    <svg class="h-5 w-5 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H4a3 3 0 00-3 3v8a3 3 0 003 3z"></path></svg>
+                    <span id="balance-amount" class="font-semibold text-sm">0</span>
+                    <svg class="w-4 h-4 opacity-70 hidden sm:block" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd"></path></svg>
+                </button>
+                <button id="theme-toggle" class="p-2 rounded-full hover:bg-black/10 dark:hover:bg-white/10"></button>
+                <a href="#cart" class="relative p-2 nav-link rounded-full"><svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"></path></svg><span id="cart-count" class="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-4 w-4 flex items-center justify-center hidden">0</span></a>
                 <div id="auth-container" class="relative"></div>
                 <button id="mobile-menu-btn" class="md:hidden p-2"><svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16m-7 6h7"></path></svg></button>
             </div>
@@ -126,10 +272,10 @@
       </div>
     </header>
 
-    <div id="mobile-menu" class="fixed inset-0 bg-black bg-opacity-50 z-50 opacity-0 pointer-events-none">
+    <div id="mobile-menu" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 opacity-0 pointer-events-none">
         <div id="mobile-menu-panel" class="fixed top-0 right-0 h-full w-64 card-bg shadow-lg p-6 transform translate-x-full">
             <button id="mobile-menu-close-btn" class="absolute top-4 right-4 p-2 text-2xl">&times;</button>
-            <nav id="mobile-nav-links" class="flex flex-col space-y-4 text-lg mt-12"></nav>
+            <nav id="mobile-nav-links" class="flex flex-col space-y-6 text-xl mt-12 text-center"></nav>
         </div>
     </div>
 
@@ -139,8 +285,12 @@
         <div data-page="chats"><div id="chats-content"></div></div>
         <div data-page="faq"><div id="faq-content"></div></div>
         <div data-page="purchases"><div id="purchases-content"></div></div>
+        <div data-page="wishlist"><div id="wishlist-content"></div></div>
         <div data-page="admin"><div id="admin-content"></div></div>
+        <div data-page="cart"><div id="cart-content"></div></div>
         <div data-page="profile"><div id="profile-content"></div></div>
+        <div data-page="download"><div id="download-content"></div></div>
+        <div data-page="settings"><div id="settings-content"></div></div>
     </main>
     
     <footer class="container mx-auto px-4 py-6 mt-8 border-t border-custom"><div id="social-links-container" class="flex justify-center items-center gap-6"></div></footer>
@@ -152,282 +302,1676 @@
         // Firebase and App Initialization
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getAuth, onAuthStateChanged, GoogleAuthProvider, signInWithPopup, signOut, updateProfile } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, doc, getDoc, setDoc, addDoc, collection, getDocs, onSnapshot, updateDoc, deleteDoc, query, where, serverTimestamp, orderBy, increment, arrayUnion, arrayRemove } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { getFirestore, doc, getDoc, setDoc, addDoc, collection, getDocs, onSnapshot, updateDoc, deleteDoc, query, where, serverTimestamp, orderBy, increment, writeBatch, arrayUnion, arrayRemove, enableIndexedDbPersistence } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-storage.js";
 
         // --- CONFIGURATION ---
         const firebaseConfig = { apiKey: "AIzaSyDim7T4GqxZK4zM9tBDLkcGTSveVOaUbMY", authDomain: "asonikstore-v3.firebaseapp.com", projectId: "asonikstore-v3", storageBucket: "asonikstore-v3.appspot.com", messagingSenderId: "1018442222532", appId: "1:1018442222532:web:9b78f7be6c5c02bb327291" };
         const IMGBB_API_KEY = '96bf3f29606f1989bb5a450ad3770cce'; 
         const ADMIN_UID = 'MrjXzJnZYbb6jb65B4f4aYDTVBt2';
+        const TELEGRAM_USERNAME = 'asonikofficial';
 
         // --- FIREBASE SETUP ---
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
         const db = getFirestore(app);
+        const storage = getStorage(app);
+        enableIndexedDbPersistence(db).catch(err => {
+            if (err.code == 'failed-precondition') {
+                console.warn("Firestore persistence failed: Multiple tabs open.");
+            } else if (err.code == 'unimplemented') {
+                console.warn("Firestore persistence failed: Browser does not support it.");
+            }
+        });
 
         // --- GLOBAL STATE ---
-        let currentUser = null, isAdmin = false, allProducts = [], paymentMethods = [];
-        const appState = { balance: 0, balanceHistory: [] };
-
-        // --- CORE FUNCTIONS ---
-        const formatPrice = (price) => new Intl.NumberFormat('ru-RU', { style: 'currency', currency: 'UZS', minimumFractionDigits: 0 }).format(price || 0);
+        let currentUser = null, isAdmin = false, allProducts = [], paymentMethods = [], userWishlist = [], cart = JSON.parse(localStorage.getItem('asonik_cart')) || [];
+        let allUsers = [];
+        let balanceHistoryFiltered = [];
+        const appState = { 
+            currency: localStorage.getItem('asonik_currency') || 'UZS', 
+            lang: localStorage.getItem('asonik_lang') || 'RU', 
+            rates: { UZS: 1, RUB: 0.0073, USD: 0.000078 }, 
+            balance: 0, 
+            balanceHistory: [],
+            guestPromptMessage: 'Пожалуйста, войдите, чтобы получить доступ ко всем функциям.',
+            minimumTopUpAmount: 1000 // Default value
+        };
+        const translations = { 
+            RU: { nav_main: 'Главная', nav_chats: 'Чаты', nav_faq: 'FAQ', nav_purchases: 'Мои покупки', nav_download: 'Скачать приложение', catalog_title: 'Каталог товаров', search_placeholder: 'Поиск...', faq_title: 'Часто задаваемые вопросы', purchases_title: 'Мои покупки', cart_title: 'Корзина', profile_title: 'Профиль', buy_button: 'Купить' }, 
+            UZ: { nav_main: 'Asosiy', nav_chats: 'Chatlar', nav_faq: 'FAQ', nav_purchases: 'Xaridlarim', nav_download: 'Ilovani yuklab olish', catalog_title: 'Mahsulotlar', search_placeholder: 'Qidirish...', faq_title: 'Ko\'p so\'raladigan savollar', purchases_title: 'Xaridlarim', cart_title: 'Savatcha', profile_title: 'Profil', buy_button: 'Sotib olish' } 
+        };
+        
+        // --- FUNCTION DEFINITIONS (Moved up to prevent reference errors) ---
+        
+        const t = key => translations[appState.lang]?.[key] || key;
+        const translatePage = () => { document.querySelectorAll('[data-lang-key]').forEach(el => el.textContent = t(el.dataset.langKey)); document.querySelectorAll('[data-lang-placeholder]').forEach(el => el.placeholder = t(el.dataset.langPlaceholder)); };
+        const formatPrice = (price, currency = appState.currency) => { 
+            if (typeof price !== 'number') price = 0;
+            return new Intl.NumberFormat('ru-RU', { style: 'currency', currency, minimumFractionDigits: 0 }).format(price * (appState.rates[currency] || 1)); 
+        }
+        const generateCode = () => 'A' + Math.random().toString(36).substring(2, 9).toUpperCase();
         const showToast = (message, isError = false) => { const el = document.createElement('div'); el.className = `fixed bottom-5 right-5 text-white py-2 px-4 rounded-lg shadow-lg z-50 ${isError ? 'bg-red-500' : 'bg-green-500'}`; el.textContent = message; document.body.appendChild(el); setTimeout(() => el.remove(), 3000); };
-        const showModal = (title, content, onSave, btnText = 'Подтвердить') => { const modal = document.createElement('div'); modal.className = 'fixed inset-0 z-50 flex items-center justify-center modal-backdrop'; modal.innerHTML = `<div class="card-bg rounded-lg shadow-xl w-11/12 md:w-1/2 p-6 max-h-[90vh] overflow-y-auto"><div class="flex justify-between items-center mb-4"><h2 class="text-2xl font-bold">${title}</h2><button class="close-modal-btn text-2xl">&times;</button></div><div>${content}</div>${onSave ? `<div class="mt-6 flex justify-end gap-4"><button class="close-modal-btn btn">Отмена</button><button class="save-modal-btn btn btn-primary">${btnText}</button></div>` : ''}</div>`; document.getElementById('modals-container').appendChild(modal); modal.querySelectorAll('.close-modal-btn').forEach(b => b.onclick = () => modal.remove()); if (onSave) modal.querySelector('.save-modal-btn').onclick = async () => { if (await onSave(modal) !== false) modal.remove(); }; return modal; };
+        const showModal = (title, content, onSave, btnText = 'Подтвердить') => { const modal = document.createElement('div'); modal.className = 'fixed inset-0 z-50 flex items-center justify-center modal-backdrop'; modal.innerHTML = `<div class="card-bg rounded-lg shadow-xl w-11/12 md:w-2/3 lg:w-1/2 p-6 max-h-[90vh] overflow-y-auto"><div class="flex justify-between items-center mb-4"><h2 class="text-2xl font-bold">${title}</h2><button class="close-modal-btn text-2xl">&times;</button></div><div>${content}</div>${onSave ? `<div class="mt-6 flex justify-end gap-4"><button class="close-modal-btn btn">Отмена</button><button class="save-modal-btn btn btn-primary">${btnText}</button></div>` : ''}</div>`; document.getElementById('modals-container').appendChild(modal); modal.querySelectorAll('.close-modal-btn').forEach(b => b.onclick = () => modal.remove()); if (onSave) modal.querySelector('.save-modal-btn').onclick = async () => { if (await onSave(modal) !== false) modal.remove(); }; return modal; };
         const confirmAction = (msg, onConfirm) => showModal('Подтвердите', `<p>${msg}</p>`, () => { onConfirm(); return true; }, 'Да, уверен');
         
-        // --- IMAGE UPLOAD ---
-        async function uploadImage(file) {
-            const formData = new FormData();
-            formData.append('image', file);
-            showToast('Загрузка изображения...');
-            try {
-                const response = await fetch(`https://api.imgbb.com/1/upload?key=${IMGBB_API_KEY}`, {
-                    method: 'POST',
-                    body: formData,
-                });
-                const result = await response.json();
-                if (result.success) {
-                    showToast('Изображение загружено!');
-                    return result.data.url;
-                } else {
-                    throw new Error(result.error.message);
-                }
-            } catch (error) {
-                showToast(`Ошибка загрузки: ${error.message}`, true);
-                return null;
+        // Moved this function up to fix the reference error
+        function renderSocialLinks(links) {
+            const container = document.getElementById('social-links-container');
+            if (container) {
+                container.innerHTML = (links || []).map(link => `<a href="${link.url}" target="_blank" class="text-gray-400 hover:text-primary"><svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24">${link.icon}</svg></a>`).join('');
             }
         }
-
-        // --- DATA LOADING & ROUTING ---
+        
         async function loadStoreSettings() { 
             try { 
                 const settingsDoc = await getDoc(doc(db, "storeSettings", "config")); 
                 if (settingsDoc.exists()) { 
                     const data = settingsDoc.data();
-                    const { logoUrl, socialLinks, siteName, adBanners, announcement } = data;
-                    if (logoUrl) document.getElementById('store-logo').src = logoUrl;
+                    const { logoUrl, socialLinks, appDownload, themeColors, siteName, adBanners, guestPromptMessage, minimumTopUpAmount, announcement } = data;
+                    const logoEl = document.getElementById('store-logo'); 
+                    if (logoUrl) { logoEl.src = logoUrl; logoEl.classList.remove('hidden'); } else { logoEl.classList.add('hidden'); } 
                     if (siteName) {
                         document.title = siteName;
-                        ['site-name-display', 'footer-site-name'].forEach(id => document.getElementById(id).textContent = siteName);
+                        document.getElementById('site-name-display').textContent = siteName;
+                        document.getElementById('footer-site-name').textContent = siteName;
                     }
-                    if (socialLinks) document.getElementById('social-links-container').innerHTML = socialLinks.map(link => `<a href="${link.url}" target="_blank" class="text-gray-400 hover:text-primary"><svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24">${link.icon}</svg></a>`).join(''); 
+                    if (socialLinks) renderSocialLinks(socialLinks); 
+                    if (themeColors) applyCustomTheme(themeColors);
+                    appState.appDownload = appDownload || {}; 
                     appState.adBanners = adBanners || [];
+                    appState.guestPromptMessage = guestPromptMessage || 'Пожалуйста, войдите, чтобы получить доступ ко всем функциям.';
+                    appState.minimumTopUpAmount = minimumTopUpAmount || 1000;
                     appState.announcement = announcement || {};
                 } 
             } catch (e) { console.error("Error loading store settings:", e); } 
         }
         
+        function loadPaymentMethods() { return new Promise(res => onSnapshot(query(collection(db, "paymentMethods"), orderBy("order", "asc")), s => { paymentMethods = s.docs.map(d => ({ id: d.id, ...d.data() })); res(); }, e => { console.error(e); res(); })); }
+        
         function handleRouting() {
             const hash = window.location.hash || '#main';
             let [page, subpage] = (hash.substring(1) || 'main').split('/');
-            document.querySelectorAll('[data-page]').forEach(p => p.classList.toggle('active', p.dataset.page === page));
-            loadPageContent(page, subpage); 
-            document.querySelectorAll('.main-nav-link').forEach(link => link.classList.toggle('active', link.dataset.navKey === page));
+            document.querySelectorAll('[data-page]').forEach(p => p.classList.remove('active'));
+            const activePage = document.querySelector(`[data-page="${page}"]`);
+            if (activePage) { 
+                activePage.classList.add('active'); 
+                loadPageContent(page, subpage); 
+            } else { 
+                const mainPage = document.querySelector(`[data-page="main"]`);
+                if(mainPage) {
+                    mainPage.classList.add('active'); 
+                    loadPageContent('main');
+                }
+            }
+             // Update active nav link
+            document.querySelectorAll('.main-nav-link').forEach(link => {
+                link.classList.remove('active');
+                if (link.dataset.navKey === page) {
+                    link.classList.add('active');
+                }
+            });
+            translatePage();
         }
 
         function loadPageContent(page, subpage) {
-            const protectedPages = ['purchases', 'chats', 'profile', 'admin'];
+            const protectedPages = ['purchases', 'chats', 'profile', 'admin', 'wishlist', 'settings'];
             const contentContainer = document.querySelector(`[data-page="${page}"] > div`);
-            if (!contentContainer) return;
+            if (!contentContainer) {
+                console.error(`Content container for page "${page}" not found.`);
+                return;
+            }
 
             if (protectedPages.includes(page) && !currentUser) { 
-                contentContainer.innerHTML = `<p class="text-center">Пожалуйста, войдите в аккаунт. <a href="#" id="login-redirect" class="text-primary underline">Войти</a></p>`; 
+                contentContainer.innerHTML = `<h1 class="text-4xl font-bold text-center mb-8">${t(page+'_title') || 'Доступ запрещен'}</h1><p class="text-center">${appState.guestPromptMessage} <a href="#" id="login-redirect" class="text-primary underline">Войти</a></p>`; 
                 return; 
             }
 
-            const pages = {
-                main: loadMainPage,
-                product: () => loadProductDetailPage(subpage),
-                faq: loadFaq,
-                admin: () => { if (isAdmin) loadAdminPanel(subpage || 'products'); },
-                chats: () => loadChatsPage(subpage),
-                purchases: loadPurchasesPage,
-                profile: loadProfilePage,
-            };
-            (pages[page] || pages.main)();
+            switch(page) {
+                case 'main': loadMainPage(); break; 
+                case 'product': loadProductDetailPage(subpage); break;
+                case 'faq': loadFaq(); break;
+                case 'admin': loadAdminPanel(subpage || 'users'); break; 
+                case 'cart': renderCartPage(); break;
+                case 'chats': loadChatsPage(subpage); break;
+                case 'purchases': loadPurchasesPage(); break;
+                case 'wishlist': loadWishlistPage(); break;
+                case 'profile': loadProfilePage(); break;
+                case 'download': loadDownloadPage(); break;
+                case 'settings': loadSettingsPage(); break;
+                default: loadMainPage(); break;
+            }
         }
         
         function loadMainPage() { 
             const el = document.getElementById('main-page-content-wrapper'); 
             if (!el) return;
-            const bannerHTML = (appState.adBanners || []).map(b => (b && b.imageUrl && b.linkUrl) ? `<a href="${b.linkUrl}" target="_blank" class="block mb-8 rounded-lg shadow-lg overflow-hidden"><img src="${b.imageUrl}" class="w-full object-cover"></a>` : '').join('');
-            const announcementHTML = (appState.announcement?.enabled && appState.announcement?.message) ? `<div class="p-4 mb-8 rounded-lg bg-primary/10 border border-primary text-primary">${appState.announcement.message}</div>` : '';
-            el.innerHTML = `${announcementHTML}${bannerHTML}<h1 class="text-4xl font-bold text-center mb-8">Каталог товаров</h1><div id="products-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6"></div>`; 
+            const banners = appState.adBanners || [];
+            const bannerHTML = banners.map(banner => 
+                (banner && banner.imageUrl && banner.linkUrl) 
+                ? `<a href="${banner.linkUrl}" target="_blank" class="block mb-8 rounded-lg shadow-lg overflow-hidden"><img src="${banner.imageUrl}" class="w-full object-cover"></a>` 
+                : ''
+            ).join('');
+
+            const announcement = appState.announcement;
+            const announcementHTML = (announcement && announcement.enabled && announcement.message)
+                ? `<div class="p-4 mb-8 rounded-lg bg-primary/10 border border-primary text-primary">${announcement.message}</div>`
+                : '';
+
+
+            el.innerHTML = `${announcementHTML}${bannerHTML}
+                <h1 class="text-4xl font-bold text-center mb-8" data-lang-key="catalog_title"></h1>
+                <div class="mb-8 p-4 card-bg rounded-lg shadow-md flex flex-col md:flex-row items-center gap-4 border border-custom">
+                    <input id="search-input" type="text" data-lang-placeholder="search_placeholder" class="w-full md:w-1/2 modern-input">
+                    <select id="category-filter" class="w-full md:w-1/4 modern-input">
+                        <option value="all">Все категории</option>
+                        <option value="игра">Игры</option>
+                        <option value="приложение">Приложения</option>
+                        <option value="другое">Другое</option>
+                    </select>
+                    <select id="sort-select" class="w-full md:w-1/4 modern-input">
+                        <option value="order">По порядку</option>
+                        <option value="newest">Сначала новые</option>
+                        <option value="price_asc">Цена: по возрастанию</option>
+                        <option value="price_desc">Цена: по убыванию</option>
+                        <option value="popular">Популярные</option>
+                    </select>
+                </div>
+                <div id="products-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6"></div>`; 
+            document.getElementById('search-input').addEventListener('input', applyFiltersAndSort); 
+            document.getElementById('category-filter').addEventListener('change', applyFiltersAndSort); 
+            document.getElementById('sort-select').addEventListener('change', applyFiltersAndSort); 
             loadProducts(); 
         };
-        function loadProducts() { onSnapshot(query(collection(db, "products")), s => { allProducts = s.docs.map(d => ({ id: d.id, ...d.data() })); renderProducts(); }); }
-        function renderProducts() { 
+        function loadProducts() { onSnapshot(query(collection(db, "products")), s => { allProducts = s.docs.map(d => ({ id: d.id, ...d.data() })); applyFiltersAndSort(); }); }
+        function applyFiltersAndSort() { 
+            let filtered = [...allProducts]; 
+            const searchInput = document.getElementById('search-input');
+            if (searchInput) {
+                const term = searchInput.value.toLowerCase(); 
+                if (term) {
+                    filtered = filtered.filter(p => p.name.toLowerCase().includes(term));
+                }
+            }
+            
+            const categoryFilter = document.getElementById('category-filter');
+            if (categoryFilter) {
+                const category = categoryFilter.value;
+                if (category !== 'all') {
+                    filtered = filtered.filter(p => p.category === category);
+                }
+            }
+
+            const sortSelect = document.getElementById('sort-select');
+            if (sortSelect) {
+                const sortBy = sortSelect.value;
+                switch(sortBy) {
+                    case 'price_asc': filtered.sort((a,b) => (a.price || 0) - (b.price || 0)); break;
+                    case 'price_desc': filtered.sort((a,b) => (b.price || 0) - (a.price || 0)); break;
+                    case 'popular': filtered.sort((a,b) => (b.purchaseCount || 0) - (a.purchaseCount || 0)); break;
+                    case 'newest': filtered.sort((a,b) => (b.createdAt?.toMillis()||0) - (a.createdAt?.toMillis()||0)); break;
+                    case 'order': filtered.sort((a,b) => (a.order || 999) - (b.order || 999)); break;
+                    default: filtered.sort((a,b) => (a.order || 999) - (b.order || 999)); break;
+                }
+            }
+
+            filtered.sort((a, b) => (b.isPinned ? 1 : 0) - (a.isPinned ? 1 : 0));
+
             const grid = document.getElementById('products-grid'); 
-            if (grid) grid.innerHTML = allProducts.length ? allProducts.map(renderProductCard).join('') : `<p class="col-span-full text-center">Товары не найдены.</p>`; 
+            if (!grid) return; 
+            grid.innerHTML = filtered.length ? filtered.map(p => renderProductCard(p)).join('') : `<p class="col-span-full text-center">Товары не найдены.</p>`; 
+            translatePage(); 
         };
         
         function renderProductCard(p) {
-            return `<div class="card-bg rounded-lg shadow-lg flex flex-col justify-between border border-custom overflow-hidden transition-all duration-300 hover:shadow-2xl hover:-translate-y-1">
-                <a href="#product/${p.id}" class="nav-link block">
-                    <img src="${p.imageUrl || 'https://placehold.co/600x400/7c3aed/ffffff?text=No+Image'}" class="w-full h-48 product-card-img">
-                </a>
+            let statusHTML = '';
+            const officialTooltip = 'На этот товар распространяется гарантия от нашего магазина.';
+            const privateTooltip = 'Товар выставляется на продажу сторонним лицом. Магазин выступает в роли площадки и не несет ответственности за данный товар.';
+
+            if (p.productStatus === 'official') {
+                statusHTML = `<div class="mt-2 text-sm text-green-600 flex items-center gap-2">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" /></svg>
+                                <span>Гарантированный товар</span>
+                                <div class="tooltip">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-gray-400" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd" /></svg>
+                                    <span class="tooltiptext">${officialTooltip}</span>
+                                </div>
+                              </div>`;
+            } else {
+                 statusHTML = `<div class="mt-2 text-sm text-orange-500 flex items-center gap-2">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clip-rule="evenodd" /></svg>
+                                <span>Частное лицо</span>
+                                <div class="tooltip">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-gray-400" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd" /></svg>
+                                    <span class="tooltiptext">${privateTooltip}</span>
+                                </div>
+                              </div>`;
+            }
+
+            const hasVariations = p.variations && p.variations.length > 0;
+            const buyButton = hasVariations
+                ? `<a href="#product/${p.id}" class="nav-link flex-grow btn btn-primary text-center">Выбрать опцию</a>`
+                : `<button class="buy-now-btn flex-grow btn btn-primary" data-product-id="${p.id}" data-lang-key="buy_button"></button>`;
+
+            return `<div class="card-bg rounded-lg shadow-lg flex flex-col justify-between border border-custom overflow-hidden transition-all duration-300 hover:shadow-2xl hover:-translate-y-1" data-product-id="${p.id}">
+                <div class="relative">
+                    <a href="#product/${p.id}" class="nav-link block">
+                        <img src="${p.imageUrl || 'https://placehold.co/600x400/7c3aed/ffffff?text=No+Image'}" class="w-full h-48 product-card-img">
+                    </a>
+                </div>
                 <div class="p-4 flex-grow">
                     <h3 class="text-lg font-semibold truncate">${p.name}</h3>
-                    <p class="text-2xl font-bold text-primary mt-2">${formatPrice(p.price)}</p>
+                    <p class="text-gray-600 dark:text-gray-400 mt-1 text-sm h-10 overflow-hidden">${p.description}</p>
+                    ${statusHTML}
+                    <p class="text-2xl font-bold text-primary mt-2">${formatPrice(p.price || 0)}</p>
                 </div>
-                <div class="p-4 border-t border-custom"><button class="buy-now-btn w-full btn btn-primary" data-product-id="${p.id}">Купить</button></div>
+                <div class="p-4 pt-2 border-t border-custom flex items-center gap-2">
+                     <button class="wishlist-btn p-2 rounded-md hover:bg-red-500/10 text-gray-500 hover:text-red-500" data-product-id="${p.id}" title="В избранное">
+                        <svg class="w-6 h-6 pointer-events-none" fill="${userWishlist.includes(p.id) ? 'currentColor' : 'none'}" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 016.364 0L12 7.636l1.318-1.318a4.5 4.5 0 016.364 6.364L12 20.364l-7.682-7.682a4.5 4.5 0 010-6.364z"></path></svg>
+                    </button>
+                    <button class="add-to-cart-btn p-2 rounded-md hover:bg-primary/10 text-gray-500 hover:text-primary" data-product-id="${p.id}" title="В корзину">
+                        <svg class="w-6 h-6 pointer-events-none" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"></path></svg>
+                    </button>
+                    ${buyButton}
+                </div>
             </div>`;
         };
         
         async function loadProductDetailPage(productId) {
             const contentContainer = document.getElementById('product-detail-content');
-            if (!productId) { contentContainer.innerHTML = `<p class="text-center">Товар не найден.</p>`; return; }
-            const productDoc = await getDoc(doc(db, "products", productId));
-            if (!productDoc.exists()) { contentContainer.innerHTML = `<p class="text-center">Товар не найден.</p>`; return; }
-            const product = { id: productDoc.id, ...productDoc.data() };
-            
-            contentContainer.innerHTML = `
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-12">
-                    <div><img id="main-product-image" src="${product.imageUrl || 'https://placehold.co/600x600'}" class="w-full rounded-lg shadow-lg"></div>
-                    <div>
-                        <h1 class="text-4xl font-extrabold mb-2">${product.name}</h1>
-                        <p class="text-3xl font-bold text-primary mb-4">${formatPrice(product.price)}</p>
-                        <p class="text-gray-600 dark:text-gray-400 mb-6">${product.description}</p>
-                        <div class="mt-8"><button id="detail-buy-btn" class="w-full btn btn-primary text-lg">Купить</button></div>
+            if (!productId) {
+                contentContainer.innerHTML = `<p class="text-center">Товар не найден.</p>`;
+                return;
+            }
+            try {
+                const productDoc = await getDoc(doc(db, "products", productId));
+                if (!productDoc.exists()) {
+                    contentContainer.innerHTML = `<p class="text-center">Товар не найден.</p>`;
+                    return;
+                }
+                const product = { id: productDoc.id, ...productDoc.data() };
+                
+                let variationsHTML = '';
+                if (product.variations && product.variations.length > 0) {
+                    variationsHTML = `
+                        <div class="mt-6">
+                            <h3 class="text-xl font-semibold mb-4">Выберите опцию:</h3>
+                            <div class="space-y-4">
+                                ${product.variations.map((v, index) => {
+                                    const disabledClass = v.isOutOfStock ? 'disabled' : '';
+                                    return `<div class="variation-option p-4 border rounded-lg cursor-pointer transition-all ${disabledClass}" data-index="${index}">
+                                        <div class="flex justify-between items-center">
+                                            <div class="flex items-center gap-4">
+                                                ${v.imageUrl ? `<img src="${v.imageUrl}" class="w-16 h-16 rounded-md object-cover">` : ''}
+                                                <div>
+                                                    <h4 class="font-bold text-lg">${v.name}</h4>
+                                                    <p class="text-sm text-gray-500">${v.description || ''}</p>
+                                                </div>
+                                            </div>
+                                            <p class="text-xl font-bold text-primary">${formatPrice(v.price)}</p>
+                                        </div>
+                                    </div>`
+                                }).join('')}
+                            </div>
+                        </div>
+                    `;
+                }
+
+                contentContainer.innerHTML = `
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-8 lg:gap-12">
+                        <div>
+                            <img id="main-product-image" src="${product.imageUrl || 'https://placehold.co/600x600'}" class="w-full rounded-lg shadow-lg">
+                        </div>
+                        <div>
+                            <h1 id="main-product-name" class="text-4xl font-extrabold mb-2">${product.name}</h1>
+                            <p id="main-product-price" class="text-3xl font-bold text-primary mb-4">${formatPrice(product.price)}</p>
+                            <p id="main-product-desc" class="text-gray-600 dark:text-gray-400 mb-6">${product.description}</p>
+                            ${variationsHTML}
+                            <div class="mt-8">
+                                <button id="detail-buy-btn" class="w-full btn btn-primary text-lg">Купить</button>
+                            </div>
+                        </div>
                     </div>
-                </div>`;
-            document.getElementById('detail-buy-btn').addEventListener('click', () => showCheckoutModal([product], product.price));
+                `;
+
+                let selectedVariation = null;
+                if (product.variations && product.variations.length > 0) {
+                     document.getElementById('main-product-price').classList.add('hidden');
+
+                    contentContainer.querySelectorAll('.variation-option').forEach(option => {
+                        option.addEventListener('click', () => {
+                            if(option.classList.contains('disabled')) return;
+
+                            contentContainer.querySelectorAll('.variation-option').forEach(el => el.classList.remove('selected'));
+                            option.classList.add('selected');
+                            selectedVariation = product.variations[parseInt(option.dataset.index)];
+                            
+                            document.getElementById('main-product-name').textContent = `${product.name} - ${selectedVariation.name}`;
+                            document.getElementById('main-product-price').textContent = formatPrice(selectedVariation.price);
+                            document.getElementById('main-product-price').classList.remove('hidden');
+                            if(selectedVariation.imageUrl && selectedVariation.updateMainImage) {
+                                document.getElementById('main-product-image').src = selectedVariation.imageUrl;
+                            }
+                            if(selectedVariation.description) {
+                                document.getElementById('main-product-desc').textContent = selectedVariation.description;
+                            }
+                        });
+                    });
+                }
+
+                document.getElementById('detail-buy-btn').addEventListener('click', () => {
+                    if (product.variations && product.variations.length > 0) {
+                        if (selectedVariation) {
+                             const fullProductData = {
+                                ...product,
+                                ...selectedVariation,
+                                name: `${product.name} - ${selectedVariation.name}`,
+                                // Make sure 'id' is from the main product
+                                id: product.id
+                            };
+                            showCheckoutModal([fullProductData], selectedVariation.price);
+                        } else {
+                            showToast('Пожалуйста, выберите опцию', true);
+                        }
+                    } else {
+                        showCheckoutModal([product], product.price);
+                    }
+                });
+
+            } catch (error) {
+                console.error("Error loading product detail:", error);
+                contentContainer.innerHTML = `<p class="text-center text-red-500">Ошибка загрузки товара.</p>`;
+            }
         };
 
         async function showCheckoutModal(items, total) {
             if (!currentUser) { showModal('Вход', '<p>Для покупки войдите в аккаунт.</p>', () => signInWithGoogle(), 'Войти'); return; }
             
-            const onSave = async m => { 
-                const selected = m.querySelector('.payment-option.selected');
-                if (!selected) { showToast('Пожалуйста, выберите способ оплаты.', true); return false; }
-                const paymentMethodId = selected.dataset.methodId;
+            const userDoc = await getDoc(doc(db, "users", currentUser.uid));
+            if (userDoc.exists() && userDoc.data().isBanned) {
+                showModal('Аккаунт заблокирован', '<p>Ваш аккаунт заблокирован администратором. Совершение покупок невозможно.</p>');
+                return;
+            }
 
-                const purchaseRef = await addDoc(collection(db, "purchases"), { 
-                    userId: currentUser.uid, 
-                    userEmail: currentUser.email,
-                    orderId: 'A' + Math.random().toString(36).substring(2, 9).toUpperCase(), 
-                    items, 
-                    status: 'Ожидает оплаты', 
-                    paymentMethodId,
-                    finalPrice: total, 
-                    createdAt: serverTimestamp()
-                });
-                m.remove();
-                showProofUploadModal(purchaseRef.id, total, paymentMethodId);
-            };
+            if (appState.balance < 0) { showModal('Отрицательный баланс', '<p>У вас отрицательный баланс. Пожалуйста, пополните счет перед совершением покупок.</p>'); return; }
+            if (!items.length) { showToast('Корзина пуста', true); return; }
 
-            const methods = paymentMethods.filter(p => p.isEnabled);
-            const methodsHTML = methods.length ? `<div class="grid grid-cols-2 gap-4">${methods.map(p => `<button data-method-id="${p.id}" class="payment-option flex flex-col items-center p-2 border-2 rounded-lg h-24 transition-all"><img src="${p.logoUrl}" class="h-12 object-contain"><span class="text-sm">${p.name}</span></button>`).join('')}</div>` : '<p>Способы оплаты не настроены.</p>';
+            let currentTotal = total; let appliedPromo = null;
+            const balanceNeeded = currentTotal - appState.balance;
+            let paymentButtonsHTML = '';
+            if (appState.balance >= currentTotal) {
+                paymentButtonsHTML += `<button class="payment-option w-full p-4 border rounded-lg text-left" data-method="balance"><strong>Списать с баланса</strong><br><span class="text-sm">Доступно: ${formatPrice(appState.balance)}</span></button>`;
+            } else if (appState.balance > 0) {
+                 paymentButtonsHTML += `<button class="payment-option w-full p-4 border rounded-lg text-left" data-method="topup"><strong>Комбинированная оплата</strong><br><span class="text-sm">Списать ${formatPrice(appState.balance)} и пополнить на ${formatPrice(balanceNeeded)}</span></button>`;
+            }
+            paymentButtonsHTML += `<button class="payment-option w-full p-4 border rounded-lg text-left" data-method="external"><strong>Оплатить напрямую</strong><br><span class="text-sm">Полная сумма: ${formatPrice(currentTotal)}</span></button>`;
+            paymentButtonsHTML += `<button class="payment-option w-full p-4 border rounded-lg text-left" data-method="topup_custom"><strong>Пополнить баланс и оплатить</strong><br><span class="text-sm">Вы сами выбираете сумму пополнения</span></button>`;
+            
+            const onSave = async m => {
+                const code = m.querySelector('#promo-input').value.toUpperCase().trim();
+                if (!code) return false;
+                const promoDoc = await getDoc(doc(db, "promocodes", code));
+                if (promoDoc.exists()) {
+                    const promoData = promoDoc.data();
+                    const productIdsInCart = items.map(item => item.id);
+                    const isApplicable = !promoData.productId || productIdsInCart.includes(promoData.productId);
 
-            const modal = showModal('Оформление заказа', `<p>Сумма: <strong>${formatPrice(total)}</strong></p><div class="mt-4">${methodsHTML}</div>`, onSave, 'К оплате');
-            modal.querySelectorAll('.payment-option').forEach(btn => btn.onclick = () => { modal.querySelectorAll('.payment-option').forEach(b => b.classList.remove('selected')); btn.classList.add('selected'); });
-        }
-        
-        async function showProofUploadModal(purchaseId, total, paymentMethodId) {
-            const paymentMethod = paymentMethods.find(m => m.id === paymentMethodId);
-            if (!paymentMethod) { showToast("Способ оплаты не найден", true); return; }
-
-            const onSave = async (modal) => {
-                const file = modal.querySelector('#proof-file-input').files[0];
-                if (!file) { showToast("Пожалуйста, выберите файл", true); return false; }
-                const imageUrl = await uploadImage(file);
-                if (imageUrl) {
-                    await updateDoc(doc(db, "purchases", purchaseId), { paymentProofUrl: imageUrl, status: 'Ожидает подтверждения' });
-                    showToast("Чек успешно загружен!");
-                    window.location.hash = '#purchases';
-                    return true;
+                    if ((promoData.uses || 0) < promoData.limit && isApplicable) {
+                        currentTotal = total * (1 - (promoData.discount / 100));
+                        appliedPromo = { code, ...promoData };
+                        m.querySelector('#total-price-display').textContent = formatPrice(currentTotal);
+                        showToast(`Промокод применен!`);
+                    } else {
+                        showToast('Промокод не действителен или не применим к этим товарам', true);
+                    }
+                } else {
+                    showToast('Неверный промокод', true);
                 }
                 return false;
             };
 
-            const modalContent = `
-                <div>
-                    <p>Пожалуйста, переведите <strong>${formatPrice(total)}</strong> на следующие реквизиты:</p>
-                    <p class="font-semibold">${paymentMethod.name}</p>
-                    <p class="my-2 p-2 bg-gray-200 dark:bg-gray-700 rounded font-mono">${paymentMethod.requisites}</p>
-                    <p class="mt-4">После оплаты, загрузите чек (скриншот).</p>
-                    <input type="file" id="proof-file-input" class="w-full modern-input mt-2" accept="image/*">
-                </div>`;
-            showModal("Загрузка чека", modalContent, onSave, "Отправить чек");
+            const modal = showModal(`Оформление заказа`, `<p>Товар: <strong>${items.length > 1 ? `${items.length} товаров` : items[0].name}</strong></p><p>Сумма: <strong id="total-price-display">${formatPrice(currentTotal)}</strong></p>
+                <div class="space-y-2 mt-4">${paymentButtonsHTML}</div>
+                <div class="mt-4 flex gap-2"><input id="promo-input" class="w-full modern-input" placeholder="Промокод..."><button id="apply-promo-btn" class="btn bg-gray-500 text-white">Применить</button></div>`, onSave, 'Применить');
+            modal.querySelector('.save-modal-btn').classList.add('hidden');
+            modal.querySelector('#apply-promo-btn').onclick = () => onSave(modal);
+            modal.querySelectorAll('.payment-option').forEach(btn => btn.onclick = async () => { 
+                const method = btn.dataset.method; 
+                modal.remove(); 
+                if (method === 'balance') await processBalancePurchase(items, currentTotal, appliedPromo); 
+                else if (method === 'topup') showBalanceTopUpPaymentModal(balanceNeeded, () => showCheckoutModal(items, total));
+                else if (method === 'topup_custom') showModal('Пополнить баланс', `<p>Введите сумму, на которую хотите пополнить баланс. Если сумма будет больше стоимости товара (${formatPrice(currentTotal)}), остаток будет зачислен на ваш счет.</p><input type="number" id="custom-topup-amount" class="w-full modern-input mt-2" placeholder="Сумма пополнения">`, m => { const amount = parseFloat(m.querySelector('#custom-topup-amount').value); if (amount > 0) { m.remove(); showBalanceTopUpPaymentModal(amount, () => showCheckoutModal(items, total)); } else { showToast('Введите корректную сумму', true); return false; } }, 'Далее');
+                else await showExternalPaymentModal(items, currentTotal, appliedPromo); 
+            });
+        }
+        async function processBalancePurchase(items, total, promo) { 
+            const batch = writeBatch(db);
+            const userRef = doc(db, "users", currentUser.uid);
+            
+            const purchaseRef = doc(collection(db, "purchases"));
+            
+            batch.update(userRef, { 
+                balance: increment(-total), 
+                balanceHistory: arrayUnion({ type: 'purchase', amount: -total, product: items[0].name, date: new Date().toISOString(), purchaseId: purchaseRef.id }) // Added purchaseId here
+            });
+            
+            batch.set(purchaseRef, { 
+                userId: currentUser.uid, 
+                userEmail: currentUser.email, 
+                orderId: generateCode(), 
+                items, 
+                productName: items.length > 1 ? `${items.length} товаров` : items[0].name, 
+                status: 'Выполнен', 
+                paymentMethod: 'Баланс', 
+                finalPrice: total, 
+                promoCode: promo?.code || null, 
+                createdAt: serverTimestamp(),
+                review: null
+            });
+
+            items.forEach(item => {
+                const productRef = doc(db, "products", item.id);
+                batch.update(productRef, { purchaseCount: increment(1) });
+            });
+
+            await batch.commit();
+
+            if (items.length > 1) { 
+                cart = []; 
+                localStorage.setItem('asonik_cart', '[]'); 
+                updateCartCount(); 
+            } 
+            showToast('Покупка совершена!'); 
+            window.location.hash = '#purchases'; 
         };
-
-
-        function loadPurchasesPage() { 
-            const el = document.getElementById('purchases-content'); 
-            if (!currentUser || !el) return; 
-            el.innerHTML = `<h1 class="text-4xl font-bold text-center mb-8">Мои покупки</h1><div id="purchases-list" class="space-y-6"></div>`; 
-            onSnapshot(query(collection(db, "purchases"), where("userId", "==", currentUser.uid), orderBy("createdAt", "desc")), s => { 
-                const container = document.getElementById('purchases-list'); 
-                if (container) container.innerHTML = s.docs.map(d => renderPurchaseItem(d.id, d.data())).join('') || '<p class="text-center">Здесь будут ваши покупки.</p>'; 
-            }); 
-        };
-
+        async function showExternalPaymentModal(items, total, promo) { const cards = paymentMethods.filter(p=>p.isEnabled && p.type==='card'), wallets = paymentMethods.filter(p=>p.isEnabled && p.type==='ewallet'); if (!cards.length && !wallets.length) { showModal('Ошибка', '<p>Способы оплаты не настроены.</p>'); return; } const onSave = async m => { const selected = m.querySelector('.payment-option.selected'); if (!selected) { showToast('Пожалуйста, выберите способ оплаты.', true); return false; } const pRef = await addDoc(collection(db, "purchases"), { userId: currentUser.uid, orderId: generateCode(), items, productName: items.length > 1 ? `${items.length} товаров`: items[0].name, status: 'Ожидает оплаты', paymentMethodId: selected.dataset.methodId, finalPrice: total, promoCode: promo?.code || null, createdAt: serverTimestamp(), review: null }); if (items.length > 1) { cart = []; localStorage.setItem('asonik_cart', '[]'); updateCartCount(); } window.location.hash = '#purchases'; showProofUploadModal(pRef.id); return true; }; const modal = showModal('Выберите способ', `<div class="space-y-4">${cards.length ? `<div><h3 class="font-bold mb-2 border-b pb-1">Банковские карты</h3><div class="grid grid-cols-2 gap-4">${cards.map(p => `<button data-method-id="${p.id}" class="payment-option flex flex-col items-center p-2 border-2 rounded-lg h-24 transition-all"><img src="${p.logoUrl}" class="h-12 object-contain"><span class="text-sm">${p.name}</span></button>`).join('')}</div></div>`:''}${wallets.length ? `<div><h3 class="font-bold mb-2 border-b pb-1">Электронные кошельки</h3><div class="grid grid-cols-2 gap-4">${wallets.map(p => `<button data-method-id="${p.id}" class="payment-option flex flex-col items-center p-2 border-2 rounded-lg h-24 transition-all"><img src="${p.logoUrl}" class="h-12 object-contain"><span class="text-sm">${p.name}</span></button>`).join('')}</div></div>`:''}</div>`, onSave, 'К оплате'); modal.querySelectorAll('.payment-option').forEach(btn => btn.onclick = () => { modal.querySelectorAll('.payment-option').forEach(b => b.classList.remove('selected')); btn.classList.add('selected'); }); };
+        function loadPurchasesPage() { const el = document.getElementById('purchases-content'); if (!currentUser) return; el.innerHTML = `<h1 class="text-4xl font-bold text-center mb-8" data-lang-key="purchases_title"></h1><div id="purchases-list" class="space-y-6"></div>`; onSnapshot(query(collection(db, "purchases"), where("userId", "==", currentUser.uid), orderBy("createdAt", "desc")), s => { const container = document.getElementById('purchases-list'); if (container) container.innerHTML = s.docs.map(d => renderPurchaseItem(d.id, d.data())).join('') || '<p class="text-center">Здесь будут ваши покупки.</p>'; }); };
         function renderPurchaseItem(id, p) {
-            const item = p.items[0];
-            return `<div class="card-bg p-6 rounded-lg border border-custom flex flex-col sm:flex-row gap-4 items-start shadow-md">
-                <img src="${item.imageUrl || 'https://placehold.co/128x128'}" class="w-full sm:w-32 h-32 object-cover rounded-md">
+            const statusMap = { 'Выполнен': {class: 'completed', text: 'Выполнен', icon: 'M5 13l4 4L19 7'}, 'Завершен': {class: 'finished', text: 'Завершен', icon: 'M5 13l4 4L19 7'}, 'Ожидает оплаты': {class: 'pending', text: 'Ожидает оплаты', icon: 'M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z'}, 'Ожидает подтверждения': {class: 'pending', text: 'Ожидает подтверждения', icon: 'M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z'}, 'Отклонен': {class: 'rejected', text: 'Отклонен', icon: 'M6 18L18 6M6 6l12 12'}, 'Отменен': {class: 'cancelled', text: 'Отменен', icon: 'M6 18L18 6M6 6l12 12'}, 'В обработке': {class: 'processing', text: 'В обработке', icon: 'M4 4v5h5'} };
+            const statusInfo = statusMap[p.status] || {class: 'pending', text: p.status, icon: 'M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z'};
+            let buttons = '';
+            
+            if(p.status === 'Ожидает оплаты') { buttons += `<button class="upload-proof-btn btn btn-primary text-sm" data-id="${id}">Загрузить чек</button><button class="cancel-purchase-btn btn btn-danger text-sm ml-2" data-id="${id}">Отменить</button>`; } 
+            if(p.status === 'Выполнен' && !p.isTopUp) { 
+                 buttons += `<button class="get-item-btn btn btn-primary text-sm ml-2" data-purchase-id="${id}">Получить товар</button>`; 
+            }
+            if(p.status === 'Завершен' && !p.isTopUp && !p.review) { buttons += `<button class="leave-review-btn btn btn-primary text-sm ml-2" data-id="${id}" data-product-id="${p.items[0].id}">Оставить отзыв</button>`; }
+
+            return `<div class="card-bg p-4 sm:p-6 rounded-lg border border-custom flex flex-col sm:flex-row gap-4 items-start shadow-md">
+                <img src="${p.items[0].imageUrl || 'https://placehold.co/128x128'}" class="w-full sm:w-32 h-32 sm:h-auto flex-shrink-0 object-cover rounded-md">
                 <div class="flex-grow">
-                    <h3 class="font-bold text-lg">${item.name}</h3>
-                    <p class="text-sm text-gray-500 mt-2">Код заказа:</p>
-                    <p class="font-mono text-lg p-2 bg-primary/10 rounded-md my-1">${p.orderId}</p>
-                    <p class="text-sm">Статус: <strong>${p.status}</strong></p>
+                    <div class="flex justify-between items-start">
+                        <h3 class="font-bold text-lg">${p.productName}</h3>
+                        <span class="status-badge ${statusInfo.class}"><svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="${statusInfo.icon}"></path></svg>${statusInfo.text}</span>
+                    </div>
+                    <p class="text-sm text-gray-500">Код заказа: ${p.orderId}</p>
+                    <p class="text-sm text-gray-500">Дата: ${p.createdAt ? new Date(p.createdAt.seconds*1000).toLocaleString() : 'N/A'}</p>
                     <p class="text-lg font-semibold mt-1">Сумма: ${formatPrice(p.finalPrice)}</p>
+                    ${p.fulfillmentData ? `<p class="mt-2 p-2 rounded-md bg-blue-500/10 text-blue-700 dark:text-blue-300 text-sm"><strong>Предоставленные данные:</strong> ${p.fulfillmentData}</p>`:''}
+                    ${p.rejectionReason ? `<p class="mt-2 p-2 rounded-md bg-red-500/10 text-red-700 dark:text-red-300 text-sm"><strong>Причина отказа:</strong> ${p.rejectionReason}</p>`:''}
+                    <div class="mt-4 flex gap-2">${buttons}</div>
                 </div>
             </div>`
         };
+        function showContactModal(code) { 
+            const content = `<p>Для получения товара, пожалуйста, свяжитесь с нами в Telegram и сообщите этот код заказа:</p>
+            <div class="my-4 relative text-center font-mono p-2 bg-gray-200 dark:bg-gray-700 rounded-md text-lg">
+                <span id="order-code-to-copy">${code}</span>
+                <button id="copy-code-btn" class="absolute top-1/2 right-2 -translate-y-1/2 p-1 hover:bg-gray-300 dark:hover:bg-gray-600 rounded-md" title="Копировать код">
+                    <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20"><path d="M7 3a1 1 0 000 2h6a1 1 0 100-2H7zM4 7a1 1 0 011-1h10a1 1 0 110 2H5a1 1 0 01-1-1zM5 11a1 1 0 100 2h4a1 1 0 100-2H5z"></path></svg>
+                </button>
+            </div>`;
+            const modal = showModal('Связь с продавцом', content, () => { window.open(`https://t.me/${TELEGRAM_USERNAME}?text=Здравствуйте, мой заказ ${code}`, '_blank'); return true; }, 'Перейти в Telegram'); 
+            modal.querySelector('#copy-code-btn').onclick = () => {
+                navigator.clipboard.writeText(code);
+                showToast('Код скопирован!');
+            }
+        }
 
+        // --- BALANCE MANAGEMENT ---
+        function showBalanceModal() { 
+            const onSave = async m => {
+                 const amount = parseFloat(m.querySelector('#topup-amount').value); 
+                 if (!amount || amount <= 0) {
+                     showToast('Введите корректную сумму', true);
+                     return false;
+                 }
+                 if (amount < appState.minimumTopUpAmount) {
+                     showToast(`Минимальная сумма пополнения: ${formatPrice(appState.minimumTopUpAmount)}`, true);
+                     return false;
+                 }
+                 m.remove(); 
+                 showBalanceTopUpPaymentModal(amount); 
+                 return false; 
+            };
+            const modalHTML = `
+                <div class="text-center mb-6">
+                    <p class="text-gray-400">Текущий баланс</p>
+                    <p id="modal-balance-display" class="text-4xl font-bold">${formatPrice(appState.balance)}</p>
+                </div>
+                <div class="flex flex-col sm:flex-row gap-2">
+                    <input id="topup-amount" type="number" class="modern-input" placeholder="Сумма пополнения (UZS)">
+                    <div class="flex gap-2">
+                       <button id="topup-btn" class="btn btn-primary flex-grow">Пополнить</button>
+                       <button id="withdraw-btn" class="btn btn-danger flex-grow">Вывести</button>
+                    </div>
+                </div>
+                <hr class="border-custom my-6">
+                <div>
+                    <div class="flex justify-between items-center mb-4">
+                        <h3 class="font-semibold text-lg">История операций</h3>
+                        <input id="history-filter" class="modern-input text-sm w-1/2" placeholder="Фильтр (покупка, пополнение...)">
+                    </div>
+                    <ul id="balance-history-list" class="space-y-2 max-h-60 overflow-y-auto pr-2"></ul>
+                </div>`;
+            
+            const modal = showModal('Баланс', modalHTML, null);
+            document.getElementById('topup-btn').onclick = () => onSave(modal);
+            document.getElementById('withdraw-btn').onclick = showWithdrawModal;
+            document.getElementById('history-filter').oninput = (e) => {
+                const term = e.target.value.toLowerCase();
+                balanceHistoryFiltered = appState.balanceHistory.filter(i => {
+                    const text = getBalanceHistoryText(i).toLowerCase();
+                    return text.includes(term);
+                });
+                document.getElementById('balance-history-list').innerHTML = renderBalanceHistory(balanceHistoryFiltered);
+            };
+
+            onSnapshot(doc(db, "users", currentUser.uid), docSnap => {
+                const balanceDisplay = document.getElementById('modal-balance-display');
+                 if (docSnap.exists()) {
+                    const data = docSnap.data();
+                    appState.balance = data.balance || 0;
+                    appState.balanceHistory = (data.balanceHistory || []).sort((a,b) => new Date(b.date) - new Date(a.date));
+                    if (balanceDisplay) {
+                       balanceDisplay.textContent = formatPrice(appState.balance);
+                    }
+                    const historyList = document.getElementById('balance-history-list');
+                    if(historyList) {
+                       historyList.innerHTML = renderBalanceHistory(appState.balanceHistory);
+                    }
+                }
+            });
+        };
+        
+        function getBalanceHistoryText(item) {
+             if (item.type === 'topup') return item.reason === 'Админ' ? 'Начислено администрацией' : `Пополнение (${item.method || '...'})`;
+             else if (item.type === 'purchase') return `Покупка: ${item.product}`;
+             else if (item.type === 'deduction') return item.reason === 'Админ' ? 'Снято администрацией' : 'Списание';
+             return item.type;
+        }
+
+        function renderBalanceHistory(historyItems) {
+            if (!historyItems || !historyItems.length) return '<p class="text-center text-gray-500">История пуста.</p>';
+            return historyItems.map(i => {
+                let buttonHTML = '';
+                if(i.type === 'purchase' && i.purchaseId){
+                    buttonHTML = `<button class="go-to-purchase-btn text-xs text-primary underline" data-purchase-id="${i.purchaseId}">К покупке</button>`
+                }
+                const text = getBalanceHistoryText(i);
+                return `<li class="flex justify-between items-center p-3 rounded-lg ${i.amount > 0 ? 'bg-green-500/10' : 'bg-red-500/10'}">
+                    <div>
+                        <span class="font-medium">${text}</span>
+                        <div class="flex items-center gap-2">
+                           <p class="text-xs text-gray-400">${new Date(i.date).toLocaleString()}</p>
+                           ${buttonHTML}
+                        </div>
+                    </div>
+                    <span class="${i.amount > 0 ? 'text-green-500' : 'text-red-500'} font-semibold text-lg">${formatPrice(i.amount)}</span>
+                </li>`;
+            }).join('');
+        }
+
+        function showWithdrawModal() {
+            const onSave = async (modal) => {
+                // This is a placeholder for now, as real withdrawal requires a backend and payment provider integration.
+                showToast("Заявка на вывод отправлена на рассмотрение.", false);
+                return true;
+            };
+
+            const content = `
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-sm">Сумма вывода (UZS)</label>
+                        <input type="number" class="w-full modern-input" placeholder="0">
+                    </div>
+                    <div>
+                        <label class="block text-sm">Номер карты</label>
+                        <input type="text" class="w-full modern-input" placeholder="8600 0000 0000 0000">
+                    </div>
+                    <div>
+                        <label class="block text-sm">Платежная система</label>
+                        <select class="w-full modern-input">
+                            <option>HUMO</option>
+                            <option>UzCard</option>
+                            <option>Visa</option>
+                        </select>
+                    </div>
+                </div>
+            `;
+            showModal('Вывод средств', content, onSave, 'Отправить заявку');
+        }
+
+        async function showBalanceTopUpPaymentModal(amount, callback) { const methods = paymentMethods.filter(p => p.isEnabled); if (!methods.length) return; const onSave = async m => { const selected = m.querySelector('.payment-option.selected'); if (!selected) { showToast('Пожалуйста, выберите способ оплаты', true); return false; } const pData = { userId: currentUser.uid, userEmail: currentUser.email, orderId: generateCode(), items: [{ name: `Пополнение на ${formatPrice(amount)}`, imageUrl:''}], productName: "Пополнение баланса", status: 'Ожидает оплаты', paymentMethodId: selected.dataset.methodId, finalPrice: amount, createdAt: serverTimestamp(), isTopUp: true }; const pRef = await addDoc(collection(db, "purchases"), pData); window.location.hash = '#purchases'; showProofUploadModal(pRef.id); if (callback) callback(); return true; }; const modal = showModal(`Пополнение на ${formatPrice(amount)}`, `<div class="grid grid-cols-2 gap-4">${methods.map(p => `<button data-method-id="${p.id}" class="payment-option flex flex-col items-center justify-center p-2 border-2 rounded-lg h-24 transition-all"><img src="${p.logoUrl}" class="h-12 object-contain"><span class="text-sm mt-2">${p.name}</span></button>`).join('')}</div>`, onSave, 'К оплате'); modal.querySelectorAll('.payment-option').forEach(btn => btn.onclick = () => { modal.querySelectorAll('.payment-option').forEach(b => b.classList.remove('selected')); btn.classList.add('selected'); }); };
+        
+        // --- ADMIN PANEL ---
+        async function loadAdminPanel(subpage) { 
+            if (!isAdmin) return; 
+            const el = document.getElementById('admin-content'); 
+            const tabs = [{ id: 'users', name: 'Пользователи', icon:'<svg class="w-5 h-5" viewBox="0 0 20 20" fill="currentColor"><path d="M9 6a3 3 0 11-6 0 3 3 0 016 0zM17 6a3 3 0 11-6 0 3 3 0 016 0zM12.93 17c.046-.327.07-.66.07-1a6.97 6.97 0 00-1.5-4.33A5 5 0 0119 16v1h-6.07zM6 11a5 5 0 015 5v1H1v-1a5 5 0 015-5z" /></svg>'}, { id: 'products', name: 'Товары', icon: '<svg class="w-5 h-5" viewBox="0 0 20 20" fill="currentColor"><path d="M5 4a2 2 0 012-2h6a2 2 0 012 2v2a2 2 0 01-2 2H7a2 2 0 01-2-2V4zM5 12a2 2 0 012-2h6a2 2 0 012 2v2a2 2 0 01-2 2H7a2 2 0 01-2-2v-2z" /></svg>'}, { id: 'purchases', name: 'Покупки', icon: '<svg class="w-5 h-5" viewBox="0 0 20 20" fill="currentColor"><path d="M3 1a1 1 0 000 2h1.22l.305 1.222a.997.997 0 00.01.042l1.358 5.43-.893.892C3.74 11.846 4.632 14 6.414 14H15a1 1 0 000-2H6.414l1-1H14a1 1 0 00.894-.553l3-6A1 1 0 0017 3H6.28l-.31-1.243A1 1 0 005 1H3zM16 16.5a1.5 1.5 0 11-3 0 1.5 1.5 0 013 0zM6.5 18a1.5 1.5 0 100-3 1.5 1.5 0 000 3z" /></svg>'}, { id: 'reviews', name: 'Отзывы', icon: '<svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" /></svg>'}, { id: 'payment', name: 'Оплата', icon: '<svg class="w-5 h-5" viewBox="0 0 20 20" fill="currentColor"><path d="M4 4a2 2 0 00-2 2v1h16V6a2 2 0 00-2-2H4z" /><path fill-rule="evenodd" d="M18 9H2v5a2 2 0 002 2h12a2 2 0 002-2V9zM4 13a1 1 0 011-1h1a1 1 0 110 2H5a1 1 0 01-1-1zm5-1a1 1 0 100 2h1a1 1 0 100-2H9z" clip-rule="evenodd" /></svg>'}, { id: 'customization', name: 'Кастомизация', icon: '<svg class="w-5 h-5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M11.49 3.17c-.38-1.56-2.6-1.56-2.98 0a1.532 1.532 0 01-2.286.948c-1.372-.836-2.942.734-1.57 1.996A1.532 1.532 0 013.17 8.51c-1.56.38-1.56 2.6 0 2.98a1.532 1.532 0 01.948 2.286c-.836 1.372.734 2.942 1.996 1.57a1.532 1.532 0 012.286.948c.38 1.56 2.6 1.56 2.98 0a1.532 1.532 0 012.286-.948c1.372.836 2.942-.734 1.57-1.996A1.532 1.532 0 0116.83 11.49c1.56-.38 1.56-2.6 0-2.98a1.532 1.532 0 01-.948-2.286c.836-1.372-.734-2.942-1.996-1.57A1.532 1.532 0 0111.49 3.17zM10 13a3 3 0 100-6 3 3 0 000 6z" clip-rule="evenodd" /></svg>'}, { id: 'faq', name: 'FAQ', icon: '<svg class="w-5 h-5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-8-3a1 1 0 00-.867.5 1 1 0 11-1.731-1A3 3 0 0113 8a3.001 3.001 0 01-2 2.83V11a1 1 0 11-2 0v-1a1 1 0 011-1 1 1 0 100-2zm0 8a1 1 0 100-2 1 1 0 000 2z" clip-rule="evenodd" /></svg>'}, {id: 'promocodes', name: 'Промокоды', icon: '<svg class="w-5 h-5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M17.707 9.293a1 1 0 010 1.414l-7 7a1 1 0 01-1.414 0l-7-7A.997.997 0 012 10V5a3 3 0 013-3h5a3 3 0 013 3v2.586l4.707 4.707zM5 6a1 1 0 100-2 1 1 0 000 2z" clip-rule="evenodd" /></svg>'}, { id: 'chats', name: 'Чаты', icon: '<svg class="w-5 h-5" viewBox="0 0 20 20" fill="currentColor"><path d="M2 5a2 2 0 012-2h7a2 2 0 012 2v4a2 2 0 01-2 2H9l-3 3v-3H4a2 2 0 01-2-2V5z" /><path d="M15 7v2a4 4 0 01-4 4H9.828l-1.766 1.767c.28.149.599.233.938.233h7a2 2 0 002-2v-4a2 2 0 00-2-2h-1.172a4 4 0 01-3.535-1.464L12 4.343V7z" /></svg>'}, { id: 'download', name: 'Приложение', icon: '<svg class="w-5 h-5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zM6.293 6.707a1 1 0 010-1.414l3-3a1 1 0 011.414 0l3 3a1 1 0 01-1.414 1.414L11 5.414V13a1 1 0 11-2 0V5.414L7.707 6.707a1 1 0 01-1.414 0z" clip-rule="evenodd" /></svg>'}, { id: 'announcement', name: 'Объявления', icon: '<svg class="w-5 h-5" viewBox="0 0 20 20" fill="currentColor"><path d="M10 2a6 6 0 00-6 6v3.586l-1.707 1.707A1 1 0 003 15h14a1 1 0 00.707-1.707L16 11.586V8a6 6 0 00-6-6zM10 18a3 3 0 01-3-3h6a3 3 0 01-3 3z" /></svg>'}]; 
+            el.innerHTML = `<h2 class="text-3xl font-bold mb-6">Админ-панель</h2><nav class="admin-tabs flex flex-wrap border-b border-custom mb-6">${tabs.map(t => `<a href="#admin/${t.id}" class="admin-tab-btn flex items-center gap-2 py-3 px-5 rounded-t-lg mr-2 mb-[-1px] bg-transparent font-semibold border border-transparent border-b-0 ${subpage === t.id ? 'active' : ''}" data-tab="${t.id}">${t.icon}<span class="hidden sm:inline">${t.name}</span></a>`).join('')}</nav><div id="admin-tab-content" class="card-bg p-6 rounded-lg min-h-[60vh] shadow-inner"></div>`; 
+            loadAdminTab(subpage); 
+        }
+        function loadAdminTab(subpage) { 
+            const container = document.getElementById('admin-tab-content');
+            if (!container) return; 
+            switch(subpage) { 
+                case 'users': loadAdminUsers(); break; 
+                case 'products': loadAdminList('products', 'Товары', renderAdminProductItem, `<button id="add-product-btn" class="btn btn-primary">Добавить товар</button>`); break; 
+                case 'faq': loadAdminList('faq', 'FAQ', renderAdminFaqItem, `<button id="add-faq-btn" class="btn btn-primary">Добавить</button>`); break; 
+                case 'purchases': loadAdminPurchases(); break; 
+                case 'reviews': loadAdminReviews(); break;
+                case 'payment': loadAdminList('paymentMethods', 'Способы оплаты', renderAdminPaymentItem, `<button id="add-payment-btn" class="btn btn-primary">Добавить</button>`); break; 
+                case 'promocodes': loadAdminList('promocodes', 'Промокоды', renderAdminPromoItem, `<button id="add-promo-btn" class="btn btn-primary">Добавить</button>`); break; 
+                case 'customization': loadCustomizationPage(); break; 
+                case 'chats': loadAdminChatsList(window.location.hash.split('/')[2]); break; 
+                case 'download': loadAdminDownloadPage(); break; 
+                case 'announcement': loadAdminAnnouncementPage(); break;
+            } 
+        };
+        function renderAdminPurchaseItem(id, p) { 
+            let actions = '';
+            if (p.status === 'Ожидает подтверждения') { 
+                actions = `<button class="approve-purchase-btn bg-green-500 hover:bg-green-600 text-white px-3 py-1 text-sm rounded-md" data-id="${id}">Подтвердить</button>
+                           <button class="reject-purchase-btn bg-red-500 hover:bg-red-600 text-white px-3 py-1 text-sm rounded-md ml-2" data-id="${id}">Отклонить</button>`; 
+            } else if (p.status === 'Выполнен' && !p.isTopUp) {
+                actions = `<button class="finish-purchase-btn bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 text-sm rounded-md" data-id="${id}">Завершить</button>`;
+            } else if (p.status === 'В обработке') {
+                 actions = `<button class="view-fulfillment-btn bg-indigo-500 hover:bg-indigo-600 text-white px-3 py-1 text-sm rounded-md" data-id="${id}">Посмотреть данные</button>`;
+            }
+            return `<div class="card-bg p-4 rounded-lg flex flex-col md:flex-row justify-between items-start md:items-center border border-custom gap-4">
+                <img src="${p.items[0].imageUrl || 'https://placehold.co/64x64'}" class="w-16 h-16 object-cover rounded-md flex-shrink-0">
+                <div class="flex-grow">
+                    <p class="font-bold">${p.productName}</p>
+                    <p class="text-sm text-gray-400">Пользователь: ${p.userEmail || 'N/A'}</p>
+                    <p class="text-sm text-gray-400">Код: ${p.orderId}</p>
+                </div>
+                <div class="flex-shrink-0">
+                    <p class="font-semibold">${formatPrice(p.finalPrice)}</p>
+                    <p class="text-sm text-center">${p.status}</p>
+                </div>
+                <div class="flex-shrink-0 flex items-center gap-2">
+                    ${p.paymentProofUrl ? `<a href="${p.paymentProofUrl}" target="_blank" class="text-blue-500 hover:underline text-sm">Чек</a>`:''}
+                    ${actions}
+                </div>
+            </div>`; 
+        };
+        
+        // --- ADMIN FORMS (RE-DESIGNED) ---
+        async function showProductForm(pId) {
+            let p = {name:'',description:'',price:0,imageUrl:'',productStatus:'official', isPinned: false, variations: [], category: 'другое', order: Date.now()};
+            if(pId){const d=await getDoc(doc(db,'products',pId)); if(d.exists()) p={...p, ...d.data(), id: d.id};}
+            
+            const onSave = async m => {
+                showToast('Сохранение товара...');
+                const file = m.querySelector('#p-image-file').files[0];
+                let url = p.imageUrl;
+                if(file) {
+                    showToast('Загрузка основного изображения...');
+                    url = await uploadImage(file);
+                }
+                
+                const variations = [];
+                const variationItems = m.querySelectorAll('.variation-item');
+                for (let i = 0; i < variationItems.length; i++) {
+                    const v = variationItems[i];
+                    const vImgFile = v.querySelector('.v-image').files[0];
+                    let vImgUrl = v.dataset.imgurl || '';
+                    if(vImgFile) {
+                        showToast(`Загрузка изображения для вариации ${i+1}...`);
+                        vImgUrl = await uploadImage(vImgFile);
+                    }
+                    variations.push({
+                        name: v.querySelector('.v-name').value, 
+                        price: parseFloat(v.querySelector('.v-price').value), 
+                        description: v.querySelector('.v-desc').value, 
+                        imageUrl: vImgUrl,
+                        updateMainImage: v.querySelector('.v-update-main-image').checked,
+                        fulfillmentPrompt: v.querySelector('.v-fulfillment-prompt').value,
+                        isAutomationEnabled: v.querySelector('.v-automation-enabled').checked,
+                        isOutOfStock: v.querySelector('.v-out-of-stock').checked
+                    });
+                }
+
+                const data={
+                    name: m.querySelector('#p-name').value, 
+                    description: m.querySelector('#p-desc').value, 
+                    price: parseFloat(m.querySelector('#p-price').value) || 0, 
+                    imageUrl: url, 
+                    productStatus: m.querySelector('input[name="product-status"]:checked').value,
+                    isPinned: m.querySelector('#p-pinned').checked,
+                    variations: variations,
+                    category: m.querySelector('#p-category').value,
+                    order: parseInt(m.querySelector('#p-order').value) || Date.now(),
+                    createdAt: p.createdAt || serverTimestamp(),
+                    updatedAt: serverTimestamp()
+                };
+                if (pId) {
+                    await setDoc(doc(db,'products',pId), data, { merge: true });
+                } else {
+                    await addDoc(collection(db,'products'), data);
+                }
+                showToast('Товар успешно сохранен!');
+                return true;
+            };
+
+            const formHTML = `
+                <div class="space-y-4">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label for="p-name" class="block text-sm font-medium mb-1">Название товара</label>
+                            <input id="p-name" value="${p.name||''}" class="w-full modern-input" placeholder="Например, 'Игровой аккаунт'">
+                        </div>
+                        <div>
+                            <label for="p-category" class="block text-sm font-medium mb-1">Категория</label>
+                            <select id="p-category" class="w-full modern-input">
+                                <option value="игра" ${p.category === 'игра' ? 'selected' : ''}>Игра</option>
+                                <option value="приложение" ${p.category === 'приложение' ? 'selected' : ''}>Приложение</option>
+                                <option value="другое" ${p.category === 'другое' ? 'selected' : ''}>Другое</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div>
+                        <label for="p-desc" class="block text-sm font-medium mb-1">Описание</label>
+                        <textarea id="p-desc" class="w-full modern-input" rows="4" placeholder="Подробное описание товара...">${p.description||''}</textarea>
+                    </div>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label for="p-price" class="block text-sm font-medium mb-1">Базовая цена (в UZS)</label>
+                            <input id="p-price" type="number" value="${p.price||0}" class="w-full modern-input" placeholder="0">
+                        </div>
+                        <div>
+                            <label for="p-order" class="block text-sm font-medium mb-1">Порядок сортировки</label>
+                            <input id="p-order" type="number" value="${p.order||''}" class="w-full modern-input" placeholder="Чем меньше, тем выше">
+                        </div>
+                    </div>
+                    <div>
+                        <label for="p-image-file" class="block text-sm font-medium mb-1">Изображение товара</label>
+                        <input type="file" id="p-image-file" class="w-full text-sm file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-primary/10 file:text-primary hover:file:bg-primary/20">
+                        ${p.imageUrl ? `<img src="${p.imageUrl}" class="mt-2 w-24 h-24 object-cover rounded-md">` : ''}
+                    </div>
+                     <div>
+                        <label class="block text-sm font-medium mb-2">Статус товара</label>
+                        <div class="flex gap-4">
+                            <label class="flex items-center">
+                                <input type="radio" name="product-status" value="official" ${p.productStatus === 'official' ? 'checked' : ''} class="h-4 w-4 text-primary focus:ring-primary border-gray-300">
+                                <span class="ml-2">Гарантированный товар</span>
+                            </label>
+                            <label class="flex items-center">
+                                <input type="radio" name="product-status" value="private" ${p.productStatus === 'private' || !p.productStatus ? 'checked' : ''} class="h-4 w-4 text-primary focus:ring-primary border-gray-300">
+                                <span class="ml-2">Частный продавец</span>
+                            </label>
+                        </div>
+                    </div>
+                    <div class="flex items-center">
+                        <input type="checkbox" id="p-pinned" ${p.isPinned ? 'checked' : ''} class="h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary">
+                        <label for="p-pinned" class="ml-2 block text-sm">Закрепить товар (будет первым в списке)</label>
+                    </div>
+                    <hr class="border-custom">
+                    <h4 class="font-bold">Вариации товара</h4>
+                    <div id="variations-container" class="space-y-4"></div>
+                    <button type="button" id="add-variation-btn" class="mt-2 btn bg-gray-500 text-white text-sm">+ Добавить вариацию</button>
+                </div>`;
+            
+            const modal = showModal(pId ? 'Редактировать товар' : 'Добавить товар', formHTML, onSave, 'Сохранить');
+            
+            const renderVariation = (v = {}) => {
+                const el = document.createElement('div');
+                el.className = 'variation-item border-2 p-4 rounded-lg space-y-3';
+                el.dataset.imgurl = v.imageUrl || '';
+                el.innerHTML = `
+                    <input class="v-name w-full modern-input" value="${v.name||''}" placeholder="Название вариации (например, 50 гемов)">
+                    <input type="number" class="v-price w-full modern-input" value="${v.price||0}" placeholder="Цена вариации">
+                    <textarea class="v-desc w-full modern-input" placeholder="Краткое описание вариации">${v.description||''}</textarea>
+                    <input type="file" class="v-image text-xs w-full file:mr-2 file:py-1 file:px-2 file:rounded-full file:border-0 file:text-xs file:font-semibold file:bg-primary/10 file:text-primary hover:file:bg-primary/20">
+                    ${v.imageUrl ? `<img src="${v.imageUrl}" class="mt-2 w-16 h-16 object-cover rounded-md">` : ''}
+                    <hr class="border-custom">
+                    <div class="p-2 bg-primary/10 rounded-lg space-y-2">
+                         <div class="flex items-center gap-2">
+                            <input type="checkbox" class="v-automation-enabled h-4 w-4 rounded border-gray-300 text-primary" ${v.isAutomationEnabled ? 'checked' : ''}>
+                            <label class="text-sm font-semibold">Включить автоматизацию</label>
+                        </div>
+                        <input class="v-fulfillment-prompt w-full modern-input" value="${v.fulfillmentPrompt||''}" placeholder="Текст запроса (напр. Введите ваш ID)">
+                    </div>
+                     <hr class="border-custom">
+                    <div class="flex items-center gap-2">
+                        <input type="checkbox" class="v-update-main-image h-4 w-4 rounded border-gray-300 text-primary" ${v.updateMainImage ? 'checked' : ''}>
+                        <label class="text-sm">Менять главное фото при выборе</label>
+                    </div>
+                     <div class="flex items-center gap-2">
+                        <input type="checkbox" class="v-out-of-stock h-4 w-4 rounded border-gray-300 text-primary" ${v.isOutOfStock ? 'checked' : ''}>
+                        <label class="text-sm">Нет в наличии</label>
+                    </div>
+
+                    <div class="text-right"><button type="button" class="remove-variation-btn btn btn-danger px-3 py-1 text-sm">Удалить</button></div>
+                `;
+                modal.querySelector('#variations-container').appendChild(el);
+            };
+
+            (p.variations || []).forEach(renderVariation);
+            modal.querySelector('#add-variation-btn').onclick = () => renderVariation();
+            modal.onclick = e => {
+                if (e.target.classList.contains('remove-variation-btn')) {
+                    e.target.closest('.variation-item').remove();
+                }
+            };
+        }
+
+        // --- CUSTOMIZATION ---
+        async function loadCustomizationPage() { 
+            const el = document.getElementById('admin-tab-content'); 
+            const settings = (await getDoc(doc(db, "storeSettings", "config"))).data() || {};
+            el.innerHTML = `<div class="space-y-8">
+                <div>
+                    <h3 class="text-xl font-bold mb-2">Общие настройки</h3>
+                    <label class="block text-sm">Название сайта</label>
+                    <input id="site-name-input" class="w-full modern-input mt-1" value="${settings.siteName || 'Asonik | Store'}">
+                    <label class="block text-sm mt-2">Минимальная сумма пополнения (в UZS)</label>
+                    <input id="min-topup-input" type="number" class="w-full modern-input mt-1" value="${settings.minimumTopUpAmount || 1000}">
+                    <label class="block text-sm mt-2">Сообщение для гостей</label>
+                    <textarea id="guest-prompt-input" class="w-full modern-input mt-1" rows="3">${settings.guestPromptMessage || ''}</textarea>
+                    <button id="save-general-settings-btn" class="btn btn-primary mt-2">Сохранить</button>
+                </div>
+                <hr class="border-custom">
+                <div>
+                     <div class="flex justify-between items-center mb-2">
+                        <h3 class="text-xl font-bold">Рекламные баннеры</h3>
+                        <button id="clear-banners-btn" class="btn bg-red-600 text-white text-sm">Очистить все</button>
+                    </div>
+                    <div id="banners-list" class="space-y-2"></div>
+                    <button id="add-banner-btn" class="btn btn-primary mt-2">Добавить баннер</button>
+                </div>
+                <hr class="border-custom">
+                <div>
+                    <h3 class="text-xl font-bold mb-2">Настройка темы</h3>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div class="p-4 card-bg rounded-lg border border-custom">
+                            <h4 class="font-semibold mb-2">Светлая тема</h4>
+                            <label class="block text-sm">Основной цвет</label>
+                            <input type="color" id="primary-light-picker" value="${settings.themeColors?.primaryLight || '#673ab7'}">
+                            <label class="block text-sm mt-2">Цвет фона</label>
+                            <input type="color" id="bg-light-picker" value="${settings.themeColors?.bgLight || '#f3e5f5'}">
+                        </div>
+                        <div class="p-4 card-bg rounded-lg border border-custom">
+                            <h4 class="font-semibold mb-2">Темная тема</h4>
+                            <label class="block text-sm">Основной цвет</label>
+                            <input type="color" id="primary-dark-picker" value="${settings.themeColors?.primaryDark || '#9575cd'}">
+                            <label class="block text-sm mt-2">Цвет фона</label>
+                            <input type="color" id="bg-dark-picker" value="${settings.themeColors?.bgDark || '#1a102c'}">
+                        </div>
+                    </div>
+                    <button id="save-theme-btn" class="btn btn-primary mt-4">Сохранить тему</button>
+                    <button id="reset-theme-btn" class="btn bg-gray-500 text-white mt-4 ml-2">Сбросить</button>
+                </div>
+                <hr class="border-custom">
+                <div>
+                    <h3 class="text-xl font-bold">Логотип</h3>
+                    <input type="file" id="logo-upload-input" class="mt-2"><button id="save-logo-btn" class="btn btn-primary ml-2">Сохранить лого</button>
+                </div>
+                <hr class="border-custom">
+                <div>
+                    <div class="flex justify-between items-center mb-2">
+                        <h3 class="text-xl font-bold">Социальные сети</h3>
+                        <button id="clear-social-links-btn" class="btn bg-red-600 text-white text-sm">Очистить все</button>
+                    </div>
+                    <div id="social-links-admin" class="space-y-2 mt-2"></div>
+                    <button id="add-social-link-btn" class="btn bg-green-500 text-white mt-2">Добавить ссылку</button>
+                </div>
+            </div>`; 
+            renderAdminSocialLinks(settings.socialLinks);
+            renderAdminBanners(settings.adBanners);
+        };
+        function applyCustomTheme(colors) {
+            const root = document.documentElement;
+            if (colors.primaryLight) root.style.setProperty('--primary-light', colors.primaryLight);
+            if (colors.bgLight) root.style.setProperty('--bg-light', colors.bgLight);
+            if (colors.primaryDark) root.style.setProperty('--primary-dark', colors.primaryDark);
+            if (colors.bgDark) root.style.setProperty('--bg-dark', colors.bgDark);
+        };
+
+        // --- THEME & AUTH UI ---
+        function initTheme() { 
+            const btn = document.getElementById('theme-toggle'); 
+            if(!btn) return; 
+            const apply = t => { 
+                if(t==='dark'){
+                    document.documentElement.classList.add('dark'); 
+                    btn.innerHTML='☀️';
+                } else {
+                    document.documentElement.classList.remove('dark'); 
+                    btn.innerHTML='🌙';
+                }
+            }; 
+            apply(localStorage.getItem('color-theme')||'light'); 
+            btn.onclick=() => {
+                const n = document.documentElement.classList.contains('dark') ? 'light' : 'dark'; 
+                localStorage.setItem('color-theme',n); 
+                apply(n);
+            };
+        };
+        async function updateAuthUI() { 
+            const c = document.getElementById('auth-container'); 
+            if(!c) return; 
+            if (currentUser) { 
+                const userDoc = await getDoc(doc(db, "users", currentUser.uid));
+                const userData = userDoc.data() || {};
+                c.innerHTML = `
+                    <div class="relative">
+                        <button id="profile-btn" class="flex items-center gap-2 p-1 pr-2 rounded-full hover:bg-black/10 dark:hover:bg-white/10">
+                            <img src="${currentUser.photoURL||'https://placehold.co/32x32'}" class="w-8 h-8 rounded-full object-cover">
+                            <span class="hidden md:inline font-semibold">${userData.nickname || currentUser.displayName}</span>
+                            <svg class="w-4 h-4 opacity-70" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd"></path></svg>
+                        </button>
+                        <div id="profile-menu" class="hidden absolute right-0 mt-2 w-60 card-bg rounded-md shadow-lg z-10 border border-custom">
+                            <div class="p-4 border-b border-custom">
+                                <p class="font-bold truncate">${currentUser.displayName}</p>
+                            </div>
+                            <a href="#profile" class="nav-link block px-4 py-2 hover:bg-primary/10">Профиль</a>
+                            <a href="#settings" class="nav-link block px-4 py-2 hover:bg-primary/10">Настройки</a>
+                            ${isAdmin ? `<a href="#admin" class="nav-link block px-4 py-2 hover:bg-primary/10">Админ-панель</a>` : ''}
+                            <a href="#" id="logout-btn" class="block px-4 py-2 text-red-500 hover:bg-red-500/10">Выйти</a>
+                        </div>
+                    </div>`;
+            } else { 
+                c.innerHTML = `<button id="google-login-btn" class="btn btn-primary">Войти</button>`; 
+            } 
+        };
+        function signInWithGoogle() { const p = new GoogleAuthProvider(); signInWithPopup(auth, p).catch(e => showToast("Ошибка: " + e.message, true)); };
+        
+        // --- EVENT LISTENERS ---
+        function setupEventListeners() {
+            window.addEventListener('hashchange', handleRouting);
+            document.body.addEventListener('click', async e => {
+                const { target } = e;
+                const closest = sel => target.closest(sel);
+
+                // Mobile Menu
+                if (target.id === 'mobile-menu-btn') {
+                    const menu = document.getElementById('mobile-menu');
+                    menu.classList.remove('hidden');
+                    setTimeout(() => menu.classList.add('open'), 10);
+                }
+                if (target.id === 'mobile-menu-close-btn' || !closest('#mobile-menu-panel')) {
+                    const menu = document.getElementById('mobile-menu');
+                    menu.classList.remove('open');
+                    setTimeout(() => menu.classList.add('hidden'), 300);
+                }
+
+                // Auto-close dropdowns
+                if (!closest('#profile-btn') && !closest('#profile-menu')) {
+                    const menu = document.getElementById('profile-menu');
+                    if (menu) menu.classList.add('hidden');
+                }
+                if (!closest('#notifications-btn') && !closest('#notifications-dropdown')) {
+                    const dropdown = document.getElementById('notifications-dropdown');
+                    if(dropdown) dropdown.classList.add('hidden');
+                }
+
+                if (closest('.nav-link')) { 
+                    e.preventDefault(); 
+                    window.location.hash = new URL(closest('.nav-link').href).hash; 
+                    // Close mobile menu on navigation
+                    const menu = document.getElementById('mobile-menu');
+                    if(menu && menu.classList.contains('open')) {
+                        menu.classList.remove('open');
+                        setTimeout(() => menu.classList.add('hidden'), 300);
+                    }
+                }
+                if (closest('.admin-tab-btn')) { e.preventDefault(); window.location.hash = `admin/${closest('.admin-tab-btn').dataset.tab}`; }
+                if (target.id === 'google-login-btn' || target.id === 'login-redirect') signInWithGoogle();
+                if (target.id === 'logout-btn' || target.id === 'logout-btn-profile') signOut(auth);
+                if (target.id === 'balance-btn') showBalanceModal();
+                if (closest('.buy-now-btn')) { const p = allProducts.find(p => p.id === closest('.buy-now-btn').dataset.productId); if (p) showCheckoutModal([p], p.price || 0); }
+                if (closest('.add-to-cart-btn')) addToCart(closest('.add-to-cart-btn').dataset.productId);
+                if (closest('.remove-from-cart-btn')) { cart.splice(closest('.remove-from-cart-btn').dataset.index, 1); localStorage.setItem('asonik_cart', JSON.stringify(cart)); renderCartPage(); updateCartCount(); }
+                if (target.id === 'checkout-cart-btn') showCheckoutModal(cart, cart.reduce((s, i) => s + (i.price || 0), 0));
+                if (closest('.faq-question')) closest('.faq-question').classList.toggle('open');
+                if(closest('.get-item-btn')) {
+                    const purchaseId = closest('.get-item-btn').dataset.purchaseId;
+                    const purchaseDoc = await getDoc(doc(db, 'purchases', purchaseId));
+                    if (purchaseDoc.exists()) {
+                        const purchaseData = purchaseDoc.data();
+                        const item = purchaseData.items[0];
+                        if (item.isAutomationEnabled && item.fulfillmentPrompt) {
+                            showFulfillmentModal(purchaseId, item.fulfillmentPrompt);
+                        } else {
+                            showContactModal(purchaseData.orderId);
+                        }
+                    }
+                }
+                if(closest('.cancel-purchase-btn')) confirmAction('Вы уверены, что хотите отменить заказ?', async () => await updateDoc(doc(db, "purchases", closest('.cancel-purchase-btn').dataset.id), { status: 'Отменен' }));
+                if(closest('.upload-proof-btn')) showProofUploadModal(closest('.upload-proof-btn').dataset.id);
+                if (closest('#profile-btn')) { e.stopPropagation(); document.getElementById('profile-menu')?.classList.toggle('hidden'); }
+                 if (closest('.wishlist-btn') || closest('.wishlist-remove-btn-icon')) { 
+                    if(!currentUser) {
+                        showToast('Пожалуйста, войдите, чтобы добавлять в избранное.');
+                        return;
+                    } 
+                    const btn = closest('.wishlist-btn') || closest('.wishlist-remove-btn-icon');
+                    const productId = btn.dataset.productId;
+                    const userRef = doc(db, 'users', currentUser.uid);
+                    await updateDoc(userRef, { wishlist: userWishlist.includes(productId) ? arrayRemove(productId) : arrayUnion(productId) }); 
+                }
+                if (target.id === 'add-product-btn') showProductForm();
+                if (target.id === 'add-promo-btn') showPromoForm();
+                if (closest('.edit-btn')) { const { id, type } = closest('.edit-btn').dataset; if(type==='product') showProductForm(id); else if (type==='promocode') showPromoForm(id); }
+                if (closest('.delete-btn')) confirmAction('Вы уверены, что хотите удалить этот элемент?', async () => await deleteDoc(doc(db, closest('.delete-btn').dataset.collection, closest('.delete-btn').dataset.id)));
+                if (closest('.leave-review-btn')) { showReviewForm(closest('.leave-review-btn').dataset.id, closest('.leave-review-btn').dataset.productId); }
+                
+                if (closest('.approve-purchase-btn')) {
+                    const btn = closest('.approve-purchase-btn');
+                    const { id } = btn.dataset;
+                    await updateDoc(doc(db, "purchases", id), { status: 'Выполнен' });
+                    showToast('Заказ подтвержден!');
+                }
+                
+                 if (closest('.view-fulfillment-btn')) {
+                    const id = closest('.view-fulfillment-btn').dataset.id;
+                    const purchaseDoc = await getDoc(doc(db, "purchases", id));
+                    if (purchaseDoc.exists()) {
+                        const data = purchaseDoc.data();
+                        showFulfillmentDataModal(id, data.fulfillmentData);
+                    }
+                }
+
+                if (closest('.finish-purchase-btn')) {
+                    const btn = closest('.finish-purchase-btn');
+                    const { id } = btn.dataset;
+                    await updateDoc(doc(db, "purchases", id), { status: 'Завершен' });
+                    showToast('Заказ завершен!');
+                }
+
+
+                if (closest('.reject-purchase-btn')) {
+                    const purchaseId = closest('.reject-purchase-btn').dataset.id;
+                    showModal('Укажите причину отказа (необязательно)', `<input id="rejection-reason" class="w-full modern-input" placeholder="Например, неверные данные чека">`, async m => { 
+                        const reason = m.querySelector('input').value;
+                        await updateDoc(doc(db, "purchases", purchaseId), { status: 'Отклонен', rejectionReason: reason || 'Причина не указана' }); 
+                        showToast('Заказ отклонен.');
+                        return true; 
+                    }, 'Отклонить');
+                }
+
+                 if (closest('.ban-user-btn')) {
+                    const uid = closest('.ban-user-btn').dataset.uid;
+                    const userRef = doc(db, 'users', uid);
+                    const userDoc = await getDoc(userRef);
+                    const isBanned = userDoc.data().isBanned || false;
+                    confirmAction(`Вы уверены, что хотите ${isBanned ? 'разбанить' : 'забанить'} этого пользователя?`, async () => {
+                        await updateDoc(userRef, { isBanned: !isBanned });
+                        showToast(`Пользователь ${isBanned ? 'разбанен' : 'забанен'}`);
+                    });
+                }
+
+
+                if (closest('.add-balance-btn') || closest('.remove-balance-btn') || closest('.annul-balance-btn')) {
+                    const btn = closest('button');
+                    const uid = btn.dataset.uid;
+                    const amountInput = btn.parentElement.querySelector('.user-balance-input');
+                    
+                    if (btn.classList.contains('annul-balance-btn')) {
+                        confirmAction(`Вы уверены, что хотите обнулить баланс этого пользователя?`, async () => {
+                            const userDoc = await getDoc(doc(db, "users", uid));
+                            const currentBalance = userDoc.data().balance || 0;
+                            await updateDoc(doc(db, "users", uid), { 
+                                balance: 0,
+                                balanceHistory: arrayUnion({ type: 'deduction', amount: -currentBalance, date: new Date().toISOString(), reason: 'Админ (Обнуление)' })
+                            });
+                            showToast('Баланс обнулен');
+                        });
+                        return;
+                    }
+
+                    const isAdding = btn.classList.contains('add-balance-btn');
+                    const amount = parseFloat(amountInput.value);
+                    if (!isNaN(amount) && amount > 0) {
+                        confirmAction(`${isAdding ? 'Добавить' : 'Снять'} ${formatPrice(amount)} с баланса пользователя?`, async () => {
+                            await updateDoc(doc(db, "users", uid), { 
+                                balance: increment(isAdding ? amount : -amount), 
+                                balanceHistory: arrayUnion({ type: isAdding ? 'topup' : 'deduction', amount: isAdding ? amount : -amount, date: new Date().toISOString(), reason: 'Админ' }) 
+                            });
+                            showToast('Баланс изменен');
+                            amountInput.value = '';
+                        });
+                    } else {
+                        showToast('Введите корректную сумму', true);
+                    }
+                }
+                 if (target.id === 'save-theme-btn') {
+                    const themeColors = {
+                        primaryLight: document.getElementById('primary-light-picker').value,
+                        bgLight: document.getElementById('bg-light-picker').value,
+                        primaryDark: document.getElementById('primary-dark-picker').value,
+                        bgDark: document.getElementById('bg-dark-picker').value,
+                    };
+                    await setDoc(doc(db, "storeSettings", "config"), { themeColors }, { merge: true });
+                    applyCustomTheme(themeColors);
+                    showToast('Тема сохранена!');
+                }
+                 if (target.id === 'reset-theme-btn') {
+                    confirmAction('Сбросить цвета темы к стандартным?', async () => {
+                        const defaultColors = { primaryLight: '#673ab7', bgLight: '#f3e5f5', primaryDark: '#9575cd', bgDark: '#1a102c' };
+                        await setDoc(doc(db, "storeSettings", "config"), { themeColors: defaultColors }, { merge: true });
+                        applyCustomTheme(defaultColors);
+                        loadCustomizationPage(); // Reload to show default values in pickers
+                        showToast('Тема сброшена!');
+                    });
+                }
+                if (target.id === 'save-general-settings-btn') {
+                    const newName = document.getElementById('site-name-input').value;
+                    const newMinTopUp = parseFloat(document.getElementById('min-topup-input').value);
+                    const newGuestPrompt = document.getElementById('guest-prompt-input').value;
+                    if (newName && newMinTopUp > 0) {
+                        await setDoc(doc(db, "storeSettings", "config"), { 
+                            siteName: newName,
+                            minimumTopUpAmount: newMinTopUp,
+                            guestPromptMessage: newGuestPrompt
+                        }, { merge: true });
+                        showToast('Общие настройки сохранены!');
+                        loadStoreSettings();
+                        updateAuthUI();
+                    } else {
+                        showToast('Проверьте введенные данные', true);
+                    }
+                }
+                 if (target.id === 'save-logo-btn') {
+                    const file = document.getElementById('logo-upload-input').files[0];
+                    if (file) {
+                        showToast('Загрузка логотипа...');
+                        const logoUrl = await uploadImage(file, 'store_assets');
+                        if (logoUrl) {
+                            await setDoc(doc(db, "storeSettings", "config"), { logoUrl }, { merge: true });
+                            showToast('Логотип сохранен!');
+                            loadStoreSettings();
+                        }
+                    }
+                }
+                if (target.id === 'add-banner-btn') {
+                    showBannerForm();
+                }
+                 if (target.id === 'clear-banners-btn') {
+                    confirmAction('Вы уверены, что хотите удалить все баннеры?', async () => {
+                        await setDoc(doc(db, "storeSettings", "config"), { adBanners: [] }, { merge: true });
+                        showToast('Все баннеры удалены');
+                        loadCustomizationPage();
+                    });
+                }
+                if (closest('.delete-banner-btn')) {
+                    const index = closest('.delete-banner-btn').dataset.index;
+                    const settings = (await getDoc(doc(db, "storeSettings", "config"))).data() || {};
+                    let banners = settings.adBanners || [];
+                    banners.splice(index, 1);
+                    await setDoc(doc(db, "storeSettings", "config"), { adBanners: banners }, { merge: true });
+                    showToast('Баннер удален');
+                    loadCustomizationPage();
+                }
+                 if (target.id === 'add-social-link-btn') {
+                    showSocialLinkForm();
+                }
+                 if (target.id === 'clear-social-links-btn') {
+                    confirmAction('Вы уверены, что хотите удалить все социальные сети?', async () => {
+                        await setDoc(doc(db, "storeSettings", "config"), { socialLinks: [] }, { merge: true });
+                        showToast('Все социальные сети удалены');
+                        loadCustomizationPage();
+                    });
+                }
+                if (closest('.delete-social-link-btn')) {
+                    const id = closest('.delete-social-link-btn').dataset.id;
+                    const settings = (await getDoc(doc(db, "storeSettings", "config"))).data() || {};
+                    let links = (settings.socialLinks || []).filter(link => link.id !== id);
+                    await setDoc(doc(db, "storeSettings", "config"), { socialLinks: links }, { merge: true });
+                    showToast('Ссылка удалена');
+                    loadCustomizationPage();
+                }
+                if (target.id === 'save-announcement-btn') {
+                    const message = document.getElementById('announcement-message').value;
+                    const enabled = document.getElementById('announcement-enabled').checked;
+                    await setDoc(doc(db, "storeSettings", "config"), { announcement: { message, enabled } }, { merge: true });
+                    showToast('Объявление сохранено!');
+                    appState.announcement = { message, enabled }; // Update local state
+                }
+            });
+        }
+        
+        // --- ALL OTHER FUNCTIONS ---
+        function showFulfillmentDataModal(purchaseId, data) {
+            const content = `<p class="mb-2">Данные, предоставленные клиентом:</p>
+            <div class="p-4 bg-gray-200 dark:bg-gray-700 rounded-lg font-mono">${data}</div>`;
+
+            showModal('Данные заказа', content, async () => {
+                await updateDoc(doc(db, 'purchases', purchaseId), { status: 'Завершен' });
+                showToast('Заказ завершен!');
+                return true;
+            }, 'Завершить заказ');
+        }
+
+        function showFulfillmentModal(purchaseId, prompt) {
+            const onSave = async (modal) => {
+                const userInput = modal.querySelector('#fulfillment-input').value;
+                if (!userInput.trim()) {
+                    showToast('Пожалуйста, введите данные', true);
+                    return false;
+                }
+                await updateDoc(doc(db, 'purchases', purchaseId), {
+                    status: 'В обработке',
+                    fulfillmentData: userInput
+                });
+                showToast('Данные отправлены на обработку!');
+                return true;
+            };
+
+            const content = `
+                <p class="mb-4">${prompt}</p>
+                <input id="fulfillment-input" class="w-full modern-input" placeholder="Ваши данные...">
+            `;
+
+            showModal('Получение товара', content, onSave, 'Отправить');
+        }
+
+        async function showProofUploadModal(purchaseId) {
+            const purchaseDocRef = doc(db, "purchases", purchaseId);
+            const purchaseSnap = await getDoc(purchaseDocRef);
+            if (!purchaseSnap.exists()) {
+                showToast("Заказ не найден", true);
+                return;
+            }
+            const purchase = purchaseSnap.data();
+            const paymentMethod = paymentMethods.find(m => m.id === purchase.paymentMethodId);
+            if (!paymentMethod) {
+                showToast("Способ оплаты не найден", true);
+                return;
+            }
+            
+            let requisitesHTML = `<p class="my-2 p-2 bg-gray-200 dark:bg-gray-700 rounded font-mono">${paymentMethod.requisites}</p>`;
+            // Special case for YooMoney to show QR
+            if (paymentMethod.name.toLowerCase().includes('yoomoney') && paymentMethod.qrCodeUrl) {
+                requisitesHTML += `<div class="mt-4 flex justify-center"><img src="${paymentMethod.qrCodeUrl}" alt="YooMoney QR Code" class="w-48 h-48"></div>`;
+            }
+
+
+            const onSave = async (modal) => {
+                const fileInput = modal.querySelector('#proof-file-input');
+                const file = fileInput.files[0];
+                if (!file) {
+                    showToast("Пожалуйста, выберите файл", true);
+                    return false; // Prevent modal from closing
+                }
+                showToast('Загрузка чека...');
+                const imageUrl = await uploadImage(file);
+                if (imageUrl) {
+                    await updateDoc(purchaseDocRef, {
+                        paymentProofUrl: imageUrl,
+                        status: 'Ожидает подтверждения'
+                    });
+                    showToast("Чек успешно загружен!");
+                    return true; // Close modal
+                } else {
+                    return false;
+                }
+            };
+
+            const modalContent = `
+                <div>
+                    <p>Пожалуйста, переведите <strong>${formatPrice(purchase.finalPrice)}</strong> на следующие реквизиты:</p>
+                    <p class="font-semibold">${paymentMethod.name}</p>
+                    ${requisitesHTML}
+                    <p class="mt-4">После оплаты, загрузите чек (скриншот) подтверждающий перевод.</p>
+                    <input type="file" id="proof-file-input" class="w-full modern-input mt-2" accept="image/*">
+                </div>
+            `;
+            showModal("Загрузка чека", modalContent, onSave, "Отправить чек");
+        };
+        function renderAdminPaymentItem(id, d) { return `<div class="card-bg p-4 rounded flex justify-between items-center border border-custom"><div><img src="${d.logoUrl}" class="h-8 inline-block mr-4"><p class="inline-block">${d.name}</p></div><div class="flex items-center gap-4"><input type="checkbox" class="toggle-payment-btn" data-id="${id}" ${d.isEnabled ? 'checked' : ''}><button class="edit-btn" data-id="${id}" data-type="payment">Ред.</button><button class="delete-btn text-red-500" data-collection="paymentMethods" data-id="${id}">Удл.</button></div></div>`; }
+        function renderAdminSocialLinks(links) { const cont = document.getElementById('social-links-admin'); if(!cont) return; cont.innerHTML = (links||[]).map(l => `<div class="flex items-center justify-between gap-2 p-2 card-bg rounded"><span>${l.name} (${l.url})</span><button class="delete-social-link-btn btn btn-danger text-sm" data-id="${l.id}">Удалить</button></div>`).join(''); };
+        function renderAdminFaqItem(id, d) { return `<div class="card-bg p-4 rounded flex justify-between items-center border border-custom"><div><p>${d.question}</p></div><div><button class="edit-btn text-blue-400 mr-4" data-id="${id}" data-type="faq">Ред.</button><button class="delete-btn text-red-500" data-collection="faq" data-id="${id}">Удл.</button></div></div>`; }
+        function renderAdminPromoItem(id, d) {
+            const product = d.productId ? allProducts.find(p => p.id === d.productId) : null;
+            const productInfo = product ? `Для: <strong>${product.name}</strong>` : 'Для всех товаров';
+            return `<div class="card-bg p-4 rounded border border-custom">
+                Код: <strong>${d.code}</strong>, Скидка: ${d.discount}%, Исп: ${d.uses||0}/${d.limit}, ${productInfo}
+                <div class="float-right">
+                    <button class="edit-btn text-blue-400 mr-4" data-id="${id}" data-type="promocode">Ред.</button>
+                    <button class="delete-btn text-red-500" data-collection="promocodes" data-id="${id}">Удл.</button>
+                </div>
+            </div>`;
+        }
+        async function loadAdminDownloadPage() { const el = document.getElementById('admin-tab-content'); const appData = (await getDoc(doc(db, "storeSettings", "config"))).data()?.appDownload || {}; el.innerHTML = `<h3>Страница "Скачать"</h3><div class="max-w-xl space-y-4"><div><label>Описание</label><textarea id="download-description" class="w-full p-2 border rounded input-bg">${appData.description || ''}</textarea></div><div><label>Ссылка .exe</label><input id="download-exe-link" class="w-full p-2 border rounded" value="${appData.exeLink || ''}"></div><div><label>Ссылка .apk</label><input id="download-apk-link" class="w-full p-2 border rounded" value="${appData.apkLink || ''}"></div><button id="save-download-settings-btn" class="btn btn-primary">Сохранить</button></div>`; };
+        async function loadAdminAnnouncementPage() { const el = document.getElementById('admin-tab-content'); const settings = (await getDoc(doc(db, "storeSettings", "config"))).data() || {}; const announcement = settings.announcement || { message: '', enabled: false }; el.innerHTML = `<h3 class="text-2xl font-bold mb-4">Объявление для всех</h3><div class="space-y-4 max-w-xl"><div><label for="announcement-message" class="block text-sm font-medium mb-1">Текст сообщения</label><textarea id="announcement-message" class="w-full modern-input" rows="4">${announcement.message}</textarea></div><div class="flex items-center"><input type="checkbox" id="announcement-enabled" ${announcement.enabled ? 'checked' : ''} class="h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary"><label for="announcement-enabled" class="ml-2 block text-sm">Включить объявление</label></div><button id="save-announcement-btn" class="btn btn-primary">Сохранить</button></div>`; };
+        function loadFaq() { const cont = document.getElementById('faq-content'); if(!cont) return; cont.innerHTML = `<div class="max-w-4xl mx-auto"><h1 class="text-4xl font-bold text-center mb-12" data-lang-key="faq_title"></h1><div id="faq-list" class="space-y-4"></div></div>`; const list = document.getElementById('faq-list'); onSnapshot(collection(db, "faq"), s => { list.innerHTML = s.docs.map(d => { const i = d.data(); return `<div class="card-bg rounded-lg shadow border border-custom"><button class="faq-question w-full text-left p-6 font-bold flex justify-between items-center text-lg"><span>${i.question}</span><svg class="faq-icon w-6 h-6 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" /></svg></button><div class="faq-answer"><p class="p-6 pt-0">${i.answer}</p></div></div>` }).join(''); }); };
         async function loadProfilePage() { 
             const el = document.getElementById('profile-content'); 
             if (!el || !currentUser) return; 
+            const userDoc = await getDoc(doc(db, "users", currentUser.uid));
+            const userData = userDoc.data() || {};
+            
+            const purchasesQuery = query(collection(db, "purchases"), where("userId", "==", currentUser.uid), orderBy("createdAt", "desc"));
+            const purchasesSnapshot = await getDocs(purchasesQuery);
+            const purchasesHistoryHTML = purchasesSnapshot.docs.map(d => renderPurchaseItem(d.id, d.data())).join('') || '<p class="text-center text-gray-500 mt-4">У вас еще нет покупок.</p>';
+
             el.innerHTML = `
-                <h1 class="text-4xl font-bold text-center mb-8">Профиль</h1>
-                <div class="max-w-md mx-auto card-bg p-8 rounded-2xl shadow-lg text-center">
-                    <img id="profile-avatar" src="${currentUser.photoURL || 'https://placehold.co/128x128/7c3aed/ffffff?text=A'}" class="w-32 h-32 rounded-full mb-4 shadow-md mx-auto">
-                    <input type="file" id="avatar-upload" class="hidden" accept="image/*">
-                    <button id="change-avatar-btn" class="text-sm text-primary hover:underline">Сменить фото</button>
-                    <h2 class="text-2xl font-bold mt-4">${currentUser.displayName}</h2>
-                    <p class="text-gray-400">${currentUser.email}</p>
-                    <button id="logout-btn-profile" class="mt-6 btn btn-danger">Выйти</button>
+                <h1 class="text-4xl font-bold text-center mb-8" data-lang-key="profile_title"></h1>
+                <div class="max-w-4xl mx-auto card-bg p-8 rounded-2xl shadow-lg space-y-8">
+                    <div class="flex flex-col md:flex-row items-center gap-8">
+                        <div class="flex flex-col items-center">
+                            <img id="profile-avatar" src="${currentUser.photoURL || 'https://placehold.co/128x128'}" class="w-32 h-32 rounded-full mb-4 shadow-md">
+                            <input type="file" id="avatar-upload" class="hidden" accept="image/*">
+                            <button id="change-avatar-btn" class="text-sm text-primary hover:underline">Сменить фото</button>
+                        </div>
+                        <div class="flex-grow w-full space-y-4">
+                             <div>
+                                <label for="profile-firstname" class="block text-sm font-medium text-gray-400">Имя</label>
+                                <input id="profile-firstname" class="w-full p-2 border-b-2 bg-transparent focus:outline-none focus:border-primary text-xl" value="${userData.firstName || ''}">
+                            </div>
+                             <div>
+                                <label for="profile-lastname" class="block text-sm font-medium text-gray-400">Фамилия</label>
+                                <input id="profile-lastname" class="w-full p-2 border-b-2 bg-transparent focus:outline-none focus:border-primary text-xl" value="${userData.lastName || ''}">
+                            </div>
+                            <div>
+                                <label for="profile-nickname" class="block text-sm font-medium text-gray-400">Никнейм</label>
+                                <input id="profile-nickname" class="w-full p-2 border-b-2 bg-transparent focus:outline-none focus:border-primary text-xl" value="${userData.nickname || ''}">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="mt-8 flex gap-4">
+                        <button id="save-profile-btn" class="flex-grow btn btn-primary">Сохранить</button>
+                        <button id="reset-profile-btn" class="btn bg-yellow-500 text-white">Сбросить</button>
+                        <button id="logout-btn-profile" class="flex-grow btn btn-danger">Выйти</button>
+                    </div>
+                    <div>
+                        <h2 class="text-2xl font-bold mt-12 mb-6 border-b pb-2">История покупок</h2>
+                        <div class="space-y-6">${purchasesHistoryHTML}</div>
+                    </div>
                 </div>`;
             
             document.getElementById('change-avatar-btn').onclick = () => document.getElementById('avatar-upload').click();
             document.getElementById('avatar-upload').onchange = async (e) => {
                 const file = e.target.files[0];
                 if (file) {
-                    const photoURL = await uploadImage(file);
+                    showToast('Загрузка фото...');
+                    const photoURL = await uploadImage(file, `avatars/${currentUser.uid}`);
                     if (photoURL) {
                         await updateProfile(auth.currentUser, { photoURL });
-                        await updateDoc(doc(db, "users", currentUser.uid), { photoURL }, { merge: true });
+                        await updateDoc(doc(db, "users", currentUser.uid), { photoURL });
                         showToast('Аватар обновлен!');
                         document.getElementById('profile-avatar').src = photoURL;
-                        updateAuthUI();
+                        await updateAuthUI(); // Refresh header avatar
                     }
                 }
             };
-        };
 
-        async function loadChatsPage() { 
+            document.getElementById('save-profile-btn').onclick = async () => {
+                const firstName = document.getElementById('profile-firstname').value;
+                const lastName = document.getElementById('profile-lastname').value;
+                const nickname = document.getElementById('profile-nickname').value;
+                await updateDoc(doc(db, "users", currentUser.uid), { firstName, lastName, nickname });
+                showToast('Профиль обновлен!');
+                updateAuthUI();
+            };
+
+            document.getElementById('reset-profile-btn').onclick = () => {
+                confirmAction('Вы уверены, что хотите сбросить профиль? Имя, фамилия, никнейм и фото будут удалены.', async () => {
+                    const defaultNickname = `Пользователь${currentUser.uid.substring(0, 5)}`;
+                    await updateDoc(doc(db, "users", currentUser.uid), {
+                        firstName: '',
+                        lastName: '',
+                        nickname: defaultNickname,
+                        photoURL: '' 
+                    });
+                    await updateProfile(auth.currentUser, { photoURL: '' });
+                    showToast('Профиль сброшен!');
+                    loadProfilePage(); 
+                });
+            };
+        };
+        function loadDownloadPage() { const el = document.getElementById('download-content'); const data = appState.appDownload || {}; el.innerHTML = `<div class="max-w-xl mx-auto card-bg p-8 rounded-lg text-center"><h1 class="text-4xl font-bold mb-4" data-lang-key="download_title"></h1><p class="mb-6">${data.description || 'Ссылки не настроены'}</p><div class="flex flex-col gap-4">${data.exeLink ? `<a href="${data.exeLink}" class="w-full btn btn-primary">Windows (.exe)</a>` : ''}${data.apkLink ? `<a href="${data.apkLink}" class="w-full btn btn-primary">Android (.apk)</a>` : ''}</div></div>`; translatePage(); };
+        async function loadChatsPage(subpage) { 
             const el = document.getElementById('chats-content'); 
             if (!el || !currentUser) return; 
-            
+            if(isAdmin) { 
+                loadAdminChatsList(subpage); 
+                return; 
+            }
             const chatId = `${currentUser.uid}_${ADMIN_UID}`;
-            await setDoc(doc(db, "userChats", currentUser.uid), {
+            const chatRef = doc(db, "userChats", currentUser.uid);
+
+            await setDoc(chatRef, {
                 lastActivity: serverTimestamp(),
+                partnerId: ADMIN_UID,
+                partnerName: "Поддержка",
                 userName: currentUser.displayName,
                 userId: currentUser.uid,
             }, { merge: true });
-            
-            el.innerHTML = `<h1 class="text-4xl font-bold text-center mb-8">Чат с поддержкой</h1>`;
-            renderChatInterface(el, chatId, currentUser.uid);
-        };
 
-        function renderChatInterface(cont, chatId, currentId) { 
-            cont.innerHTML += `
-                <div class="card-bg p-4 rounded-lg shadow-lg max-w-2xl mx-auto">
-                    <div id="messages-container" class="h-96 p-4 overflow-y-auto flex flex-col space-y-4"></div>
-                    <div class="p-4 border-t border-custom flex gap-2">
-                        <input id="chat-message-input" class="flex-grow modern-input">
-                        <button id="send-chat-message" class="btn btn-primary">Отправить</button>
-                    </div>
+            el.innerHTML = `<h1 class="text-4xl font-bold text-center mb-8" data-lang-key="nav_chats"></h1>`;
+            renderChatInterface(el, chatId, `Чат с поддержкой (Ваш ID: ${currentUser.uid})`, currentUser.uid);
+        };
+        function loadWishlistPage() { 
+            const el = document.getElementById('wishlist-content'); 
+            const prods = allProducts.filter(p => userWishlist.includes(p.id)); 
+            el.innerHTML = `<h1 class="text-4xl font-bold text-center mb-8">Избранное</h1>` + 
+            (prods.length 
+                ? `<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">${prods.map(p => {
+                    return `<div class="relative group">
+                                ${renderProductCard(p)}
+                            </div>`;
+                }).join('')}</div>` 
+                : '<p class="text-center">Здесь будут товары, которые вы добавили в избранное.</p>'); 
+        };
+        function addToCart(pId) { const p = allProducts.find(p => p.id === pId); if(p) { cart.push({ id: p.id, name: p.name, price: p.price, imageUrl: p.imageUrl }); localStorage.setItem('asonik_cart', JSON.stringify(cart)); updateCartCount(); showToast('Добавлено в корзину'); } };
+        function updateCartCount() { const el = document.getElementById('cart-count'); if (!el) return; el.textContent = cart.length; el.classList.toggle('hidden', cart.length === 0); };
+        function renderCartPage() { const el = document.getElementById('cart-content'); el.innerHTML = `<h1 class="text-4xl font-bold text-center mb-8" data-lang-key="cart_title"></h1>`; if (cart.length === 0) { el.innerHTML += '<p class="text-center">Ваша корзина пуста.</p>'; return; } let total = cart.reduce((s, i) => s + (i.price || 0), 0); el.innerHTML += `<div class="space-y-4">${cart.map((i, idx) => `<div class="card-bg p-4 rounded-lg flex justify-between items-center"><div class="flex items-center gap-4"><img src="${i.imageUrl||''}" class="w-16 h-16 rounded object-cover"><p>${i.name}</p></div><div class="flex items-center gap-4"><span>${formatPrice(i.price)}</span><button class="remove-from-cart-btn text-red-500 font-bold text-xl" data-index="${idx}">&times;</button></div></div>`).join('')}</div><div class="mt-6 pt-4 border-t border-custom flex justify-end items-center gap-4"><span class="text-2xl font-bold">Итого: ${formatPrice(total)}</span><button id="checkout-cart-btn" class="btn btn-primary">Оформить заказ</button></div>`; };
+        function loadAdminUsers() {
+            const el = document.getElementById('admin-tab-content');
+            if (!el) return;
+            el.innerHTML = `<h3 class="text-2xl font-bold mb-4">Пользователи</h3>
+                <div class="flex justify-between items-center mb-4">
+                    <input id="user-search-input" class="modern-input w-1/2" placeholder="Поиск по email или имени...">
+                    <span id="user-stats" class="font-semibold"></span>
+                </div>
+                <div id="users-list" class="space-y-3 mt-4"></div>`;
+            
+            const searchInput = document.getElementById('user-search-input');
+            searchInput.addEventListener('input', () => renderUsersList(searchInput.value));
+
+            onSnapshot(query(collection(db, "users")), s => {
+                allUsers = s.docs.map(d => d.data());
+                renderUsersList();
+            });
+        };
+        function renderUsersList(searchTerm = '') {
+            const listEl = document.getElementById('users-list');
+            const statsEl = document.getElementById('user-stats');
+            if (!listEl || !statsEl) return;
+
+            const lowercasedTerm = searchTerm.toLowerCase();
+            const filteredUsers = searchTerm
+                ? allUsers.filter(u => u.displayName.toLowerCase().includes(lowercasedTerm) || u.email.toLowerCase().includes(lowercasedTerm))
+                : allUsers;
+            
+            statsEl.textContent = `Всего пользователей: ${allUsers.length}`;
+            listEl.innerHTML = filteredUsers.map(u => renderAdminUserItem(u)).join('') || '<p>Пользователи не найдены.</p>';
+        }
+
+        function renderAdminUserItem(u) {
+            const isBanned = u.isBanned || false;
+            return `<div class="card-bg p-4 rounded flex flex-col md:flex-row justify-between items-start md:items-center border border-custom gap-4"><div><p>${u.displayName} (${u.email})</p><p class="text-xs text-gray-400">UID: ${u.uid}</p><p>Баланс: ${formatPrice(u.balance || 0)}</p></div><div class="flex items-center gap-2 flex-wrap"><input type="number" class="user-balance-input w-24 p-2 rounded bg-transparent border" placeholder="Сумма"><button class="add-balance-btn bg-green-500 text-white p-2 rounded-md" data-uid="${u.uid}">➕</button><button class="remove-balance-btn bg-yellow-500 text-white p-2 rounded-md" data-uid="${u.uid}">➖</button><button class="annul-balance-btn bg-red-500 text-white p-2 rounded-md" data-uid="${u.uid}">Обнулить</button><button class="ban-user-btn ${isBanned ? 'bg-blue-500' : 'bg-red-700'} text-white p-2 rounded-md" data-uid="${u.uid}">${isBanned ? 'Разбанить' : 'Забанить'}</button></div></div>`;
+        }
+        async function uploadImage(file, path = 'images') {
+            showToast('Начинаю загрузку изображения...', false);
+            const storageRef = ref(storage, `${path}/${Date.now()}_${file.name}`);
+            try {
+                const snapshot = await uploadBytes(storageRef, file);
+                const downloadURL = await getDownloadURL(snapshot.ref);
+                showToast('Изображение успешно загружено!', false);
+                return downloadURL;
+            } catch (e) {
+                console.error("Firebase Storage Upload Error: ", e);
+                showToast('Ошибка Firebase. Пробую резервный способ...', true);
+                // Fallback to imgbb
+                const fd = new FormData(); 
+                fd.append('image', file); 
+                try { 
+                    const res = await fetch(`https://api.imgbb.com/1/upload?key=${IMGBB_API_KEY}`, { method: 'POST', body: fd }); 
+                    const r = await res.json(); 
+                    if (r.success) {
+                        showToast('Изображение успешно загружено через резервный хостинг!', false);
+                        return r.data.url;
+                    } 
+                    else throw new Error(r.error.message); 
+                } catch (e) { 
+                    showToast('Ошибка загрузки изображения: ' + e.message, true); 
+                    return null; 
+                }
+            }
+        }
+        function loadAdminList(coll, title, render, btn) { const el = document.getElementById('admin-tab-content'); if(!el) return; el.innerHTML = `<div class="flex justify-between items-center mb-6"><h3 class="text-2xl font-bold">${title}</h3><div>${btn || ''}</div></div><div id="admin-list-container" class="space-y-3"></div>`; onSnapshot(query(collection(db, coll)), s => { const listEl = document.getElementById('admin-list-container'); if(listEl) listEl.innerHTML = s.docs.map(d => render(d.id, d.data())).join('') || '<p>Пусто</p>'; }); };
+        function loadAdminPurchases() { const el = document.getElementById('admin-tab-content'); if(!el) return; el.innerHTML = `<h3 class="text-2xl font-bold">Покупки</h3><div id="admin-list-container" class="space-y-3 mt-4"></div>`; onSnapshot(query(collection(db, "purchases"), orderBy("createdAt", "desc")), s => { const listEl = document.getElementById('admin-list-container'); if(listEl) listEl.innerHTML = s.docs.map(d => renderAdminPurchaseItem(d.id, d.data())).join(''); }); };
+        function renderAdminProductItem(id, d) { return `
+            <div class="card-bg p-4 rounded flex justify-between items-center border border-custom">
+                <div class="flex items-center gap-4">
+                    <img src="${d.imageUrl || 'https://placehold.co/64x64'}" class="w-16 h-16 object-cover rounded-md">
+                    <p class="font-semibold">${d.name}</p>
+                </div>
+                <div class="flex items-center gap-2">
+                    <button class="edit-btn btn bg-blue-500 text-white text-sm" data-id="${id}" data-type="product">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
+                        <span class="hidden sm:inline">Ред.</span>
+                    </button>
+                    <button class="delete-btn btn btn-danger text-sm" data-collection="products" data-id="${id}">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                        <span class="hidden sm:inline">Удалить</span>
+                    </button>
+                </div>
+            </div>`;
+        }
+        async function showPromoForm(promoId) {
+            let promo = { code: '', discount: 0, limit: 1, uses: 0, productId: '' };
+            if (promoId) {
+                const docSnap = await getDoc(doc(db, 'promocodes', promoId));
+                if (docSnap.exists()) promo = { id: docSnap.id, ...docSnap.data() };
+            }
+
+            const onSave = async (modal) => {
+                const data = {
+                    code: modal.querySelector('#promo-code').value.toUpperCase(),
+                    discount: parseFloat(modal.querySelector('#promo-discount').value),
+                    limit: parseInt(modal.querySelector('#promo-limit').value),
+                    uses: promo.uses, // Keep existing uses
+                    productId: modal.querySelector('#promo-product').value || null
+                };
+                if (!data.code || !data.discount || !data.limit) {
+                    showToast('Заполните все обязательные поля', true);
+                    return false;
+                }
+                if (promo.id) {
+                    await setDoc(doc(db, 'promocodes', promo.id), data, { merge: true });
+                } else {
+                    await setDoc(doc(db, 'promocodes', data.code), data); // Use code as ID for new promos
+                }
+                showToast('Промокод сохранен!');
+                return true;
+            };
+
+            const productOptions = allProducts.map(p => `<option value="${p.id}" ${promo.productId === p.id ? 'selected' : ''}>${p.name}</option>`).join('');
+
+            const formHTML = `<div class="space-y-4">
+                <div><label>Код</label><input id="promo-code" class="w-full modern-input" value="${promo.code}" ${promo.id ? 'readonly' : ''}></div>
+                <div><label>Скидка (%)</label><input type="number" id="promo-discount" class="w-full modern-input" value="${promo.discount}"></div>
+                <div><label>Лимит использований</label><input type="number" id="promo-limit" class="w-full modern-input" value="${promo.limit}"></div>
+                <div><label>Применить к товару (необязательно)</label><select id="promo-product" class="w-full modern-input"><option value="">Для всех товаров</option>${productOptions}</select></div>
+            </div>`;
+            showModal(promo.id ? 'Редактировать промокод' : 'Добавить промокод', formHTML, onSave, 'Сохранить');
+        }
+
+        function showBannerForm() {
+            const onSave = async (modal) => {
+                const imageUrl = modal.querySelector('#banner-image-url').value;
+                const linkUrl = modal.querySelector('#banner-link-url').value;
+                if (!imageUrl || !linkUrl) {
+                    showToast('Заполните все поля', true);
+                    return false;
+                }
+                const newBanner = { imageUrl, linkUrl };
+                await setDoc(doc(db, "storeSettings", "config"), { adBanners: arrayUnion(newBanner) }, { merge: true });
+                showToast('Баннер добавлен!');
+                loadCustomizationPage();
+                return true;
+            };
+            const formHTML = `<div class="space-y-4">
+                <div><label>URL изображения</label><input id="banner-image-url" class="w-full modern-input" placeholder="https://example.com/image.png"></div>
+                <div><label>URL ссылки</label><input id="banner-link-url" class="w-full modern-input" placeholder="https://example.com/product"></div>
+            </div>`;
+            showModal('Добавить баннер', formHTML, onSave, 'Добавить');
+        }
+        function renderAdminBanners(banners) {
+            const cont = document.getElementById('banners-list');
+            if (!cont) return;
+            cont.innerHTML = (banners || []).map((b, index) => `<div class="flex items-center justify-between gap-2 p-2 card-bg rounded"><span>${b.linkUrl}</span><button class="delete-banner-btn btn btn-danger text-sm" data-index="${index}">Удалить</button></div>`).join('');
+        }
+
+        function showSocialLinkForm() {
+             const onSave = async (modal) => {
+                const name = modal.querySelector('#social-name').value;
+                const url = modal.querySelector('#social-url').value;
+                const icon = modal.querySelector('#social-icon').value;
+                if (!name || !url || !icon) {
+                    showToast('Заполните все поля', true);
+                    return false;
+                }
+                const newLink = { id: `link_${Date.now()}`, name, url, icon };
+                await setDoc(doc(db, "storeSettings", "config"), { socialLinks: arrayUnion(newLink) }, { merge: true });
+                showToast('Ссылка добавлена!');
+                loadCustomizationPage();
+                return true;
+            };
+             const formHTML = `<div class="space-y-4">
+                <div><label>Название</label><input id="social-name" class="w-full modern-input" placeholder="Telegram"></div>
+                <div><label>URL</label><input id="social-url" class="w-full modern-input" placeholder="https://t.me/username"></div>
+                <div><label>SVG иконка</label><textarea id="social-icon" class="w-full modern-input" rows="3" placeholder='<path d="..."/>'></textarea></div>
+            </div>`;
+            showModal('Добавить соц.сеть', formHTML, onSave, 'Добавить');
+        }
+
+        function loadAdminChatsList(activeChatUserId) { 
+            const el = document.getElementById('admin-tab-content'); 
+            if(!el) return; 
+            el.innerHTML = `<div class="flex gap-4 h-[75vh]"><div id="chat-list-sidebar" class="w-1/3 border-r pr-2 overflow-y-auto"></div><div id="chat-view" class="w-2/3 flex flex-col"></div></div>`; 
+            const sidebar = document.getElementById('chat-list-sidebar'); 
+            onSnapshot(query(collection(db, "userChats"), orderBy("lastActivity", "desc")), s => { 
+                if(sidebar) sidebar.innerHTML = s.docs.filter(d=>d.id !== ADMIN_UID).map(d => {
+                    const data = d.data();
+                    return `<a href="#admin/chats/${data.userId}" class="nav-link block p-3 rounded-lg transition-colors ${activeChatUserId === data.userId ? 'bg-primary text-white' : 'hover:bg-primary/10'}">${data.userName || 'User'} <span class="text-xs opacity-70">(${data.userId})</span></a>`
+                }).join(''); 
+            }); 
+            if(activeChatUserId) { 
+                const chatView = document.getElementById('chat-view'); 
+                if(chatView) {
+                    const chatId = `${activeChatUserId}_${ADMIN_UID}`;
+                    const chatTitle = `Чат с пользователем (ID: ${activeChatUserId})`;
+                    renderChatInterface(chatView, chatId, chatTitle, ADMIN_UID); 
+                }
+            } else {
+                const chatView = document.getElementById('chat-view');
+                if(chatView) chatView.innerHTML = `<div class="flex-grow flex items-center justify-center text-gray-500"><p>Выберите чат для просмотра</p></div>`;
+            }
+        };
+        function renderChatInterface(cont, chatId, title, currentId) { 
+            cont.innerHTML = `
+                <div class="p-4 font-bold border-b">${title}</div>
+                <div id="messages-container" class="p-4 flex-grow overflow-y-auto flex flex-col space-y-4"></div>
+                <div class="p-4 border-t flex gap-2">
+                    <input id="chat-message-input" class="flex-grow modern-input">
+                    <button id="send-chat-message" class="btn btn-primary">Отправить</button>
                 </div>`; 
             
             const msgCont = document.getElementById('messages-container'); 
@@ -437,8 +1981,13 @@
             const sendMessage = async () => {
                 const text = msgInput.value.trim();
                 if (text) {
-                    await addDoc(collection(db, `chats/${chatId}/messages`), { text, senderId: currentId, createdAt: serverTimestamp() });
-                    await updateDoc(doc(db, "userChats", currentUser.uid), { lastActivity: serverTimestamp() });
+                    const [userUid, adminUid] = chatId.split('_');
+                    await addDoc(collection(db, `chats/${chatId}/messages`), {
+                        text,
+                        senderId: currentId,
+                        createdAt: serverTimestamp()
+                    });
+                    await setDoc(doc(db, 'userChats', userUid), { lastActivity: serverTimestamp() }, { merge: true });
                     msgInput.value = '';
                 }
             };
@@ -448,351 +1997,244 @@
 
             onSnapshot(query(collection(db, `chats/${chatId}/messages`), orderBy("createdAt", "asc")), s => { 
                 if(msgCont) { 
-                    msgCont.innerHTML = s.docs.map(d => `<div class="flex items-end gap-2 ${d.data().senderId === currentId ? 'self-end' : ''}"><div class="px-4 py-2 rounded-lg ${d.data().senderId === currentId ? 'bg-primary text-white' : 'card-bg'}">${d.data().text}</div></div>`).join(''); 
+                    msgCont.innerHTML = s.docs.map(d => `<div class="flex items-end gap-2 ${d.data().senderId === currentId ? 'self-end' : 'self-start'}"><div class="px-4 py-2 rounded-lg ${d.data().senderId === currentId ? 'bg-primary text-white' : 'bg-gray-200 dark:bg-gray-700'}">${d.data().text}</div></div>`).join(''); 
                     msgCont.scrollTop = msgCont.scrollHeight; 
                 } 
             }); 
         };
-
-        function loadFaq() {
-            const cont = document.getElementById('faq-content');
-            if (!cont) return;
-            cont.innerHTML = `<div class="max-w-4xl mx-auto">
-                <h1 class="text-4xl font-bold text-center mb-12">Часто задаваемые вопросы</h1>
-                <div id="faq-list" class="space-y-4"></div>
-            </div>`;
-            const list = document.getElementById('faq-list');
-            onSnapshot(query(collection(db, "faq"), orderBy("order", "asc")), s => {
-                if(list) {
-                    list.innerHTML = s.docs.map(d => {
-                        const i = d.data();
-                        return `<div class="card-bg rounded-lg shadow border border-custom">
-                            <button class="faq-question w-full text-left p-6 font-bold flex justify-between items-center text-lg">
-                                <span>${i.question}</span>
-                                <svg class="faq-icon w-6 h-6 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" /></svg>
-                            </button>
-                            <div class="faq-answer">
-                                <p class="p-6 pt-0 text-gray-600 dark:text-gray-400">${i.answer}</p>
-                            </div>
-                        </div>`
-                    }).join('');
-                }
+        function loadAdminReviews() {
+            const el = document.getElementById('admin-tab-content');
+            if(!el) return;
+            el.innerHTML = `<div class="flex justify-between items-center mb-6"><h3 class="text-2xl font-bold">Отзывы</h3><button id="add-review-btn" class="btn btn-primary">Добавить отзыв</button></div><div id="reviews-list" class="space-y-4"></div>`;
+            document.getElementById('add-review-btn').onclick = () => showAdminReviewForm();
+            onSnapshot(query(collection(db, "reviews"), orderBy("createdAt", "desc")), s => {
+                const listEl = document.getElementById('reviews-list');
+                if(listEl) listEl.innerHTML = s.docs.map(d => renderAdminReviewItem(d.id, d.data())).join('') || '<p>Отзывов пока нет.</p>';
             });
-        }
-        
-        // --- UI & THEME ---
-        function initMobileMenu() {
-            const menu = document.getElementById('mobile-menu');
-            const openBtn = document.getElementById('mobile-menu-btn');
-            const closeBtn = document.getElementById('mobile-menu-close-btn');
-            const linksContainer = document.getElementById('mobile-nav-links');
-
-            linksContainer.innerHTML = document.getElementById('desktop-nav').innerHTML;
-            const toggleMenu = (isOpen) => menu.classList.toggle('open', isOpen);
-            
-            openBtn.addEventListener('click', (e) => { e.stopPropagation(); toggleMenu(true); });
-            closeBtn.addEventListener('click', () => toggleMenu(false));
-            menu.addEventListener('click', (e) => { if (e.target === menu) toggleMenu(false); });
-            linksContainer.addEventListener('click', (e) => { if (e.target.tagName === 'A') toggleMenu(false); });
-        }
-
-        function initTheme() { 
-            const btn = document.getElementById('theme-toggle'); 
-            const apply = t => { 
-                document.documentElement.classList.toggle('dark', t === 'dark');
-                btn.innerHTML = t === 'dark' ? '☀️' : '🌙';
-            }; 
-            const currentTheme = localStorage.getItem('color-theme') || 'light';
-            apply(currentTheme); 
-            btn.onclick=() => {
-                const newTheme = document.documentElement.classList.contains('dark') ? 'light' : 'dark'; 
-                localStorage.setItem('color-theme', newTheme); 
-                apply(newTheme);
-            };
         };
-
-        async function updateAuthUI() { 
-            const c = document.getElementById('auth-container'); 
-            if(!c) return; 
-            if (currentUser) { 
-                c.innerHTML = `
-                    <div class="relative">
-                        <button id="profile-btn" class="flex items-center gap-2 p-1 rounded-full"><img src="${currentUser.photoURL||'https://placehold.co/32x32/7c3aed/ffffff?text=A'}" class="w-8 h-8 rounded-full object-cover"></button>
-                        <div id="profile-menu" class="hidden absolute right-0 mt-2 w-48 card-bg rounded-md shadow-lg z-10 border border-custom">
-                            <a href="#profile" class="nav-link block px-4 py-2 hover:bg-primary/10">Профиль</a>
-                            ${isAdmin ? `<a href="#admin" class="nav-link block px-4 py-2 hover:bg-primary/10">Админ-панель</a>` : ''}
-                            <a href="#" id="logout-btn" class="block px-4 py-2 text-red-500 hover:bg-red-500/10">Выйти</a>
-                        </div>
-                    </div>`;
-            } else { 
-                c.innerHTML = `<button id="google-login-btn" class="btn btn-primary">Войти</button>`; 
-            } 
-        };
-        
-        function showBalanceModal() {
-            const modalHTML = `
-                <div class="text-center mb-6">
-                    <p class="text-gray-400">Текущий баланс</p>
-                    <p id="modal-balance-display" class="text-4xl font-bold">${formatPrice(appState.balance)}</p>
+        function renderAdminReviewItem(id, r) {
+            return `<div class="card-bg p-4 rounded border border-custom">
+                <div class="flex justify-between">
+                    <p><strong>${r.productName}</strong> - ${'⭐'.repeat(r.rating)}</p>
+                    <button class="delete-btn text-red-500" data-collection="reviews" data-id="${id}">Удалить</button>
                 </div>
-                <hr class="border-custom my-6">
-                <div>
-                    <h3 class="font-semibold text-lg mb-4">История операций</h3>
-                    <ul id="balance-history-list" class="space-y-2 max-h-60 overflow-y-auto pr-2"></ul>
-                </div>`;
-            
-            const modal = showModal('Баланс', modalHTML, null);
-            
-            const listEl = modal.querySelector('#balance-history-list');
-            const sortedHistory = (appState.balanceHistory || []).sort((a,b) => new Date(b.date) - new Date(a.date));
-
-            if(sortedHistory.length > 0) {
-                listEl.innerHTML = sortedHistory.map(i => `
-                    <li class="flex justify-between items-center p-3 rounded-lg ${i.amount > 0 ? 'bg-green-500/10' : 'bg-red-500/10'}">
-                        <div>
-                            <span class="font-medium">${i.type === 'purchase' ? `Покупка: ${i.product}` : 'Пополнение'}</span>
-                            <p class="text-xs text-gray-400">${new Date(i.date).toLocaleString()}</p>
-                        </div>
-                        <span class="${i.amount > 0 ? 'text-green-500' : 'text-red-500'} font-semibold">${formatPrice(i.amount)}</span>
-                    </li>
-                `).join('');
-            } else {
-                listEl.innerHTML = '<p class="text-center text-gray-500">История пуста.</p>';
-            }
-        }
-
-        // --- EVENT LISTENERS & INITIALIZATION ---
-        function setupEventListeners() {
-            window.addEventListener('hashchange', handleRouting);
-            document.body.addEventListener('click', e => {
-                const { target } = e;
-                const closest = sel => target.closest(sel);
-
-                if (!closest('#profile-btn') && !closest('#profile-menu')) document.getElementById('profile-menu')?.classList.add('hidden');
-                if (closest('.nav-link')) { e.preventDefault(); window.location.hash = new URL(closest('.nav-link').href).hash; }
-                if (target.id === 'google-login-btn' || target.id === 'login-redirect') signInWithPopup(auth, new GoogleAuthProvider()).catch(e => showToast("Ошибка: " + e.message, true));
-                if (target.id === 'logout-btn' || target.id === 'logout-btn-profile') signOut(auth);
-                if (target.id === 'balance-btn') showBalanceModal();
-                if (closest('.buy-now-btn')) { const p = allProducts.find(p => p.id === closest('.buy-now-btn').dataset.productId); if (p) showCheckoutModal([p], p.price); }
-                if (closest('#profile-btn')) document.getElementById('profile-menu')?.classList.toggle('hidden');
-                if (closest('.faq-question')) {
-                    const question = closest('.faq-question');
-                    question.classList.toggle('open');
+                <p class="mt-2 italic">"${r.text}"</p>
+                <p class="text-sm text-gray-400 mt-1">От: ${r.userName} (${new Date(r.createdAt.seconds * 1000).toLocaleDateString()})</p>
+            </div>`;
+        };
+        async function showAdminReviewForm() {
+            const productOptions = allProducts.map(p => `<option value="${p.id}">${p.name}</option>`).join('');
+            const onSave = async m => {
+                const productId = m.querySelector('#review-product-select').value;
+                const rating = m.querySelector('input[name="admin-rating"]:checked')?.value;
+                const text = m.querySelector('#review-text').value;
+                const userName = m.querySelector('#review-user-name').value;
+                if (!productId || !rating || !userName) {
+                    showToast('Заполните все поля', true);
+                    return false;
                 }
-            });
-        }
-        
-        document.addEventListener('DOMContentLoaded', () => { 
-            initTheme(); 
-            initMobileMenu();
-            setupEventListeners(); 
-            onAuthStateChanged(auth, async user => { 
-                currentUser = user;
-                isAdmin = user?.uid === ADMIN_UID;
-                if (user) {
-                    const userRef = doc(db, "users", user.uid);
-                    const userDoc = await getDoc(userRef);
-                    if (!userDoc.exists()) await setDoc(userRef, { displayName: user.displayName, email: user.email, photoURL: user.photoURL, uid: user.uid, balance: 0, balanceHistory: [] }, { merge: true });
-                    onSnapshot(userRef, docSnap => { 
-                        if (docSnap.exists()) {
-                            const data = docSnap.data();
-                            appState.balance = data.balance || 0; 
-                            appState.balanceHistory = data.balanceHistory || [];
-                            document.getElementById('balance-amount').textContent = formatPrice(appState.balance);
-                        }
-                    });
-                    document.getElementById('balance-btn')?.classList.remove('hidden');
-                } else {
-                    document.getElementById('balance-btn')?.classList.add('hidden');
-                }
-                await Promise.all([loadStoreSettings(), onSnapshot(query(collection(db, "paymentMethods")), s => { paymentMethods = s.docs.map(d => ({ id: d.id, ...d.data() })) })]); 
-                await updateAuthUI();
-                handleRouting();
-                document.getElementById('loading-overlay').style.opacity = '0';
-                setTimeout(() => document.getElementById('loading-overlay').style.display = 'none', 500);
-                document.body.classList.remove('opacity-0');
-            }); 
-        });
-
-        // --- ADMIN PANEL ---
-        function loadAdminPanel(subpage) {
-            const el = document.getElementById('admin-content');
-            const tabs = [
-                { id: 'products', name: 'Товары' }, { id: 'customization', name: 'Настройки' },
-                { id: 'purchases', name: 'Покупки'}, { id: 'chats', name: 'Чаты'}
-            ];
-            el.innerHTML = `<h2 class="text-3xl font-bold mb-6">Админ-панель</h2><nav class="flex border-b border-custom mb-6">${tabs.map(t => `<a href="#admin/${t.id}" class="admin-tab-btn py-3 px-5 ${subpage === t.id ? 'border-b-2 border-primary text-primary' : ''}">${t.name}</a>`).join('')}</nav><div id="admin-tab-content"></div>`;
-            const contentEl = document.getElementById('admin-tab-content');
-            switch (subpage) {
-                case 'products':
-                    contentEl.innerHTML = `<button id="add-product-btn" class="btn btn-primary mb-4">Добавить товар</button><div id="admin-products-list" class="space-y-3"></div>`;
-                    document.getElementById('add-product-btn').onclick = () => showProductForm();
-                    onSnapshot(collection(db, 'products'), s => {
-                        document.getElementById('admin-products-list').innerHTML = s.docs.map(d => `
-                            <div class="card-bg p-4 rounded flex justify-between items-center border border-custom">
-                                <span>${d.data().name}</span>
-                                <div>
-                                    <button class="edit-product-btn text-blue-400 mr-4" data-id="${d.id}">Ред.</button>
-                                    <button class="delete-product-btn text-red-500" data-id="${d.id}">Удалить</button>
-                                </div>
-                            </div>`).join('');
-                    });
-                    break;
-                case 'customization':
-                    loadCustomizationPage();
-                    break;
-                 case 'purchases':
-                    contentEl.innerHTML = `<div id="admin-purchases-list" class="space-y-3"></div>`;
-                    onSnapshot(query(collection(db, "purchases"), orderBy("createdAt", "desc")), s => {
-                        document.getElementById('admin-purchases-list').innerHTML = s.docs.map(d => {
-                            const p = d.data();
-                            let actions = '';
-                            if (p.status === 'Ожидает подтверждения') {
-                                actions = `<button class="approve-purchase-btn bg-green-500 text-white px-3 py-1 text-sm rounded" data-id="${d.id}">Подтвердить</button>`;
-                            }
-                            return `<div class="card-bg p-4 rounded border border-custom">
-                                <p><strong>${p.userEmail}</strong> - ${p.items[0].name} (${formatPrice(p.finalPrice)})</p>
-                                <p>Статус: ${p.status}</p>
-                                ${p.paymentProofUrl ? `<a href="${p.paymentProofUrl}" target="_blank" class="text-blue-500">Чек</a>` : ''}
-                                <div class="mt-2">${actions}</div>
-                            </div>`;
-                        }).join('');
-                    });
-                    break;
-                case 'chats':
-                    contentEl.innerHTML = `<div id="admin-chats-list" class="space-y-3"></div>`;
-                     onSnapshot(query(collection(db, "userChats"), orderBy("lastActivity", "desc")), s => {
-                        document.getElementById('admin-chats-list').innerHTML = s.docs.map(d => `
-                            <a href="#" class="open-chat-btn block card-bg p-4 rounded border border-custom" data-uid="${d.data().userId}" data-name="${d.data().userName}">
-                                Чат с ${d.data().userName} (ID: ${d.data().userId})
-                            </a>`).join('');
-                     });
-                    break;
-            }
-        }
-        
-        async function showProductForm(productId = null) {
-            let p = {};
-            if (productId) {
-                const docSnap = await getDoc(doc(db, 'products', productId));
-                if (docSnap.exists()) p = docSnap.data();
-            }
-            const onSave = async (modal) => {
-                const file = modal.querySelector('#p-image-file').files[0];
-                let imageUrl = p.imageUrl || '';
-                if (file) imageUrl = await uploadImage(file);
-                
-                const data = {
-                    name: modal.querySelector('#p-name').value,
-                    description: modal.querySelector('#p-desc').value,
-                    price: parseFloat(modal.querySelector('#p-price').value),
-                    imageUrl
-                };
-                
-                if (productId) await setDoc(doc(db, 'products', productId), data);
-                else await addDoc(collection(db, 'products'), data);
+                const product = allProducts.find(p => p.id === productId);
+                await addDoc(collection(db, 'reviews'), {
+                    productId,
+                    productName: product.name,
+                    rating: parseInt(rating),
+                    text,
+                    userId: 'admin',
+                    userName,
+                    createdAt: serverTimestamp()
+                });
+                showToast('Отзыв добавлен!');
                 return true;
             };
-            showModal(productId ? 'Редактировать товар' : 'Добавить товар', `
-                <div class="space-y-4">
-                    <div><label>Название</label><input id="p-name" value="${p.name || ''}" class="w-full modern-input"></div>
-                    <div><label>Описание</label><textarea id="p-desc" class="w-full modern-input">${p.description || ''}</textarea></div>
-                    <div><label>Цена (UZS)</label><input id="p-price" type="number" value="${p.price || 0}" class="w-full modern-input"></div>
-                    <div><label>Изображение</label><input type="file" id="p-image-file" class="w-full"></div>
-                </div>`, onSave, 'Сохранить');
-        }
-
-        async function loadCustomizationPage() {
-            const el = document.getElementById('admin-tab-content');
-            const settings = (await getDoc(doc(db, "storeSettings", "config"))).data() || {};
-            
-            const renderBanners = (banners = []) => banners.map((b, i) => `<div class="flex items-center justify-between p-2 card-bg rounded"><span>${b.linkUrl}</span><button class="delete-banner-btn text-red-500" data-index="${i}">&times;</button></div>`).join('');
-            const renderSocials = (links = []) => links.map((l, i) => `<div class="flex items-center justify-between p-2 card-bg rounded"><span>${l.name}</span><button class="delete-social-btn text-red-500" data-index="${i}">&times;</button></div>`).join('');
-
-            el.innerHTML = `<div class="space-y-6">
-                <div><h3 class="text-xl font-bold mb-2">Объявление для всех</h3>
-                    <textarea id="announcement-message" class="w-full modern-input" rows="3">${settings.announcement?.message || ''}</textarea>
-                    <label class="flex items-center mt-2"><input type="checkbox" id="announcement-enabled" ${settings.announcement?.enabled ? 'checked' : ''}>Включить</label>
+            const formHtml = `<div class="space-y-4">
+                <div>
+                    <label class="block text-sm">Товар</label>
+                    <select id="review-product-select" class="w-full modern-input">${productOptions}</select>
                 </div>
-                <div><h3 class="text-xl font-bold mb-2">Рекламные баннеры</h3>
-                    <div id="banners-list" class="space-y-2">${renderBanners(settings.adBanners)}</div>
-                    <button id="add-banner-btn" class="btn mt-2">Добавить баннер</button>
-                    <button id="clear-banners-btn" class="btn mt-2 bg-red-600 text-white">Очистить все</button>
+                 <div>
+                    <label class="block text-sm">Имя пользователя</label>
+                    <input id="review-user-name" class="w-full modern-input" value="Администратор">
                 </div>
-                <div><h3 class="text-xl font-bold mb-2">Социальные сети</h3>
-                    <div id="socials-list" class="space-y-2">${renderSocials(settings.socialLinks)}</div>
-                    <button id="add-social-btn" class="btn mt-2">Добавить ссылку</button>
-                    <button id="clear-socials-btn" class="btn mt-2 bg-red-600 text-white">Очистить все</button>
+                <div>
+                    <label class="block text-sm">Оценка</label>
+                    <div class="star-rating">
+                        <input type="radio" id="admin-star5" name="admin-rating" value="5" /><label for="admin-star5" title="5 звезд">★</label>
+                        <input type="radio" id="admin-star4" name="admin-rating" value="4" /><label for="admin-star4" title="4 звезды">★</label>
+                        <input type="radio" id="admin-star3" name="admin-rating" value="3" /><label for="admin-star3" title="3 звезды">★</label>
+                        <input type="radio" id="admin-star2" name="admin-rating" value="2" /><label for="admin-star2" title="2 звезды">★</label>
+                        <input type="radio" id="admin-star1" name="admin-rating" value="1" /><label for="admin-star1" title="1 звезда">★</label>
+                    </div>
                 </div>
-                <button id="save-customization-btn" class="btn btn-primary">Сохранить все настройки</button>
+                <div>
+                    <label class="block text-sm">Текст отзыва</label>
+                    <textarea id="review-text" class="w-full modern-input" rows="3"></textarea>
+                </div>
             </div>`;
-
-            document.getElementById('add-banner-btn').onclick = () => {
-                const url = prompt('URL изображения баннера:');
-                const link = prompt('URL ссылки баннера:');
-                if(url && link) {
-                    settings.adBanners = settings.adBanners || [];
-                    settings.adBanners.push({ imageUrl: url, linkUrl: link });
-                    document.getElementById('banners-list').innerHTML = renderBanners(settings.adBanners);
+            showModal('Добавить отзыв', formHtml, onSave, 'Добавить');
+        };
+        function showReviewForm(purchaseId, productId) {
+            const onSave = async m => {
+                const rating = m.querySelector('input[name="rating"]:checked')?.value;
+                const text = m.querySelector('#review-text').value;
+                if (!rating) {
+                    showToast('Пожалуйста, поставьте оценку', true);
+                    return false;
                 }
+                const product = allProducts.find(p => p.id === productId);
+                await addDoc(collection(db, 'reviews'), {
+                    productId,
+                    productName: product.name,
+                    rating: parseInt(rating),
+                    text,
+                    userId: currentUser.uid,
+                    userName: currentUser.displayName,
+                    createdAt: serverTimestamp()
+                });
+                await updateDoc(doc(db, 'purchases', purchaseId), { review: { rating: parseInt(rating), text } });
+                showToast('Спасибо за ваш отзыв!');
+                return true;
             };
-             document.getElementById('add-social-btn').onclick = () => {
-                const name = prompt('Название (напр. Telegram):');
-                const url = prompt('URL ссылки:');
-                const icon = prompt('SVG иконка (<path...>):');
-                if(name && url && icon) {
-                    settings.socialLinks = settings.socialLinks || [];
-                    settings.socialLinks.push({ name, url, icon });
-                    document.getElementById('socials-list').innerHTML = renderSocials(settings.socialLinks);
-                }
-            };
-            
-            el.addEventListener('click', e => {
-                if(e.target.matches('.delete-banner-btn')) {
-                    settings.adBanners.splice(e.target.dataset.index, 1);
-                    document.getElementById('banners-list').innerHTML = renderBanners(settings.adBanners);
-                }
-                if(e.target.matches('.delete-social-btn')) {
-                    settings.socialLinks.splice(e.target.dataset.index, 1);
-                    document.getElementById('socials-list').innerHTML = renderSocials(settings.socialLinks);
-                }
-                if(e.target.matches('#clear-banners-btn')) {
-                    settings.adBanners = [];
-                    document.getElementById('banners-list').innerHTML = '';
-                }
-                if(e.target.matches('#clear-socials-btn')) {
-                    settings.socialLinks = [];
-                    document.getElementById('socials-list').innerHTML = '';
-                }
-            });
+            const formHtml = `<div class="space-y-4">
+                <p>Пожалуйста, оцените вашу покупку.</p>
+                <div class="star-rating">
+                    <input type="radio" id="star5" name="rating" value="5" /><label for="star5" title="5 звезд">★</label>
+                    <input type="radio" id="star4" name="rating" value="4" /><label for="star4" title="4 звезды">★</label>
+                    <input type="radio" id="star3" name="rating" value="3" /><label for="star3" title="3 звезды">★</label>
+                    <input type="radio" id="star2" name="rating" value="2" /><label for="star2" title="2 звезды">★</label>
+                    <input type="radio" id="star1" name="rating" value="1" /><label for="star1" title="1 звезда">★</label>
+                </div>
+                <textarea id="review-text" class="w-full modern-input" rows="3" placeholder="Ваш комментарий (необязательно)"></textarea>
+            </div>`;
+            showModal('Оставить отзыв', formHtml, onSave, 'Отправить');
+        };
+        function setupNotificationsListener() { /* ... implementation ... */ }
+        function setupWishlistListener() { /* ... implementation ... */ }
 
-            document.getElementById('save-customization-btn').onclick = async () => {
-                const dataToSave = {
-                    adBanners: settings.adBanners || [],
-                    socialLinks: settings.socialLinks || [],
-                    announcement: {
-                        message: document.getElementById('announcement-message').value,
-                        enabled: document.getElementById('announcement-enabled').checked
+        // --- MAIN INITIALIZATION LOGIC ---
+
+        document.addEventListener('DOMContentLoaded', () => { 
+            try {
+                initTheme(); 
+                setupEventListeners(); 
+                updateCartCount(); 
+                onAuthStateChanged(auth, async user => { 
+                    try {
+                        await Promise.all([loadPaymentMethods(), loadStoreSettings()]); 
+                        await initializeAppState(user); 
+                    } catch (authError) {
+                        console.error("Error during auth state change handling:", authError);
+                    } finally {
+                        document.getElementById('loading-overlay').style.opacity = '0';
+                        setTimeout(() => {
+                            document.getElementById('loading-overlay').style.display = 'none';
+                            document.body.classList.remove('opacity-0');
+                        }, 500);
                     }
-                };
-                await setDoc(doc(db, "storeSettings", "config"), dataToSave, { merge: true });
-                showToast('Настройки сохранены!');
-                loadStoreSettings();
-            };
-        }
-
-        document.body.addEventListener('click', e => {
-            if (e.target.matches('.edit-product-btn')) showProductForm(e.target.dataset.id);
-            if (e.target.matches('.delete-product-btn')) confirmAction('Удалить товар?', () => deleteDoc(doc(db, 'products', e.target.dataset.id)));
-            if (e.target.matches('.approve-purchase-btn')) updateDoc(doc(db, 'purchases', e.target.dataset.id), { status: 'Выполнен' });
-            if (e.target.matches('.open-chat-btn')) {
-                const { uid, name } = e.target.dataset;
-                const chatId = `${uid}_${ADMIN_UID}`;
-                const modalContent = `<div id="modal-chat-container"></div>`;
-                const modal = showModal(`Чат с ${name}`, modalContent, null);
-                renderChatInterface(modal.querySelector('#modal-chat-container'), chatId, ADMIN_UID);
+                }); 
+            } catch (e) {
+                console.error("Critical error on DOMContentLoaded:", e);
+                document.body.innerHTML = '<div style="text-align: center; padding-top: 50px; font-family: sans-serif;"><h1>Произошла ошибка</h1><p>Не удалось загрузить сайт. Пожалуйста, попробуйте обновить страницу.</p></div>';
+                document.body.classList.remove('opacity-0');
+                const loader = document.getElementById('loading-overlay');
+                if (loader) loader.style.display = 'none';
             }
         });
+
+        async function initializeAppState(user) {
+            currentUser = user;
+            isAdmin = user?.uid === ADMIN_UID;
+            const balanceBtn = document.getElementById('balance-btn');
+            
+            // Setup Mobile Navigation
+            const navLinksContainer = document.querySelector('#mobile-nav-links');
+            const mainNavLinks = document.querySelectorAll('nav.hidden.md\\:flex a.main-nav-link');
+            navLinksContainer.innerHTML = '';
+            mainNavLinks.forEach(link => {
+                const newLink = link.cloneNode(true);
+                newLink.classList.remove('px-3', 'py-1.5', 'rounded-full');
+                newLink.classList.add('p-4', 'text-lg');
+                navLinksContainer.appendChild(newLink);
+            });
+
+
+            if (user) {
+                balanceBtn?.classList.remove('hidden');
+                const userRef = doc(db, "users", user.uid);
+                onSnapshot(userRef, docSnap => { 
+                    if (docSnap.exists()) { 
+                        const data = docSnap.data(); 
+                        appState.balance = data.balance || 0; 
+                        appState.balanceHistory = (data.balanceHistory || []).sort((a,b) => new Date(b.date) - new Date(a.date)); 
+                        const balanceAmountEl = document.getElementById('balance-amount');
+                        if (balanceAmountEl) {
+                            balanceAmountEl.textContent = formatPrice(appState.balance);
+                        }
+                    }
+                });
+                
+                const userDoc = await getDoc(userRef);
+                if (!userDoc.exists() || !userDoc.data().nickname) {
+                    const defaultNickname = `Пользователь${user.uid.substring(0, 5)}`;
+                    await setDoc(userRef, { 
+                        displayName: user.displayName, 
+                        email: user.email, 
+                        photoURL: user.photoURL, 
+                        lastSeen: serverTimestamp(), 
+                        uid: user.uid,
+                        nickname: defaultNickname
+                    }, { merge: true });
+                }
+
+                setupNotificationsListener();
+                setupWishlistListener();
+            } else {
+                if(balanceBtn) balanceBtn.classList.add('hidden');
+                const notificationsContainer = document.getElementById('notifications-container');
+                if (notificationsContainer) notificationsContainer.innerHTML = '';
+                userWishlist = [];
+                appState.balance = 0;
+            }
+            await updateAuthUI();
+            handleRouting();
+        }
+
+        function loadSettingsPage() {
+            const el = document.getElementById('settings-content');
+            el.innerHTML = `
+                <div class="max-w-2xl mx-auto card-bg p-8 rounded-lg shadow-lg">
+                    <h1 class="text-3xl font-bold mb-6">Настройки</h1>
+                    <div class="space-y-6">
+                        <div>
+                            <label class="block text-lg font-medium">Язык</label>
+                            <select id="language-select" class="w-full modern-input mt-2">
+                                <option value="RU" ${appState.lang === 'RU' ? 'selected' : ''}>Русский</option>
+                                <option value="UZ" ${appState.lang === 'UZ' ? 'selected' : ''}>O'zbekcha</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-lg font-medium">Валюта</label>
+                            <select id="currency-select" class="w-full modern-input mt-2">
+                                <option value="UZS" ${appState.currency === 'UZS' ? 'selected' : ''}>Узбекский сум (UZS)</option>
+                                <option value="RUB" ${appState.currency === 'RUB' ? 'selected' : ''}>Российский рубль (RUB)</option>
+                                <option value="USD" ${appState.currency === 'USD' ? 'selected' : ''}>Доллар США (USD)</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>`;
+
+            document.getElementById('language-select').addEventListener('change', (e) => {
+                appState.lang = e.target.value;
+                localStorage.setItem('asonik_lang', appState.lang);
+                translatePage();
+            });
+
+            document.getElementById('currency-select').addEventListener('change', (e) => {
+                appState.currency = e.target.value;
+                localStorage.setItem('asonik_currency', appState.currency);
+                // Re-render any visible components with prices
+                handleRouting(); 
+            });
+        }
 
     </script>
 </body>
