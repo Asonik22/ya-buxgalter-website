@@ -276,6 +276,7 @@
         <div data-page="cart"><div id="cart-content"></div></div>
         <div data-page="profile"><div id="profile-content"></div></div>
         <div data-page="download"><div id="download-content"></div></div>
+        <div data-page="settings"><div id="settings-content"></div></div>
     </main>
     
     <footer class="container mx-auto px-4 py-6 mt-8 border-t border-custom"><div id="social-links-container" class="flex justify-center items-center gap-6"></div></footer>
@@ -318,45 +319,59 @@
             lang: localStorage.getItem('asonik_lang') || 'RU', 
             rates: { UZS: 1, RUB: 0.0073, USD: 0.000078 }, 
             balance: 0, 
-            balanceHistory: [] 
+            balanceHistory: [],
+            guestPromptMessage: 'Пожалуйста, войдите, чтобы получить доступ ко всем функциям.',
+            minimumTopUpAmount: 1000 // Default value
         };
         const translations = { 
             RU: { nav_main: 'Главная', nav_chats: 'Чаты', nav_faq: 'FAQ', nav_purchases: 'Мои покупки', nav_download: 'Скачать приложение', catalog_title: 'Каталог товаров', search_placeholder: 'Поиск...', faq_title: 'Часто задаваемые вопросы', purchases_title: 'Мои покупки', cart_title: 'Корзина', profile_title: 'Профиль', buy_button: 'Купить' }, 
             UZ: { nav_main: 'Asosiy', nav_chats: 'Chatlar', nav_faq: 'FAQ', nav_purchases: 'Xaridlarim', nav_download: 'Ilovani yuklab olish', catalog_title: 'Mahsulotlar', search_placeholder: 'Qidirish...', faq_title: 'Ko\'p so\'raladigan savollar', purchases_title: 'Xaridlarim', cart_title: 'Savatcha', profile_title: 'Profil', buy_button: 'Sotib olish' } 
         };
         
-        // --- FUNCTION DEFINITIONS ---
-        // All functions are defined here first to avoid ReferenceError issues.
-
+        // --- FUNCTION DEFINITIONS (Moved up to prevent reference errors) ---
+        
         const t = key => translations[appState.lang]?.[key] || key;
         const translatePage = () => { document.querySelectorAll('[data-lang-key]').forEach(el => el.textContent = t(el.dataset.langKey)); document.querySelectorAll('[data-lang-placeholder]').forEach(el => el.placeholder = t(el.dataset.langPlaceholder)); };
-        const formatPrice = (price, currency = appState.currency) => new Intl.NumberFormat('ru-RU', { style: 'currency', currency, minimumFractionDigits: 0 }).format(price * (appState.rates[currency] || 1));
+        const formatPrice = (price, currency = appState.currency) => { 
+            if (typeof price !== 'number') price = 0;
+            return new Intl.NumberFormat('ru-RU', { style: 'currency', currency, minimumFractionDigits: 0 }).format(price * (appState.rates[currency] || 1)); 
+        }
         const generateCode = () => 'A' + Math.random().toString(36).substring(2, 9).toUpperCase();
         const showToast = (message, isError = false) => { const el = document.createElement('div'); el.className = `fixed bottom-5 right-5 text-white py-2 px-4 rounded-lg shadow-lg z-50 ${isError ? 'bg-red-500' : 'bg-green-500'}`; el.textContent = message; document.body.appendChild(el); setTimeout(() => el.remove(), 3000); };
         const showModal = (title, content, onSave, btnText = 'Подтвердить') => { const modal = document.createElement('div'); modal.className = 'fixed inset-0 z-50 flex items-center justify-center modal-backdrop'; modal.innerHTML = `<div class="card-bg rounded-lg shadow-xl w-11/12 md:w-2/3 lg:w-1/2 p-6 max-h-[90vh] overflow-y-auto"><div class="flex justify-between items-center mb-4"><h2 class="text-2xl font-bold">${title}</h2><button class="close-modal-btn text-2xl">&times;</button></div><div>${content}</div>${onSave ? `<div class="mt-6 flex justify-end gap-4"><button class="close-modal-btn btn">Отмена</button><button class="save-modal-btn btn btn-primary">${btnText}</button></div>` : ''}</div>`; document.getElementById('modals-container').appendChild(modal); modal.querySelectorAll('.close-modal-btn').forEach(b => b.onclick = () => modal.remove()); if (onSave) modal.querySelector('.save-modal-btn').onclick = async () => { if (await onSave(modal) !== false) modal.remove(); }; return modal; };
         const confirmAction = (msg, onConfirm) => showModal('Подтвердите', `<p>${msg}</p>`, () => { onConfirm(); return true; }, 'Да, уверен');
         
+        // Moved this function up to fix the reference error
+        function renderSocialLinks(links) {
+            const container = document.getElementById('social-links-container');
+            if (container) {
+                container.innerHTML = (links || []).map(link => `<a href="${link.url}" target="_blank" class="text-gray-400 hover:text-primary"><svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24">${link.icon}</svg></a>`).join('');
+            }
+        }
+        
         async function loadStoreSettings() { 
             try { 
                 const settingsDoc = await getDoc(doc(db, "storeSettings", "config")); 
                 if (settingsDoc.exists()) { 
-                    const { logoUrl, socialLinks, appDownload, themeColors, siteName, adBanner } = settingsDoc.data(); 
+                    const data = settingsDoc.data();
+                    const { logoUrl, socialLinks, appDownload, themeColors, siteName, adBanner, guestPromptMessage, minimumTopUpAmount } = data;
                     const logoEl = document.getElementById('store-logo'); 
                     if (logoUrl) { logoEl.src = logoUrl; logoEl.classList.remove('hidden'); } else { logoEl.classList.add('hidden'); } 
                     if (siteName) {
-                        document.getElementById('site-title').textContent = siteName;
-                        const siteNameDisplay = document.getElementById('site-name-display');
-                        if (siteNameDisplay) siteNameDisplay.textContent = siteName;
-                        const footerSiteName = document.getElementById('footer-site-name');
-                        if(footerSiteName) footerSiteName.textContent = siteName;
+                        document.title = siteName;
+                        document.getElementById('site-name-display').textContent = siteName;
+                        document.getElementById('footer-site-name').textContent = siteName;
                     }
                     if (socialLinks) renderSocialLinks(socialLinks); 
                     if (themeColors) applyCustomTheme(themeColors);
                     appState.appDownload = appDownload || {}; 
                     appState.adBanner = adBanner || {};
+                    appState.guestPromptMessage = guestPromptMessage || 'Пожалуйста, войдите, чтобы получить доступ ко всем функциям.';
+                    appState.minimumTopUpAmount = minimumTopUpAmount || 1000;
                 } 
             } catch (e) { console.error("Error loading store settings:", e); } 
         }
+        
         function loadPaymentMethods() { return new Promise(res => onSnapshot(query(collection(db, "paymentMethods"), orderBy("order", "asc")), s => { paymentMethods = s.docs.map(d => ({ id: d.id, ...d.data() })); res(); }, e => { console.error(e); res(); })); }
         
         function handleRouting() {
@@ -385,7 +400,7 @@
         }
 
         function loadPageContent(page, subpage) {
-            const protectedPages = ['purchases', 'chats', 'profile', 'admin', 'wishlist'];
+            const protectedPages = ['purchases', 'chats', 'profile', 'admin', 'wishlist', 'settings'];
             const contentContainer = document.querySelector(`[data-page="${page}"] > div`);
             if (!contentContainer) {
                 console.error(`Content container for page "${page}" not found.`);
@@ -393,7 +408,7 @@
             }
 
             if (protectedPages.includes(page) && !currentUser) { 
-                contentContainer.innerHTML = `<h1 class="text-4xl font-bold text-center mb-8">${t(page+'_title')}</h1><p class="text-center">Пожалуйста, <a href="#" id="login-redirect" class="text-primary underline">войдите</a>.</p>`; 
+                contentContainer.innerHTML = `<h1 class="text-4xl font-bold text-center mb-8">${t(page+'_title') || 'Доступ запрещен'}</h1><p class="text-center">Пожалуйста, <a href="#" id="login-redirect" class="text-primary underline">войдите</a>.</p>`; 
                 return; 
             }
 
@@ -408,6 +423,7 @@
                 case 'wishlist': loadWishlistPage(); break;
                 case 'profile': loadProfilePage(); break;
                 case 'download': loadDownloadPage(); break;
+                case 'settings': loadSettingsPage(); break;
                 default: loadMainPage(); break;
             }
         }
@@ -646,6 +662,13 @@
 
         async function showCheckoutModal(items, total) {
             if (!currentUser) { showModal('Вход', '<p>Для покупки войдите в аккаунт.</p>', () => signInWithGoogle(), 'Войти'); return; }
+            
+            const userDoc = await getDoc(doc(db, "users", currentUser.uid));
+            if (userDoc.exists() && userDoc.data().isBanned) {
+                showModal('Аккаунт заблокирован', '<p>Ваш аккаунт заблокирован администратором. Совершение покупок невозможно.</p>');
+                return;
+            }
+
             if (appState.balance < 0) { showModal('Отрицательный баланс', '<p>У вас отрицательный баланс. Пожалуйста, пополните счет перед совершением покупок.</p>'); return; }
             if (!items.length) { showToast('Корзина пуста', true); return; }
 
@@ -764,11 +787,37 @@
                 </div>
             </div>`
         };
-        function showContactModal(code) { showModal('Связь с продавцом', `<p>Для получения товара, пожалуйста, свяжитесь с нами в Telegram и сообщите этот код заказа:</p><p class="my-4 text-center font-mono p-2 bg-gray-200 dark:bg-gray-700 rounded-md text-lg">${code}</p>`, () => { window.open(`https://t.me/${TELEGRAM_USERNAME}?text=Здравствуйте, мой заказ ${code}`, '_blank'); return true; }, 'Перейти в Telegram'); }
+        function showContactModal(code) { 
+            const content = `<p>Для получения товара, пожалуйста, свяжитесь с нами в Telegram и сообщите этот код заказа:</p>
+            <div class="my-4 relative text-center font-mono p-2 bg-gray-200 dark:bg-gray-700 rounded-md text-lg">
+                <span id="order-code-to-copy">${code}</span>
+                <button id="copy-code-btn" class="absolute top-1/2 right-2 -translate-y-1/2 p-1 hover:bg-gray-300 dark:hover:bg-gray-600 rounded-md">
+                    <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20"><path d="M7 3a1 1 0 000 2h6a1 1 0 100-2H7zM4 7a1 1 0 011-1h10a1 1 0 110 2H5a1 1 0 01-1-1zM5 11a1 1 0 100 2h4a1 1 0 100-2H5z"></path></svg>
+                </button>
+            </div>`;
+            const modal = showModal('Связь с продавцом', content, () => { window.open(`https://t.me/${TELEGRAM_USERNAME}?text=Здравствуйте, мой заказ ${code}`, '_blank'); return true; }, 'Перейти в Telegram'); 
+            modal.querySelector('#copy-code-btn').onclick = () => {
+                navigator.clipboard.writeText(code);
+                showToast('Код скопирован!');
+            }
+        }
 
         // --- BALANCE MANAGEMENT ---
         function showBalanceModal() { 
-            const onSave = async m => { const amount = parseFloat(m.querySelector('#topup-amount').value); if (!amount || amount <= 0) return false; m.remove(); showBalanceTopUpPaymentModal(amount); return false; };
+            const onSave = async m => {
+                 const amount = parseFloat(m.querySelector('#topup-amount').value); 
+                 if (!amount || amount <= 0) {
+                     showToast('Введите корректную сумму', true);
+                     return false;
+                 }
+                 if (amount < appState.minimumTopUpAmount) {
+                     showToast(`Минимальная сумма пополнения: ${formatPrice(appState.minimumTopUpAmount)}`, true);
+                     return false;
+                 }
+                 m.remove(); 
+                 showBalanceTopUpPaymentModal(amount); 
+                 return false; 
+            };
             const modalHTML = `
                 <div class="text-center mb-6">
                     <p class="text-gray-400">Текущий баланс</p>
@@ -777,7 +826,7 @@
                 <div class="flex gap-2">
                     <input id="topup-amount" type="number" class="w-full modern-input" placeholder="Сумма пополнения (UZS)">
                     <button id="topup-btn" class="btn btn-primary">Пополнить</button>
-                    <button id="withdraw-btn" class="btn bg-gray-500 text-white">Вывести</button>
+                    <button id="withdraw-btn" class="btn bg-red-600 text-white">Вывести</button>
                 </div>
                 <hr class="border-custom my-6">
                 <div>
@@ -785,16 +834,12 @@
                         <h3 class="font-semibold text-lg">История операций</h3>
                         <input id="history-filter" class="modern-input text-sm w-1/2" placeholder="Фильтр (покупка, пополнение...)">
                     </div>
-                    <ul id="balance-history-list" class="space-y-2 max-h-60 overflow-y-auto pr-2">
-                        ${renderBalanceHistory(appState.balanceHistory)}
-                    </ul>
+                    <ul id="balance-history-list" class="space-y-2 max-h-60 overflow-y-auto pr-2"></ul>
                 </div>`;
             
             const modal = showModal('Баланс', modalHTML, null);
             document.getElementById('topup-btn').onclick = () => onSave(modal);
-            document.getElementById('withdraw-btn').onclick = () => {
-                showModal('Вывод средств', '<div><p class="text-2xl text-center mb-4">🚧</p><p>Извините, вывод средств временно недоступен, так как сайт находится в активной разработке. Эта функция появится в ближайшее время!</p></div>', null)
-            };
+            document.getElementById('withdraw-btn').onclick = showWithdrawModal;
             document.getElementById('history-filter').oninput = (e) => {
                 const term = e.target.value.toLowerCase();
                 balanceHistoryFiltered = appState.balanceHistory.filter(i => {
@@ -826,15 +871,51 @@
         function renderBalanceHistory(historyItems) {
             if (!historyItems.length) return '<p class="text-center text-gray-500">История пуста.</p>';
             return historyItems.map(i => {
-                const text = getBalanceHistoryText(i);
+                let buttonHTML = '';
+                if(i.type === 'purchase'){
+                    buttonHTML = `<button class="go-to-purchase-btn text-xs text-primary underline" data-product-name="${i.product}">К покупке</button>`
+                }
                 return `<li class="flex justify-between items-center p-3 rounded-lg ${i.amount > 0 ? 'bg-green-500/10' : 'bg-red-500/10'}">
                     <div>
                         <span class="font-medium">${text}</span>
-                        <p class="text-xs text-gray-400">${new Date(i.date).toLocaleString()}</p>
+                        <div class="flex items-center gap-2">
+                           <p class="text-xs text-gray-400">${new Date(i.date).toLocaleString()}</p>
+                           ${buttonHTML}
+                        </div>
                     </div>
                     <span class="${i.amount > 0 ? 'text-green-500' : 'text-red-500'} font-semibold text-lg">${formatPrice(i.amount)}</span>
                 </li>`;
             }).join('');
+        }
+
+        function showWithdrawModal() {
+            const onSave = async (modal) => {
+                // This is a placeholder for now
+                showToast("Функция вывода в разработке", true);
+                return false;
+            };
+
+            const content = `
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-sm">Сумма вывода (UZS)</label>
+                        <input type="number" class="w-full modern-input" placeholder="0">
+                    </div>
+                    <div>
+                        <label class="block text-sm">Номер карты</label>
+                        <input type="text" class="w-full modern-input" placeholder="8600 0000 0000 0000">
+                    </div>
+                    <div>
+                        <label class="block text-sm">Платежная система</label>
+                        <select class="w-full modern-input">
+                            <option>HUMO</option>
+                            <option>UzCard</option>
+                            <option>Visa</option>
+                        </select>
+                    </div>
+                </div>
+            `;
+            showModal('Вывод средств', content, onSave, 'Отправить заявку');
         }
 
         async function showBalanceTopUpPaymentModal(amount, callback) { const methods = paymentMethods.filter(p => p.isEnabled); if (!methods.length) return; const onSave = async m => { const selected = m.querySelector('.payment-option.selected'); if (!selected) { showToast('Пожалуйста, выберите способ оплаты', true); return false; } const pData = { userId: currentUser.uid, userEmail: currentUser.email, orderId: generateCode(), items: [{ name: `Пополнение на ${formatPrice(amount)}`, imageUrl:''}], productName: "Пополнение баланса", status: 'Ожидает оплаты', paymentMethodId: selected.dataset.methodId, finalPrice: amount, createdAt: serverTimestamp(), isTopUp: true }; const pRef = await addDoc(collection(db, "purchases"), pData); window.location.hash = '#purchases'; showProofUploadModal(pRef.id); if (callback) callback(); return true; }; const modal = showModal(`Пополнение на ${formatPrice(amount)}`, `<div class="grid grid-cols-2 gap-4">${methods.map(p => `<button data-method-id="${p.id}" class="payment-option flex flex-col items-center p-2 border-2 rounded-lg h-24 transition-all"><img src="${p.logoUrl}" class="h-12 object-contain"><span class="text-sm">${p.name}</span></button>`).join('')}</div>`, onSave, 'К оплате'); modal.querySelectorAll('.payment-option').forEach(btn => btn.onclick = () => { modal.querySelectorAll('.payment-option').forEach(b => b.classList.remove('selected')); btn.classList.add('selected'); }); };
@@ -870,6 +951,8 @@
                            <button class="reject-purchase-btn bg-red-500 hover:bg-red-600 text-white px-3 py-1 text-sm rounded-md ml-2" data-id="${id}">Отклонить</button>`; 
             } else if (p.status === 'Выполнен' && !p.isTopUp) {
                 actions = `<button class="finish-purchase-btn bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 text-sm rounded-md" data-id="${id}">Завершить</button>`;
+            } else if (p.status === 'В обработке') {
+                 actions = `<button class="view-fulfillment-btn bg-indigo-500 hover:bg-indigo-600 text-white px-3 py-1 text-sm rounded-md" data-id="${id}">Посмотреть данные</button>`;
             }
             return `<div class="card-bg p-4 rounded-lg flex flex-col md:flex-row justify-between items-start md:items-center border border-custom gap-4">
                 <img src="${p.items[0].imageUrl || 'https://placehold.co/64x64'}" class="w-16 h-16 object-cover rounded-md flex-shrink-0">
@@ -895,6 +978,7 @@
             if(pId){const d=await getDoc(doc(db,'products',pId)); if(d.exists()) p={...p, ...d.data(), id: d.id};}
             
             const onSave = async m => {
+                showToast('Сохранение товара...');
                 const file = m.querySelector('#p-image-file').files[0];
                 let url = p.imageUrl;
                 if(file) url = await uploadImage(file);
@@ -934,6 +1018,7 @@
                 } else {
                     await addDoc(collection(db,'products'), data);
                 }
+                showToast('Товар успешно сохранен!');
                 return true;
             };
 
@@ -1044,11 +1129,15 @@
             const el = document.getElementById('admin-tab-content'); 
             const settings = (await getDoc(doc(db, "storeSettings", "config"))).data() || {};
             el.innerHTML = `<div class="space-y-8">
-                 <div>
+                <div>
                     <h3 class="text-xl font-bold mb-2">Общие настройки</h3>
                     <label class="block text-sm">Название сайта</label>
                     <input id="site-name-input" class="w-full modern-input mt-1" value="${settings.siteName || 'Asonik | Store'}">
-                    <button id="save-site-name-btn" class="btn btn-primary mt-2">Сохранить название</button>
+                    <label class="block text-sm mt-2">Минимальная сумма пополнения (в UZS)</label>
+                    <input id="min-topup-input" type="number" class="w-full modern-input mt-1" value="${settings.minimumTopUpAmount || 1000}">
+                    <label class="block text-sm mt-2">Сообщение для гостей</label>
+                    <textarea id="guest-prompt-input" class="w-full modern-input mt-1" rows="3">${settings.guestPromptMessage || ''}</textarea>
+                    <button id="save-general-settings-btn" class="btn btn-primary mt-2">Сохранить</button>
                 </div>
                 <hr class="border-custom">
                 <div>
@@ -1141,12 +1230,16 @@
                                 <p class="font-bold truncate">${currentUser.displayName}</p>
                             </div>
                             <a href="#profile" class="nav-link block px-4 py-2 hover:bg-primary/10">Профиль</a>
+                            <a href="#settings" class="nav-link block px-4 py-2 hover:bg-primary/10">Настройки</a>
                             ${isAdmin ? `<a href="#admin" class="nav-link block px-4 py-2 hover:bg-primary/10">Админ-панель</a>` : ''}
                             <a href="#" id="logout-btn" class="block px-4 py-2 text-red-500 hover:bg-red-500/10">Выйти</a>
                         </div>
                     </div>`;
             } else { 
-                c.innerHTML = `<button id="google-login-btn" class="btn btn-primary">Войти</button>`; 
+                c.innerHTML = `<div class="p-2 text-center card-bg rounded-lg border border-custom">
+                    <p class="text-sm mb-2">${appState.guestPromptMessage}</p>
+                    <button id="google-login-btn" class="btn btn-primary w-full">Войти</button>
+                </div>`; 
             } 
         };
         function signInWithGoogle() { const p = new GoogleAuthProvider(); signInWithPopup(auth, p).catch(e => showToast("Ошибка: " + e.message, true)); };
@@ -1217,6 +1310,15 @@
                     showToast('Заказ подтвержден!');
                 }
                 
+                 if (closest('.view-fulfillment-btn')) {
+                    const id = closest('.view-fulfillment-btn').dataset.id;
+                    const purchaseDoc = await getDoc(doc(db, "purchases", id));
+                    if (purchaseDoc.exists()) {
+                        const data = purchaseDoc.data();
+                        showFulfillmentDataModal(id, data.fulfillmentData);
+                    }
+                }
+
                 if (closest('.finish-purchase-btn')) {
                     const btn = closest('.finish-purchase-btn');
                     const { id } = btn.dataset;
@@ -1300,12 +1402,21 @@
                         showToast('Тема сброшена!');
                     });
                 }
-                if (target.id === 'save-site-name-btn') {
+                if (target.id === 'save-general-settings-btn') {
                     const newName = document.getElementById('site-name-input').value;
-                    if (newName) {
-                        await setDoc(doc(db, "storeSettings", "config"), { siteName: newName }, { merge: true });
-                        showToast('Название сайта сохранено!');
-                        loadStoreSettings(); // Reload settings to apply changes
+                    const newMinTopUp = parseFloat(document.getElementById('min-topup-input').value);
+                    const newGuestPrompt = document.getElementById('guest-prompt-input').value;
+                    if (newName && newMinTopUp > 0) {
+                        await setDoc(doc(db, "storeSettings", "config"), { 
+                            siteName: newName,
+                            minimumTopUpAmount: newMinTopUp,
+                            guestPromptMessage: newGuestPrompt
+                        }, { merge: true });
+                        showToast('Общие настройки сохранены!');
+                        loadStoreSettings();
+                        updateAuthUI();
+                    } else {
+                        showToast('Проверьте введенные данные', true);
                     }
                 }
                 if (target.id === 'save-ad-banner-btn') {
@@ -1313,6 +1424,7 @@
                     const linkUrl = document.getElementById('ad-banner-link-input').value;
                     let imageUrl = appState.adBanner?.imageUrl;
                     if (file) {
+                        showToast('Загрузка баннера...');
                         imageUrl = await uploadImage(file);
                     }
                     if (imageUrl) {
@@ -1327,6 +1439,17 @@
         }
         
         // --- ALL OTHER FUNCTIONS ---
+        function showFulfillmentDataModal(purchaseId, data) {
+            const content = `<p class="mb-2">Данные, предоставленные клиентом:</p>
+            <div class="p-4 bg-gray-200 dark:bg-gray-700 rounded-lg font-mono">${data}</div>`;
+
+            showModal('Данные заказа', content, async () => {
+                await updateDoc(doc(db, 'purchases', purchaseId), { status: 'Завершен' });
+                showToast('Заказ завершен!');
+                return true;
+            }, 'Завершить заказ');
+        }
+
         function showFulfillmentModal(purchaseId, prompt) {
             const onSave = async (modal) => {
                 const userInput = modal.querySelector('#fulfillment-input').value;
@@ -1378,6 +1501,7 @@
                     showToast("Пожалуйста, выберите файл", true);
                     return false; // Prevent modal from closing
                 }
+                showToast('Загрузка чека...');
                 const imageUrl = await uploadImage(file);
                 if (imageUrl) {
                     await updateDoc(purchaseDocRef, {
@@ -1675,7 +1799,8 @@
                 const chatView = document.getElementById('chat-view'); 
                 if(chatView) {
                     const chatId = `${activeChatUserId}_${ADMIN_UID}`;
-                    renderChatInterface(chatView, chatId, 'Чат с пользователем', ADMIN_UID); 
+                    const chatTitle = `Чат с пользователем (ID: ${activeChatUserId})`;
+                    renderChatInterface(chatView, chatId, chatTitle, ADMIN_UID); 
                 }
             } else {
                 const chatView = document.getElementById('chat-view');
@@ -1901,6 +2026,44 @@
             }
             await updateAuthUI();
             handleRouting();
+        }
+
+        function loadSettingsPage() {
+            const el = document.getElementById('settings-content');
+            el.innerHTML = `
+                <div class="max-w-2xl mx-auto card-bg p-8 rounded-lg shadow-lg">
+                    <h1 class="text-3xl font-bold mb-6">Настройки</h1>
+                    <div class="space-y-6">
+                        <div>
+                            <label class="block text-lg font-medium">Язык</label>
+                            <select id="language-select" class="w-full modern-input mt-2">
+                                <option value="RU" ${appState.lang === 'RU' ? 'selected' : ''}>Русский</option>
+                                <option value="UZ" ${appState.lang === 'UZ' ? 'selected' : ''}>O'zbekcha</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-lg font-medium">Валюта</label>
+                            <select id="currency-select" class="w-full modern-input mt-2">
+                                <option value="UZS" ${appState.currency === 'UZS' ? 'selected' : ''}>Узбекский сум (UZS)</option>
+                                <option value="RUB" ${appState.currency === 'RUB' ? 'selected' : ''}>Российский рубль (RUB)</option>
+                                <option value="USD" ${appState.currency === 'USD' ? 'selected' : ''}>Доллар США (USD)</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>`;
+
+            document.getElementById('language-select').addEventListener('change', (e) => {
+                appState.lang = e.target.value;
+                localStorage.setItem('asonik_lang', appState.lang);
+                translatePage();
+            });
+
+            document.getElementById('currency-select').addEventListener('change', (e) => {
+                appState.currency = e.target.value;
+                localStorage.setItem('asonik_currency', appState.currency);
+                // Re-render any visible components with prices
+                handleRouting(); 
+            });
         }
 
     </script>
