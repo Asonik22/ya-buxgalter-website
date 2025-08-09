@@ -121,19 +121,11 @@
             transform: translateY(-2px);
             box-shadow: 0 4px 12px rgba(0,0,0,0.15);
         }
-        .btn-danger {
-            background-color: #ef4444;
-            color: white;
-        }
-        .btn-danger:hover {
-             background-color: #dc2626;
-        }
         .modern-input {
             background-color: var(--card-bg);
             border: 1px solid var(--border);
             border-radius: 0.5rem;
             padding: 0.75rem;
-            width: 100%;
             transition: border-color 0.2s, box-shadow 0.2s;
         }
         .modern-input:focus {
@@ -227,12 +219,6 @@
             cursor: not-allowed;
             background-color: color-mix(in srgb, var(--card-bg) 50%, #888);
         }
-
-        /* Mobile menu transition */
-        #mobile-menu { transition: opacity 0.3s; }
-        #mobile-menu-panel { transition: transform 0.3s; }
-        #mobile-menu.open { opacity: 1; pointer-events: auto; }
-        #mobile-menu.open #mobile-menu-panel { transform: translateX(0); }
     </style>
 </head>
 <body class="antialiased opacity-0 transition-opacity duration-500">
@@ -244,8 +230,8 @@
     <header class="sticky top-0 z-40">
       <div class="container mx-auto px-4">
         <div class="mt-4 card-bg shadow-lg rounded-xl border border-custom/50 flex justify-between items-center h-16 px-4">
-            <a href="#main" class="flex items-center gap-3 text-2xl font-bold nav-link rounded-lg flex-shrink-0">
-                <img id="store-logo" src="" alt="logo" class="h-10 w-10 rounded-full hidden">
+            <a href="#main" class="flex items-center gap-3 text-2xl font-bold nav-link rounded-lg">
+                <img id="store-logo" src="" alt="logo" class="h-8 w-8 rounded-full hidden">
                 <span id="site-name-display" class="logo-text hidden sm:inline">Asonik | Store</span>
             </a>
             
@@ -258,10 +244,10 @@
             </nav>
 
             <div class="flex items-center space-x-1 sm:space-x-2">
-                <button id="balance-btn" class="hidden btn bg-primary/10 hover:bg-primary/20 border border-custom/50 px-2 sm:px-4">
+                <button id="balance-btn" class="hidden btn bg-primary/10 hover:bg-primary/20 border border-custom/50">
                     <svg class="h-5 w-5 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H4a3 3 0 00-3 3v8a3 3 0 003 3z"></path></svg>
                     <span id="balance-amount" class="font-semibold text-sm">0</span>
-                    <svg class="w-4 h-4 opacity-70 hidden sm:block" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd"></path></svg>
+                    <svg class="w-4 h-4 opacity-70" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd"></path></svg>
                 </button>
                 <button id="theme-toggle" class="p-2 rounded-full hover:bg-black/10 dark:hover:bg-white/10"></button>
                 <a href="#cart" class="relative p-2 nav-link rounded-full"><svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"></path></svg><span id="cart-count" class="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-4 w-4 flex items-center justify-center hidden">0</span></a>
@@ -272,7 +258,7 @@
       </div>
     </header>
 
-    <div id="mobile-menu" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 opacity-0 pointer-events-none">
+    <div id="mobile-menu" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 opacity-0">
         <div id="mobile-menu-panel" class="fixed top-0 right-0 h-full w-64 card-bg shadow-lg p-6 transform translate-x-full">
             <button id="mobile-menu-close-btn" class="absolute top-4 right-4 p-2 text-2xl">&times;</button>
             <nav id="mobile-nav-links" class="flex flex-col space-y-6 text-xl mt-12 text-center"></nav>
@@ -747,14 +733,12 @@
         async function processBalancePurchase(items, total, promo) { 
             const batch = writeBatch(db);
             const userRef = doc(db, "users", currentUser.uid);
-            
-            const purchaseRef = doc(collection(db, "purchases"));
-            
             batch.update(userRef, { 
                 balance: increment(-total), 
-                balanceHistory: arrayUnion({ type: 'purchase', amount: -total, product: items[0].name, date: new Date().toISOString(), purchaseId: purchaseRef.id }) // Added purchaseId here
+                balanceHistory: arrayUnion({ type: 'purchase', amount: -total, product: items[0].name, date: new Date().toISOString() }) 
             });
             
+            const purchaseRef = doc(collection(db, "purchases"));
             batch.set(purchaseRef, { 
                 userId: currentUser.uid, 
                 userEmail: currentUser.email, 
@@ -817,7 +801,7 @@
             const content = `<p>Для получения товара, пожалуйста, свяжитесь с нами в Telegram и сообщите этот код заказа:</p>
             <div class="my-4 relative text-center font-mono p-2 bg-gray-200 dark:bg-gray-700 rounded-md text-lg">
                 <span id="order-code-to-copy">${code}</span>
-                <button id="copy-code-btn" class="absolute top-1/2 right-2 -translate-y-1/2 p-1 hover:bg-gray-300 dark:hover:bg-gray-600 rounded-md" title="Копировать код">
+                <button id="copy-code-btn" class="absolute top-1/2 right-2 -translate-y-1/2 p-1 hover:bg-gray-300 dark:hover:bg-gray-600 rounded-md">
                     <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20"><path d="M7 3a1 1 0 000 2h6a1 1 0 100-2H7zM4 7a1 1 0 011-1h10a1 1 0 110 2H5a1 1 0 01-1-1zM5 11a1 1 0 100 2h4a1 1 0 100-2H5z"></path></svg>
                 </button>
             </div>`;
@@ -849,12 +833,10 @@
                     <p class="text-gray-400">Текущий баланс</p>
                     <p id="modal-balance-display" class="text-4xl font-bold">${formatPrice(appState.balance)}</p>
                 </div>
-                <div class="flex flex-col sm:flex-row gap-2">
-                    <input id="topup-amount" type="number" class="modern-input" placeholder="Сумма пополнения (UZS)">
-                    <div class="flex gap-2">
-                       <button id="topup-btn" class="btn btn-primary flex-grow">Пополнить</button>
-                       <button id="withdraw-btn" class="btn btn-danger flex-grow">Вывести</button>
-                    </div>
+                <div class="flex gap-2">
+                    <input id="topup-amount" type="number" class="w-full modern-input" placeholder="Сумма пополнения (UZS)">
+                    <button id="topup-btn" class="btn btn-primary">Пополнить</button>
+                    <button id="withdraw-btn" class="btn bg-red-600 text-white">Вывести</button>
                 </div>
                 <hr class="border-custom my-6">
                 <div>
@@ -879,17 +861,12 @@
 
             onSnapshot(doc(db, "users", currentUser.uid), docSnap => {
                 const balanceDisplay = document.getElementById('modal-balance-display');
-                 if (docSnap.exists()) {
+                if (balanceDisplay) {
                     const data = docSnap.data();
                     appState.balance = data.balance || 0;
                     appState.balanceHistory = (data.balanceHistory || []).sort((a,b) => new Date(b.date) - new Date(a.date));
-                    if (balanceDisplay) {
-                       balanceDisplay.textContent = formatPrice(appState.balance);
-                    }
-                    const historyList = document.getElementById('balance-history-list');
-                    if(historyList) {
-                       historyList.innerHTML = renderBalanceHistory(appState.balanceHistory);
-                    }
+                    balanceDisplay.textContent = formatPrice(appState.balance);
+                    document.getElementById('balance-history-list').innerHTML = renderBalanceHistory(appState.balanceHistory);
                 }
             });
         };
@@ -902,11 +879,11 @@
         }
 
         function renderBalanceHistory(historyItems) {
-            if (!historyItems || !historyItems.length) return '<p class="text-center text-gray-500">История пуста.</p>';
+            if (!historyItems.length) return '<p class="text-center text-gray-500">История пуста.</p>';
             return historyItems.map(i => {
                 let buttonHTML = '';
-                if(i.type === 'purchase' && i.purchaseId){
-                    buttonHTML = `<button class="go-to-purchase-btn text-xs text-primary underline" data-purchase-id="${i.purchaseId}">К покупке</button>`
+                if(i.type === 'purchase'){
+                    buttonHTML = `<button class="go-to-purchase-btn text-xs text-primary underline" data-product-name="${i.product}">К покупке</button>`
                 }
                 const text = getBalanceHistoryText(i);
                 return `<li class="flex justify-between items-center p-3 rounded-lg ${i.amount > 0 ? 'bg-green-500/10' : 'bg-red-500/10'}">
@@ -924,9 +901,9 @@
 
         function showWithdrawModal() {
             const onSave = async (modal) => {
-                // This is a placeholder for now, as real withdrawal requires a backend and payment provider integration.
-                showToast("Заявка на вывод отправлена на рассмотрение.", false);
-                return true;
+                // This is a placeholder for now
+                showToast("Функция вывода в разработке", true);
+                return false;
             };
 
             const content = `
@@ -952,14 +929,14 @@
             showModal('Вывод средств', content, onSave, 'Отправить заявку');
         }
 
-        async function showBalanceTopUpPaymentModal(amount, callback) { const methods = paymentMethods.filter(p => p.isEnabled); if (!methods.length) return; const onSave = async m => { const selected = m.querySelector('.payment-option.selected'); if (!selected) { showToast('Пожалуйста, выберите способ оплаты', true); return false; } const pData = { userId: currentUser.uid, userEmail: currentUser.email, orderId: generateCode(), items: [{ name: `Пополнение на ${formatPrice(amount)}`, imageUrl:''}], productName: "Пополнение баланса", status: 'Ожидает оплаты', paymentMethodId: selected.dataset.methodId, finalPrice: amount, createdAt: serverTimestamp(), isTopUp: true }; const pRef = await addDoc(collection(db, "purchases"), pData); window.location.hash = '#purchases'; showProofUploadModal(pRef.id); if (callback) callback(); return true; }; const modal = showModal(`Пополнение на ${formatPrice(amount)}`, `<div class="grid grid-cols-2 gap-4">${methods.map(p => `<button data-method-id="${p.id}" class="payment-option flex flex-col items-center justify-center p-2 border-2 rounded-lg h-24 transition-all"><img src="${p.logoUrl}" class="h-12 object-contain"><span class="text-sm mt-2">${p.name}</span></button>`).join('')}</div>`, onSave, 'К оплате'); modal.querySelectorAll('.payment-option').forEach(btn => btn.onclick = () => { modal.querySelectorAll('.payment-option').forEach(b => b.classList.remove('selected')); btn.classList.add('selected'); }); };
+        async function showBalanceTopUpPaymentModal(amount, callback) { const methods = paymentMethods.filter(p => p.isEnabled); if (!methods.length) return; const onSave = async m => { const selected = m.querySelector('.payment-option.selected'); if (!selected) { showToast('Пожалуйста, выберите способ оплаты', true); return false; } const pData = { userId: currentUser.uid, userEmail: currentUser.email, orderId: generateCode(), items: [{ name: `Пополнение на ${formatPrice(amount)}`, imageUrl:''}], productName: "Пополнение баланса", status: 'Ожидает оплаты', paymentMethodId: selected.dataset.methodId, finalPrice: amount, createdAt: serverTimestamp(), isTopUp: true }; const pRef = await addDoc(collection(db, "purchases"), pData); window.location.hash = '#purchases'; showProofUploadModal(pRef.id); if (callback) callback(); return true; }; const modal = showModal(`Пополнение на ${formatPrice(amount)}`, `<div class="grid grid-cols-2 gap-4">${methods.map(p => `<button data-method-id="${p.id}" class="payment-option flex flex-col items-center p-2 border-2 rounded-lg h-24 transition-all"><img src="${p.logoUrl}" class="h-12 object-contain"><span class="text-sm">${p.name}</span></button>`).join('')}</div>`, onSave, 'К оплате'); modal.querySelectorAll('.payment-option').forEach(btn => btn.onclick = () => { modal.querySelectorAll('.payment-option').forEach(b => b.classList.remove('selected')); btn.classList.add('selected'); }); };
         
         // --- ADMIN PANEL ---
         async function loadAdminPanel(subpage) { 
             if (!isAdmin) return; 
             const el = document.getElementById('admin-content'); 
             const tabs = [{ id: 'users', name: 'Пользователи', icon:'<svg class="w-5 h-5" viewBox="0 0 20 20" fill="currentColor"><path d="M9 6a3 3 0 11-6 0 3 3 0 016 0zM17 6a3 3 0 11-6 0 3 3 0 016 0zM12.93 17c.046-.327.07-.66.07-1a6.97 6.97 0 00-1.5-4.33A5 5 0 0119 16v1h-6.07zM6 11a5 5 0 015 5v1H1v-1a5 5 0 015-5z" /></svg>'}, { id: 'products', name: 'Товары', icon: '<svg class="w-5 h-5" viewBox="0 0 20 20" fill="currentColor"><path d="M5 4a2 2 0 012-2h6a2 2 0 012 2v2a2 2 0 01-2 2H7a2 2 0 01-2-2V4zM5 12a2 2 0 012-2h6a2 2 0 012 2v2a2 2 0 01-2 2H7a2 2 0 01-2-2v-2z" /></svg>'}, { id: 'purchases', name: 'Покупки', icon: '<svg class="w-5 h-5" viewBox="0 0 20 20" fill="currentColor"><path d="M3 1a1 1 0 000 2h1.22l.305 1.222a.997.997 0 00.01.042l1.358 5.43-.893.892C3.74 11.846 4.632 14 6.414 14H15a1 1 0 000-2H6.414l1-1H14a1 1 0 00.894-.553l3-6A1 1 0 0017 3H6.28l-.31-1.243A1 1 0 005 1H3zM16 16.5a1.5 1.5 0 11-3 0 1.5 1.5 0 013 0zM6.5 18a1.5 1.5 0 100-3 1.5 1.5 0 000 3z" /></svg>'}, { id: 'reviews', name: 'Отзывы', icon: '<svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" /></svg>'}, { id: 'payment', name: 'Оплата', icon: '<svg class="w-5 h-5" viewBox="0 0 20 20" fill="currentColor"><path d="M4 4a2 2 0 00-2 2v1h16V6a2 2 0 00-2-2H4z" /><path fill-rule="evenodd" d="M18 9H2v5a2 2 0 002 2h12a2 2 0 002-2V9zM4 13a1 1 0 011-1h1a1 1 0 110 2H5a1 1 0 01-1-1zm5-1a1 1 0 100 2h1a1 1 0 100-2H9z" clip-rule="evenodd" /></svg>'}, { id: 'customization', name: 'Кастомизация', icon: '<svg class="w-5 h-5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M11.49 3.17c-.38-1.56-2.6-1.56-2.98 0a1.532 1.532 0 01-2.286.948c-1.372-.836-2.942.734-1.57 1.996A1.532 1.532 0 013.17 8.51c-1.56.38-1.56 2.6 0 2.98a1.532 1.532 0 01.948 2.286c-.836 1.372.734 2.942 1.996 1.57a1.532 1.532 0 012.286.948c.38 1.56 2.6 1.56 2.98 0a1.532 1.532 0 012.286-.948c1.372.836 2.942-.734 1.57-1.996A1.532 1.532 0 0116.83 11.49c1.56-.38 1.56-2.6 0-2.98a1.532 1.532 0 01-.948-2.286c.836-1.372-.734-2.942-1.996-1.57A1.532 1.532 0 0111.49 3.17zM10 13a3 3 0 100-6 3 3 0 000 6z" clip-rule="evenodd" /></svg>'}, { id: 'faq', name: 'FAQ', icon: '<svg class="w-5 h-5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-8-3a1 1 0 00-.867.5 1 1 0 11-1.731-1A3 3 0 0113 8a3.001 3.001 0 01-2 2.83V11a1 1 0 11-2 0v-1a1 1 0 011-1 1 1 0 100-2zm0 8a1 1 0 100-2 1 1 0 000 2z" clip-rule="evenodd" /></svg>'}, {id: 'promocodes', name: 'Промокоды', icon: '<svg class="w-5 h-5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M17.707 9.293a1 1 0 010 1.414l-7 7a1 1 0 01-1.414 0l-7-7A.997.997 0 012 10V5a3 3 0 013-3h5a3 3 0 013 3v2.586l4.707 4.707zM5 6a1 1 0 100-2 1 1 0 000 2z" clip-rule="evenodd" /></svg>'}, { id: 'chats', name: 'Чаты', icon: '<svg class="w-5 h-5" viewBox="0 0 20 20" fill="currentColor"><path d="M2 5a2 2 0 012-2h7a2 2 0 012 2v4a2 2 0 01-2 2H9l-3 3v-3H4a2 2 0 01-2-2V5z" /><path d="M15 7v2a4 4 0 01-4 4H9.828l-1.766 1.767c.28.149.599.233.938.233h7a2 2 0 002-2v-4a2 2 0 00-2-2h-1.172a4 4 0 01-3.535-1.464L12 4.343V7z" /></svg>'}, { id: 'download', name: 'Приложение', icon: '<svg class="w-5 h-5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zM6.293 6.707a1 1 0 010-1.414l3-3a1 1 0 011.414 0l3 3a1 1 0 01-1.414 1.414L11 5.414V13a1 1 0 11-2 0V5.414L7.707 6.707a1 1 0 01-1.414 0z" clip-rule="evenodd" /></svg>'}, { id: 'announcement', name: 'Объявления', icon: '<svg class="w-5 h-5" viewBox="0 0 20 20" fill="currentColor"><path d="M10 2a6 6 0 00-6 6v3.586l-1.707 1.707A1 1 0 003 15h14a1 1 0 00.707-1.707L16 11.586V8a6 6 0 00-6-6zM10 18a3 3 0 01-3-3h6a3 3 0 01-3 3z" /></svg>'}]; 
-            el.innerHTML = `<h2 class="text-3xl font-bold mb-6">Админ-панель</h2><nav class="admin-tabs flex flex-wrap border-b border-custom mb-6">${tabs.map(t => `<a href="#admin/${t.id}" class="admin-tab-btn flex items-center gap-2 py-3 px-5 rounded-t-lg mr-2 mb-[-1px] bg-transparent font-semibold border border-transparent border-b-0 ${subpage === t.id ? 'active' : ''}" data-tab="${t.id}">${t.icon}<span class="hidden sm:inline">${t.name}</span></a>`).join('')}</nav><div id="admin-tab-content" class="card-bg p-6 rounded-lg min-h-[60vh] shadow-inner"></div>`; 
+            el.innerHTML = `<h2 class="text-3xl font-bold mb-6">Админ-панель</h2><nav class="admin-tabs flex flex-wrap border-b border-custom mb-6">${tabs.map(t => `<a href="#admin/${t.id}" class="admin-tab-btn flex items-center gap-2 py-3 px-5 rounded-t-lg mr-2 mb-[-1px] bg-transparent font-semibold border border-transparent border-b-0 ${subpage === t.id ? 'active' : ''}" data-tab="${t.id}">${t.icon}<span>${t.name}</span></a>`).join('')}</nav><div id="admin-tab-content" class="card-bg p-6 rounded-lg min-h-[60vh] shadow-inner"></div>`; 
             loadAdminTab(subpage); 
         }
         function loadAdminTab(subpage) { 
@@ -1016,21 +993,13 @@
                 showToast('Сохранение товара...');
                 const file = m.querySelector('#p-image-file').files[0];
                 let url = p.imageUrl;
-                if(file) {
-                    showToast('Загрузка основного изображения...');
-                    url = await uploadImage(file);
-                }
+                if(file) url = await uploadImage(file);
                 
                 const variations = [];
-                const variationItems = m.querySelectorAll('.variation-item');
-                for (let i = 0; i < variationItems.length; i++) {
-                    const v = variationItems[i];
+                for(const v of m.querySelectorAll('.variation-item')) {
                     const vImgFile = v.querySelector('.v-image').files[0];
                     let vImgUrl = v.dataset.imgurl || '';
-                    if(vImgFile) {
-                        showToast(`Загрузка изображения для вариации ${i+1}...`);
-                        vImgUrl = await uploadImage(vImgFile);
-                    }
+                    if(vImgFile) vImgUrl = await uploadImage(vImgFile);
                     variations.push({
                         name: v.querySelector('.v-name').value, 
                         price: parseFloat(v.querySelector('.v-price').value), 
@@ -1297,14 +1266,12 @@
 
                 // Mobile Menu
                 if (target.id === 'mobile-menu-btn') {
-                    const menu = document.getElementById('mobile-menu');
-                    menu.classList.remove('hidden');
-                    setTimeout(() => menu.classList.add('open'), 10);
+                    document.getElementById('mobile-menu').classList.remove('hidden');
+                    setTimeout(() => document.getElementById('mobile-menu').classList.remove('opacity-0'), 10);
                 }
-                if (target.id === 'mobile-menu-close-btn' || !closest('#mobile-menu-panel')) {
-                    const menu = document.getElementById('mobile-menu');
-                    menu.classList.remove('open');
-                    setTimeout(() => menu.classList.add('hidden'), 300);
+                if ((target.id === 'mobile-menu-close-btn' || !closest('#mobile-menu-panel')) && !closest('#mobile-menu-btn')) {
+                    document.getElementById('mobile-menu').classList.add('opacity-0');
+                    setTimeout(() => document.getElementById('mobile-menu').classList.add('hidden'), 300);
                 }
 
                 // Auto-close dropdowns
@@ -1317,16 +1284,7 @@
                     if(dropdown) dropdown.classList.add('hidden');
                 }
 
-                if (closest('.nav-link')) { 
-                    e.preventDefault(); 
-                    window.location.hash = new URL(closest('.nav-link').href).hash; 
-                    // Close mobile menu on navigation
-                    const menu = document.getElementById('mobile-menu');
-                    if(menu && menu.classList.contains('open')) {
-                        menu.classList.remove('open');
-                        setTimeout(() => menu.classList.add('hidden'), 300);
-                    }
-                }
+                if (closest('.nav-link')) { e.preventDefault(); window.location.hash = new URL(closest('.nav-link').href).hash; }
                 if (closest('.admin-tab-btn')) { e.preventDefault(); window.location.hash = `admin/${closest('.admin-tab-btn').dataset.tab}`; }
                 if (target.id === 'google-login-btn' || target.id === 'login-redirect') signInWithGoogle();
                 if (target.id === 'logout-btn' || target.id === 'logout-btn-profile') signOut(auth);
@@ -1484,18 +1442,6 @@
                         showToast('Проверьте введенные данные', true);
                     }
                 }
-                 if (target.id === 'save-logo-btn') {
-                    const file = document.getElementById('logo-upload-input').files[0];
-                    if (file) {
-                        showToast('Загрузка логотипа...');
-                        const logoUrl = await uploadImage(file, 'store_assets');
-                        if (logoUrl) {
-                            await setDoc(doc(db, "storeSettings", "config"), { logoUrl }, { merge: true });
-                            showToast('Логотип сохранен!');
-                            loadStoreSettings();
-                        }
-                    }
-                }
                 if (target.id === 'add-banner-btn') {
                     showBannerForm();
                 }
@@ -1616,6 +1562,7 @@
                     showToast("Чек успешно загружен!");
                     return true; // Close modal
                 } else {
+                    showToast("Ошибка загрузки изображения", true);
                     return false;
                 }
             };
@@ -1705,6 +1652,8 @@
                         showToast('Аватар обновлен!');
                         document.getElementById('profile-avatar').src = photoURL;
                         await updateAuthUI(); // Refresh header avatar
+                    } else {
+                        showToast('Ошибка загрузки фото', true);
                     }
                 }
             };
@@ -1753,7 +1702,7 @@
             }, { merge: true });
 
             el.innerHTML = `<h1 class="text-4xl font-bold text-center mb-8" data-lang-key="nav_chats"></h1>`;
-            renderChatInterface(el, chatId, `Чат с поддержкой (Ваш ID: ${currentUser.uid})`, currentUser.uid);
+            renderChatInterface(el, chatId, 'Чат с поддержкой', currentUser.uid);
         };
         function loadWishlistPage() { 
             const el = document.getElementById('wishlist-content'); 
@@ -1806,34 +1755,31 @@
             const isBanned = u.isBanned || false;
             return `<div class="card-bg p-4 rounded flex flex-col md:flex-row justify-between items-start md:items-center border border-custom gap-4"><div><p>${u.displayName} (${u.email})</p><p class="text-xs text-gray-400">UID: ${u.uid}</p><p>Баланс: ${formatPrice(u.balance || 0)}</p></div><div class="flex items-center gap-2 flex-wrap"><input type="number" class="user-balance-input w-24 p-2 rounded bg-transparent border" placeholder="Сумма"><button class="add-balance-btn bg-green-500 text-white p-2 rounded-md" data-uid="${u.uid}">➕</button><button class="remove-balance-btn bg-yellow-500 text-white p-2 rounded-md" data-uid="${u.uid}">➖</button><button class="annul-balance-btn bg-red-500 text-white p-2 rounded-md" data-uid="${u.uid}">Обнулить</button><button class="ban-user-btn ${isBanned ? 'bg-blue-500' : 'bg-red-700'} text-white p-2 rounded-md" data-uid="${u.uid}">${isBanned ? 'Разбанить' : 'Забанить'}</button></div></div>`;
         }
+        
+        // ========= ИСПРАВЛЕННАЯ ФУНКЦИЯ ЗАГРУЗКИ ИЗОБРАЖЕНИЙ =========
         async function uploadImage(file, path = 'images') {
-            showToast('Начинаю загрузку изображения...', false);
-            const storageRef = ref(storage, `${path}/${Date.now()}_${file.name}`);
-            try {
-                const snapshot = await uploadBytes(storageRef, file);
-                const downloadURL = await getDownloadURL(snapshot.ref);
-                showToast('Изображение успешно загружено!', false);
-                return downloadURL;
-            } catch (e) {
-                console.error("Firebase Storage Upload Error: ", e);
-                showToast('Ошибка Firebase. Пробую резервный способ...', true);
-                // Fallback to imgbb
-                const fd = new FormData(); 
-                fd.append('image', file); 
-                try { 
-                    const res = await fetch(`https://api.imgbb.com/1/upload?key=${IMGBB_API_KEY}`, { method: 'POST', body: fd }); 
-                    const r = await res.json(); 
-                    if (r.success) {
-                        showToast('Изображение успешно загружено через резервный хостинг!', false);
-                        return r.data.url;
-                    } 
-                    else throw new Error(r.error.message); 
-                } catch (e) { 
-                    showToast('Ошибка загрузки изображения: ' + e.message, true); 
-                    return null; 
+            console.log("Attempting upload via ImgBB...");
+            const fd = new FormData(); 
+            fd.append('image', file); 
+            
+            try { 
+                const res = await fetch(`https://api.imgbb.com/1/upload?key=${IMGBB_API_KEY}`, { method: 'POST', body: fd }); 
+                const r = await res.json(); 
+                
+                if (r.success) {
+                    console.log("ImgBB Upload Successful:", r.data.url);
+                    return r.data.url; 
+                } else {
+                    throw new Error(r.error.message); 
                 }
+            } catch (e) { 
+                console.error('Ошибка загрузки изображения через ImgBB: ' + e.message); 
+                showToast('Ошибка загрузки изображения: ' + e.message, true);
+                return null; 
             }
         }
+        // =============================================================
+
         function loadAdminList(coll, title, render, btn) { const el = document.getElementById('admin-tab-content'); if(!el) return; el.innerHTML = `<div class="flex justify-between items-center mb-6"><h3 class="text-2xl font-bold">${title}</h3><div>${btn || ''}</div></div><div id="admin-list-container" class="space-y-3"></div>`; onSnapshot(query(collection(db, coll)), s => { const listEl = document.getElementById('admin-list-container'); if(listEl) listEl.innerHTML = s.docs.map(d => render(d.id, d.data())).join('') || '<p>Пусто</p>'; }); };
         function loadAdminPurchases() { const el = document.getElementById('admin-tab-content'); if(!el) return; el.innerHTML = `<h3 class="text-2xl font-bold">Покупки</h3><div id="admin-list-container" class="space-y-3 mt-4"></div>`; onSnapshot(query(collection(db, "purchases"), orderBy("createdAt", "desc")), s => { const listEl = document.getElementById('admin-list-container'); if(listEl) listEl.innerHTML = s.docs.map(d => renderAdminPurchaseItem(d.id, d.data())).join(''); }); };
         function renderAdminProductItem(id, d) { return `
@@ -1845,11 +1791,11 @@
                 <div class="flex items-center gap-2">
                     <button class="edit-btn btn bg-blue-500 text-white text-sm" data-id="${id}" data-type="product">
                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
-                        <span class="hidden sm:inline">Ред.</span>
+                        <span>Ред.</span>
                     </button>
                     <button class="delete-btn btn btn-danger text-sm" data-collection="products" data-id="${id}">
                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
-                        <span class="hidden sm:inline">Удалить</span>
+                        <span>Удалить</span>
                     </button>
                 </div>
             </div>`;
@@ -1950,7 +1896,7 @@
             onSnapshot(query(collection(db, "userChats"), orderBy("lastActivity", "desc")), s => { 
                 if(sidebar) sidebar.innerHTML = s.docs.filter(d=>d.id !== ADMIN_UID).map(d => {
                     const data = d.data();
-                    return `<a href="#admin/chats/${data.userId}" class="nav-link block p-3 rounded-lg transition-colors ${activeChatUserId === data.userId ? 'bg-primary text-white' : 'hover:bg-primary/10'}">${data.userName || 'User'} <span class="text-xs opacity-70">(${data.userId})</span></a>`
+                    return `<a href="#admin/chats/${d.id}" class="block p-3 rounded-lg transition-colors ${activeChatUserId === d.id ? 'bg-primary text-white' : 'hover:bg-primary/10'}">${data.userName || 'User'}</a>`
                 }).join(''); 
             }); 
             if(activeChatUserId) { 
