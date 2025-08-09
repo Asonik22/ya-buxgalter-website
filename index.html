@@ -354,7 +354,7 @@
                 const settingsDoc = await getDoc(doc(db, "storeSettings", "config")); 
                 if (settingsDoc.exists()) { 
                     const data = settingsDoc.data();
-                    const { logoUrl, socialLinks, appDownload, themeColors, siteName, adBanner, guestPromptMessage, minimumTopUpAmount } = data;
+                    const { logoUrl, socialLinks, appDownload, themeColors, siteName, adBanners, guestPromptMessage, minimumTopUpAmount } = data;
                     const logoEl = document.getElementById('store-logo'); 
                     if (logoUrl) { logoEl.src = logoUrl; logoEl.classList.remove('hidden'); } else { logoEl.classList.add('hidden'); } 
                     if (siteName) {
@@ -365,7 +365,7 @@
                     if (socialLinks) renderSocialLinks(socialLinks); 
                     if (themeColors) applyCustomTheme(themeColors);
                     appState.appDownload = appDownload || {}; 
-                    appState.adBanner = adBanner || {};
+                    appState.adBanners = adBanners || []; // Changed to array
                     appState.guestPromptMessage = guestPromptMessage || 'Пожалуйста, войдите, чтобы получить доступ ко всем функциям.';
                     appState.minimumTopUpAmount = minimumTopUpAmount || 1000;
                 } 
@@ -408,7 +408,7 @@
             }
 
             if (protectedPages.includes(page) && !currentUser) { 
-                contentContainer.innerHTML = `<h1 class="text-4xl font-bold text-center mb-8">${t(page+'_title') || 'Доступ запрещен'}</h1><p class="text-center">Пожалуйста, <a href="#" id="login-redirect" class="text-primary underline">войдите</a>.</p>`; 
+                contentContainer.innerHTML = `<h1 class="text-4xl font-bold text-center mb-8">${t(page+'_title') || 'Доступ запрещен'}</h1><p class="text-center">${appState.guestPromptMessage} <a href="#" id="login-redirect" class="text-primary underline">Войти</a></p>`; 
                 return; 
             }
 
@@ -431,10 +431,13 @@
         function loadMainPage() { 
             const el = document.getElementById('main-page-content-wrapper'); 
             if (!el) return;
-            const banner = appState.adBanner;
-            const bannerHTML = (banner && banner.imageUrl && banner.linkUrl) 
+            const banners = appState.adBanners || [];
+            const bannerHTML = banners.map(banner => 
+                (banner && banner.imageUrl && banner.linkUrl) 
                 ? `<a href="${banner.linkUrl}" target="_blank" class="block mb-8 rounded-lg shadow-lg overflow-hidden"><img src="${banner.imageUrl}" class="w-full object-cover"></a>` 
-                : '';
+                : ''
+            ).join('');
+
             el.innerHTML = `${bannerHTML}
                 <h1 class="text-4xl font-bold text-center mb-8" data-lang-key="catalog_title"></h1>
                 <div class="mb-8 p-4 card-bg rounded-lg shadow-md flex flex-col md:flex-row items-center gap-4 border border-custom">
@@ -1142,11 +1145,8 @@
                 <hr class="border-custom">
                 <div>
                     <h3 class="text-xl font-bold mb-2">Рекламный баннер</h3>
-                     <label class="block text-sm">Изображение баннера</label>
-                    <input type="file" id="ad-banner-upload-input" class="w-full text-sm file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-primary/10 file:text-primary hover:file:bg-primary/20 mt-1">
-                    <label class="block text-sm mt-2">Ссылка (куда ведет баннер)</label>
-                    <input id="ad-banner-link-input" class="w-full modern-input mt-1" value="${settings.adBanner?.linkUrl || ''}" placeholder="https://example.com">
-                    <button id="save-ad-banner-btn" class="btn btn-primary mt-2">Сохранить баннер</button>
+                    <div id="banners-list" class="space-y-2"></div>
+                    <button id="add-banner-btn" class="btn btn-primary mt-2">Добавить баннер</button>
                 </div>
                 <hr class="border-custom">
                 <div>
@@ -1183,6 +1183,7 @@
                 </div>
             </div>`; 
             renderAdminSocialLinks(settings.socialLinks);
+            renderAdminBanners(settings.adBanners);
         };
         function applyCustomTheme(colors) {
             const root = document.documentElement;
@@ -1419,21 +1420,8 @@
                         showToast('Проверьте введенные данные', true);
                     }
                 }
-                if (target.id === 'save-ad-banner-btn') {
-                    const file = document.getElementById('ad-banner-upload-input').files[0];
-                    const linkUrl = document.getElementById('ad-banner-link-input').value;
-                    let imageUrl = appState.adBanner?.imageUrl;
-                    if (file) {
-                        showToast('Загрузка баннера...');
-                        imageUrl = await uploadImage(file);
-                    }
-                    if (imageUrl) {
-                        await setDoc(doc(db, "storeSettings", "config"), { adBanner: { imageUrl, linkUrl } }, { merge: true });
-                        showToast('Баннер сохранен!');
-                        loadStoreSettings();
-                    } else {
-                        showToast('Сначала загрузите изображение', true);
-                    }
+                if (target.id === 'add-banner-btn') {
+                    showBannerForm();
                 }
             });
         }
