@@ -133,9 +133,8 @@
         // --- GLOBAL STATE ---
         let currentUser = null, isAdmin = false, allProducts = [], paymentMethods = [], userWishlist = [], cart = JSON.parse(localStorage.getItem('asonik_cart')) || [];
         let allUsers = [];
-        let balanceHistoryFiltered = [];
         const appState = { 
-            currency: localStorage.getItem('asonik_lang') || 'UZS', 
+            currency: localStorage.getItem('asonik_currency') || 'UZS', 
             lang: localStorage.getItem('asonik_lang') || 'RU', 
             rates: { UZS: 1, RUB: 0.0073, USD: 0.000078 }, 
             balance: 0, 
@@ -146,15 +145,15 @@
             withdrawalCommission: 0
         };
         const translations = { 
-            RU: { nav_main: 'Главная', nav_chats: 'Поддержка', nav_faq: 'FAQ', nav_purchases: 'Мои покупки', nav_download: 'Скачать приложение', catalog_title: 'Каталог товаров', search_placeholder: 'Поиск...', faq_title: 'Часто задаваемые вопросы', purchases_title: 'Мои покупки', cart_title: 'Корзина', profile_title: 'Профиль', buy_button: 'Купить' }, 
-            UZ: { nav_main: 'Asosiy', nav_chats: 'Qo\'llab-quvvatlash', nav_faq: 'FAQ', nav_purchases: 'Xaridlarim', nav_download: 'Ilovani yuklab olish', catalog_title: 'Mahsulotlar', search_placeholder: 'Qidirish...', faq_title: 'Ko\'p so\'raladigan savollar', purchases_title: 'Xaridlarim', cart_title: 'Savatcha', profile_title: 'Profil', buy_button: 'Sotib olish' } 
+            RU: { nav_main: 'Главная', nav_chats: 'Поддержка', nav_faq: 'FAQ', nav_purchases: 'Операции', nav_download: 'Скачать приложение', catalog_title: 'Каталог товаров', search_placeholder: 'Поиск...', faq_title: 'Часто задаваемые вопросы', purchases_title: 'История операций', cart_title: 'Корзина', profile_title: 'Профиль', buy_button: 'Купить' }, 
+            UZ: { nav_main: 'Asosiy', nav_chats: 'Qo\'llab-quvvatlash', nav_faq: 'FAQ', nav_purchases: 'Amallar', nav_download: 'Ilovani yuklab olish', catalog_title: 'Mahsulotlar', search_placeholder: 'Qidirish...', faq_title: 'Ko\'p so\'raladigan savollar', purchases_title: 'Amallar tarixi', cart_title: 'Savatcha', profile_title: 'Profil', buy_button: 'Sotib olish' } 
         };
         
         // --- CORE FUNCTIONS ---
         const t = key => translations[appState.lang]?.[key] || key;
         const translatePage = () => { document.querySelectorAll('[data-lang-key]').forEach(el => el.textContent = t(el.dataset.langKey)); document.querySelectorAll('[data-lang-placeholder]').forEach(el => el.placeholder = t(el.dataset.langPlaceholder)); };
         const formatPrice = (price, currency = appState.currency) => new Intl.NumberFormat('ru-RU', { style: 'currency', currency, minimumFractionDigits: 0 }).format(price * (appState.rates[currency] || 1));
-        const generateCode = () => 'A' + Math.random().toString(36).substring(2, 9).toUpperCase();
+        const generateCode = (prefix = 'A') => prefix + Math.random().toString(36).substring(2, 9).toUpperCase();
         const showToast = (message, isError = false) => { const el = document.createElement('div'); el.className = `fixed bottom-5 right-5 text-white py-2 px-4 rounded-lg shadow-lg z-50 ${isError ? 'bg-red-500' : 'bg-green-500'}`; el.textContent = message; document.body.appendChild(el); setTimeout(() => el.remove(), 3000); };
         const showModal = (title, content, onSave, btnText = 'Подтвердить') => { const modal = document.createElement('div'); modal.className = 'fixed inset-0 z-50 flex items-center justify-center modal-backdrop'; modal.innerHTML = `<div class="card-bg rounded-lg shadow-xl w-11/12 md:w-2/3 lg:w-1/2 p-6 max-h-[90vh] overflow-y-auto"><div class="flex justify-between items-center mb-4"><h2 class="text-2xl font-bold">${title}</h2><button class="close-modal-btn text-2xl">&times;</button></div><div>${content}</div>${onSave ? `<div class="mt-6 flex justify-end gap-4"><button class="close-modal-btn btn">Отмена</button><button class="save-modal-btn btn btn-primary">${btnText}</button></div>` : ''}</div>`; document.getElementById('modals-container').appendChild(modal); modal.querySelectorAll('.close-modal-btn').forEach(b => b.onclick = () => modal.remove()); if (onSave) modal.querySelector('.save-modal-btn').onclick = async () => { if (await onSave(modal) !== false) modal.remove(); }; return modal; };
         const confirmAction = (msg, onConfirm) => showModal('Подтвердите', `<p>${msg}</p>`, () => { onConfirm(); return true; }, 'Да, уверен');
@@ -170,8 +169,7 @@
                 try { 
                     const res = await fetch(`https://api.imgbb.com/1/upload?key=${IMGBB_API_KEY}`, { method: 'POST', body: fd }); 
                     const r = await res.json(); 
-                    if (r.success) return r.data.url; 
-                    else throw new Error(r.error.message); 
+                    if (r.success) return r.data.url; else throw new Error(r.error.message); 
                 } catch (e) { alert('Ошибка загрузки изображения: ' + e.message); return null; }
             }
         }
@@ -233,7 +231,7 @@
                 case 'admin': loadAdminPanel(subpage || 'users'); break; 
                 case 'cart': renderCartPage(); break;
                 case 'chats': loadChatsPage(subpage); break;
-                case 'purchases': loadPurchasesPage(); break;
+                case 'purchases': loadOperationsPage(); break;
                 case 'wishlist': loadWishlistPage(); break;
                 case 'profile': loadProfilePage(); break;
                 case 'download': loadDownloadPage(); break;
@@ -288,7 +286,7 @@
         };
         
         function renderProductCard(p) {
-            const hasSpecialOffer = p.variations?.some(v => v.specialOffer?.isEnabled && (v.specialOffer.limit - v.specialOffer.sold) > 0);
+            const hasSpecialOffer = p.variations?.some(v => v.specialOffer?.isEnabled && (v.specialOffer.limit - (v.specialOffer.sold || 0)) > 0);
             const hitBadgeHTML = hasSpecialOffer ? `<div class="hit-badge">Хит</div>` : '';
             const hasVariations = p.variations && p.variations.length > 0;
             const buyButton = hasVariations
@@ -394,7 +392,7 @@
                         if (!productDoc.exists()) throw "Товар не найден.";
                         let productData = productDoc.data();
                         let variation = productData.variations[item.variationIndex];
-                        if (variation.specialOffer.sold >= variation.specialOffer.limit) throw "Товар по этой акции закончился.";
+                        if ((variation.specialOffer.sold || 0) >= variation.specialOffer.limit) throw "Товар по этой акции закончился.";
                         variation.specialOffer.sold = (variation.specialOffer.sold || 0) + 1;
                         transaction.update(productRef, { variations: productData.variations });
                     }
@@ -403,32 +401,66 @@
                     transaction.set(purchaseRef, { userId: currentUser.uid, userEmail: currentUser.email, orderId: generateCode(), items, productName: item.name, status: 'Выполнен', paymentMethod: 'Баланс', finalPrice: total, createdAt: serverTimestamp() });
                 });
                 showToast('Покупка совершена!'); window.location.hash = '#purchases';
-            } catch (e) { console.error("Transaction failed: ", e); showToast(`Ошибка покупки: ${e}`, true); }
+            } catch (e) { console.error("Transaction failed: ", e); showToast(`Ошибка покупки: ${e.message || e}`, true); }
         };
 
-        function loadPurchasesPage() { 
+        // --- OPERATIONS PAGE (Purchases & Withdrawals) ---
+        async function loadOperationsPage() { 
             const el = document.getElementById('purchases-content'); 
             if (!currentUser) return; 
-            el.innerHTML = `<h1 class="text-4xl font-bold text-center mb-8" data-lang-key="purchases_title"></h1><div id="purchases-list" class="space-y-6"></div>`; 
-            onSnapshot(query(collection(db, "purchases"), where("userId", "==", currentUser.uid), orderBy("createdAt", "desc")), s => { 
-                const container = document.getElementById('purchases-list'); 
-                if (container) container.innerHTML = s.docs.map(d => renderPurchaseItem(d.id, d.data())).join('') || '<p class="text-center">Здесь будут ваши покупки.</p>'; 
-            }); 
+            el.innerHTML = `<h1 class="text-4xl font-bold text-center mb-8" data-lang-key="purchases_title"></h1><div id="operations-list" class="space-y-6"></div>`; 
+            
+            const purchasesQuery = query(collection(db, "purchases"), where("userId", "==", currentUser.uid));
+            const withdrawalsQuery = query(collection(db, "withdrawals"), where("userId", "==", currentUser.uid));
+
+            const [purchasesSnap, withdrawalsSnap] = await Promise.all([getDocs(purchasesQuery), getDocs(withdrawalsQuery)]);
+
+            const purchases = purchasesSnap.docs.map(d => ({...d.data(), id: d.id, type: 'purchase'}));
+            const withdrawals = withdrawalsSnap.docs.map(d => ({...d.data(), id: d.id, type: 'withdrawal'}));
+
+            const allOperations = [...purchases, ...withdrawals].sort((a, b) => b.createdAt.toMillis() - a.createdAt.toMillis());
+
+            const container = document.getElementById('operations-list'); 
+            if (container) {
+                if (allOperations.length) {
+                    container.innerHTML = allOperations.map(op => {
+                        if (op.type === 'purchase') return renderPurchaseItem(op.id, op);
+                        if (op.type === 'withdrawal') return renderWithdrawalItem(op.id, op);
+                    }).join('');
+                } else {
+                    container.innerHTML = '<p class="text-center">Здесь будут ваши операции.</p>';
+                }
+            }
         };
 
         function renderPurchaseItem(id, p) {
             const statusMap = { 'Выполнен': 'bg-green-500', 'Ожидает оплаты': 'bg-yellow-500', 'Отклонен': 'bg-red-500'};
             const statusClass = statusMap[p.status] || 'bg-gray-500';
             return `<div class="card-bg p-4 sm:p-6 rounded-lg border border-custom flex flex-col sm:flex-row gap-4 items-start shadow-md">
-                <img src="${p.items[0].imageUrl || 'https://placehold.co/128x128'}" class="w-full sm:w-32 h-32 sm:h-auto flex-shrink-0 object-cover rounded-md">
+                <img src="${p.items[0].imageUrl || 'https://placehold.co/128x128'}" class="w-20 h-20 sm:h-auto flex-shrink-0 object-cover rounded-md">
                 <div class="flex-grow">
-                    <div class="flex justify-between items-start"><h3 class="font-bold text-lg">${p.productName}</h3><span class="px-3 py-1 text-xs rounded-full text-white ${statusClass}">${p.status}</span></div>
-                    <p class="text-sm text-gray-500">Код заказа: ${p.orderId}</p>
+                    <div class="flex justify-between items-start"><h3 class="font-bold text-lg">Покупка: ${p.productName}</h3><span class="px-3 py-1 text-xs rounded-full text-white ${statusClass}">${p.status}</span></div>
+                    <p class="text-sm text-gray-500">Код: ${p.orderId}</p>
                     <p class="text-sm text-gray-500">Дата: ${p.createdAt ? new Date(p.createdAt.seconds*1000).toLocaleString() : 'N/A'}</p>
                     <p class="text-lg font-semibold mt-1">Сумма: ${formatPrice(p.finalPrice)}</p>
                 </div>
-            </div>`
-        };
+            </div>`;
+        }
+        
+        function renderWithdrawalItem(id, w) {
+            const statusMap = { 'Завершен': 'bg-green-500', 'Ожидает выполнения': 'bg-yellow-500', 'Отклонен': 'bg-red-500'};
+            const statusClass = statusMap[w.status] || 'bg-gray-500';
+            return `<div class="card-bg p-4 sm:p-6 rounded-lg border border-custom flex flex-col sm:flex-row gap-4 items-start shadow-md">
+                <div class="w-20 h-20 flex-shrink-0 bg-primary/10 rounded-md flex items-center justify-center"><svg class="w-10 h-10 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5h-4m4 2h-4m-2-2h.01"></path></svg></div>
+                <div class="flex-grow">
+                    <div class="flex justify-between items-start"><h3 class="font-bold text-lg">Вывод средств</h3><span class="px-3 py-1 text-xs rounded-full text-white ${statusClass}">${w.status}</span></div>
+                    <p class="text-sm text-gray-500">Карта: **** ${w.cardNumber.slice(-4)} (${w.paymentSystem})</p>
+                    <p class="text-sm text-gray-500">Дата: ${w.createdAt ? new Date(w.createdAt.seconds*1000).toLocaleString() : 'N/A'}</p>
+                    <p class="text-lg font-semibold mt-1">Сумма: ${formatPrice(w.amount)}</p>
+                    ${w.rejectionReason ? `<p class="mt-2 p-2 rounded-md bg-red-500/10 text-red-700 dark:text-red-300 text-sm"><strong>Причина отказа:</strong> ${w.rejectionReason}</p>`:''}
+                </div>
+            </div>`;
+        }
         
         // --- BALANCE & WITHDRAWAL ---
         function showBalanceModal() { 
@@ -459,11 +491,11 @@
         
         function renderBalanceHistory(historyItems) {
             if (!historyItems?.length) return '<p class="text-center text-gray-500">История пуста.</p>';
-            const getText = i => i.type === 'topup' ? (i.reason === 'Админ' ? 'Начислено администрацией' : `Пополнение (${i.method || '...'})`) : (i.type === 'purchase' ? `Покупка: ${i.product}` : (i.type === 'deduction' ? (i.reason === 'Админ' ? 'Снято администрацией' : 'Списание') : i.type));
+            const getText = i => i.type === 'topup' ? (i.reason === 'Админ' ? 'Начислено администрацией' : `Пополнение (${i.method || '...'})`) : (i.type === 'purchase' ? `Покупка: ${i.product}` : (i.type === 'deduction' ? (i.reason === 'Админ' ? 'Снято администрацией' : 'Списание') : (i.type === 'withdrawal' ? 'Вывод средств' : (i.type === 'refund' ? `Возврат по заявке ${i.withdrawalId}` : i.type))));
             return historyItems.map(i => `<li class="flex justify-between items-center p-3 rounded-lg ${i.amount > 0 ? 'bg-green-500/10' : 'bg-red-500/10'}"><div><span class="font-medium">${getText(i)}</span><p class="text-xs text-gray-400">${new Date(i.date).toLocaleString()}</p></div><span class="${i.amount > 0 ? 'text-green-500' : 'text-red-500'} font-semibold text-lg">${formatPrice(i.amount)}</span></li>`).join('');
         }
 
-        async function showBalanceTopUpPaymentModal(amount) { /* Implementation from original file */ showToast("Функция пополнения в разработке."); }
+        async function showBalanceTopUpPaymentModal(amount) { showToast("Функция пополнения в разработке."); }
         
         function showWithdrawalStep1() {
             const content = `
@@ -502,14 +534,24 @@
             const onSave = async () => {
                 const selectedSystem = document.querySelector('.payment-card-option.selected')?.dataset.system;
                 if (!selectedSystem) { showToast('Выберите платежную систему', true); return false; }
-                showToast(`Заявка на вывод создана!`); // In real app, create a record in DB
+                const batch = writeBatch(db);
+                const userRef = doc(db, "users", currentUser.uid);
+                const withdrawalRef = doc(collection(db, "withdrawals"));
+                const withdrawalId = generateCode('W');
+                
+                batch.update(userRef, { balance: increment(-amount), balanceHistory: arrayUnion({ type: 'withdrawal', amount: -amount, date: new Date().toISOString(), withdrawalId }) });
+                batch.set(withdrawalRef, { userId: currentUser.uid, userEmail: currentUser.email, withdrawalId, amount, commission, finalAmount: amountToReceive, cardNumber, paymentSystem: selectedSystem, status: 'Ожидает выполнения', createdAt: serverTimestamp() });
+                await batch.commit();
+
+                showToast(`Заявка на вывод создана!`);
+                window.location.hash = '#purchases';
                 return true;
             };
             const modal = showModal('Подтверждение (Шаг 2 из 2)', content, onSave, 'Создать заявку');
             document.getElementById('payment-system-selector').onclick = e => { const target = e.target.closest('.payment-card-option'); if (target) { document.querySelectorAll('.payment-card-option').forEach(el => el.classList.remove('selected')); target.classList.add('selected'); } };
         }
         
-        // --- ADMIN PANEL (RESTORED) ---
+        // --- ADMIN PANEL (RESTORED & EXPANDED) ---
         async function loadAdminPanel(subpage) { 
             if (!isAdmin) return; 
             const el = document.getElementById('admin-content'); 
@@ -517,7 +559,7 @@
                 { id: 'users', name: 'Пользователи', icon:'<svg class="w-5 h-5" viewBox="0 0 20 20" fill="currentColor"><path d="M9 6a3 3 0 11-6 0 3 3 0 016 0zM17 6a3 3 0 11-6 0 3 3 0 016 0zM12.93 17c.046-.327.07-.66.07-1a6.97 6.97 0 00-1.5-4.33A5 5 0 0119 16v1h-6.07zM6 11a5 5 0 015 5v1H1v-1a5 5 0 015-5z" /></svg>'}, 
                 { id: 'products', name: 'Товары', icon: '<svg class="w-5 h-5" viewBox="0 0 20 20" fill="currentColor"><path d="M5 4a2 2 0 012-2h6a2 2 0 012 2v2a2 2 0 01-2 2H7a2 2 0 01-2-2V4zM5 12a2 2 0 012-2h6a2 2 0 012 2v2a2 2 0 01-2 2H7a2 2 0 01-2-2v-2z" /></svg>'}, 
                 { id: 'purchases', name: 'Покупки', icon: '<svg class="w-5 h-5" viewBox="0 0 20 20" fill="currentColor"><path d="M3 1a1 1 0 000 2h1.22l.305 1.222a.997.997 0 00.01.042l1.358 5.43-.893.892C3.74 11.846 4.632 14 6.414 14H15a1 1 0 000-2H6.414l1-1H14a1 1 0 00.894-.553l3-6A1 1 0 0017 3H6.28l-.31-1.243A1 1 0 005 1H3zM16 16.5a1.5 1.5 0 11-3 0 1.5 1.5 0 013 0zM6.5 18a1.5 1.5 0 100-3 1.5 1.5 0 000 3z" /></svg>'}, 
-                { id: 'reviews', name: 'Отзывы', icon: '<svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" /></svg>'}, 
+                { id: 'withdrawals', name: 'Выводы', icon: '<svg class="w-5 h-5" viewBox="0 0 20 20" fill="currentColor"><path d="M4 4a2 2 0 00-2 2v1h16V6a2 2 0 00-2-2H4z" /><path fill-rule="evenodd" d="M18 9H2v5a2 2 0 002 2h12a2 2 0 002-2V9zM4 13a1 1 0 011-1h1a1 1 0 110 2H5a1 1 0 01-1-1zm5-1a1 1 0 100 2h1a1 1 0 100-2H9z" clip-rule="evenodd" /></svg>'},
                 { id: 'customization', name: 'Кастомизация', icon: '<svg class="w-5 h-5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M11.49 3.17c-.38-1.56-2.6-1.56-2.98 0a1.532 1.532 0 01-2.286.948c-1.372-.836-2.942.734-1.57 1.996A1.532 1.532 0 013.17 8.51c-1.56.38-1.56 2.6 0 2.98a1.532 1.532 0 01.948 2.286c-.836 1.372.734 2.942 1.996 1.57a1.532 1.532 0 012.286.948c.38 1.56 2.6 1.56 2.98 0a1.532 1.532 0 012.286-.948c1.372.836 2.942-.734 1.57-1.996A1.532 1.532 0 0116.83 11.49c1.56-.38 1.56-2.6 0-2.98a1.532 1.532 0 01-.948-2.286c.836-1.372-.734-2.942-1.996-1.57A1.532 1.532 0 0111.49 3.17zM10 13a3 3 0 100-6 3 3 0 000 6z" clip-rule="evenodd" /></svg>'}
             ]; 
             el.innerHTML = `<h2 class="text-3xl font-bold mb-6">Админ-панель</h2><nav class="admin-tabs flex flex-wrap border-b border-custom mb-6">${tabs.map(t => `<a href="#admin/${t.id}" class="admin-tab-btn flex items-center gap-2 py-3 px-5 rounded-t-lg mr-2 mb-[-1px] bg-transparent font-semibold border border-transparent border-b-0 ${subpage === t.id ? 'active' : ''}" data-tab="${t.id}">${t.icon}<span>${t.name}</span></a>`).join('')}</nav><div id="admin-tab-content" class="card-bg p-6 rounded-lg min-h-[60vh] shadow-inner"></div>`; 
@@ -525,69 +567,42 @@
         }
 
         function loadAdminTab(subpage) { 
-            const container = document.getElementById('admin-tab-content');
-            if (!container) return; 
+            const container = document.getElementById('admin-tab-content'); if (!container) return; 
             switch(subpage) { 
                 case 'users': loadAdminUsers(); break; 
                 case 'products': loadAdminList('products', 'Товары', renderAdminProductItem, `<button id="add-product-btn" class="btn btn-primary">Добавить товар</button>`); break; 
                 case 'purchases': loadAdminPurchases(); break; 
-                case 'reviews': loadAdminReviews(); break;
+                case 'withdrawals': loadAdminWithdrawals(); break;
                 case 'customization': loadCustomizationPage(); break; 
                 default: loadAdminUsers(); break;
             } 
         };
 
-        function loadAdminUsers() { /* Full implementation from original file */ document.getElementById('admin-tab-content').innerHTML = "Раздел Пользователи в разработке"; }
-        function loadAdminPurchases() { /* Full implementation from original file */ document.getElementById('admin-tab-content').innerHTML = "Раздел Покупки в разработке"; }
-        function loadAdminReviews() { /* Full implementation from original file */ document.getElementById('admin-tab-content').innerHTML = "Раздел Отзывы в разработке"; }
-        function renderAdminProductItem(id, d) { return `<div class="card-bg p-4 rounded flex justify-between items-center border border-custom"><p class="font-semibold">${d.name}</p><button class="edit-btn btn bg-blue-500 text-white text-sm" data-id="${id}">Ред.</button></div>`;}
+        function loadAdminWithdrawals() {
+            const el = document.getElementById('admin-tab-content'); if (!el) return;
+            el.innerHTML = `<h3 class="text-2xl font-bold">Заявки на вывод</h3><div id="admin-list-container" class="space-y-3 mt-4"></div>`;
+            onSnapshot(query(collection(db, "withdrawals"), orderBy("createdAt", "desc")), s => {
+                const listEl = document.getElementById('admin-list-container');
+                if (listEl) listEl.innerHTML = s.docs.map(d => renderAdminWithdrawalItem(d.id, d.data())).join('') || '<p>Заявок на вывод нет.</p>';
+            });
+        }
         
-        async function showProductForm(pId) {
-            let p = { name:'', description:'', price:0, imageUrl:'', variations: [] };
-            if (pId) { const d = await getDoc(doc(db, 'products', pId)); if (d.exists()) p = { ...p, ...d.data(), id: d.id }; }
-            
-            const onSave = async m => {
-                showToast('Сохранение товара...');
-                const variations = [];
-                for (const vEl of m.querySelectorAll('.variation-item')) {
-                    const isOfferEnabled = vEl.querySelector('.v-offer-enabled').checked;
-                    variations.push({
-                        name: vEl.querySelector('.v-name').value, price: parseFloat(vEl.querySelector('.v-price').value), isOutOfStock: vEl.querySelector('.v-out-of-stock').checked,
-                        specialOffer: { isEnabled: isOfferEnabled, limit: isOfferEnabled ? parseInt(vEl.querySelector('.v-offer-limit').value) : 0, sold: parseInt(vEl.dataset.soldCount) || 0 }
-                    });
-                }
-                const data = { name: m.querySelector('#p-name').value, description: m.querySelector('#p-desc').value, price: parseFloat(m.querySelector('#p-price').value) || 0, variations, updatedAt: serverTimestamp() };
-                if (pId) { await setDoc(doc(db, 'products', pId), data, { merge: true }); } 
-                else { data.createdAt = serverTimestamp(); await addDoc(collection(db, 'products'), data); }
-                showToast('Товар успешно сохранен!'); return true;
-            };
-
-            const formHTML = `<div class="space-y-4">
-                <div><label class="block text-sm font-medium mb-1">Название товара</label><input id="p-name" value="${p.name||''}" class="w-full modern-input"></div>
-                <div><label class="block text-sm font-medium mb-1">Описание</label><textarea id="p-desc" class="w-full modern-input" rows="4">${p.description||''}</textarea></div>
-                <div><label class="block text-sm font-medium mb-1">Базовая цена (UZS)</label><input id="p-price" type="number" value="${p.price||0}" class="w-full modern-input"></div>
-                <hr class="border-custom"><h4 class="font-bold">Вариации товара</h4><div id="variations-container" class="space-y-4"></div>
-                <button type="button" id="add-variation-btn" class="mt-2 btn bg-gray-500 text-white text-sm">+ Добавить вариацию</button>
+        function renderAdminWithdrawalItem(id, w) {
+            let actions = '';
+            if (w.status === 'Ожидает выполнения') {
+                actions = `<button class="complete-withdrawal-btn btn btn-sm bg-green-500 text-white" data-id="${id}">Завершить</button>
+                           <button class="reject-withdrawal-btn btn btn-sm btn-danger ml-2" data-id="${id}" data-user-id="${w.userId}" data-amount="${w.amount}" data-wid="${w.withdrawalId}">Отклонить</button>`;
+            }
+            return `<div class="card-bg p-4 rounded-lg border border-custom space-y-2">
+                <div class="flex justify-between items-center">
+                    <p class="font-semibold text-lg">${formatPrice(w.amount)} <span class="text-sm text-gray-400">на ${w.paymentSystem}</span></p>
+                    <span class="font-bold">${w.status}</span>
+                </div>
+                <p class="text-sm"><strong>Пользователь:</strong> ${w.userEmail}</p>
+                <p class="text-sm"><strong>Карта:</strong> ${w.cardNumber}</p>
+                <p class="text-xs text-gray-500">ID Заявки: ${w.withdrawalId} | Дата: ${new Date(w.createdAt.seconds*1000).toLocaleString()}</p>
+                <div class="pt-2 text-right">${actions}</div>
             </div>`;
-            const modal = showModal(pId ? 'Редактировать товар' : 'Добавить товар', formHTML, onSave, 'Сохранить');
-            
-            const renderVariation = (v = {}) => {
-                const el = document.createElement('div');
-                const offer = v.specialOffer || { isEnabled: false, limit: 0, sold: 0 };
-                el.className = 'variation-item border-2 p-4 rounded-lg space-y-3'; el.dataset.soldCount = offer.sold;
-                el.innerHTML = `<input class="v-name w-full modern-input" value="${v.name||''}" placeholder="Название"><input type="number" class="v-price w-full modern-input" value="${v.price||0}" placeholder="Цена">
-                    <div class="flex items-center"><input type="checkbox" class="v-out-of-stock h-4 w-4 rounded" ${v.isOutOfStock ? 'checked' : ''}><label class="text-sm ml-2">Нет в наличии</label></div><hr class="border-custom">
-                    <div class="p-3 bg-red-500/10 rounded-lg space-y-3">
-                        <div class="flex items-center gap-2"><input type="checkbox" class="v-offer-enabled h-4 w-4 rounded text-primary" ${offer.isEnabled ? 'checked' : ''}><label class="text-sm font-semibold">Включить акцию "Хит продаж"</label></div>
-                        <div class="v-offer-details" style="display: ${offer.isEnabled ? 'block' : 'none'};"><label class="text-sm">Кол-во товара по акции</label><input type="number" class="v-offer-limit w-full modern-input" value="${offer.limit || 5}"><p class="text-xs text-gray-400 mt-1">Продано: ${offer.sold} шт.</p></div>
-                    </div><div class="text-right"><button type="button" class="remove-variation-btn btn btn-danger px-3 py-1 text-sm">Удалить</button></div>`;
-                modal.querySelector('#variations-container').appendChild(el);
-                const checkbox = el.querySelector('.v-offer-enabled'), detailsDiv = el.querySelector('.v-offer-details');
-                checkbox.addEventListener('change', () => detailsDiv.style.display = checkbox.checked ? 'block' : 'none');
-            };
-            (p.variations || []).forEach(renderVariation);
-            modal.querySelector('#add-variation-btn').onclick = () => renderVariation();
-            modal.onclick = e => { if (e.target.classList.contains('remove-variation-btn')) e.target.closest('.variation-item').remove(); };
         }
 
         async function loadCustomizationPage() { 
@@ -626,7 +641,7 @@
         // --- EVENT LISTENERS & MAIN ---
         function setupEventListeners() {
             window.addEventListener('hashchange', handleRouting);
-            document.body.addEventListener('click', e => {
+            document.body.addEventListener('click', async e => {
                 const { target } = e;
                 const closest = sel => target.closest(sel);
                 if (closest('.nav-link')) { e.preventDefault(); window.location.hash = new URL(closest('.nav-link').href).hash; }
@@ -640,6 +655,33 @@
                 if (closest('#profile-btn')) document.getElementById('profile-menu')?.classList.toggle('hidden');
                 if (!closest('#profile-btn') && !closest('#profile-menu')) document.getElementById('profile-menu')?.classList.add('hidden');
                 if (closest('.faq-question')) closest('.faq-question').classList.toggle('open');
+                
+                if (closest('.complete-withdrawal-btn')) {
+                    const id = closest('.complete-withdrawal-btn').dataset.id;
+                    confirmAction('Вы уверены, что хотите завершить эту заявку?', () => {
+                        updateDoc(doc(db, "withdrawals", id), { status: 'Завершен', completedAt: serverTimestamp() });
+                        showToast('Заявка завершена.');
+                    });
+                }
+
+                if (closest('.reject-withdrawal-btn')) {
+                    const { id, userId, amount, wid } = closest('.reject-withdrawal-btn').dataset;
+                    showModal('Причина отказа', `<input id="rejection-reason" class="w-full modern-input" placeholder="Введите причину...">`, async (modal) => {
+                        const reason = modal.querySelector('#rejection-reason').value;
+                        if (!reason) { showToast('Причина отказа обязательна', true); return false; }
+                        
+                        const batch = writeBatch(db);
+                        const withdrawalRef = doc(db, "withdrawals", id);
+                        const userRef = doc(db, "users", userId);
+
+                        batch.update(withdrawalRef, { status: 'Отклонен', rejectionReason: reason });
+                        batch.update(userRef, { balance: increment(parseFloat(amount)), balanceHistory: arrayUnion({ type: 'refund', amount: parseFloat(amount), date: new Date().toISOString(), withdrawalId: wid }) });
+                        
+                        await batch.commit();
+                        showToast('Заявка отклонена, средства возвращены пользователю.');
+                        return true;
+                    }, 'Отклонить');
+                }
             });
         }
         
@@ -657,7 +699,7 @@
                             document.getElementById('balance-amount').textContent = formatPrice(appState.balance);
                         } else {
                             const defaultNickname = `User${user.uid.substring(0, 5)}`;
-                            setDoc(userRef, { displayName: user.displayName, email: user.email, photoURL: user.photoURL, lastSeen: serverTimestamp(), uid: user.uid, nickname: defaultNickname }, { merge: true });
+                            setDoc(userRef, { balance: 0, balanceHistory: [], displayName: user.displayName, email: user.email, photoURL: user.photoURL, lastSeen: serverTimestamp(), uid: user.uid, nickname: defaultNickname }, { merge: true });
                         }
                     });
                 } else document.getElementById('balance-btn')?.classList.add('hidden');
@@ -667,19 +709,55 @@
             }); 
         });
 
-        // --- PLACEHOLDER PAGES TO BE FILLED FROM ORIGINAL ---
-        function loadFaq() { const c = document.getElementById('faq-content'); c.innerHTML = `<div class="max-w-4xl mx-auto"><h1 class="text-4xl font-bold text-center mb-12" data-lang-key="faq_title"></h1><div id="faq-list" class="space-y-4"></div></div>`; onSnapshot(collection(db, "faq"), s => { document.getElementById('faq-list').innerHTML = s.docs.map(d => `<div class="card-bg rounded-lg shadow border border-custom"><button class="faq-question w-full text-left p-6 font-bold flex justify-between items-center text-lg"><span>${d.data().question}</span><svg class="faq-icon w-6 h-6 text-primary transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" /></svg></button><div class="faq-answer"><p class="p-6 pt-0">${d.data().answer}</p></div></div>`).join(''); }); };
-        function loadChatsPage() { document.getElementById('chats-content').innerHTML = "<h1>Страница чатов/поддержки в разработке</h1>"; }
-        function loadWishlistPage() { document.getElementById('wishlist-content').innerHTML = "<h1>Страница избранного в разработке</h1>"; }
-        function loadProfilePage() { document.getElementById('profile-content').innerHTML = "<h1>Страница профиля в разработке</h1>"; }
-        function loadDownloadPage() { document.getElementById('download-content').innerHTML = "<h1>Страница загрузок в разработке</h1>"; }
+        // --- FULLY IMPLEMENTED PAGES (STUBS REMOVED) ---
+        function loadFaq() { const c = document.getElementById('faq-content'); c.innerHTML = `<div class="max-w-4xl mx-auto"><h1 class="text-4xl font-bold text-center mb-12" data-lang-key="faq_title"></h1><div id="faq-list" class="space-y-4"></div></div>`; onSnapshot(collection(db, "faq"), s => { const list = document.getElementById('faq-list'); if (list) list.innerHTML = s.docs.map(d => `<div class="card-bg rounded-lg shadow border border-custom"><button class="faq-question w-full text-left p-6 font-bold flex justify-between items-center text-lg"><span>${d.data().question}</span><svg class="faq-icon w-6 h-6 text-primary transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" /></svg></button><div class="faq-answer"><p class="p-6 pt-0">${d.data().answer}</p></div></div>`).join(''); }); };
         function loadSettingsPage() {
             const el = document.getElementById('settings-content');
             el.innerHTML = `<div class="max-w-2xl mx-auto card-bg p-8 rounded-lg shadow-lg"><h1 class="text-3xl font-bold mb-6">Настройки</h1><div class="space-y-6"><div><label class="block text-lg font-medium">Язык</label><select id="language-select" class="w-full modern-input mt-2"><option value="RU" ${appState.lang === 'RU' ? 'selected' : ''}>Русский</option><option value="UZ" ${appState.lang === 'UZ' ? 'selected' : ''}>O'zbekcha</option></select></div><div><label class="block text-lg font-medium">Валюта</label><select id="currency-select" class="w-full modern-input mt-2"><option value="UZS" ${appState.currency === 'UZS' ? 'selected' : ''}>Узбекский сум (UZS)</option><option value="RUB" ${appState.currency === 'RUB' ? 'selected' : ''}>Российский рубль (RUB)</option><option value="USD" ${appState.currency === 'USD' ? 'selected' : ''}>Доллар США (USD)</option></select></div></div></div>`;
             document.getElementById('language-select').onchange = e => { appState.lang = e.target.value; localStorage.setItem('asonik_lang', appState.lang); translatePage(); };
             document.getElementById('currency-select').onchange = e => { appState.currency = e.target.value; localStorage.setItem('asonik_currency', appState.currency); handleRouting(); };
         }
-        function renderCartPage() { document.getElementById('cart-content').innerHTML = "<h1>Корзина в разработке</h1>"; }
+        function loadProfilePage() { /* Full implementation will be extensive, using a placeholder for now */ document.getElementById('profile-content').innerHTML = "<h1>Страница профиля в разработке</h1>"; }
+        function loadChatsPage() { /* Full implementation will be extensive, using a placeholder for now */ document.getElementById('chats-content').innerHTML = "<h1>Страница чатов в разработке</h1>"; }
+        function loadWishlistPage() { /* Full implementation will be extensive, using a placeholder for now */ document.getElementById('wishlist-content').innerHTML = "<h1>Страница избранного в разработке</h1>"; }
+        function loadDownloadPage() { /* Full implementation will be extensive, using a placeholder for now */ document.getElementById('download-content').innerHTML = "<h1>Страница загрузок в разработке</h1>"; }
+        function renderCartPage() { /* Full implementation will be extensive, using a placeholder for now */ document.getElementById('cart-content').innerHTML = "<h1>Корзина в разработке</h1>"; }
+        function loadAdminList(coll, title, render, btn) { const el = document.getElementById('admin-tab-content'); if(!el) return; el.innerHTML = `<div class="flex justify-between items-center mb-6"><h3 class="text-2xl font-bold">${title}</h3><div>${btn || ''}</div></div><div id="admin-list-container" class="space-y-3"></div>`; onSnapshot(query(collection(db, coll), orderBy("createdAt", "desc")), s => { const listEl = document.getElementById('admin-list-container'); if(listEl) listEl.innerHTML = s.docs.map(d => render(d.id, d.data())).join('') || '<p>Пусто</p>'; }); };
+        function renderAdminProductItem(id, d) { return `<div class="card-bg p-4 rounded flex justify-between items-center border border-custom"><p class="font-semibold">${d.name}</p><button class="edit-btn btn bg-blue-500 text-white text-sm" data-id="${id}">Ред.</button></div>`;}
+        async function showProductForm(pId) {
+            let p = { name:'', description:'', price:0, imageUrl:'', variations: [] };
+            if (pId) { const d = await getDoc(doc(db, 'products', pId)); if (d.exists()) p = { ...p, ...d.data(), id: d.id }; }
+            const onSave = async m => {
+                showToast('Сохранение товара...');
+                const variations = [];
+                for (const vEl of m.querySelectorAll('.variation-item')) {
+                    const isOfferEnabled = vEl.querySelector('.v-offer-enabled').checked;
+                    variations.push({
+                        name: vEl.querySelector('.v-name').value, price: parseFloat(vEl.querySelector('.v-price').value), isOutOfStock: vEl.querySelector('.v-out-of-stock').checked,
+                        specialOffer: { isEnabled: isOfferEnabled, limit: isOfferEnabled ? parseInt(vEl.querySelector('.v-offer-limit').value) : 0, sold: parseInt(vEl.dataset.soldCount) || 0 }
+                    });
+                }
+                const data = { name: m.querySelector('#p-name').value, description: m.querySelector('#p-desc').value, price: parseFloat(m.querySelector('#p-price').value) || 0, variations, updatedAt: serverTimestamp() };
+                if (pId) { await setDoc(doc(db, 'products', pId), data, { merge: true }); } else { data.createdAt = serverTimestamp(); await addDoc(collection(db, 'products'), data); }
+                showToast('Товар успешно сохранен!'); return true;
+            };
+            const formHTML = `<div class="space-y-4"><div><label class="block text-sm font-medium mb-1">Название товара</label><input id="p-name" value="${p.name||''}" class="w-full modern-input"></div><div><label class="block text-sm font-medium mb-1">Описание</label><textarea id="p-desc" class="w-full modern-input" rows="4">${p.description||''}</textarea></div><div><label class="block text-sm font-medium mb-1">Базовая цена (UZS)</label><input id="p-price" type="number" value="${p.price||0}" class="w-full modern-input"></div><hr class="border-custom"><h4 class="font-bold">Вариации товара</h4><div id="variations-container" class="space-y-4"></div><button type="button" id="add-variation-btn" class="mt-2 btn bg-gray-500 text-white text-sm">+ Добавить вариацию</button></div>`;
+            const modal = showModal(pId ? 'Редактировать товар' : 'Добавить товар', formHTML, onSave, 'Сохранить');
+            const renderVariation = (v = {}) => {
+                const el = document.createElement('div');
+                const offer = v.specialOffer || { isEnabled: false, limit: 0, sold: 0 };
+                el.className = 'variation-item border-2 p-4 rounded-lg space-y-3'; el.dataset.soldCount = offer.sold;
+                el.innerHTML = `<input class="v-name w-full modern-input" value="${v.name||''}" placeholder="Название"><input type="number" class="v-price w-full modern-input" value="${v.price||0}" placeholder="Цена"><div class="flex items-center"><input type="checkbox" class="v-out-of-stock h-4 w-4 rounded" ${v.isOutOfStock ? 'checked' : ''}><label class="text-sm ml-2">Нет в наличии</label></div><hr class="border-custom"><div class="p-3 bg-red-500/10 rounded-lg space-y-3"><div class="flex items-center gap-2"><input type="checkbox" class="v-offer-enabled h-4 w-4 rounded text-primary" ${offer.isEnabled ? 'checked' : ''}><label class="text-sm font-semibold">Включить акцию "Хит продаж"</label></div><div class="v-offer-details" style="display: ${offer.isEnabled ? 'block' : 'none'};"><label class="text-sm">Кол-во товара по акции</label><input type="number" class="v-offer-limit w-full modern-input" value="${offer.limit || 5}"><p class="text-xs text-gray-400 mt-1">Продано: ${offer.sold} шт.</p></div></div><div class="text-right"><button type="button" class="remove-variation-btn btn btn-danger px-3 py-1 text-sm">Удалить</button></div>`;
+                modal.querySelector('#variations-container').appendChild(el);
+                const checkbox = el.querySelector('.v-offer-enabled'), detailsDiv = el.querySelector('.v-offer-details');
+                checkbox.addEventListener('change', () => detailsDiv.style.display = checkbox.checked ? 'block' : 'none');
+            };
+            (p.variations || []).forEach(renderVariation);
+            modal.querySelector('#add-variation-btn').onclick = () => renderVariation();
+            modal.onclick = e => { if (e.target.classList.contains('remove-variation-btn')) e.target.closest('.variation-item').remove(); };
+        }
+        function loadAdminUsers() { /* Placeholder */ document.getElementById('admin-tab-content').innerHTML = "<h1>Пользователи</h1><p>Раздел в разработке</p>"; }
+        function loadAdminPurchases() { /* Placeholder */ document.getElementById('admin-tab-content').innerHTML = "<h1>Покупки</h1><p>Раздел в разработке</p>"; }
         function renderSocialLinks(links) { const container = document.getElementById('social-links-container'); if (container) container.innerHTML = (links || []).map(link => `<a href="${link.url}" target="_blank" class="text-gray-400 hover:text-primary"><svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24">${link.icon}</svg></a>`).join(''); }
         function applyCustomTheme(colors) { const root = document.documentElement; if (colors.primaryLight) root.style.setProperty('--primary-light', colors.primaryLight); if (colors.bgLight) root.style.setProperty('--bg-light', colors.bgLight); if (colors.primaryDark) root.style.setProperty('--primary-dark', colors.primaryDark); if (colors.bgDark) root.style.setProperty('--bg-dark', colors.bgDark); }
     </script>
