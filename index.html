@@ -3,256 +3,527 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ДЕМО-ВЕРСИЯ | Asonik Store</title>
+    <title id="site-title">Asonik | Store</title>
     <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🛒</text></svg>" />
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
     <style>
         :root {
-            --bg-light-start: #ede9fe; --bg-light-end: #f5f3ff; --text-light: #1e1b4b; --card-bg-light: #ffffff; --primary-light: #7c3aed; --primary-hover-light: #6d28d9; --border-light: #ddd6fe; --logo-text-light: #5b21b6; --nav-hover-bg-light: #e0e7ff; --nav-hover-text-light: #1e1b4b; --nav-active-bg-light: #7c3aed; --nav-active-text-light: #ffffff;
-            --bg-dark-start: #1e1b4b; --bg-dark-end: #17133a; --text-dark: #e0e7ff; --card-bg-dark: #282454; --primary-dark: #a78bfa; --primary-hover-dark: #c4b5fd; --border-dark: #4338ca; --logo-text-dark: #c7d2fe; --nav-hover-bg-dark: #312e74; --nav-hover-text-dark: #e0e7ff; --nav-active-bg-dark: #a78bfa; --nav-active-text-dark: #1e1b4b;
+            /* NEW Light Theme Colors with Gradient */
+            --bg-light-start: #ede9fe;
+            --bg-light-end: #f5f3ff;
+            --text-light: #1e1b4b; 
+            --card-bg-light: #ffffff; 
+            --primary-light: #7c3aed; 
+            --primary-hover-light: #6d28d9; 
+            --border-light: #ddd6fe; 
+            --logo-text-light: #5b21b6;
+            --nav-hover-bg-light: #e0e7ff;
+            --nav-hover-text-light: #1e1b4b;
+            --nav-active-bg-light: #7c3aed; /* Active nav link background */
+            --nav-active-text-light: #ffffff; /* Active nav link text */
+
+            /* NEW Dark Theme Colors */
+            --bg-dark-start: #1e1b4b;
+            --bg-dark-end: #17133a;
+            --text-dark: #e0e7ff; 
+            --card-bg-dark: #282454; 
+            --primary-dark: #a78bfa; 
+            --primary-hover-dark: #c4b5fd; 
+            --border-dark: #4338ca; 
+            --logo-text-dark: #c7d2fe;
+            --nav-hover-bg-dark: #312e74;
+            --nav-hover-text-dark: #e0e7ff;
+            --nav-active-bg-dark: #a78bfa; /* Active nav link background */
+            --nav-active-text-dark: #1e1b4b; /* Active nav link text */
         }
+
         html.dark { 
-            --bg-start: var(--bg-dark-start); --bg-end: var(--bg-dark-end); --text: var(--text-dark); --card-bg: var(--card-bg-dark); --primary: var(--primary-dark); --primary-hover: var(--primary-hover-dark); --border: var(--border-dark); --logo-text: var(--logo-text-dark); --nav-hover-bg: var(--nav-hover-bg-dark); --nav-hover-text: var(--nav-hover-text-dark); --nav-active-bg: var(--nav-active-bg-dark); --nav-active-text: var(--nav-active-text-dark);
+            --bg-start: var(--bg-dark-start);
+            --bg-end: var(--bg-dark-end);
+            --text: var(--text-dark); 
+            --card-bg: var(--card-bg-dark); 
+            --primary: var(--primary-dark); 
+            --primary-hover: var(--primary-hover-dark); 
+            --border: var(--border-dark); 
+            --logo-text: var(--logo-text-dark); 
+            --nav-hover-bg: var(--nav-hover-bg-dark);
+            --nav-hover-text: var(--nav-hover-text-dark);
+            --nav-active-bg: var(--nav-active-bg-dark);
+            --nav-active-text: var(--nav-active-text-dark);
         }
         html:not(.dark) { 
-            --bg-start: var(--bg-light-start); --bg-end: var(--bg-light-end); --text: var(--text-light); --card-bg: var(--card-bg-light); --primary: var(--primary-light); --primary-hover: var(--primary-hover-light); --border: var(--border-light); --logo-text: var(--logo-text-light); --nav-hover-bg: var(--nav-hover-bg-light); --nav-hover-text: var(--nav-hover-text-light); --nav-active-bg: var(--nav-active-bg-light); --nav-active-text: var(--nav-active-text-light);
+            --bg-start: var(--bg-light-start);
+            --bg-end: var(--bg-light-end);
+            --text: var(--text-light); 
+            --card-bg: var(--card-bg-light); 
+            --primary: var(--primary-light); 
+            --primary-hover: var(--primary-hover-light); 
+            --border: var(--border-light); 
+            --logo-text: var(--logo-text-light);
+            --nav-hover-bg: var(--nav-hover-bg-light);
+            --nav-hover-text: var(--nav-hover-text-light);
+            --nav-active-bg: var(--nav-active-bg-light);
+            --nav-active-text: var(--nav-active-text-light);
         }
-        body { font-family: 'Manrope', sans-serif; background-image: linear-gradient(120deg, var(--bg-start), var(--bg-end)); color: var(--text); transition: background-color 0.3s, color 0.3s; }
-        .logo-text { color: var(--logo-text); } .bg-primary { background-color: var(--primary); } .hover\:bg-primary-hover:hover { background-color: var(--primary-hover); } .text-primary { color: var(--primary); } .border-custom { border-color: var(--border); } .card-bg { background-color: var(--card-bg); } .input-bg { background-color: var(--card-bg); border-color: var(--border); color: var(--text); } .modal-backdrop { background-color: rgba(0, 0, 0, 0.7); }
-        [data-page] { display: none; } [data-page].active { display: block; }
-        .main-nav-link:hover { background-color: var(--nav-hover-bg); color: var(--nav-hover-text) !important; }
-        .main-nav-link.active { background-color: var(--nav-active-bg); color: var(--nav-active-text) !important; }
-        .btn { display: inline-flex; align-items: center; justify-content: center; gap: 0.5rem; padding: 0.75rem 1.25rem; border-radius: 0.5rem; font-weight: 600; transition: all 0.2s; cursor: pointer; border: none; }
-        .btn-primary { background-color: var(--primary); color: white; } .btn-primary:hover { background-color: var(--primary-hover); transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,0.15); }
-        .btn-danger { background-color: #ef4444; color: white; } .btn-danger:hover { background-color: #dc2626; }
-        .modern-input { background-color: var(--card-bg); border: 1px solid var(--border); border-radius: 0.5rem; padding: 0.75rem; width: 100%; transition: border-color 0.2s, box-shadow 0.2s; color: var(--text); }
-        .modern-input::placeholder { color: color-mix(in srgb, var(--text) 50%, transparent); }
-        .modern-input:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 0 3px color-mix(in srgb, var(--primary) 25%, transparent); }
-        #loading-overlay { position: fixed; inset: 0; background-image: linear-gradient(120deg, var(--bg-start), var(--bg-end)); z-index: 100; display: flex; align-items: center; justify-content: center; transition: opacity 0.5s ease-out; opacity: 1; }
-        .spinner { width: 56px; height: 56px; border-radius: 50%; border: 8px solid; border-color: var(--border); border-right-color: var(--primary); animation: spinner-d3wgkg 1s infinite linear; }
-        @keyframes spinner-d3wgkg { to { transform: rotate(1turn); } }
-        #store-logo, .product-card-img, #main-product-image, #profile-avatar { object-fit: cover; }
-        .variation-option.selected, .payment-option.selected { border-color: var(--primary) !important; box-shadow: 0 0 0 3px color-mix(in srgb, var(--primary) 40%, transparent); border-width: 2px; }
-        .variation-option.disabled { opacity: 0.5; cursor: not-allowed; background-color: color-mix(in srgb, var(--card-bg) 50%, #888); }
-        .hit-badge { position: absolute; top: 8px; right: 8px; background-color: #ef4444; color: white; padding: 2px 8px; border-radius: 9999px; font-size: 0.8rem; font-weight: 800; z-index: 10; text-transform: uppercase; }
-        .payment-card-option { transition: all 0.2s ease-in-out; }
+
+        /* Base styles */
+        body { 
+            font-family: 'Manrope', sans-serif; 
+            background-image: linear-gradient(120deg, var(--bg-start), var(--bg-end));
+            color: var(--text); 
+            transition: background-color 0.3s, color 0.3s;
+        }
+        .logo-text { color: var(--logo-text); }
+        .bg-primary { background-color: var(--primary); }
+        .hover\:bg-primary-hover:hover { background-color: var(--primary-hover); }
+        .text-primary { color: var(--primary); }
+        .border-custom { border-color: var(--border); }
+        .card-bg { background-color: var(--card-bg); }
+        .input-bg { background-color: var(--card-bg); border-color: var(--border); color: var(--text); }
+        .modal-backdrop { background-color: rgba(0, 0, 0, 0.7); }
+        
+        /* Page visibility */
+        [data-page] { display: none; }
+        [data-page].active { display: block; }
+
+        .main-nav-link:hover {
+            background-color: var(--nav-hover-bg);
+            color: var(--nav-hover-text) !important;
+        }
+        .main-nav-link.active {
+            background-color: var(--nav-active-bg);
+            color: var(--nav-active-text) !important;
+        }
+
+        /* General UI improvements */
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            padding: 0.75rem 1.25rem;
+            border-radius: 0.5rem;
+            font-weight: 600;
+            transition: all 0.2s;
+            cursor: pointer;
+            border: none;
+        }
+        .btn-primary {
+            background-color: var(--primary);
+            color: white;
+        }
+        .btn-primary:hover {
+            background-color: var(--primary-hover);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        }
+        /* Added btn-danger for destructive actions */
+        .btn-danger {
+            background-color: #ef4444; /* red-500 */
+            color: white;
+        }
+        .btn-danger:hover {
+             background-color: #dc2626; /* red-600 */
+        }
+        .modern-input {
+            background-color: var(--card-bg);
+            border: 1px solid var(--border);
+            border-radius: 0.5rem;
+            padding: 0.75rem;
+            width: 100%;
+            transition: border-color 0.2s, box-shadow 0.2s;
+            color: var(--text);
+        }
+        .modern-input::placeholder {
+            color: color-mix(in srgb, var(--text) 50%, transparent);
+        }
+        .modern-input:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px color-mix(in srgb, var(--primary) 25%, transparent);
+        }
+        
+        /* Loading Spinner */
+        #loading-overlay {
+            position: fixed;
+            inset: 0;
+            background-image: linear-gradient(120deg, var(--bg-start), var(--bg-end));
+            z-index: 100;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: opacity 0.5s ease-out;
+            opacity: 1;
+        }
+        .spinner {
+            width: 56px;
+            height: 56px;
+            border-radius: 50%;
+            border: 8px solid;
+            border-color: var(--border);
+            border-right-color: var(--primary);
+            animation: spinner-d3wgkg 1s infinite linear;
+        }
+        @keyframes spinner-d3wgkg {
+            to {
+                transform: rotate(1turn);
+            }
+        }
+        
+        /* Mobile image fix & object-fit */
+        #store-logo, .product-card-img, #main-product-image, #profile-avatar {
+            object-fit: cover;
+        }
+        
+        /* Variation and Payment Selection */
+        .variation-option.selected, .payment-option.selected {
+            border-color: var(--primary) !important;
+            box-shadow: 0 0 0 3px color-mix(in srgb, var(--primary) 40%, transparent);
+            border-width: 2px;
+        }
+         .variation-option.disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            background-color: color-mix(in srgb, var(--card-bg) 50%, #888);
+        }
+        
+        /* Mobile Menu Panel Transition */
+        #mobile-menu-panel {
+            transition: transform 0.3s ease-in-out;
+        }
+
+        /* Star Rating CSS */
+        .star-rating { display: flex; flex-direction: row-reverse; justify-content: center; }
+        .star-rating input { display: none; }
+        .star-rating label { font-size: 2rem; color: #ddd; cursor: pointer; transition: color 0.2s; }
+        .star-rating input:checked ~ label, .star-rating label:hover, .star-rating label:hover ~ label { color: #ffc700; }
+        
+        /* New "HIT" badge for product cards */
+        .hit-badge {
+            position: absolute;
+            top: 8px;
+            right: 8px;
+            background-color: #ef4444; /* red-500 */
+            color: white;
+            padding: 2px 8px;
+            border-radius: 9999px;
+            font-size: 0.8rem;
+            font-weight: 800;
+            z-index: 10;
+            text-transform: uppercase;
+        }
+         .payment-card-option { transition: all 0.2s ease-in-out; }
         .payment-card-option.selected { transform: scale(1.05); border-color: var(--primary); box-shadow: 0 0 15px color-mix(in srgb, var(--primary) 20%, transparent); }
     </style>
 </head>
 <body class="antialiased opacity-0 transition-opacity duration-500">
 
-    <div id="loading-overlay"><div class="spinner"></div></div>
+    <div id="loading-overlay">
+        <div class="spinner"></div>
+    </div>
 
     <header class="sticky top-0 z-40">
-        <div class="container mx-auto px-4">
-            <div class="mt-4 card-bg shadow-lg rounded-xl border border-custom/50 flex justify-between items-center h-16 px-4">
-                <a href="#main" class="flex items-center gap-3 text-2xl font-bold nav-link rounded-lg">
-                    <img id="store-logo" src="https://i.ibb.co/mS6Habd/1712683935639.jpg" alt="logo" class="h-8 w-8 rounded-full">
-                    <span id="site-name-display" class="logo-text hidden sm:inline">Asonik | Store</span>
-                </a>
-                <nav class="hidden md:flex items-center space-x-2 bg-white/10 dark:bg-black/10 p-1 rounded-full">
-                    <a href="#main" class="main-nav-link nav-link flex items-center gap-2 px-3 py-1.5 rounded-full transition-colors active" data-nav-key="main">Главная</a>
-                    <a href="#" class="main-nav-link nav-link flex items-center gap-2 px-3 py-1.5 rounded-full transition-colors">Поддержка</a>
-                    <a href="#" class="main-nav-link nav-link flex items-center gap-2 px-3 py-1.5 rounded-full transition-colors">FAQ</a>
-                    <a href="#" class="main-nav-link nav-link flex items-center gap-2 px-3 py-1.5 rounded-full transition-colors">Мои покупки</a>
-                </nav>
-                <div class="flex items-center space-x-1 sm:space-x-2">
-                    <button id="balance-btn" class="btn bg-primary/10 hover:bg-primary/20 border border-custom/50">
-                        <svg class="h-5 w-5 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H4a3 3 0 00-3 3v8a3 3 0 003 3z"></path></svg>
-                        <span id="balance-amount" class="font-semibold text-sm">0</span>
-                        <svg class="w-4 h-4 opacity-70" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd"></path></svg>
-                    </button>
-                    <button id="theme-toggle" class="p-2 rounded-full hover:bg-black/10 dark:hover:bg-white/10">🌙</button>
-                    <div id="auth-container" class="relative"></div>
-                </div>
+      <div class="container mx-auto px-4">
+        <div class="mt-4 card-bg shadow-lg rounded-xl border border-custom/50 flex justify-between items-center h-16 px-4">
+            <a href="#main" class="flex items-center gap-3 text-2xl font-bold nav-link rounded-lg">
+                <img id="store-logo" src="" alt="logo" class="h-8 w-8 rounded-full hidden">
+                <span id="site-name-display" class="logo-text hidden sm:inline">Asonik | Store</span>
+            </a>
+            
+            <nav class="hidden md:flex items-center space-x-2 bg-white/10 dark:bg-black/10 p-1 rounded-full">
+                <a href="#main" class="main-nav-link nav-link flex items-center gap-2 px-3 py-1.5 rounded-full transition-colors" data-nav-key="main" data-lang-key="nav_main"></a>
+                <a href="#chats" class="main-nav-link nav-link flex items-center gap-2 px-3 py-1.5 rounded-full transition-colors" data-nav-key="chats" data-lang-key="nav_chats"></a>
+                <a href="#faq" class="main-nav-link nav-link flex items-center gap-2 px-3 py-1.5 rounded-full transition-colors" data-nav-key="faq" data-lang-key="nav_faq"></a>
+                <a href="#purchases" class="main-nav-link nav-link flex items-center gap-2 px-3 py-1.5 rounded-full transition-colors" data-nav-key="purchases" data-lang-key="nav_purchases"></a>
+                <a href="#download" class="main-nav-link nav-link flex items-center gap-2 px-3 py-1.5 rounded-full transition-colors" data-nav-key="download" data-lang-key="nav_download"></a>
+            </nav>
+
+            <div class="flex items-center space-x-1 sm:space-x-2">
+                <button id="balance-btn" class="hidden btn bg-primary/10 hover:bg-primary/20 border border-custom/50">
+                    <svg class="h-5 w-5 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H4a3 3 0 00-3 3v8a3 3 0 003 3z"></path></svg>
+                    <span id="balance-amount" class="font-semibold text-sm">0</span>
+                    <svg class="w-4 h-4 opacity-70" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd"></path></svg>
+                </button>
+                <button id="theme-toggle" class="p-2 rounded-full hover:bg-black/10 dark:hover:bg-white/10"></button>
+                <a href="#cart" class="relative p-2 nav-link rounded-full"><svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"></path></svg><span id="cart-count" class="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-4 w-4 flex items-center justify-center hidden">0</span></a>
+                <div id="auth-container" class="relative"></div>
+                <button id="mobile-menu-btn" class="md:hidden p-2"><svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16m-7 6h7"></path></svg></button>
             </div>
         </div>
+      </div>
     </header>
+
+    <div id="mobile-menu" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 opacity-0 transition-opacity duration-300">
+        <div id="mobile-menu-panel" class="fixed top-0 right-0 h-full w-64 card-bg shadow-lg p-6 transform translate-x-full">
+            <button id="mobile-menu-close-btn" class="absolute top-4 right-4 p-2 text-2xl">&times;</button>
+            <nav id="mobile-nav-links" class="flex flex-col space-y-6 text-xl mt-12 text-center"></nav>
+        </div>
+    </div>
 
     <main class="container mx-auto px-4 py-8">
         <div data-page="main" class="active"><div id="main-page-content-wrapper"></div></div>
         <div data-page="product"><div id="product-detail-content"></div></div>
+        <div data-page="chats"><div id="chats-content"></div></div>
+        <div data-page="faq"><div id="faq-content"></div></div>
+        <div data-page="purchases"><div id="purchases-content"></div></div>
+        <div data-page="wishlist"><div id="wishlist-content"></div></div>
         <div data-page="admin"><div id="admin-content"></div></div>
+        <div data-page="cart"><div id="cart-content"></div></div>
+        <div data-page="profile"><div id="profile-content"></div></div>
+        <div data-page="download"><div id="download-content"></div></div>
+        <div data-page="settings"><div id="settings-content"></div></div>
     </main>
     
-    <footer class="text-center text-sm text-gray-500 py-4 mt-8 border-t border-custom">© Asonik | Store (ДЕМО) 2025</footer>
+    <footer class="container mx-auto px-4 py-6 mt-8 border-t border-custom"><div id="social-links-container" class="flex justify-center items-center gap-6"></div></footer>
+    <div class="text-center text-sm text-gray-500 py-4">© <span id="footer-site-name">Asonik | Store</span> 2025</div>
     
     <div id="modals-container"></div>
 
-    <script>
-        // --- MOCK DATA (FOR DEMO PURPOSES) ---
-        let currentUser = {
-            displayName: 'Тестовый Пользователь',
-            photoURL: 'https://i.pravatar.cc/150?u=a042581f4e29026704d',
-            uid: 'MrjXzJnZYbb6jb65B4f4aYDTVBt2' // Simulating admin UID
-        };
-        let isAdmin = true;
-        let appState = {
-            balance: 543210,
-            withdrawalCommission: 2.5, // 2.5% commission
-            currency: 'UZS',
-            rates: { UZS: 1 }
-        };
-        let allProducts = [
-            {
-                id: 'prod_1',
-                name: 'Премиум Аккаунт "Легенда"',
-                description: 'Получите доступ к эксклюзивным функциям, уникальным предметам и специальным возможностям на целый год.',
-                imageUrl: 'https://images.unsplash.com/photo-1593344484962-796b99420a26?q=80&w=1920&auto=format&fit=crop',
-                price: 150000,
-                isPinned: true,
-                variations: [
-                    { name: 'Стандарт (1 месяц)', price: 25000 },
-                    { 
-                        name: 'ХИТ! Золотой (6 месяцев)', 
-                        price: 120000,
-                        specialOffer: { isEnabled: true, limit: 5, sold: 1 } 
-                    },
-                    { name: 'Платина (1 год)', price: 200000, isOutOfStock: true },
-                ]
-            },
-            {
-                id: 'prod_2',
-                name: 'Стартовый набор "Новичок"',
-                description: 'Все что нужно для быстрого старта: базовая экипировка, немного валюты и бустеры опыта.',
-                imageUrl: 'https://images.unsplash.com/photo-1612287230202-95a041628d26?q=80&w=1920&auto=format&fit=crop',
-                price: 50000,
+    <script type="module">
+        // Firebase and App Initialization
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, onAuthStateChanged, GoogleAuthProvider, signInWithPopup, signOut, updateProfile } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, doc, getDoc, setDoc, addDoc, collection, getDocs, onSnapshot, updateDoc, deleteDoc, query, where, serverTimestamp, orderBy, increment, writeBatch, arrayUnion, arrayRemove, enableIndexedDbPersistence, runTransaction } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-storage.js";
+
+        // --- CONFIGURATION ---
+        const firebaseConfig = { apiKey: "AIzaSyDim7T4GqxZK4zM9tBDLkcGTSveVOaUbMY", authDomain: "asonikstore-v3.firebaseapp.com", projectId: "asonikstore-v3", storageBucket: "asonikstore-v3.appspot.com", messagingSenderId: "1018442222532", appId: "1:1018442222532:web:9b78f7be6c5c02bb327291" };
+        const IMGBB_API_KEY = '96bf3f29606f1989bb5a450ad3770cce'; 
+        const ADMIN_UID = 'MrjXzJnZYbb6jb65B4f4aYDTVBt2';
+        const TELEGRAM_USERNAME = 'asonikofficial';
+
+        // --- FIREBASE SETUP ---
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+        const storage = getStorage(app);
+        enableIndexedDbPersistence(db).catch(err => {
+            if (err.code == 'failed-precondition') {
+                console.warn("Firestore persistence failed: Multiple tabs open.");
+            } else if (err.code == 'unimplemented') {
+                console.warn("Firestore persistence failed: Browser does not support it.");
             }
-        ];
+        });
 
-        // --- CORE UI FUNCTIONS ---
-        const formatPrice = (price, currency = appState.currency) => new Intl.NumberFormat('ru-RU', { style: 'currency', currency, minimumFractionDigits: 0 }).format(price);
-        const showToast = (message, isError = false) => { const el = document.createElement('div'); el.className = `fixed bottom-5 right-5 text-white py-2 px-4 rounded-lg shadow-lg z-50 ${isError ? 'bg-red-500' : 'bg-green-500'}`; el.textContent = message; document.body.appendChild(el); setTimeout(() => el.remove(), 3000); };
-        const showModal = (title, content, onSave, btnText = 'Подтвердить') => { const modal = document.createElement('div'); modal.id = 'modal-backdrop'; modal.className = 'fixed inset-0 z-50 flex items-center justify-center modal-backdrop'; modal.innerHTML = `<div class="card-bg rounded-lg shadow-xl w-11/12 md:max-w-xl p-6 max-h-[90vh] overflow-y-auto"><div class="flex justify-between items-center mb-4"><h2 class="text-2xl font-bold">${title}</h2><button class="close-modal-btn text-2xl">&times;</button></div><div>${content}</div>${onSave ? `<div class="mt-6 flex justify-end gap-4"><button class="close-modal-btn btn">Отмена</button><button class="save-modal-btn btn btn-primary">${btnText}</button></div>` : ''}</div>`; document.getElementById('modals-container').appendChild(modal); modal.querySelectorAll('.close-modal-btn').forEach(b => b.onclick = () => modal.remove()); if (onSave) modal.querySelector('.save-modal-btn').onclick = async () => { if (await onSave(modal) !== false) modal.remove(); }; return modal; };
+        // --- GLOBAL STATE ---
+        let currentUser = null, isAdmin = false, allProducts = [], paymentMethods = [], userWishlist = [], cart = JSON.parse(localStorage.getItem('asonik_cart')) || [];
+        let allUsers = [];
+        let balanceHistoryFiltered = [];
+        const appState = { 
+            currency: localStorage.getItem('asonik_currency') || 'UZS', 
+            lang: localStorage.getItem('asonik_lang') || 'RU', 
+            rates: { UZS: 1, RUB: 0.0073, USD: 0.000078 }, 
+            balance: 0, 
+            balanceHistory: [],
+            guestPromptMessage: 'Пожалуйста, войдите, чтобы получить доступ ко всем функциям.',
+            minimumTopUpAmount: 1000,
+            withdrawalCommission: 0 // Default commission
+        };
+        const translations = { 
+            RU: { nav_main: 'Главная', nav_chats: 'Поддержка', nav_faq: 'FAQ', nav_purchases: 'Мои покупки', nav_download: 'Скачать приложение', catalog_title: 'Каталог товаров', search_placeholder: 'Поиск...', faq_title: 'Часто задаваемые вопросы', purchases_title: 'Мои покупки', cart_title: 'Корзина', profile_title: 'Профиль', buy_button: 'Купить' }, 
+            UZ: { nav_main: 'Asosiy', nav_chats: 'Qo\'llab-quvvatlash', nav_faq: 'FAQ', nav_purchases: 'Xaridlarim', nav_download: 'Ilovani yuklab olish', catalog_title: 'Mahsulotlar', search_placeholder: 'Qidirish...', faq_title: 'Ko\'p so\'raladigan savollar', purchases_title: 'Xaridlarim', cart_title: 'Savatcha', profile_title: 'Profil', buy_button: 'Sotib olish' } 
+        };
         
-        // --- NEW WITHDRAWAL MODAL ---
-        function showWithdrawModal() {
-            let step = 1;
-            let amount = 0;
-            let cardNumber = '';
-
-            const render = () => {
-                if (step === 1) {
-                    const content = `
-                        <p class="text-sm text-gray-400 mb-4">Доступно для вывода: ${formatPrice(appState.balance)}</p>
-                        <div class="space-y-4">
-                            <div>
-                                <label class="block text-sm font-medium mb-1">Сумма вывода (UZS)</label>
-                                <div class="relative">
-                                    <input id="withdraw-amount" type="number" class="modern-input pr-10" placeholder="0">
-                                    <button id="fill-max-amount" class="absolute inset-y-0 right-0 flex items-center px-3 text-gray-400 hover:text-primary" title="Вывести всю сумму">
-                                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-6 h-6"><path d="M17 4H7V2h10v2Zm0 16H7v-2h10v2Zm-5-4a4 4 0 0 1-4-4V8h2v6a2 2 0 0 0 2 2h2v2H12ZM7 8H5V6h2v2Zm12 0h-2V6h2v2Z"></path><path d="M7 16h2v-2H7v2Zm10-2h-2v-2h2v2Z"></path></svg>
-                                    </button>
-                                </div>
-                            </div>
-                            <div>
-                                <label class="block text-sm font-medium mb-1">Номер карты</label>
-                                <input id="withdraw-card" type="text" class="modern-input" placeholder="8600 0000 0000 0000">
-                            </div>
-                        </div>
-                    `;
-                    const modal = showModal('Вывод средств (Шаг 1 из 2)', content, () => {
-                        amount = parseFloat(document.getElementById('withdraw-amount').value);
-                        cardNumber = document.getElementById('withdraw-card').value;
-                        if (!amount || amount <= 0) { showToast('Введите корректную сумму', true); return false; }
-                        if (amount > appState.balance) { showToast('Сумма вывода превышает баланс', true); return false; }
-                        if (!cardNumber.replace(/\s/g, '').match(/^\d{16}$/)) { showToast('Введите корректный номер карты (16 цифр)', true); return false; }
-                        step = 2;
-                        modal.remove();
-                        render();
-                    }, 'Далее');
-                    document.getElementById('fill-max-amount').onclick = () => document.getElementById('withdraw-amount').value = appState.balance;
-
-                } else if (step === 2) {
-                    const commission = amount * (appState.withdrawalCommission / 100);
-                    const totalDeducted = amount;
-                    const amountToReceive = amount - commission;
-
-                    const content = `
-                        <div class="space-y-3 mb-6">
-                            <div class="flex justify-between text-lg"><span class="text-gray-400">Сумма вывода:</span> <strong>${formatPrice(amount)}</strong></div>
-                            <div class="flex justify-between text-lg"><span class="text-gray-400">Комиссия (${appState.withdrawalCommission}%):</span> <strong class="text-red-500">-${formatPrice(commission)}</strong></div>
-                            <hr class="border-custom">
-                            <div class="flex justify-between text-xl font-bold"><span class="text-gray-400">К зачислению:</span> <span class="text-green-500">${formatPrice(amountToReceive)}</span></div>
-                        </div>
-                        <h3 class="font-bold text-center mb-4">Выберите платежную систему вашей карты</h3>
-                        <div class="grid grid-cols-3 gap-4" id="payment-system-selector">
-                            <div data-system="HUMO" class="payment-card-option cursor-pointer p-4 border-2 border-custom rounded-lg flex flex-col items-center justify-center gap-2">
-                                <img src="https://www.kapital.uz/upload/media/icons/humo_logo.png" class="h-10 object-contain">
-                                <span class="font-semibold">HUMO</span>
-                            </div>
-                            <div data-system="UzCard" class="payment-card-option cursor-pointer p-4 border-2 border-custom rounded-lg flex flex-col items-center justify-center gap-2">
-                                <img src="https://uzcard.uz/img/logos/8600.png" class="h-10 object-contain">
-                                <span class="font-semibold">UzCard</span>
-                            </div>
-                             <div data-system="Visa" class="payment-card-option cursor-pointer p-4 border-2 border-custom rounded-lg flex flex-col items-center justify-center gap-2">
-                                <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/5/5e/Visa_Inc._logo.svg/1280px-Visa_Inc._logo.svg.png" class="h-10 object-contain">
-                                <span class="font-semibold">Visa</span>
-                            </div>
-                        </div>
-                    `;
-                    const modal = showModal('Подтверждение (Шаг 2 из 2)', content, () => {
-                        const selectedSystem = document.querySelector('.payment-card-option.selected')?.dataset.system;
-                        if (!selectedSystem) {
-                            showToast('Выберите платежную систему', true);
-                            return false;
-                        }
-                        showToast(`Заявка на вывод ${formatPrice(amount)} на карту ${selectedSystem} создана!`);
-                        // In a real app, you would deduct the balance here
-                        // appState.balance -= totalDeducted;
-                        // updateBalanceUI();
-                        return true;
-                    }, 'Создать заявку');
-                    
-                    document.getElementById('payment-system-selector').onclick = (e) => {
-                        const target = e.target.closest('.payment-card-option');
-                        if (target) {
-                            document.querySelectorAll('.payment-card-option').forEach(el => el.classList.remove('selected'));
-                            target.classList.add('selected');
-                        }
-                    };
-                }
-            };
-            render();
+        // --- FUNCTION DEFINITIONS (Moved up to prevent reference errors) ---
+        
+        const t = key => translations[appState.lang]?.[key] || key;
+        const translatePage = () => { document.querySelectorAll('[data-lang-key]').forEach(el => el.textContent = t(el.dataset.langKey)); document.querySelectorAll('[data-lang-placeholder]').forEach(el => el.placeholder = t(el.dataset.langPlaceholder)); };
+        const formatPrice = (price, currency = appState.currency) => { 
+            if (typeof price !== 'number') price = 0;
+            return new Intl.NumberFormat('ru-RU', { style: 'currency', currency, minimumFractionDigits: 0 }).format(price * (appState.rates[currency] || 1)); 
         }
-
-        // --- PAGE RENDERING ---
+        const generateCode = () => 'A' + Math.random().toString(36).substring(2, 9).toUpperCase();
+        const showToast = (message, isError = false) => { const el = document.createElement('div'); el.className = `fixed bottom-5 right-5 text-white py-2 px-4 rounded-lg shadow-lg z-50 ${isError ? 'bg-red-500' : 'bg-green-500'}`; el.textContent = message; document.body.appendChild(el); setTimeout(() => el.remove(), 3000); };
+        const showModal = (title, content, onSave, btnText = 'Подтвердить') => { const modal = document.createElement('div'); modal.className = 'fixed inset-0 z-50 flex items-center justify-center modal-backdrop'; modal.innerHTML = `<div class="card-bg rounded-lg shadow-xl w-11/12 md:w-2/3 lg:w-1/2 p-6 max-h-[90vh] overflow-y-auto"><div class="flex justify-between items-center mb-4"><h2 class="text-2xl font-bold">${title}</h2><button class="close-modal-btn text-2xl">&times;</button></div><div>${content}</div>${onSave ? `<div class="mt-6 flex justify-end gap-4"><button class="close-modal-btn btn">Отмена</button><button class="save-modal-btn btn btn-primary">${btnText}</button></div>` : ''}</div>`; document.getElementById('modals-container').appendChild(modal); modal.querySelectorAll('.close-modal-btn').forEach(b => b.onclick = () => modal.remove()); if (onSave) modal.querySelector('.save-modal-btn').onclick = async () => { if (await onSave(modal) !== false) modal.remove(); }; return modal; };
+        const confirmAction = (msg, onConfirm) => showModal('Подтвердите', `<p>${msg}</p>`, () => { onConfirm(); return true; }, 'Да, уверен');
+        
+        // Moved this function up to fix the reference error
+        function renderSocialLinks(links) {
+            const container = document.getElementById('social-links-container');
+            if (container) {
+                container.innerHTML = (links || []).map(link => `<a href="${link.url}" target="_blank" class="text-gray-400 hover:text-primary"><svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24">${link.icon}</svg></a>`).join('');
+            }
+        }
+        
+        async function loadStoreSettings() { 
+            try { 
+                const settingsDoc = await getDoc(doc(db, "storeSettings", "config")); 
+                if (settingsDoc.exists()) { 
+                    const data = settingsDoc.data();
+                    const { logoUrl, socialLinks, appDownload, themeColors, siteName, adBanners, guestPromptMessage, minimumTopUpAmount, announcement, withdrawalCommission } = data;
+                    const logoEl = document.getElementById('store-logo'); 
+                    if (logoUrl) { logoEl.src = logoUrl; logoEl.classList.remove('hidden'); } else { logoEl.classList.add('hidden'); } 
+                    if (siteName) {
+                        document.title = siteName;
+                        document.getElementById('site-name-display').textContent = siteName;
+                        document.getElementById('footer-site-name').textContent = siteName;
+                    }
+                    if (socialLinks) renderSocialLinks(socialLinks); 
+                    if (themeColors) applyCustomTheme(themeColors);
+                    appState.appDownload = appDownload || {}; 
+                    appState.adBanners = adBanners || [];
+                    appState.guestPromptMessage = guestPromptMessage || 'Пожалуйста, войдите, чтобы получить доступ ко всем функциям.';
+                    appState.minimumTopUpAmount = minimumTopUpAmount || 1000;
+                    appState.announcement = announcement || {};
+                    appState.withdrawalCommission = withdrawalCommission || 0;
+                } 
+            } catch (e) { console.error("Error loading store settings:", e); } 
+        }
+        
+        function loadPaymentMethods() { return new Promise(res => onSnapshot(query(collection(db, "paymentMethods"), orderBy("order", "asc")), s => { paymentMethods = s.docs.map(d => ({ id: d.id, ...d.data() })); res(); }, e => { console.error(e); res(); })); }
+        
         function handleRouting() {
             const hash = window.location.hash || '#main';
             let [page, subpage] = (hash.substring(1) || 'main').split('/');
             document.querySelectorAll('[data-page]').forEach(p => p.classList.remove('active'));
-            document.querySelector(`[data-page="${page}"]`)?.classList.add('active');
-            
+            const activePage = document.querySelector(`[data-page="${page}"]`);
+            if (activePage) { 
+                activePage.classList.add('active'); 
+                loadPageContent(page, subpage); 
+            } else { 
+                const mainPage = document.querySelector(`[data-page="main"]`);
+                if(mainPage) {
+                    mainPage.classList.add('active'); 
+                    loadPageContent('main');
+                }
+            }
+             // Update active nav link
             document.querySelectorAll('.main-nav-link').forEach(link => {
-                link.classList.toggle('active', link.dataset.navKey === page);
+                link.classList.remove('active');
+                if (link.dataset.navKey === page) {
+                    link.classList.add('active');
+                }
             });
+            translatePage();
+        }
+
+        function loadPageContent(page, subpage) {
+            const protectedPages = ['purchases', 'chats', 'profile', 'admin', 'wishlist', 'settings'];
+            const contentContainer = document.querySelector(`[data-page="${page}"] > div`);
+            if (!contentContainer) {
+                console.error(`Content container for page "${page}" not found.`);
+                return;
+            }
+
+            if (protectedPages.includes(page) && !currentUser) { 
+                contentContainer.innerHTML = `<h1 class="text-4xl font-bold text-center mb-8">${t(page+'_title') || 'Доступ запрещен'}</h1><p class="text-center">${appState.guestPromptMessage} <a href="#" id="login-redirect" class="text-primary underline">Войти</a></p>`; 
+                return; 
+            }
 
             switch(page) {
                 case 'main': loadMainPage(); break; 
                 case 'product': loadProductDetailPage(subpage); break;
-                case 'admin': loadAdminPanel(subpage || 'products'); break; 
+                case 'faq': loadFaq(); break;
+                case 'admin': loadAdminPanel(subpage || 'users'); break; 
+                case 'cart': renderCartPage(); break;
+                case 'chats': loadChatsPage(subpage); break;
+                case 'purchases': loadPurchasesPage(); break;
+                case 'wishlist': loadWishlistPage(); break;
+                case 'profile': loadProfilePage(); break;
+                case 'download': loadDownloadPage(); break;
+                case 'settings': loadSettingsPage(); break;
+                default: loadMainPage(); break;
             }
         }
+        
+        function loadMainPage() { 
+            const el = document.getElementById('main-page-content-wrapper'); 
+            if (!el) return;
+            const banners = appState.adBanners || [];
+            const bannerHTML = banners.map(banner => 
+                (banner && banner.imageUrl && banner.linkUrl) 
+                ? `<a href="${banner.linkUrl}" target="_blank" class="block mb-8 rounded-lg shadow-lg overflow-hidden"><img src="${banner.imageUrl}" class="w-full object-cover"></a>` 
+                : ''
+            ).join('');
 
-        function loadMainPage() {
-            const grid = document.getElementById('main-page-content-wrapper');
-            grid.innerHTML = `<h1 class="text-4xl font-bold text-center mb-8">Каталог товаров</h1>
-                              <div id="products-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6"></div>`;
-            document.getElementById('products-grid').innerHTML = allProducts.map(p => renderProductCard(p)).join('');
-        }
+            const announcement = appState.announcement;
+            const announcementHTML = (announcement && announcement.enabled && announcement.message)
+                ? `<div class="p-4 mb-8 rounded-lg bg-primary/10 border border-primary text-primary">${announcement.message}</div>`
+                : '';
 
-        function renderProductCard(p) {
-            const hasSpecialOffer = p.variations?.some(v => v.specialOffer?.isEnabled);
-            const hitBadgeHTML = hasSpecialOffer ? `<div class="hit-badge">Хит</div>` : '';
+
+            el.innerHTML = `${announcementHTML}${bannerHTML}
+                <h1 class="text-4xl font-bold text-center mb-8" data-lang-key="catalog_title"></h1>
+                <div class="mb-8 p-4 card-bg rounded-lg shadow-md flex flex-col md:flex-row items-center gap-4 border border-custom">
+                    <input id="search-input" type="text" data-lang-placeholder="search_placeholder" class="w-full md:w-1/2 modern-input">
+                    <select id="category-filter" class="w-full md:w-1/4 modern-input">
+                        <option value="all">Все категории</option>
+                        <option value="игра">Игры</option>
+                        <option value="приложение">Приложения</option>
+                        <option value="другое">Другое</option>
+                    </select>
+                    <select id="sort-select" class="w-full md:w-1/4 modern-input">
+                        <option value="order">По порядку</option>
+                        <option value="newest">Сначала новые</option>
+                        <option value="price_asc">Цена: по возрастанию</option>
+                        <option value="price_desc">Цена: по убыванию</option>
+                        <option value="popular">Популярные</option>
+                    </select>
+                </div>
+                <div id="products-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6"></div>`; 
+            document.getElementById('search-input').addEventListener('input', applyFiltersAndSort); 
+            document.getElementById('category-filter').addEventListener('change', applyFiltersAndSort); 
+            document.getElementById('sort-select').addEventListener('change', applyFiltersAndSort); 
+            loadProducts(); 
+        };
+        function loadProducts() { onSnapshot(query(collection(db, "products")), s => { allProducts = s.docs.map(d => ({ id: d.id, ...d.data() })); applyFiltersAndSort(); }); }
+        function applyFiltersAndSort() { 
+            let filtered = [...allProducts]; 
+            const searchInput = document.getElementById('search-input');
+            if (searchInput) {
+                const term = searchInput.value.toLowerCase(); 
+                if (term) {
+                    filtered = filtered.filter(p => p.name.toLowerCase().includes(term));
+                }
+            }
             
-            return `<div class="card-bg rounded-lg shadow-lg flex flex-col justify-between border border-custom overflow-hidden transition-all duration-300 hover:shadow-2xl hover:-translate-y-1">
+            const categoryFilter = document.getElementById('category-filter');
+            if (categoryFilter) {
+                const category = categoryFilter.value;
+                if (category !== 'all') {
+                    filtered = filtered.filter(p => p.category === category);
+                }
+            }
+
+            const sortSelect = document.getElementById('sort-select');
+            if (sortSelect) {
+                const sortBy = sortSelect.value;
+                switch(sortBy) {
+                    case 'price_asc': filtered.sort((a,b) => (a.price || 0) - (b.price || 0)); break;
+                    case 'price_desc': filtered.sort((a,b) => (b.price || 0) - (a.price || 0)); break;
+                    case 'popular': filtered.sort((a,b) => (b.purchaseCount || 0) - (a.purchaseCount || 0)); break;
+                    case 'newest': filtered.sort((a,b) => (b.createdAt?.toMillis()||0) - (a.createdAt?.toMillis()||0)); break;
+                    case 'order': filtered.sort((a,b) => (a.order || 999) - (b.order || 999)); break;
+                    default: filtered.sort((a,b) => (a.order || 999) - (b.order || 999)); break;
+                }
+            }
+
+            filtered.sort((a, b) => (b.isPinned ? 1 : 0) - (a.isPinned ? 1 : 0));
+
+            const grid = document.getElementById('products-grid'); 
+            if (!grid) return; 
+            grid.innerHTML = filtered.length ? filtered.map(p => renderProductCard(p)).join('') : `<p class="col-span-full text-center">Товары не найдены.</p>`; 
+            translatePage(); 
+        };
+        
+        function renderProductCard(p) {
+            const hasSpecialOffer = p.variations?.some(v => v.specialOffer?.isEnabled && (v.specialOffer.limit - v.specialOffer.sold) > 0);
+            const hitBadgeHTML = hasSpecialOffer ? `<div class="hit-badge">Хит</div>` : '';
+
+            const hasVariations = p.variations && p.variations.length > 0;
+            const buyButton = hasVariations
+                ? `<a href="#product/${p.id}" class="nav-link flex-grow btn btn-primary text-center">Выбрать опцию</a>`
+                : `<button class="buy-now-btn flex-grow btn btn-primary" data-product-id="${p.id}" data-lang-key="buy_button"></button>`;
+
+            return `<div class="card-bg rounded-lg shadow-lg flex flex-col justify-between border border-custom overflow-hidden transition-all duration-300 hover:shadow-2xl hover:-translate-y-1" data-product-id="${p.id}">
                 <div class="relative">
-                    ${hitBadgeHTML}
+                     ${hitBadgeHTML}
                     <a href="#product/${p.id}" class="nav-link block">
-                        <img src="${p.imageUrl}" class="w-full h-48 product-card-img">
+                        <img src="${p.imageUrl || 'https://placehold.co/600x400/7c3aed/ffffff?text=No+Image'}" class="w-full h-48 product-card-img">
                     </a>
                 </div>
                 <div class="p-4 flex-grow">
@@ -260,207 +531,617 @@
                     <p class="text-gray-600 dark:text-gray-400 mt-1 text-sm h-10 overflow-hidden">${p.description}</p>
                     <p class="text-2xl font-bold text-primary mt-4">${formatPrice(p.price || 0)}</p>
                 </div>
-                <div class="p-4 pt-2 border-t border-custom">
-                     <a href="#product/${p.id}" class="nav-link w-full btn btn-primary text-center">Подробнее</a>
+                <div class="p-4 pt-2 border-t border-custom flex items-center gap-2">
+                     <button class="wishlist-btn p-2 rounded-md hover:bg-red-500/10 text-gray-500 hover:text-red-500" data-product-id="${p.id}" title="В избранное">
+                        <svg class="w-6 h-6 pointer-events-none" fill="${userWishlist.includes(p.id) ? 'currentColor' : 'none'}" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 016.364 0L12 7.636l1.318-1.318a4.5 4.5 0 016.364 6.364L12 20.364l-7.682-7.682a4.5 4.5 0 010-6.364z"></path></svg>
+                    </button>
+                    <button class="add-to-cart-btn p-2 rounded-md hover:bg-primary/10 text-gray-500 hover:text-primary" data-product-id="${p.id}" title="В корзину">
+                        <svg class="w-6 h-6 pointer-events-none" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"></path></svg>
+                    </button>
+                    ${buyButton}
                 </div>
             </div>`;
-        }
+        };
         
-        function loadProductDetailPage(productId) {
+        async function loadProductDetailPage(productId) {
             const contentContainer = document.getElementById('product-detail-content');
-            const product = allProducts.find(p => p.id === productId);
-            if (!product) { contentContainer.innerHTML = 'Товар не найден'; return; }
+            if (!productId) {
+                contentContainer.innerHTML = `<p class="text-center">Товар не найден.</p>`;
+                return;
+            }
+            try {
+                const productDoc = await getDoc(doc(db, "products", productId));
+                if (!productDoc.exists()) {
+                    contentContainer.innerHTML = `<p class="text-center">Товар не найден.</p>`;
+                    return;
+                }
+                const product = { id: productDoc.id, ...productDoc.data() };
+                
+                let variationsHTML = '';
+                if (product.variations && product.variations.length > 0) {
+                    variationsHTML = `
+                        <div class="mt-6">
+                            <h3 class="text-xl font-semibold mb-4">Выберите опцию:</h3>
+                            <div class="space-y-4">
+                                ${product.variations.map((v, index) => {
+                                    const offer = v.specialOffer || {};
+                                    const remaining = offer.isEnabled ? offer.limit - offer.sold : Infinity;
+                                    const isOutOfStock = v.isOutOfStock || remaining <= 0;
+                                    const disabledClass = isOutOfStock ? 'disabled' : '';
+                                    const hitBadgeHTML = offer.isEnabled ? `<span class="px-2 py-0.5 text-xs rounded-full bg-red-500 text-white font-bold">ХИТ</span>` : '';
+                                    const stockHTML = offer.isEnabled ? `<span class="text-sm font-semibold ${remaining > 0 ? 'text-green-500' : 'text-red-500'}">Осталось: ${remaining} шт.</span>` : '';
 
-            const variationsHTML = (product.variations || []).map((v, index) => {
-                const remaining = v.specialOffer?.limit - v.specialOffer?.sold;
-                const isOutOfStock = v.isOutOfStock || (v.specialOffer?.isEnabled && remaining <= 0);
-                const disabledClass = isOutOfStock ? 'disabled' : '';
-                const hitBadgeHTML = v.specialOffer?.isEnabled ? `<span class="px-2 py-0.5 text-xs rounded-full bg-red-500 text-white font-bold">ХИТ</span>` : '';
-                const stockHTML = v.specialOffer?.isEnabled ? `<span class="text-sm font-semibold ${remaining > 0 ? 'text-green-500' : 'text-red-500'}">Осталось: ${remaining} шт.</span>` : '';
+                                    return `<div class="variation-option p-4 border rounded-lg cursor-pointer transition-all ${disabledClass}" data-index="${index}">
+                                        <div class="flex justify-between items-center">
+                                            <div>
+                                                <h4 class="font-bold text-lg flex items-center gap-2">${v.name} ${hitBadgeHTML}</h4>
+                                                <p class="text-sm text-gray-500">${v.description || ''}</p>
+                                            </div>
+                                            <div class="text-right">
+                                               <p class="text-xl font-bold text-primary">${formatPrice(v.price)}</p>
+                                               ${stockHTML}
+                                            </div>
+                                        </div>
+                                    </div>`
+                                }).join('')}
+                            </div>
+                        </div>
+                    `;
+                }
 
-                return `<div class="variation-option p-4 border rounded-lg cursor-pointer transition-all ${disabledClass}" data-index="${index}">
-                    <div class="flex justify-between items-center">
+                contentContainer.innerHTML = `
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-8 lg:gap-12">
                         <div>
-                            <h4 class="font-bold text-lg flex items-center gap-2">${v.name} ${hitBadgeHTML}</h4>
-                            <p class="text-sm text-gray-500">${v.description || ''}</p>
+                            <img id="main-product-image" src="${product.imageUrl || 'https://placehold.co/600x600'}" class="w-full rounded-lg shadow-lg">
                         </div>
-                        <div class="text-right">
-                           <p class="text-xl font-bold text-primary">${formatPrice(v.price)}</p>
-                           ${stockHTML}
-                        </div>
-                    </div>
-                </div>`;
-            }).join('');
-
-            contentContainer.innerHTML = `
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-8 lg:gap-12">
-                    <div><img id="main-product-image" src="${product.imageUrl}" class="w-full rounded-lg shadow-lg"></div>
-                    <div>
-                        <h1 class="text-4xl font-extrabold mb-4">${product.name}</h1>
-                        <div class="space-y-4">${variationsHTML}</div>
-                        <div class="mt-8">
-                            <button id="detail-buy-btn" class="w-full btn btn-primary text-lg">Купить (Демо)</button>
+                        <div>
+                            <h1 id="main-product-name" class="text-4xl font-extrabold mb-2">${product.name}</h1>
+                            <p id="main-product-price" class="text-3xl font-bold text-primary mb-4">${formatPrice(product.price)}</p>
+                            <p id="main-product-desc" class="text-gray-600 dark:text-gray-400 mb-6">${product.description}</p>
+                            ${variationsHTML}
+                            <div class="mt-8">
+                                <button id="detail-buy-btn" class="w-full btn btn-primary text-lg">Купить</button>
+                            </div>
                         </div>
                     </div>
-                </div>`;
+                `;
 
-            contentContainer.querySelectorAll('.variation-option').forEach(option => {
-                option.addEventListener('click', () => {
-                    if(option.classList.contains('disabled')) return;
-                    contentContainer.querySelectorAll('.variation-option').forEach(el => el.classList.remove('selected'));
-                    option.classList.add('selected');
+                let selectedVariation = null;
+                if (product.variations && product.variations.length > 0) {
+                     document.getElementById('main-product-price').classList.add('hidden');
+
+                    contentContainer.querySelectorAll('.variation-option').forEach(option => {
+                        option.addEventListener('click', () => {
+                            if(option.classList.contains('disabled')) return;
+
+                            contentContainer.querySelectorAll('.variation-option').forEach(el => el.classList.remove('selected'));
+                            option.classList.add('selected');
+                            selectedVariation = product.variations[parseInt(option.dataset.index)];
+                            
+                            document.getElementById('main-product-name').textContent = `${product.name} - ${selectedVariation.name}`;
+                            document.getElementById('main-product-price').textContent = formatPrice(selectedVariation.price);
+                            document.getElementById('main-product-price').classList.remove('hidden');
+                            if(selectedVariation.imageUrl && selectedVariation.updateMainImage) {
+                                document.getElementById('main-product-image').src = selectedVariation.imageUrl;
+                            }
+                        });
+                    });
+                }
+
+                document.getElementById('detail-buy-btn').addEventListener('click', () => {
+                    if (product.variations && product.variations.length > 0) {
+                        if (selectedVariation) {
+                             const fullProductData = {
+                                ...product,
+                                price: selectedVariation.price,
+                                variationName: selectedVariation.name,
+                                name: `${product.name} - ${selectedVariation.name}`,
+                                variationIndex: product.variations.indexOf(selectedVariation),
+                                id: product.id,
+                                specialOffer: selectedVariation.specialOffer
+                            };
+                            showCheckoutModal([fullProductData], selectedVariation.price);
+                        } else {
+                            showToast('Пожалуйста, выберите опцию', true);
+                        }
+                    } else {
+                        showCheckoutModal([product], product.price);
+                    }
                 });
-            });
-            
-            document.getElementById('detail-buy-btn').onclick = () => showToast('Это демо-версия, покупка отключена.');
-        }
 
-        // --- ADMIN PANEL DEMO ---
-        function loadAdminPanel(subpage) {
-            const el = document.getElementById('admin-content');
-            const tabs = [
-                { id: 'products', name: 'Товары' }, 
-                { id: 'customization', name: 'Кастомизация' }
-            ];
-            el.innerHTML = `<h2 class="text-3xl font-bold mb-6">Админ-панель (Демо)</h2>
-                <nav class="flex border-b border-custom mb-6">${tabs.map(t => `<a href="#admin/${t.id}" class="admin-tab-btn py-3 px-5 font-semibold border-b-2 ${subpage === t.id ? 'text-primary border-primary' : 'border-transparent'}" data-tab="${t.id}">${t.name}</a>`).join('')}</nav>
-                <div id="admin-tab-content" class="card-bg p-6 rounded-lg min-h-[60vh] shadow-inner"></div>`;
-            
-            if (subpage === 'products') loadAdminProducts();
-            if (subpage === 'customization') loadAdminCustomization();
-        }
+            } catch (error) {
+                console.error("Error loading product detail:", error);
+                contentContainer.innerHTML = `<p class="text-center text-red-500">Ошибка загрузки товара.</p>`;
+            }
+        };
 
-        function loadAdminProducts() {
-            const container = document.getElementById('admin-tab-content');
-            container.innerHTML = `
-                <div class="space-y-4">
-                    ${allProducts.map(p => `
-                        <div class="card-bg p-4 rounded flex justify-between items-center border border-custom">
-                            <p class="font-semibold">${p.name}</p>
-                            <button class="edit-btn btn bg-blue-500 text-white text-sm" data-id="${p.id}">Ред.</button>
-                        </div>
-                    `).join('')}
-                </div>`;
-             container.querySelector('.edit-btn')?.addEventListener('click', e => showProductForm(e.target.dataset.id));
+        async function showCheckoutModal(items, total) {
+            if (!currentUser) { showModal('Вход', '<p>Для покупки войдите в аккаунт.</p>', () => signInWithGoogle(), 'Войти'); return; }
+            
+            if (appState.balance < total) { 
+                showModal('Недостаточно средств', `<p>На вашем балансе недостаточно средств. Пожалуйста, пополните баланс, чтобы совершить покупку.</p>`); 
+                return; 
+            }
+
+            const onSave = async m => {
+                await processBalancePurchase(items, total);
+                return true;
+            };
+
+            const modalContent = `
+                <p>Вы собираетесь приобрести: <strong>${items[0].name}</strong></p>
+                <p>Сумма к списанию с вашего баланса: <strong class="text-primary">${formatPrice(total)}</strong></p>
+                <p class="mt-4 text-gray-400">Текущий баланс: ${formatPrice(appState.balance)}</p>
+                <p class="text-gray-400">Баланс после покупки: ${formatPrice(appState.balance - total)}</p>
+            `;
+            
+            showModal('Подтверждение покупки', modalContent, onSave, `Списать ${formatPrice(total)}`);
         }
         
-        function loadAdminCustomization() {
-            const container = document.getElementById('admin-tab-content');
-            container.innerHTML = `<div class="space-y-4 max-w-md">
-                <div>
-                    <label class="block text-sm font-medium mb-1">Комиссия на вывод (%)</label>
-                    <input id="commission-input" type="number" class="modern-input" value="${appState.withdrawalCommission}">
+        async function processBalancePurchase(items, total) { 
+            const item = items[0]; // Assuming one item at a time for simplicity now
+            
+            try {
+                await runTransaction(db, async (transaction) => {
+                    const userRef = doc(db, "users", currentUser.uid);
+                    const purchaseRef = doc(collection(db, "purchases"));
+                    
+                    // Handle special offer stock
+                    if (item.specialOffer?.isEnabled) {
+                        const productRef = doc(db, "products", item.id);
+                        const productDoc = await transaction.get(productRef);
+                        if (!productDoc.exists()) {
+                            throw "Товар не найден.";
+                        }
+                        
+                        let productData = productDoc.data();
+                        let variation = productData.variations[item.variationIndex];
+                        
+                        if (variation.specialOffer.sold >= variation.specialOffer.limit) {
+                            throw "Товар по этой акции закончился.";
+                        }
+                        
+                        variation.specialOffer.sold += 1;
+                        transaction.update(productRef, { variations: productData.variations });
+                    }
+
+                    // Update user balance
+                    transaction.update(userRef, { 
+                        balance: increment(-total), 
+                        balanceHistory: arrayUnion({ type: 'purchase', amount: -total, product: item.name, date: new Date().toISOString() }) 
+                    });
+
+                    // Create purchase record
+                    transaction.set(purchaseRef, { 
+                        userId: currentUser.uid, 
+                        userEmail: currentUser.email, 
+                        orderId: generateCode(), 
+                        items: items, 
+                        productName: items.length > 1 ? `${items.length} товаров` : items[0].name, 
+                        status: 'Выполнен', 
+                        paymentMethod: 'Баланс', 
+                        finalPrice: total, 
+                        createdAt: serverTimestamp(),
+                    });
+                });
+                
+                showToast('Покупка совершена!'); 
+                window.location.hash = '#purchases';
+
+            } catch (e) {
+                console.error("Transaction failed: ", e);
+                showToast(`Ошибка покупки: ${e}`, true);
+            }
+        };
+
+        function loadPurchasesPage() { const el = document.getElementById('purchases-content'); if (!currentUser) return; el.innerHTML = `<h1 class="text-4xl font-bold text-center mb-8" data-lang-key="purchases_title"></h1><div id="purchases-list" class="space-y-6"></div>`; onSnapshot(query(collection(db, "purchases"), where("userId", "==", currentUser.uid), orderBy("createdAt", "desc")), s => { const container = document.getElementById('purchases-list'); if (container) container.innerHTML = s.docs.map(d => renderPurchaseItem(d.id, d.data())).join('') || '<p class="text-center">Здесь будут ваши покупки.</p>'; }); };
+        function renderPurchaseItem(id, p) {
+            const statusMap = { 'Выполнен': {class: 'bg-green-500', text: 'Выполнен'}, 'Ожидает оплаты': {class: 'bg-yellow-500', text: 'Ожидает оплаты'}, 'Отклонен': {class: 'bg-red-500', text: 'Отклонен'}};
+            const statusInfo = statusMap[p.status] || {class: 'bg-gray-500', text: p.status};
+            return `<div class="card-bg p-4 sm:p-6 rounded-lg border border-custom flex flex-col sm:flex-row gap-4 items-start shadow-md">
+                <img src="${p.items[0].imageUrl || 'https://placehold.co/128x128'}" class="w-full sm:w-32 h-32 sm:h-auto flex-shrink-0 object-cover rounded-md">
+                <div class="flex-grow">
+                    <div class="flex justify-between items-start">
+                        <h3 class="font-bold text-lg">${p.productName}</h3>
+                        <span class="px-3 py-1 text-xs rounded-full text-white ${statusInfo.class}">${statusInfo.text}</span>
+                    </div>
+                    <p class="text-sm text-gray-500">Код заказа: ${p.orderId}</p>
+                    <p class="text-sm text-gray-500">Дата: ${p.createdAt ? new Date(p.createdAt.seconds*1000).toLocaleString() : 'N/A'}</p>
+                    <p class="text-lg font-semibold mt-1">Сумма: ${formatPrice(p.finalPrice)}</p>
                 </div>
-                <button id="save-commission-btn" class="btn btn-primary">Сохранить (Демо)</button>
-            </div>`;
-            document.getElementById('save-commission-btn').onclick = () => {
-                const newCommission = parseFloat(document.getElementById('commission-input').value);
-                appState.withdrawalCommission = newCommission;
-                showToast(`Комиссия обновлена до ${newCommission}%`);
+            </div>`
+        };
+        
+        // --- BALANCE MANAGEMENT (RESTORED) ---
+        function showBalanceModal() { 
+            const onTopUp = async m => {
+                 const amount = parseFloat(m.querySelector('#topup-amount').value); 
+                 if (!amount || amount <= 0) { showToast('Введите корректную сумму', true); return false; }
+                 if (amount < appState.minimumTopUpAmount) { showToast(`Минимальная сумма пополнения: ${formatPrice(appState.minimumTopUpAmount)}`, true); return false; }
+                 m.remove(); 
+                 showBalanceTopUpPaymentModal(amount); 
+                 return false; 
+            };
+
+            const modalHTML = `
+                <div class="text-center mb-6">
+                    <p class="text-gray-400">Текущий баланс</p>
+                    <p id="modal-balance-display" class="text-4xl font-bold">${formatPrice(appState.balance)}</p>
+                </div>
+                <div class="flex gap-2">
+                    <input id="topup-amount" type="number" class="w-full modern-input" placeholder="Сумма пополнения (UZS)">
+                    <button id="topup-btn" class="btn btn-primary">Пополнить</button>
+                    <button id="withdraw-btn" class="btn bg-red-600 text-white">Вывести</button>
+                </div>
+                <hr class="border-custom my-6">
+                <div>
+                    <h3 class="font-semibold text-lg mb-4">История операций</h3>
+                    <ul id="balance-history-list" class="space-y-2 max-h-60 overflow-y-auto pr-2"></ul>
+                </div>`;
+            
+            const modal = showModal('Баланс', modalHTML, null);
+            modal.querySelector('.save-modal-btn')?.classList.add('hidden'); // No main save button
+            document.getElementById('topup-btn').onclick = () => onTopUp(modal);
+            document.getElementById('withdraw-btn').onclick = () => { modal.remove(); showWithdrawalStep1(); };
+
+            onSnapshot(doc(db, "users", currentUser.uid), docSnap => {
+                const balanceDisplay = document.getElementById('modal-balance-display');
+                if (balanceDisplay && docSnap.exists()) {
+                    const data = docSnap.data();
+                    appState.balance = data.balance || 0;
+                    appState.balanceHistory = (data.balanceHistory || []).sort((a,b) => new Date(b.date) - new Date(a.date));
+                    balanceDisplay.textContent = formatPrice(appState.balance);
+                    document.getElementById('balance-history-list').innerHTML = renderBalanceHistory(appState.balanceHistory);
+                }
+            });
+        };
+        
+        function renderBalanceHistory(historyItems) {
+            if (!historyItems || !historyItems.length) return '<p class="text-center text-gray-500">История пуста.</p>';
+            
+            const getBalanceHistoryText = (item) => {
+                 if (item.type === 'topup') return item.reason === 'Админ' ? 'Начислено администрацией' : `Пополнение (${item.method || '...'})`;
+                 else if (item.type === 'purchase') return `Покупка: ${item.product}`;
+                 else if (item.type === 'deduction') return item.reason === 'Админ' ? 'Снято администрацией' : 'Списание';
+                 return item.type;
+            }
+
+            return historyItems.map(i => {
+                const text = getBalanceHistoryText(i);
+                return `<li class="flex justify-between items-center p-3 rounded-lg ${i.amount > 0 ? 'bg-green-500/10' : 'bg-red-500/10'}">
+                    <div>
+                        <span class="font-medium">${text}</span>
+                        <p class="text-xs text-gray-400">${new Date(i.date).toLocaleString()}</p>
+                    </div>
+                    <span class="${i.amount > 0 ? 'text-green-500' : 'text-red-500'} font-semibold text-lg">${formatPrice(i.amount)}</span>
+                </li>`;
+            }).join('');
+        }
+
+        async function showBalanceTopUpPaymentModal(amount) {
+            // Simplified for brevity, in real app would show payment methods
+            confirmAction(`Вы уверены, что хотите пополнить баланс на ${formatPrice(amount)}? (Это симуляция)`, async () => {
+                await updateDoc(doc(db, "users", currentUser.uid), {
+                    balance: increment(amount),
+                    balanceHistory: arrayUnion({ type: 'topup', amount: amount, date: new Date().toISOString(), reason: 'Симуляция' })
+                });
+                showToast('Баланс пополнен!');
+            });
+        };
+        
+        // --- NEW WITHDRAWAL FLOW ---
+        function showWithdrawalStep1() {
+            const content = `
+                <p class="text-sm text-gray-400 mb-4">Доступно для вывода: ${formatPrice(appState.balance)}</p>
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium mb-1">Сумма вывода (UZS)</label>
+                        <div class="relative">
+                            <input id="withdraw-amount" type="number" class="modern-input pr-10" placeholder="0">
+                            <button id="fill-max-amount" class="absolute inset-y-0 right-0 flex items-center px-3 text-gray-400 hover:text-primary" title="Вывести всю сумму">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5h-4m4 2h-4m-2-2h.01" /></svg>
+                            </button>
+                        </div>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium mb-1">Номер карты</label>
+                        <input id="withdraw-card" type="text" class="modern-input" placeholder="8600 0000 0000 0000">
+                    </div>
+                </div>
+            `;
+            const onSave = () => {
+                const amount = parseFloat(document.getElementById('withdraw-amount').value);
+                const cardNumber = document.getElementById('withdraw-card').value;
+                if (!amount || amount <= 0) { showToast('Введите корректную сумму', true); return false; }
+                if (amount > appState.balance) { showToast('Сумма вывода превышает баланс', true); return false; }
+                if (!cardNumber.replace(/\s/g, '').match(/^\d{16}$/)) { showToast('Введите корректный номер карты (16 цифр)', true); return false; }
+                
+                showWithdrawalStep2(amount, cardNumber);
+                return true;
+            };
+            showModal('Вывод средств (Шаг 1 из 2)', content, onSave, 'Далее');
+            document.getElementById('fill-max-amount').onclick = () => document.getElementById('withdraw-amount').value = appState.balance;
+        }
+
+        function showWithdrawalStep2(amount, cardNumber) {
+            const commission = amount * (appState.withdrawalCommission / 100);
+            const amountToReceive = amount - commission;
+
+            const content = `
+                <div class="space-y-3 mb-6">
+                    <div class="flex justify-between text-lg"><span class="text-gray-400">Сумма вывода:</span> <strong>${formatPrice(amount)}</strong></div>
+                    <div class="flex justify-between text-lg"><span class="text-gray-400">Комиссия (${appState.withdrawalCommission}%):</span> <strong class="text-red-500">-${formatPrice(commission)}</strong></div>
+                    <hr class="border-custom">
+                    <div class="flex justify-between text-xl font-bold"><span class="text-gray-400">К зачислению:</span> <span class="text-green-500">${formatPrice(amountToReceive)}</span></div>
+                </div>
+                <h3 class="font-bold text-center mb-4">Выберите платежную систему вашей карты</h3>
+                <div class="grid grid-cols-3 gap-4" id="payment-system-selector">
+                    <div data-system="HUMO" class="payment-card-option cursor-pointer p-4 border-2 border-transparent rounded-lg flex flex-col items-center justify-center gap-2 card-bg shadow-sm">
+                        <img src="https://www.kapital.uz/upload/media/icons/humo_logo.png" class="h-10 object-contain pointer-events-none">
+                        <span class="font-semibold pointer-events-none">HUMO</span>
+                    </div>
+                    <div data-system="UzCard" class="payment-card-option cursor-pointer p-4 border-2 border-transparent rounded-lg flex flex-col items-center justify-center gap-2 card-bg shadow-sm">
+                        <img src="https://uzcard.uz/img/logos/8600.png" class="h-10 object-contain pointer-events-none">
+                        <span class="font-semibold pointer-events-none">UzCard</span>
+                    </div>
+                     <div data-system="Visa" class="payment-card-option cursor-pointer p-4 border-2 border-transparent rounded-lg flex flex-col items-center justify-center gap-2 card-bg shadow-sm">
+                        <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/5/5e/Visa_Inc._logo.svg/1280px-Visa_Inc._logo.svg.png" class="h-10 object-contain pointer-events-none">
+                        <span class="font-semibold pointer-events-none">Visa</span>
+                    </div>
+                </div>
+            `;
+            const onSave = async () => {
+                const selectedSystem = document.querySelector('.payment-card-option.selected')?.dataset.system;
+                if (!selectedSystem) { showToast('Выберите платежную систему', true); return false; }
+
+                showToast(`Заявка на вывод создана!`);
+                // Placeholder for actual withdrawal logic
+                console.log({ amount, cardNumber, selectedSystem, commission });
+                return true;
+            };
+            const modal = showModal('Подтверждение (Шаг 2 из 2)', content, onSave, 'Создать заявку');
+            
+            document.getElementById('payment-system-selector').onclick = (e) => {
+                const target = e.target.closest('.payment-card-option');
+                if (target) {
+                    document.querySelectorAll('.payment-card-option').forEach(el => el.classList.remove('selected'));
+                    target.classList.add('selected');
+                }
             };
         }
 
-        function showProductForm(productId) {
-            const p = allProducts.find(prod => prod.id === productId);
-            if (!p) return;
+        
+        // --- ADMIN PANEL ---
+        async function loadAdminPanel(subpage) { 
+            if (!isAdmin) return; 
+            const el = document.getElementById('admin-content'); 
+            const tabs = [{ id: 'users', name: 'Пользователи'}, { id: 'products', name: 'Товары'}, { id: 'purchases', name: 'Покупки'}, { id: 'customization', name: 'Кастомизация'}];
+            el.innerHTML = `<h2 class="text-3xl font-bold mb-6">Админ-панель</h2><nav class="admin-tabs flex flex-wrap border-b border-custom mb-6">${tabs.map(t => `<a href="#admin/${t.id}" class="admin-tab-btn flex items-center gap-2 py-3 px-5 rounded-t-lg mr-2 mb-[-1px] bg-transparent font-semibold border border-transparent border-b-0 ${subpage === t.id ? 'active' : ''}" data-tab="${t.id}"><span>${t.name}</span></a>`).join('')}</nav><div id="admin-tab-content" class="card-bg p-6 rounded-lg min-h-[60vh] shadow-inner"></div>`; 
+            loadAdminTab(subpage); 
+        }
+        function loadAdminTab(subpage) { 
+            const container = document.getElementById('admin-tab-content');
+            if (!container) return; 
+            switch(subpage) { 
+                case 'products': loadAdminList('products', 'Товары', renderAdminProductItem, `<button id="add-product-btn" class="btn btn-primary">Добавить товар</button>`); break; 
+                case 'customization': loadCustomizationPage(); break;
+                // other cases to be added back later
+                default: loadAdminList('products', 'Товары', renderAdminProductItem, `<button id="add-product-btn" class="btn btn-primary">Добавить товар</button>`); break;
+            } 
+        };
+        
+        // --- ADMIN FORMS (WITH HIT-SALE IMPROVEMENT) ---
+        async function showProductForm(pId) {
+            let p = {name:'',description:'',price:0,imageUrl:'', variations: [] };
+            if(pId){const d=await getDoc(doc(db,'products',pId)); if(d.exists()) p={...p, ...d.data(), id: d.id};}
+            
+            const onSave = async m => {
+                showToast('Сохранение товара...');
+                const variations = [];
+                for(const vEl of m.querySelectorAll('.variation-item')) {
+                    const isOfferEnabled = vEl.querySelector('.v-offer-enabled').checked;
+                    variations.push({
+                        name: vEl.querySelector('.v-name').value, 
+                        price: parseFloat(vEl.querySelector('.v-price').value),
+                        isOutOfStock: vEl.querySelector('.v-out-of-stock').checked,
+                        specialOffer: {
+                            isEnabled: isOfferEnabled,
+                            limit: isOfferEnabled ? parseInt(vEl.querySelector('.v-offer-limit').value) : 0,
+                            sold: vEl.dataset.soldCount || 0
+                        }
+                    });
+                }
 
-            const renderVariationForm = (v, index) => {
-                const offer = v.specialOffer || { isEnabled: false, limit: 0 };
-                return `
-                <div class="variation-item border-2 p-4 rounded-lg space-y-3 mt-4">
-                    <input class="v-name w-full modern-input" value="${v.name || ''}" placeholder="Название вариации">
-                    <hr class="border-custom my-4">
+                const data={ name: m.querySelector('#p-name').value, description: m.querySelector('#p-desc').value, price: parseFloat(m.querySelector('#p-price').value) || 0, variations: variations, updatedAt: serverTimestamp() };
+                if (pId) { await setDoc(doc(db,'products',pId), data, { merge: true }); } 
+                else { data.createdAt = serverTimestamp(); await addDoc(collection(db,'products'), data); }
+                showToast('Товар успешно сохранен!');
+                return true;
+            };
+
+            const formHTML = `
+                <div class="space-y-4">
+                    <div><label for="p-name" class="block text-sm font-medium mb-1">Название товара</label><input id="p-name" value="${p.name||''}" class="w-full modern-input"></div>
+                    <div><label for="p-desc" class="block text-sm font-medium mb-1">Описание</label><textarea id="p-desc" class="w-full modern-input" rows="4">${p.description||''}</textarea></div>
+                    <div><label for="p-price" class="block text-sm font-medium mb-1">Базовая цена (UZS)</label><input id="p-price" type="number" value="${p.price||0}" class="w-full modern-input"></div>
+                    <hr class="border-custom"><h4 class="font-bold">Вариации товара</h4>
+                    <div id="variations-container" class="space-y-4"></div>
+                    <button type="button" id="add-variation-btn" class="mt-2 btn bg-gray-500 text-white text-sm">+ Добавить вариацию</button>
+                </div>`;
+            
+            const modal = showModal(pId ? 'Редактировать товар' : 'Добавить товар', formHTML, onSave, 'Сохранить');
+            
+            const renderVariation = (v = {}) => {
+                const el = document.createElement('div');
+                const offer = v.specialOffer || { isEnabled: false, limit: 0, sold: 0 };
+                el.className = 'variation-item border-2 p-4 rounded-lg space-y-3';
+                el.dataset.soldCount = offer.sold;
+                el.innerHTML = `
+                    <input class="v-name w-full modern-input" value="${v.name||''}" placeholder="Название вариации">
+                    <input type="number" class="v-price w-full modern-input" value="${v.price||0}" placeholder="Цена вариации">
+                     <div class="flex items-center"><input type="checkbox" class="v-out-of-stock h-4 w-4 rounded" ${v.isOutOfStock ? 'checked' : ''}><label class="text-sm ml-2">Нет в наличии</label></div>
+                    <hr class="border-custom">
                     <div class="p-3 bg-red-500/10 rounded-lg space-y-3">
-                         <h5 class="font-bold text-red-400">Акция "Хит продаж"</h5>
                          <div class="flex items-center gap-2">
-                            <input type="checkbox" id="v-offer-enabled-${index}" class="v-offer-enabled h-4 w-4 rounded text-primary" ${offer.isEnabled ? 'checked' : ''}>
-                            <label for="v-offer-enabled-${index}" class="text-sm font-semibold">Включить акцию для этой вариации</label>
+                            <input type="checkbox" class="v-offer-enabled h-4 w-4 rounded text-primary" ${offer.isEnabled ? 'checked' : ''}>
+                            <label class="text-sm font-semibold">Включить акцию "Хит продаж"</label>
                         </div>
-                        <div class="space-y-1">
+                        <div class="v-offer-details" style="display: ${offer.isEnabled ? 'block' : 'none'};">
                            <label class="text-sm">Количество товара по акции</label>
                            <input type="number" class="v-offer-limit w-full modern-input" value="${offer.limit || 5}" placeholder="Напр. 5">
+                           <p class="text-xs text-gray-400 mt-1">Продано: ${offer.sold} шт.</p>
                         </div>
                     </div>
-                </div>`;
+                    <div class="text-right"><button type="button" class="remove-variation-btn btn btn-danger px-3 py-1 text-sm">Удалить</button></div>
+                `;
+                const container = modal.querySelector('#variations-container');
+                container.appendChild(el);
+                
+                // Add event listener for the new checkbox
+                const checkbox = el.querySelector('.v-offer-enabled');
+                const detailsDiv = el.querySelector('.v-offer-details');
+                checkbox.addEventListener('change', () => {
+                    detailsDiv.style.display = checkbox.checked ? 'block' : 'none';
+                });
             };
 
-            const formHTML = `<div class="space-y-4">
+            (p.variations || []).forEach(renderVariation);
+            modal.querySelector('#add-variation-btn').onclick = () => renderVariation();
+            modal.onclick = e => { if (e.target.classList.contains('remove-variation-btn')) e.target.closest('.variation-item').remove(); };
+        }
+
+        // --- CUSTOMIZATION ---
+        async function loadCustomizationPage() { 
+            const el = document.getElementById('admin-tab-content'); 
+            const settings = (await getDoc(doc(db, "storeSettings", "config"))).data() || {};
+            el.innerHTML = `<div class="space-y-8 max-w-xl">
                 <div>
-                    <label class="block text-sm font-medium mb-1">Название товара</label>
-                    <input id="p-name" value="${p.name || ''}" class="w-full modern-input">
+                    <h3 class="text-xl font-bold mb-2">Общие настройки</h3>
+                    <label class="block text-sm">Название сайта</label>
+                    <input id="site-name-input" class="w-full modern-input mt-1" value="${settings.siteName || 'Asonik | Store'}">
+                    <label class="block text-sm mt-2">Минимальная сумма пополнения (в UZS)</label>
+                    <input id="min-topup-input" type="number" class="w-full modern-input mt-1" value="${settings.minimumTopUpAmount || 1000}">
+                    <label class="block text-sm mt-2">Комиссия на вывод (%)</label>
+                    <input id="withdrawal-commission-input" type="number" class="w-full modern-input mt-1" value="${settings.withdrawalCommission || 0}">
+                    <button id="save-general-settings-btn" class="btn btn-primary mt-2">Сохранить</button>
                 </div>
-                <hr class="border-custom">
-                <h4 class="font-bold">Вариации товара</h4>
-                <div id="variations-container" class="space-y-4">${(p.variations || []).map(renderVariationForm).join('')}</div>
-            </div>`;
-            
-            showModal('Редактировать товар (Демо)', formHTML, () => {
-                 showToast('Настройки сохранены (в демо-режиме)');
-            }, 'Сохранить (Демо)');
-        }
+            </div>`; 
 
+            document.getElementById('save-general-settings-btn').onclick = async () => {
+                const newName = document.getElementById('site-name-input').value;
+                const newMinTopUp = parseFloat(document.getElementById('min-topup-input').value);
+                const newCommission = parseFloat(document.getElementById('withdrawal-commission-input').value);
+                await setDoc(doc(db, "storeSettings", "config"), { 
+                    siteName: newName,
+                    minimumTopUpAmount: newMinTopUp,
+                    withdrawalCommission: newCommission
+                }, { merge: true });
+                showToast('Настройки сохранены!');
+                loadStoreSettings();
+            };
+        };
 
-        // --- INITIALIZATION ---
-        function init() {
-            document.getElementById('loading-overlay').style.display = 'none';
-            document.body.classList.remove('opacity-0');
-            
-            initTheme();
-            updateAuthUI();
-            updateBalanceUI();
-            handleRouting();
-            setupEventListeners();
-        }
-
+        // --- THEME & AUTH UI ---
         function initTheme() { 
             const btn = document.getElementById('theme-toggle'); 
+            if(!btn) return; 
             const apply = t => { 
                 document.documentElement.classList.toggle('dark', t === 'dark'); 
-                btn.innerHTML = t === 'dark' ? '☀️' : '🌙';
+                btn.innerHTML = t==='dark' ? '☀️' : '🌙';
             }; 
-            apply(localStorage.getItem('color-theme') || 'dark'); 
-            btn.onclick = () => {
+            apply(localStorage.getItem('color-theme')||'dark'); 
+            btn.onclick=() => {
                 const n = document.documentElement.classList.contains('dark') ? 'light' : 'dark'; 
-                localStorage.setItem('color-theme', n); 
+                localStorage.setItem('color-theme',n); 
                 apply(n);
             };
-        }
+        };
 
-        function updateAuthUI() {
+        async function updateAuthUI() { 
             const c = document.getElementById('auth-container'); 
-            c.innerHTML = `<div class="relative">
-                <button id="profile-btn" class="flex items-center gap-2 p-1 pr-2 rounded-full hover:bg-black/10 dark:hover:bg-white/10">
-                    <img src="${currentUser.photoURL}" class="w-8 h-8 rounded-full object-cover">
-                    <span class="hidden md:inline font-semibold">${currentUser.displayName}</span>
-                </button>
-                <div id="profile-menu" class="hidden absolute right-0 mt-2 w-60 card-bg rounded-md shadow-lg z-10 border border-custom">
-                    ${isAdmin ? `<a href="#admin" class="nav-link block px-4 py-2 hover:bg-primary/10">Админ-панель</a>` : ''}
-                    <a href="#" id="logout-btn" class="block px-4 py-2 text-red-500 hover:bg-red-500/10">Выйти (Демо)</a>
-                </div>
-            </div>`;
-        }
-
-        function updateBalanceUI() {
-            const balanceAmountEl = document.getElementById('balance-amount');
-            if (balanceAmountEl) balanceAmountEl.textContent = formatPrice(appState.balance);
-        }
+            if(!c) return; 
+            if (currentUser) { 
+                c.innerHTML = `
+                    <div class="relative">
+                        <button id="profile-btn" class="flex items-center gap-2 p-1 pr-2 rounded-full hover:bg-black/10 dark:hover:bg-white/10">
+                            <img src="${currentUser.photoURL||'https://placehold.co/32x32'}" class="w-8 h-8 rounded-full object-cover">
+                            <span class="hidden md:inline font-semibold">${currentUser.displayName}</span>
+                        </button>
+                        <div id="profile-menu" class="hidden absolute right-0 mt-2 w-60 card-bg rounded-md shadow-lg z-10 border border-custom">
+                            ${isAdmin ? `<a href="#admin/products" class="nav-link block px-4 py-2 hover:bg-primary/10">Админ-панель</a>` : ''}
+                            <a href="#" id="logout-btn" class="block px-4 py-2 text-red-500 hover:bg-red-500/10">Выйти</a>
+                        </div>
+                    </div>`;
+            } else { 
+                c.innerHTML = `<button id="google-login-btn" class="btn btn-primary">Войти</button>`; 
+            } 
+        };
+        function signInWithGoogle() { const p = new GoogleAuthProvider(); signInWithPopup(auth, p).catch(e => showToast("Ошибка: " + e.message, true)); };
         
+        // --- EVENT LISTENERS ---
         function setupEventListeners() {
             window.addEventListener('hashchange', handleRouting);
-            document.body.addEventListener('click', e => {
+            document.body.addEventListener('click', async e => {
                 const { target } = e;
                 const closest = sel => target.closest(sel);
 
                 if (closest('.nav-link')) { e.preventDefault(); window.location.hash = new URL(closest('.nav-link').href).hash; }
                 if (closest('.admin-tab-btn')) { e.preventDefault(); window.location.hash = `admin/${closest('.admin-tab-btn').dataset.tab}`; }
-                if (target.id === 'balance-btn') showModal('Баланс (Демо)', `<p>Ваш текущий баланс: <strong>${formatPrice(appState.balance)}</strong></p>`, showWithdrawModal, "Вывести");
+                if (target.id === 'google-login-btn') signInWithGoogle();
+                if (target.id === 'logout-btn') signOut(auth);
+                if (target.id === 'balance-btn') showBalanceModal();
+                if (closest('.buy-now-btn')) { const p = allProducts.find(p => p.id === closest('.buy-now-btn').dataset.productId); if (p) showCheckoutModal([p], p.price || 0); }
+                if (target.id === 'add-product-btn') showProductForm();
+                if (closest('.edit-btn')) showProductForm(closest('.edit-btn').dataset.id);
                 if (closest('#profile-btn')) document.getElementById('profile-menu')?.classList.toggle('hidden');
                 if (!closest('#profile-btn') && !closest('#profile-menu')) document.getElementById('profile-menu')?.classList.add('hidden');
             });
         }
+        
+        // --- MAIN INITIALIZATION LOGIC ---
+        document.addEventListener('DOMContentLoaded', () => { 
+            initTheme(); 
+            setupEventListeners(); 
+            updateCartCount(); 
+            onAuthStateChanged(auth, async user => { 
+                await Promise.all([loadPaymentMethods(), loadStoreSettings()]); 
+                currentUser = user;
+                isAdmin = user?.uid === ADMIN_UID;
+                if (user) {
+                    document.getElementById('balance-btn')?.classList.remove('hidden');
+                    onSnapshot(doc(db, "users", user.uid), docSnap => { 
+                        if (docSnap.exists()) { 
+                            const data = docSnap.data(); 
+                            appState.balance = data.balance || 0; 
+                            appState.balanceHistory = data.balanceHistory || [];
+                            document.getElementById('balance-amount').textContent = formatPrice(appState.balance);
+                        }
+                    });
+                } else {
+                    document.getElementById('balance-btn')?.classList.add('hidden');
+                }
+                await updateAuthUI();
+                handleRouting();
+                document.getElementById('loading-overlay').style.opacity = '0';
+                setTimeout(() => {
+                    document.getElementById('loading-overlay').style.display = 'none';
+                    document.body.classList.remove('opacity-0');
+                }, 500);
+            }); 
+        });
 
-        // --- LET'S GO ---
-        document.addEventListener('DOMContentLoaded', init);
+        // --- DUMMY FUNCTIONS TO BE FILLED LATER ---
+        function addToCart(pId) { showToast('Функция в разработке'); }
+        function updateCartCount() { /* ... */ }
+        function renderCartPage() { /* ... */ }
+        function loadFaq() { document.getElementById('faq-content').innerHTML = "Страница в разработке"; }
+        function loadChatsPage(subpage) { document.getElementById('chats-content').innerHTML = "Страница в разработке"; }
+        function loadWishlistPage() { document.getElementById('wishlist-content').innerHTML = "Страница в разработке"; }
+        function loadProfilePage() { document.getElementById('profile-content').innerHTML = "Страница в разработке"; }
+        function loadDownloadPage() { document.getElementById('download-content').innerHTML = "Страница в разработке"; }
+        function loadSettingsPage() { document.getElementById('settings-content').innerHTML = "Страница в разработке"; }
+        function loadAdminList(coll, title, render, btn) { const el = document.getElementById('admin-tab-content'); if(!el) return; el.innerHTML = `<div class="flex justify-between items-center mb-6"><h3 class="text-2xl font-bold">${title}</h3><div>${btn || ''}</div></div><div id="admin-list-container" class="space-y-3"></div>`; onSnapshot(query(collection(db, coll)), s => { const listEl = document.getElementById('admin-list-container'); if(listEl) listEl.innerHTML = s.docs.map(d => render(d.id, d.data())).join('') || '<p>Пусто</p>'; }); };
+        function renderAdminProductItem(id, d) { return `<div class="card-bg p-4 rounded flex justify-between items-center border border-custom"><div><p class="font-semibold">${d.name}</p></div><button class="edit-btn btn bg-blue-500 text-white text-sm" data-id="${id}">Ред.</button></div>`;}
     </script>
 </body>
 </html>
