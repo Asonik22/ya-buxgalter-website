@@ -7,8 +7,8 @@
     <style>
         /* CSS-стили для оформления сайта. Используется шрифт Inter. */
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap');
-
-        /* Общие стили для тела страницы и звездного фона */
+        
+        /* Общие стили */
         body {
             font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
             background: #000;
@@ -21,88 +21,25 @@
             justify-content: space-between;
             position: relative;
             overflow: hidden;
+            text-rendering: optimizeLegibility;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
         }
 
-        /* Анимация звезд и комет */
-        @keyframes move-stars {
-            from { background-position: 0 0; }
-            to { background-position: -10000px -5000px; }
+        /* Анимация падающих звезд/астероидов */
+        @keyframes fall {
+            from { transform: translateY(-10vh) translateX(0); opacity: 1; }
+            to { transform: translateY(110vh) translateX(50vw); opacity: 0; }
         }
 
-        /* Анимация комет */
-        @keyframes move-comet-1 {
-            0% { transform: translateX(200vw) translateY(-100vh); opacity: 0; }
-            1% { opacity: 1; }
-            100% { transform: translateX(-100vw) translateY(50vh); opacity: 0; }
-        }
-        
-        @keyframes move-comet-2 {
-            0% { transform: translateX(-100vw) translateY(200vh); opacity: 0; }
-            10% { opacity: 0; }
-            11% { opacity: 1; }
-            100% { transform: translateX(200vw) translateY(-100vh); opacity: 0; }
-        }
-
-        @keyframes move-comet-3 {
-            0% { transform: translateX(200vw) translateY(200vh); opacity: 0; }
-            20% { opacity: 0; }
-            21% { opacity: 1; }
-            100% { transform: translateX(-100vw) translateY(-100vh); opacity: 0; }
-        }
-        
-        body::before {
-            content: '';
+        .falling-object {
             position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background-image:
-                radial-gradient(4px 4px at 20px 30px, #fff, rgba(0,0,0,0)),
-                radial-gradient(3px 3px at 40px 70px, #fff, rgba(0,0,0,0)),
-                radial-gradient(2px 2px at 150px 10px, #ddd, rgba(0,0,0,0)),
-                radial-gradient(4px 4px at 100px 20px, #fff, rgba(0,0,0,0)),
-                radial-gradient(2px 2px at 130px 50px, #ddd, rgba(0,0,0,0)),
-                radial-gradient(5px 5px at 300px 500px, #fff, rgba(0,0,0,0)),
-                radial-gradient(3px 3px at 200px 40px, #fff, rgba(0,0,0,0)),
-                radial-gradient(2px 2px at 350px 80px, #ddd, rgba(0,0,0,0)),
-                radial-gradient(4px 4px at 400px 120px, #fff, rgba(0,0,0,0)),
-                radial-gradient(3px 3px at 600px 200px, #ddd, rgba(0,0,0,0)),
-                radial-gradient(2px 2px at 700px 400px, #fff, rgba(0,0,0,0));
-            background-repeat: repeat;
-            background-size: 500px 500px;
-            opacity: 0.7;
-            animation: move-stars 100s linear infinite;
-            z-index: -1;
-        }
-
-        .comet {
-            position: fixed;
-            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.8), transparent);
+            background: rgba(255, 255, 255, 0.8);
             border-radius: 50%;
-            width: 200px;
-            height: 2px;
-            transform-origin: left center;
-            opacity: 0;
+            box-shadow: 0 0 5px 2px rgba(255, 255, 255, 0.7), 0 0 10px 5px rgba(255, 255, 255, 0.5);
+            animation: fall linear infinite;
+            pointer-events: none;
             z-index: 0;
-        }
-
-        #comet-1 {
-            top: 10%; left: 0;
-            animation: move-comet-1 20s linear infinite;
-            animation-delay: 5s;
-        }
-        
-        #comet-2 {
-            top: 80%; right: 0;
-            animation: move-comet-2 25s linear infinite;
-            animation-delay: 15s;
-        }
-        
-        #comet-3 {
-            bottom: 20%; left: 0;
-            animation: move-comet-3 30s linear infinite;
-            animation-delay: 10s;
         }
 
         /* Заголовок сайта */
@@ -111,7 +48,7 @@
             justify-content: space-between;
             align-items: center;
             padding: 20px 40px;
-            background-color: rgba(255, 255, 255, 0.05);
+            background-color: rgba(0, 0, 0, 0.2);
             backdrop-filter: blur(10px);
             border-bottom: 1px solid rgba(255, 255, 255, 0.1);
             box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
@@ -122,7 +59,12 @@
             font-size: 2rem;
             font-weight: 700;
             color: #fff;
-            text-shadow: 0 0 15px rgba(0, 191, 255, 0.7);
+            text-shadow: 0 0 15px rgba(0, 191, 255, 0.7), 0 0 25px rgba(0, 191, 255, 0.5);
+            transition: text-shadow 0.3s ease;
+        }
+
+        .logo:hover {
+            text-shadow: 0 0 20px rgba(0, 191, 255, 1), 0 0 30px rgba(0, 191, 255, 0.8);
         }
 
         /* Контейнер для кнопок аутентификации */
@@ -151,12 +93,22 @@
         .main-auth-btn {
             background-color: #007bff;
             color: white;
+            transition: background-color 0.3s ease;
         }
-        
+
+        .main-auth-btn:hover {
+            background-color: #0056b3;
+        }
+
         /* Кнопка истории чатов */
         #chat-history-btn {
             background-color: #333;
             color: #fff;
+            transition: background-color 0.3s ease;
+        }
+
+        #chat-history-btn:hover {
+            background-color: #555;
         }
 
         /* Кнопка профиля с выпадающим меню */
@@ -177,6 +129,8 @@
             align-items: center;
             overflow: hidden;
             cursor: pointer;
+            border: 2px solid #00bfff;
+            box-shadow: 0 0 10px rgba(0, 191, 255, 0.7);
         }
 
         .profile-btn img {
@@ -189,7 +143,8 @@
             position: absolute;
             top: 50px;
             right: 0;
-            background-color: #2c2f33;
+            background-color: #1a1a1a;
+            border: 1px solid rgba(255, 255, 255, 0.1);
             border-radius: 8px;
             box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
             padding: 10px;
@@ -198,6 +153,7 @@
             gap: 5px;
             z-index: 15;
             min-width: 150px;
+            animation: fadeIn 0.3s ease-out;
         }
 
         .profile-menu.show {
@@ -209,13 +165,14 @@
             cursor: pointer;
             text-align: left;
             border-radius: 6px;
-            transition: background-color 0.2s ease;
+            transition: background-color 0.2s ease, transform 0.2s ease;
             color: white;
             text-decoration: none;
         }
 
         .profile-menu-item:hover {
-            background-color: #3e4247;
+            background-color: #2c2f33;
+            transform: translateX(5px);
         }
         
         /* Модальные окна */
@@ -232,7 +189,7 @@
             z-index: 20;
             opacity: 0;
             visibility: hidden;
-            transition: opacity 0.3s ease;
+            transition: opacity 0.3s ease, visibility 0.3s ease;
         }
 
         .modal.open {
@@ -248,6 +205,8 @@
             box-shadow: 0 8px 30px rgba(0, 0, 0, 0.5);
             max-width: 400px;
             width: 90%;
+            position: relative;
+            animation: scaleIn 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
         }
 
         .modal-content h2 {
@@ -255,65 +214,71 @@
             font-size: 1.5rem;
             color: white;
             margin-bottom: 20px;
+            text-shadow: 0 0 10px rgba(255, 255, 255, 0.3);
         }
 
-        .modal-buttons {
+        /* Стили для формы профиля */
+        #profile-form {
             display: flex;
             flex-direction: column;
             gap: 15px;
+            text-align: left;
+        }
+        
+        #profile-form label {
+            font-size: 0.9rem;
+            color: #999;
         }
 
-        .modal-auth-btn {
-            padding: 15px;
+        #profile-form input[type="text"] {
+            padding: 10px;
+            border-radius: 8px;
+            border: 1px solid #333;
+            background-color: #222;
+            color: #fff;
+            outline: none;
+        }
+
+        #profile-form input[type="file"] {
+            border: 1px solid #333;
+            border-radius: 8px;
+            padding: 10px;
+            background-color: #222;
+            color: #fff;
+        }
+
+        #save-profile-btn {
+            background-color: #007bff;
+            color: white;
+            padding: 12px;
+            border-radius: 8px;
             border: none;
-            border-radius: 10px;
-            font-size: 1rem;
             cursor: pointer;
             transition: background-color 0.3s ease;
         }
 
-        .modal-auth-btn.google-btn {
-            background-color: #4285F4;
-            color: white;
+        #save-profile-btn:hover {
+            background-color: #0056b3;
         }
         
-        .modal-auth-btn.apple-btn {
-            background-color: #000;
-            color: white;
-            border: 1px solid rgba(255, 255, 255, 0.2);
-        }
-
-        /* Модальное окно истории чатов */
-        #chat-history-modal {
-            display: none;
-            flex-direction: column;
-        }
-        
-        #chat-history-modal.open {
-            display: flex;
-        }
-
-        #history-list {
-            max-height: 500px;
-            overflow-y: auto;
-            text-align: left;
-            width: 100%;
-        }
-
-        .history-item {
-            padding: 10px;
-            border-radius: 8px;
-            background-color: #2c2f33;
-            margin-bottom: 10px;
+        /* Кнопка закрытия модального окна */
+        .close-modal-btn {
+            position: absolute;
+            top: 10px;
+            right: 15px;
+            background: none;
+            border: none;
+            color: #fff;
+            font-size: 1.5rem;
             cursor: pointer;
-            transition: background-color 0.2s ease;
-            word-wrap: break-word;
-        }
-
-        .history-item:hover {
-            background-color: #3e4247;
+            opacity: 0.7;
+            transition: opacity 0.2s ease;
         }
         
+        .close-modal-btn:hover {
+            opacity: 1;
+        }
+
         /* Основной контейнер чата */
         .chat-container {
             flex-grow: 1;
@@ -333,22 +298,25 @@
             display: flex;
             flex-direction: column;
             overflow-y: auto;
-            gap: 10px;
+            gap: 15px;
             padding-bottom: 20px;
+            scroll-behavior: smooth;
         }
 
         .message {
-            padding: 12px 18px;
-            border-radius: 18px;
+            padding: 15px 20px;
+            border-radius: 20px;
             max-width: 85%;
             word-wrap: break-word;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+            position: relative;
+            animation: fadeInUp 0.5s ease-out;
         }
         
         .message-content {
             display: flex;
             flex-direction: column;
-            gap: 8px;
+            gap: 10px;
         }
 
         .user-message {
@@ -364,15 +332,17 @@
             color: #e0e0e0;
             border-bottom-left-radius: 4px;
         }
-        
+
+        /* Предварительный просмотр файлов */
         .file-preview {
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
-            gap: 8px;
-            margin-top: 8px;
-            padding: 8px;
+            grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+            gap: 10px;
+            margin-top: 10px;
+            padding: 10px;
             background-color: rgba(255, 255, 255, 0.1);
-            border-radius: 8px;
+            border-radius: 12px;
+            box-shadow: inset 0 0 10px rgba(0, 0, 0, 0.2);
         }
         
         .file-preview-item {
@@ -380,59 +350,59 @@
             display: flex;
             flex-direction: column;
             align-items: center;
+            transition: transform 0.2s ease;
+        }
+
+        .file-preview-item:hover {
+            transform: scale(1.05);
         }
         
         .file-preview-item img {
             width: 100%;
-            height: 80px;
+            height: 100px;
             object-fit: cover;
-            border-radius: 6px;
-        }
-
-        .file-preview-item .file-icon {
-            width: 100%;
-            height: 80px;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            background-color: #3e4247;
-            border-radius: 6px;
+            border-radius: 8px;
+            border: 2px solid #555;
         }
 
         .file-preview-item .file-name {
-            font-size: 0.75rem;
+            font-size: 0.8rem;
             text-align: center;
             overflow: hidden;
             white-space: nowrap;
             text-overflow: ellipsis;
             max-width: 100%;
-            margin-top: 4px;
+            margin-top: 6px;
+            color: #ccc;
         }
 
+        /* Кнопка удаления файла */
         .remove-file-btn {
             position: absolute;
-            top: -5px;
-            right: -5px;
+            top: -8px;
+            right: -8px;
             background-color: #f44336;
             color: white;
             border: none;
             border-radius: 50%;
-            width: 20px;
-            height: 20px;
-            font-size: 0.8rem;
+            width: 25px;
+            height: 25px;
+            font-size: 1.2rem;
             display: flex;
             justify-content: center;
             align-items: center;
             cursor: pointer;
             opacity: 0.8;
-            transition: opacity 0.2s;
+            transition: opacity 0.2s, transform 0.2s;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.3);
         }
         
         .remove-file-btn:hover {
             opacity: 1;
+            transform: scale(1.1);
         }
 
-        /* Плавающая панель ввода */
+        /* Панель ввода */
         .chat-input-wrapper {
             position: sticky;
             bottom: 20px;
@@ -440,12 +410,12 @@
             display: flex;
             flex-direction: column;
             gap: 10px;
-            padding: 10px;
-            border-radius: 15px;
-            background-color: rgba(255, 255, 255, 0.08);
-            backdrop-filter: blur(10px);
+            padding: 15px;
+            border-radius: 20px;
+            background-color: rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(15px);
             border: 1px solid rgba(255, 255, 255, 0.1);
-            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.5);
             box-sizing: border-box;
         }
         
@@ -456,36 +426,23 @@
             align-items: center;
         }
 
-        .ai-selection-container {
-            width: 100%;
-            text-align: left;
-            margin-bottom: 0;
-        }
-
-        #ai-selector {
-            width: 100%;
-            padding: 10px;
-            border-radius: 8px;
-            border: 1px solid rgba(255, 255, 255, 0.2);
-            background-color: rgba(255, 255, 255, 0.1);
-            color: #e0e0e0;
-            -webkit-appearance: none;
-            -moz-appearance: none;
-            appearance: none;
-            cursor: pointer;
-        }
-
         #user-message-input {
             flex-grow: 1;
-            padding: 12px;
+            padding: 15px;
             border: none;
-            border-radius: 8px;
+            border-radius: 12px;
             background-color: #1a1a1a;
             color: white;
             font-size: 1rem;
             outline: none;
+            transition: box-shadow 0.3s ease;
         }
 
+        #user-message-input:focus {
+            box-shadow: 0 0 10px rgba(0, 191, 255, 0.5);
+        }
+
+        /* Кнопки ввода */
         .input-button {
             width: 50px;
             height: 50px;
@@ -513,9 +470,8 @@
 
         #send-message-btn svg {
             fill: white;
-            width: 20px;
-            height: 20px;
-            transform: translateX(2px);
+            width: 24px;
+            height: 24px;
         }
         
         #file-upload-btn {
@@ -531,7 +487,7 @@
 
         /* Стили для динамического скрытия/показа элементов */
         .hidden {
-            display: none;
+            display: none !important;
         }
 
         /* Стили для кнопки во время загрузки */
@@ -539,14 +495,28 @@
             background-color: #777;
             cursor: not-allowed;
         }
+
+        /* Анимации */
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        @keyframes scaleIn {
+            from { transform: scale(0.9); opacity: 0; }
+            to { transform: scale(1); opacity: 1; }
+        }
+
+        @keyframes fadeInUp {
+            from { transform: translateY(20px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
     </style>
 </head>
 <body>
 
-    <!-- Кометы -->
-    <div class="comet" id="comet-1"></div>
-    <div class="comet" id="comet-2"></div>
-    <div class="comet" id="comet-3"></div>
+    <!-- Контейнер для падающих астероидов -->
+    <div id="falling-objects-container"></div>
 
     <!-- Заголовок -->
     <header class="header">
@@ -561,7 +531,7 @@
 
         <!-- Кнопка профиля и истории для авторизованных пользователей -->
         <div id="profile-container" class="auth-buttons-container hidden">
-            <button id="chat-history-btn" class="auth-btn">История чатов</button>
+            <button id="chat-history-btn" class="auth-btn">История</button>
             <span id="display-username">Имя пользователя</span>
             <div class="profile-btn-wrapper">
                 <button class="profile-btn" id="profile-btn">
@@ -575,10 +545,11 @@
         </div>
     </header>
 
-    <!-- Модальное окно для выбора входа -->
+    <!-- Модальное окно для входа -->
     <div id="auth-modal" class="modal">
         <div class="modal-content">
-            <h2>Выберите способ входа</h2>
+            <button class="close-modal-btn">&times;</button>
+            <h2>Добро пожаловать</h2>
             <div class="modal-buttons">
                 <button id="google-modal-btn" class="modal-auth-btn google-btn">
                     Войти с Google
@@ -596,6 +567,7 @@
     <!-- Модальное окно профиля -->
     <div id="profile-modal" class="modal">
         <div class="modal-content">
+            <button class="close-modal-btn">&times;</button>
             <h2>Профиль</h2>
             <form id="profile-form">
                 <label for="username-input">Имя пользователя:</label>
@@ -612,6 +584,7 @@
     <!-- Модальное окно истории чатов -->
     <div id="chat-history-modal" class="modal">
         <div class="modal-content">
+            <button class="close-modal-btn">&times;</button>
             <h2>История чатов</h2>
             <div id="history-list"></div>
         </div>
@@ -626,17 +599,6 @@
         
         <!-- Панель ввода сообщений (скрыта до входа) -->
         <div class="chat-input-wrapper hidden" id="chat-input-wrapper">
-            <!-- Выпадающий список для выбора AI, теперь над полем ввода -->
-            <div class="ai-selection-container" id="ai-selection-wrapper">
-                <!-- Я исправил эту часть, чтобы она включала выбор GPT 3.5 и 4.0 -->
-                <select id="ai-selector">
-                    <option value="gpt-3.5">GPT 3.5</option>
-                    <option value="gpt-4.0">GPT 4.0</option>
-                    <option value="gemini">Gemini AI (бесплатно)</option>
-                    <option value="asonik">Asonik AI (бесплатно)</option>
-                </select>
-            </div>
-            
             <!-- Контейнер для предварительного просмотра файлов -->
             <div id="file-preview-container" class="file-preview hidden"></div>
             
@@ -644,12 +606,25 @@
                 <input type="text" id="user-message-input" placeholder="Задайте вопрос нейросети...">
                 
                 <!-- Скрытый input для выбора файлов -->
-                <input type="file" id="file-upload-input" multiple accept="image/*, .pdf, .docx" class="hidden">
+                <input type="file" id="file-upload-input" multiple accept="image/*" class="hidden">
                 
                 <!-- Кнопка для загрузки файлов (скрепка) -->
                 <button id="file-upload-btn" class="input-button">
-                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" width="24" height="24">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="m18.375 12.75-6.125 6.125a2.25 2.25 0 0 1-3.182 0l-10.435-10.435a2.25 2.25 0 0 1 0-3.182L5.635 1.565a2.25 2.25 0 0 1 3.182 0l6.125 6.125m-1.5 1.5-6.125-6.125a2.25 2.25 0 0 0-3.182 0L1.565 8.135a2.25 2.25 0 0 0 0 3.182l10.435 10.435a2.25 2.25 0 0 0 3.182 0l6.125-6.125m-1.5-1.5L22.435 5.635a2.25 2.25 0 0 0 0-3.182L15.635 1.565a2.25 2.25 0 0 0-3.182 0L6.375 7.685"/>
+                    <svg viewBox="0 0 24 24" width="24" height="24">
+                        <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z" fill="#fff"/>
+                        <circle cx="12" cy="12" r="1" fill="#000"/>
+                        <path d="M14.5 10c0-2.48-2.02-4.5-4.5-4.5S5.5 7.52 5.5 10H4c0-3.31 2.69-6 6-6s6 2.69 6 6h-1.5z" fill="#000" opacity="0.5"/>
+                    </svg>
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="transform: rotate(-45deg);">
+                        <path d="M13.5 13.5L20 7M13.5 13.5L16 16M13.5 13.5L7 20M13.5 13.5L7 7"/>
+                        <path d="M13.5 13.5L20 7"/>
+                        <path d="M22 2L11 13"/>
+                        <path d="M15 6L21 12"/>
+                        <path d="M6 15L12 21"/>
+                        <path d="M3 3L21 21"/>
+                    </svg>
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M21.44 11.05l-9.19 9.19a6 6 0 01-8.49-8.49l9.19-9.19a4 4 0 015.66 5.66l-9.2 9.19a2 2 0 01-2.83-2.83l8.49-8.48"/>
                     </svg>
                 </button>
                 
@@ -673,7 +648,7 @@
     <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
     
     <script>
-        // Ваши данные из Firebase, которые ты предоставил
+        // Ваши данные из Firebase
         const firebaseConfig = {
             apiKey: "AIzaSyB1FLSf6PBzNzb7_CWYH6Y0_--jhqO9MLQ",
             authDomain: "asonik-ai.firebaseapp.com",
@@ -684,13 +659,11 @@
             measurementId: "G-HT5T20YPVE"
         };
         
-        // Ключ для доступа к Gemini API.
+        // Ключ для доступа к Gemini API
         const geminiApiKey = "";
         
-        // Ваш ключ для доступа к API ChatGPT.
-        // Замените этот ключ на свой, чтобы GPT заработал.
-        // Инструкцию, как получить ключ, см. ниже.
-        const gptApiKey = "sk-proj-95-v6B_o-MeLss1Ehcae8XX-PTQFT42IEe6WrVpFZhHgQTSrxDylzvg-411hbK-bxF1bFqJugT3BlbkFJMRuGGTxJCFo0HM5SioUgwxCGJLtSWI_Dq_2YdmldtODgGu79LrPqEChr7PgXHvUZQzLjGU37IA";
+        // Ключ для ImgBB API
+        const imgbbApiKey = "23dbb48c8abe7d9ffa57785cb44b33e5";
         
         // Инициализация Firebase
         firebase.initializeApp(firebaseConfig);
@@ -709,7 +682,6 @@
         const sendMessageBtn = document.getElementById('send-message-btn');
         const mainSignInBtn = document.getElementById('main-signin-btn');
         const signOutBtn = document.getElementById('signout-btn');
-        const aiSelector = document.getElementById('ai-selector');
         const aiChatContainer = document.getElementById('ai-chat');
         const chatInputWrapper = document.getElementById('chat-input-wrapper');
         const authModal = document.getElementById('auth-modal');
@@ -717,24 +689,45 @@
         const chatHistoryModal = document.getElementById('chat-history-modal');
         const historyList = document.getElementById('history-list');
         const googleModalBtn = document.getElementById('google-modal-btn');
-        const appleModalBtn = document.getElementById('apple-modal-btn');
-        const gamecenterModalBtn = document.getElementById('gamecenter-modal-btn');
         const openProfileModalBtn = document.getElementById('open-profile-modal-btn');
         const chatHistoryBtn = document.getElementById('chat-history-btn');
         const profileForm = document.getElementById('profile-form');
         const usernameInput = document.getElementById('username-input');
         const avatarInput = document.getElementById('avatar-input');
-        
-        // Элементы для загрузки файлов
         const fileUploadBtn = document.getElementById('file-upload-btn');
         const fileUploadInput = document.getElementById('file-upload-input');
         const filePreviewContainer = document.getElementById('file-preview-container');
 
-        // Глобальный массив для хранения истории чата текущей сессии
+        // Глобальный массив для истории чата
         let chatHistory = [];
         // Массив для хранения загруженных файлов
         let uploadedFiles = [];
         
+        // Генерация падающих астероидов
+        function createFallingObjects() {
+            const container = document.getElementById('falling-objects-container');
+            const numberOfObjects = 30; // Увеличиваем количество объектов для более плотного потока
+
+            for (let i = 0; i < numberOfObjects; i++) {
+                const fallingObject = document.createElement('div');
+                fallingObject.classList.add('falling-object');
+
+                const size = Math.random() * 5 + 2; // Случайный размер от 2px до 7px
+                const duration = Math.random() * 10 + 10; // Случайная продолжительность анимации от 10s до 20s
+                const delay = Math.random() * 10; // Случайная задержка для асинхронности
+
+                fallingObject.style.width = `${size}px`;
+                fallingObject.style.height = `${size}px`;
+                fallingObject.style.top = `${Math.random() * 100}vh`;
+                fallingObject.style.left = `${Math.random() * 100}vw`;
+                fallingObject.style.animationDuration = `${duration}s`;
+                fallingObject.style.animationDelay = `${delay}s`;
+                fallingObject.style.animationName = 'fall';
+                container.appendChild(fallingObject);
+            }
+        }
+        createFallingObjects();
+
         // Загрузка данных профиля из LocalStorage при загрузке страницы
         window.onload = () => {
             const savedUsername = localStorage.getItem('username');
@@ -747,18 +740,41 @@
             }
         };
 
-        // Открытие модального окна входа
-        mainSignInBtn.addEventListener('click', () => {
-            authModal.classList.add('open');
+        // Открытие и закрытие модальных окон
+        document.querySelectorAll('[data-modal-target]').forEach(button => {
+            button.addEventListener('click', () => {
+                const modalId = button.dataset.modalTarget;
+                const modal = document.getElementById(modalId);
+                if (modal) {
+                    modal.classList.add('open');
+                }
+            });
         });
 
-        // Закрытие модального окна при клике вне его
+        document.querySelectorAll('.close-modal-btn').forEach(button => {
+            button.addEventListener('click', () => {
+                const modal = button.closest('.modal');
+                if (modal) {
+                    modal.classList.remove('open');
+                }
+            });
+        });
+
         [authModal, profileModal, chatHistoryModal].forEach(modal => {
             modal.addEventListener('click', (event) => {
                 if (event.target === modal) {
                     modal.classList.remove('open');
                 }
             });
+        });
+        
+        // Открытие модального окна входа
+        mainSignInBtn.addEventListener('click', () => authModal.classList.add('open'));
+        
+        // Открытие модального окна истории чатов
+        chatHistoryBtn.addEventListener('click', () => {
+            renderChatHistoryList();
+            chatHistoryModal.classList.add('open');
         });
 
         // Открытие модального окна профиля
@@ -771,12 +787,6 @@
                 usernameInput.value = savedUsername;
             }
         });
-        
-        // Открытие модального окна истории чатов
-        chatHistoryBtn.addEventListener('click', () => {
-            renderChatHistoryList();
-            chatHistoryModal.classList.add('open');
-        });
 
         // Переключение выпадающего меню профиля
         profileBtn.addEventListener('click', (event) => {
@@ -787,7 +797,6 @@
         googleModalBtn.addEventListener('click', () => {
             auth.signInWithPopup(googleProvider)
                 .then((result) => {
-                    console.log('Пользователь успешно вошел:', result.user.displayName);
                     localStorage.setItem('username', result.user.displayName || 'Пользователь');
                     localStorage.setItem('avatar', result.user.photoURL || 'https://placehold.co/40x40/2c2f33/white?text=U');
                     authModal.classList.remove('open');
@@ -797,9 +806,9 @@
                     addMessageToChat('Ошибка входа: пожалуйста, проверьте настройки Firebase.', 'ai');
                 });
         });
-
-        // Обработчик сохранения профиля
-        profileForm.addEventListener('submit', (event) => {
+        
+        // Обработчик сохранения профиля с загрузкой изображения на ImgBB
+        profileForm.addEventListener('submit', async (event) => {
             event.preventDefault();
             const newUsername = usernameInput.value.trim();
             if (newUsername) {
@@ -809,13 +818,29 @@
 
             const file = avatarInput.files[0];
             if (file) {
-                const reader = new FileReader();
-                reader.onload = (e) => {
-                    const newAvatar = e.target.result;
-                    localStorage.setItem('avatar', newAvatar);
-                    profilePicElement.src = newAvatar;
-                };
-                reader.readAsDataURL(file);
+                try {
+                    const formData = new FormData();
+                    formData.append("image", file);
+                    
+                    const imgbbResponse = await fetch(`https://api.imgbb.com/1/upload?key=${imgbbApiKey}`, {
+                        method: 'POST',
+                        body: formData
+                    });
+                    
+                    const imgbbResult = await imgbbResponse.json();
+                    if (imgbbResult.success) {
+                        const newAvatarUrl = imgbbResult.data.url;
+                        localStorage.setItem('avatar', newAvatarUrl);
+                        profilePicElement.src = newAvatarUrl;
+                        console.log("Аватар успешно загружен на ImgBB:", newAvatarUrl);
+                    } else {
+                        throw new Error("Не удалось загрузить изображение на ImgBB.");
+                    }
+
+                } catch (error) {
+                    console.error('Ошибка загрузки аватара:', error);
+                    addMessageToChat('Ошибка: не удалось загрузить аватар. Попробуйте еще раз.', 'ai');
+                }
             }
             profileModal.classList.remove('open');
         });
@@ -824,10 +849,8 @@
         signOutBtn.addEventListener('click', () => {
             auth.signOut().then(() => {
                 console.log('Пользователь вышел');
-                // Очищаем LocalStorage при выходе
                 localStorage.removeItem('username');
                 localStorage.removeItem('avatar');
-                // Очищаем историю чата
                 chatHistory = [];
                 messagesContainer.innerHTML = '';
             }).catch((error) => {
@@ -838,7 +861,6 @@
         // Отслеживание состояния аутентификации
         auth.onAuthStateChanged((user) => {
             if (user) {
-                // Пользователь вошел. Показываем чат и скрываем кнопки входа.
                 authContainer.classList.add('hidden');
                 profileContainer.classList.remove('hidden');
                 aiChatContainer.classList.remove('hidden');
@@ -852,7 +874,6 @@
                     displayUsername.textContent = user.displayName;
                 }
             } else {
-                // Пользователь вышел. Скрываем чат и показываем кнопки входа.
                 authContainer.classList.remove('hidden');
                 profileContainer.classList.add('hidden');
                 aiChatContainer.classList.add('hidden');
@@ -886,7 +907,7 @@
                     
                     if (file.type.startsWith('image/')) {
                         const img = document.createElement('img');
-                        img.src = URL.createObjectURL(file);
+                        img.src = file.url; // Используем URL из ImgBB
                         img.alt = file.name;
                         fileItem.appendChild(img);
                     } else {
@@ -908,21 +929,17 @@
             messagesContainer.appendChild(messageDiv);
             messagesContainer.scrollTop = messagesContainer.scrollHeight;
             
-            // Добавляем сообщение в историю чата
             chatHistory.push({ text, sender, files });
         }
 
-        // Функция для рендеринга списка истории чатов в модальном окне
+        // Функция для рендеринга списка истории чатов
         function renderChatHistoryList() {
-            historyList.innerHTML = ''; // Очищаем список
-            // Группируем сообщения по сессиям (простой пример: одна сессия = один чат)
+            historyList.innerHTML = ''; 
             if (chatHistory.length > 0) {
                 const sessionDiv = document.createElement('div');
                 sessionDiv.classList.add('history-item');
-                // Отображаем первые 30 символов первого сообщения в качестве заголовка
                 sessionDiv.textContent = chatHistory[0].text.substring(0, 30) + '...';
                 sessionDiv.addEventListener('click', () => {
-                    // При клике загружаем историю в основной чат
                     messagesContainer.innerHTML = '';
                     chatHistory.forEach(msg => addMessageToChat(msg.text, msg.sender, msg.files));
                     chatHistoryModal.classList.remove('open');
@@ -961,12 +978,19 @@
                     } else {
                         const iconDiv = document.createElement('div');
                         iconDiv.classList.add('file-icon');
-                        iconDiv.innerHTML = `<svg viewBox="0 0 20 20" fill="currentColor" width="32" height="32" class="text-gray-600 dark:text-gray-400"><path d="M2 6a2 2 0 012-2h5l2 2h5a2 2 0 012 2v6a2 2 0 01-2 2H4a2 2 0 01-2-2V6z"></path></svg>`;
+                        // Используем SVG для иконки файла
+                        iconDiv.innerHTML = `<svg viewBox="0 0 24 24" fill="currentColor" width="32" height="32" style="color: #999;"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8l-6-6zM6 4h7v4h4v12H6z"/></svg>`;
                         fileItem.appendChild(iconDiv);
                     }
+                    
+                    // Кнопка удаления с иконкой
                     const removeBtn = document.createElement('button');
                     removeBtn.classList.add('remove-file-btn');
-                    removeBtn.textContent = '×';
+                    removeBtn.innerHTML = `
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+                            <path d="M4.646 4.646a.5.5 0 0 1 .708 0L8 7.293l2.646-2.647a.5.5 0 0 1 .708.708L8.707 8l2.647 2.646a.5.5 0 0 1-.708.708L8 8.707l-2.646 2.647a.5.5 0 0 1-.708-.708L7.293 8 4.646 5.354a.5.5 0 0 1 0-.708z"/>
+                        </svg>
+                    `;
                     removeBtn.addEventListener('click', () => {
                         uploadedFiles = uploadedFiles.filter((_, i) => i !== index);
                         renderFilePreviews();
@@ -985,78 +1009,52 @@
             }
         }
 
-
-        // Функция для отправки сообщения в Gemini AI
-        async function sendMessageToGemini(message) {
-            const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-05-20:generateContent?key=${geminiApiKey}`;
+        // Функция для отправки сообщения в Asonik AI (имитация)
+        async function sendMessageToAsonik(message, files) {
+            sendMessageBtn.disabled = true;
+            sendMessageBtn.classList.add('send-loading');
             
-            const payload = {
-                contents: [{ parts: [{ text: message }] }]
-            };
-
-            try {
-                const response = await fetch(apiUrl, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify(payload)
+            const filePromises = files.map(file => {
+                return new Promise(async (resolve, reject) => {
+                    const formData = new FormData();
+                    formData.append("image", file);
+                    try {
+                        const response = await fetch(`https://api.imgbb.com/1/upload?key=${imgbbApiKey}`, {
+                            method: 'POST',
+                            body: formData
+                        });
+                        const result = await response.json();
+                        if (result.success) {
+                            resolve({
+                                name: file.name,
+                                type: file.type,
+                                url: result.data.url
+                            });
+                        } else {
+                            reject(new Error('ImgBB upload failed'));
+                        }
+                    } catch (error) {
+                        reject(error);
+                    }
                 });
-
-                if (!response.ok) {
-                    throw new Error(`API request failed with status: ${response.status}`);
-                }
-
-                const result = await response.json();
-                const aiText = result.candidates[0].content.parts[0].text;
-                addMessageToChat(aiText, 'ai');
+            });
+            
+            try {
+                const uploadedFileUrls = await Promise.all(filePromises);
+                
+                // Добавляем сообщение пользователя с файлами в чат
+                addMessageToChat(message, 'user', uploadedFileUrls);
+                
+                // Здесь будет вызов реальной нейросети, но пока это имитация
+                setTimeout(() => {
+                    addMessageToChat("Привет! Я - твоя бесплатная нейросеть Asonik. Я получил ваше сообщение и файлы. Пока я умею только имитировать ответы, но скоро мы добавим сюда реальные модели для обработки изображений и текста!", 'ai');
+                    sendMessageBtn.disabled = false;
+                    sendMessageBtn.classList.remove('send-loading');
+                }, 1500);
 
             } catch (error) {
-                console.error('Error calling Gemini API:', error);
-                addMessageToChat('Извини, произошла ошибка при получении ответа от нейросети.', 'ai');
-            } finally {
-                sendMessageBtn.disabled = false;
-                sendMessageBtn.classList.remove('send-loading');
-            }
-        }
-        
-        // Функция для отправки сообщения в GPT AI (требует API-ключа)
-        async function sendMessageToGpt(message) {
-            if (gptApiKey === "Ваш-Новый-GPT-Ключ-Сюда" || !gptApiKey) {
-                addMessageToChat('Ошибка: для использования GPT необходим API-ключ. Пожалуйста, замените "Ваш-Новый-GPT-Ключ-Сюда" в коде на ваш ключ.', 'ai');
-                sendMessageBtn.disabled = false;
-                sendMessageBtn.classList.remove('send-loading');
-                return;
-            }
-            
-            const apiUrl = 'https://api.openai.com/v1/chat/completions';
-            const payload = {
-                model: "gpt-4o-mini",
-                messages: [{ role: "user", content: message }]
-            };
-
-            try {
-                const response = await fetch(apiUrl, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${gptApiKey}`
-                    },
-                    body: JSON.stringify(payload)
-                });
-
-                if (!response.ok) {
-                    throw new Error(`API request failed with status: ${response.status}`);
-                }
-
-                const result = await response.json();
-                const aiText = result.choices[0].message.content;
-                addMessageToChat(aiText, 'ai');
-
-            } catch (error) {
-                console.error('Error calling GPT API:', error);
-                addMessageToChat('Извини, произошла ошибка при получении ответа от GPT. Проверьте ваш API-ключ и убедитесь, что он активен.', 'ai');
-            } finally {
+                console.error("Ошибка при загрузке файлов:", error);
+                addMessageToChat("Извините, произошла ошибка при загрузке файлов.", 'ai');
                 sendMessageBtn.disabled = false;
                 sendMessageBtn.classList.remove('send-loading');
             }
@@ -1065,37 +1063,18 @@
         // Обработчик отправки сообщения
         sendMessageBtn.addEventListener('click', () => {
             const message = userMessageInput.value.trim();
-            const selectedAi = aiSelector.value;
             
-            // Проверяем, есть ли что-то для отправки
             if (message === '' && uploadedFiles.length === 0) {
-                return; // Ничего не отправляем, если нет текста и нет файлов
+                return;
             }
 
-            // Добавляем сообщение пользователя с файлами в чат
-            addMessageToChat(message, 'user', uploadedFiles);
+            // Отправляем сообщение в Asonik AI
+            sendMessageToAsonik(message, uploadedFiles);
             
             // Очищаем поле ввода и файлы
             userMessageInput.value = '';
             uploadedFiles = [];
             renderFilePreviews();
-            
-            sendMessageBtn.disabled = true;
-            sendMessageBtn.classList.add('send-loading');
-            
-            if (selectedAi.startsWith('gpt')) {
-                // Здесь нужно добавить логику для обработки файлов с GPT, но пока просто отправляем текст
-                sendMessageToGpt(message);
-            } else if (selectedAi === 'gemini') {
-                // Здесь нужно добавить логику для обработки файлов с Gemini, но пока просто отправляем текст
-                sendMessageToGemini(message);
-            } else if (selectedAi === 'asonik') {
-                setTimeout(() => {
-                    addMessageToChat("Привет! Я - твоя бесплатная нейросеть Asonik. Пока я умею только имитировать ответы, но скоро мы добавим сюда реальные модели!", 'ai');
-                    sendMessageBtn.disabled = false;
-                    sendMessageBtn.classList.remove('send-loading');
-                }, 1500);
-            }
         });
         
         // Отправка по нажатию Enter
