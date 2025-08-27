@@ -21,10 +21,10 @@
             overflow: hidden;
         }
 
-        /* Звездный фон и анимация */
+        /* Звездный фон и анимация (теперь звезды падают) */
         @keyframes move-stars {
             from { background-position: 0 0; }
-            to { background-position: -10000px -5000px; }
+            to { background-position: 0 10000px; }
         }
 
         /* Анимация комет */
@@ -152,9 +152,28 @@
         }
         
         /* Кнопка истории чатов */
-        #chat-history-btn, #clear-chat-btn {
+        #chat-history-btn {
             background-color: #333;
             color: #fff;
+        }
+        
+        #clear-chat-btn {
+            padding: 8px 12px;
+            border: 1px solid #fff; /* Белая обводка */
+            background-color: rgba(255, 255, 255, 0.1); /* Полупрозрачный белый фон */
+            color: white;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            transition: all 0.3s ease;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+            backdrop-filter: blur(5px);
+        }
+        
+        #clear-chat-btn:hover {
+            background-color: rgba(255, 255, 255, 0.3);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+            transform: translateY(-1px);
         }
 
         /* Кнопка профиля с выпадающим меню */
@@ -362,6 +381,13 @@
             color: #e0e0e0;
             border-bottom-left-radius: 4px;
         }
+        
+        .message-image {
+            max-width: 100%;
+            height: auto;
+            border-radius: 12px;
+            margin-top: 10px;
+        }
 
         /* Плавающая панель ввода */
         .chat-input-wrapper {
@@ -436,28 +462,23 @@
             transition: all 0.3s ease;
             box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
         }
+        
+        #file-upload-btn {
+            background-color: #4caf50;
+        }
 
-        #send-message-btn:hover, #file-upload-btn:hover {
+        #send-message-btn:hover {
             background-color: #0099e6;
             transform: scale(1.05);
             box-shadow: 0 6px 15px rgba(0, 0, 0, 0.3);
         }
+        
+        #file-upload-btn:hover {
+            background-color: #45a049;
+            transform: scale(1.05);
+            box-shadow: 0 6px 15px rgba(0, 0, 0, 0.3);
+        }
 
-        #clear-chat-btn {
-            background-color: #dc3545;
-            color: white;
-            border: none;
-            padding: 8px 12px;
-            border-radius: 8px;
-            cursor: pointer;
-            font-size: 0.9rem;
-            transition: background-color 0.3s;
-        }
-        
-        #clear-chat-btn:hover {
-            background-color: #c82333;
-        }
-        
         .loader {
             border: 4px solid #f3f3f3;
             border-radius: 50%;
@@ -534,9 +555,7 @@
                     <!-- Dropdown для выбора AI модели -->
                     <select id="ai-selector">
                         <option value="gemini-2.5-flash-preview-05-20">Gemini 2.5 Flash</option>
-                        <option value="gpt-3.5-turbo">GPT-3.5</option>
-                        <option value="gpt-4">GPT-4</option>
-                        <option value="gpt-4o-mini" selected>GPT-4o Mini</option>
+                        <option value="gpt-4o-mini">GPT-4o Mini</option>
                     </select>
                 </div>
                 <button id="clear-chat-btn">Очистить чат</button>
@@ -589,14 +608,6 @@
                         <path d="M10 1c4.97 0 9 4.03 9 9s-4.03 9-9 9-9-4.03-9-9 4.03-9 9-9z" fill="#1a1a1a"/>
                         <path d="M13.62 9.07a2.53 2.53 0 00-1.87-1.19c-.31.06-.61.16-.9.3a1.43 1.43 0 01-1.07-.34c-.16-.14-.33-.27-.51-.4a2.23 2.23 0 00-1.18-.45c-.48.06-.95.22-1.39.48a4.93 4.93 0 00-1.92 1.68c-.62.86-.96 1.83-.96 2.86 0 1.03.34 2.01.96 2.86a4.93 4.93 0 001.92 1.68c.44.26.91.42 1.39.48.56-.1 1.08-.28 1.57-.54.38.16.78.29 1.18.39.29.07.59.1.9.11a2.53 2.53 0 001.87-1.19c.16-.14.33-.27.51-.4a2.23 2.23 0 001.18-.45c.48.06.95.22 1.39.48a4.93 4.93 0 001.92 1.68c.62.86.96 1.83.96 2.86 0 1.03-.34 2.01-.96 2.86a4.93 4.93 0 00-1.92 1.68c-.44.26-.91.42-1.39.48-.56-.1-1.08-.28-1.57-.54-.38.16-.78.29-1.18.39-.29.07-.59.1-.9.11-1.04-.01-1.9-.3-2.61-.83-.73-.55-1.25-1.3-.9-2.02.35-.74.96-1.15 1.69-1.57.73-.42 1.33-.8 1.69-1.54.35-.74-.06-1.5-.78-2.03-.73-.54-1.6-.83-2.61-.83-.29 0-.59.03-.9.1A2.53 2.53 0 0013.62 9.07z" fill="#fff"/>
                     </svg>
-                    Войти с Google
-                </button>
-                <button class="modal-auth-btn apple-btn">
-                    <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
-                        <path d="M10 0C4.477 0 0 4.477 0 10c0 4.192 2.454 7.79 6.015 9.497A9.96 9.96 0 0010 20c5.523 0 10-4.477 10-10S15.523 0 10 0z" fill="white"/>
-                        <path d="M10 1c4.97 0 9 4.03 9 9s-4.03 9-9 9-9-4.03-9-9 4.03-9 9-9z" fill="#1a1a1a"/>
-                        <path d="M13.62 9.07a2.53 2.53 0 00-1.87-1.19c-.31.06-.61.16-.9.3a1.43 1.43 0 01-1.07-.34c-.16-.14-.33-.27-.51-.4a2.23 2.23 0 00-1.18-.45c-.48.06-.95.22-1.39.48a4.93 4.93 0 00-1.92 1.68c-.62.86-.96 1.83-.96 2.86 0 1.03.34 2.01.96 2.86a4.93 4.93 0 001.92 1.68c.44.26.91.42 1.39.48.56-.1 1.08-.28 1.57-.54.38.16.78.29 1.18.39.29.07.59.1.9.11a2.53 2.53 0 001.87-1.19c.16-.14.33-.27.51-.4a2.23 2.23 0 001.18-.45c.48.06.95.22 1.39.48a4.93 4.93 0 001.92 1.68c.62.86.96 1.83.96 2.86 0 1.03-.34 2.01-.96 2.86a4.93 4.93 0 00-1.92 1.68c-.44.26-.91.42-1.39.48-.56-.1-1.08-.28-1.57-.54-.38.16-.78.29-1.18.39-.29.07-.59.1-.9.11-1.04-.01-1.9-.3-2.61-.83-.73-.55-1.25-1.3-.9-2.02.35-.74.96-1.15 1.69-1.57.73-.42 1.33-.8 1.69-1.54.35-.74-.06-1.5-.78-2.03-.73-.54-1.6-.83-2.61-.83-.29 0-.59.03-.9.1A2.53 2.53 0 0013.62 9.07z" fill="#fff"/>
-                    </svg>
                     Войти с Apple
                 </button>
             </div>
@@ -622,6 +633,15 @@
                 <button class="modal-auth-btn" id="new-chat-btn">Да, начать новый чат</button>
                 <button class="modal-auth-btn" id="continue-chat-btn" style="background-color: #333;">Нет, продолжить в этом чате</button>
             </div>
+        </div>
+    </div>
+    
+    <!-- Модальное окно для предупреждения OpenAI -->
+    <div id="openai-warning-modal" class="modal">
+        <div class="modal-content">
+            <h2>Ограничения OpenAI</h2>
+            <p>Из-за ограничений API, некоторые модели OpenAI (GPT-3.5, GPT-4) могут быть недоступны или работать с ошибками. Пожалуйста, используйте модель GPT-4o Mini или Gemini 2.5 Flash для стабильной работы.</p>
+            <button class="modal-auth-btn" onclick="closeOpenAIWarningModal()">Понятно</button>
         </div>
     </div>
 
@@ -652,6 +672,7 @@
         const modelChangeModal = document.getElementById('model-change-modal');
         const newChatBtn = document.getElementById('new-chat-btn');
         const continueChatBtn = document.getElementById('continue-chat-btn');
+        const openaiWarningModal = document.getElementById('openai-warning-modal');
 
         // Элементы чата
         const aiChatContainer = document.getElementById('ai-chat');
@@ -686,9 +707,14 @@
             messageModal.classList.remove('open');
         };
 
+        // Функция для закрытия модального окна с предупреждением OpenAI
+        window.closeOpenAIWarningModal = function() {
+            openaiWarningModal.classList.remove('open');
+        };
+
         // API Keys для разных моделей
         const openAIApiKey = "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";
-        const geminiApiKey = "AIzaSyBc6cQReJOWWmbuCdsAyj17szuO9fEF5Lc";
+        const geminiApiKey = ""; // Пустой ключ, будет предоставлен средой Canvas
 
         const geminiUrl = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-05-20:generateContent";
         const openAiUrl = "https://api.openai.com/v1/chat/completions";
@@ -732,11 +758,22 @@
         clearChatBtn.addEventListener('click', clearChat);
 
         // Функция для добавления сообщения в чат
-        function addMessageToChat(text, sender) {
+        function addMessageToChat(text, sender, imageUrl = null) {
             const messageDiv = document.createElement('div');
             messageDiv.classList.add('message');
             messageDiv.classList.add(sender === 'user' ? 'user-message' : 'ai-message');
-            messageDiv.innerHTML = text.replace(/\n/g, '<br>'); // Замена переносов строк на <br> для правильного отображения
+            
+            if (imageUrl) {
+                const img = document.createElement('img');
+                img.src = imageUrl;
+                img.classList.add('message-image');
+                messageDiv.appendChild(img);
+            }
+            
+            const textContent = document.createElement('p');
+            textContent.innerHTML = text.replace(/\n/g, '<br>'); // Замена переносов строк на <br> для правильного отображения
+            messageDiv.appendChild(textContent);
+            
             aiChatContainer.appendChild(messageDiv);
             aiChatContainer.scrollTop = aiChatContainer.scrollHeight; // Автоматическая прокрутка вниз
         }
@@ -746,17 +783,34 @@
         // =================================
         
         // Функция для отправки сообщения в Gemini API
-        async function sendMessageToGemini(message) {
+        async function sendMessageToGemini(message, imageData = null) {
             if (!geminiApiKey) {
-                showMessageModal("Ошибка API-ключа", "Пожалуйста, вставьте ваш API-ключ от Gemini в код.");
-                return;
+                // Если ключ не предоставлен, он будет добавлен средой Canvas
             }
 
-            chatHistory.push({ role: "user", parts: [{ text: message }] });
+            const parts = [{ text: message }];
+            if (imageData) {
+                parts.push({
+                    inlineData: {
+                        mimeType: imageData.mimeType,
+                        data: imageData.data
+                    }
+                });
+            }
+
+            const historyPayload = chatHistory.map(entry => {
+                const parts = entry.parts.map(part => {
+                    if (part.inlineData) {
+                        return { inlineData: part.inlineData };
+                    }
+                    return { text: part.text };
+                });
+                return { role: entry.role, parts: parts };
+            });
 
             try {
                 const payload = {
-                    contents: chatHistory,
+                    contents: [...historyPayload, { role: "user", parts: parts }],
                     tools: [{ "google_search": {} }],
                     systemInstruction: {
                         parts: [{ text: "You are a helpful and friendly AI assistant." }]
@@ -854,13 +908,58 @@
 
             } catch (error) {
                 console.error("Error calling OpenAI API:", error);
-                throw new Error("Извини, произошла ошибка при получении ответа от GPT. Пожалуйста, проверь свой API-ключ. " + error.message);
+                throw new Error("Извини, произошла ошибка при получении ответа от GPT. " + error.message);
             }
         }
 
-        // Обработчик события для кнопки загрузки файла (пока заглушка)
+        // Обработчик события для кнопки загрузки файла
         fileUploadBtn.addEventListener('click', () => {
-            showMessageModal("Функция загрузки", "Извините, эта функция пока не реализована. Мы работаем над ней!");
+            fileInput.click();
+        });
+        
+        fileInput.addEventListener('change', (event) => {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = async () => {
+                const base64String = reader.result.split(',')[1];
+                const message = ``;
+                
+                addMessageToChat(message, 'user', reader.result);
+                
+                const loaderDiv = document.createElement('div');
+                loaderDiv.className = 'ai-message';
+                loaderDiv.innerHTML = `<div class="loader"></div>`;
+                aiChatContainer.appendChild(loaderDiv);
+                aiChatContainer.scrollTop = aiChatContainer.scrollHeight;
+
+                try {
+                    const selectedModel = aiSelector.value;
+                    let aiResponse;
+                    if (selectedModel === "gemini-2.5-flash-preview-05-20") {
+                        const imageData = {
+                            mimeType: file.type,
+                            data: base64String
+                        };
+                        aiResponse = await sendMessageToGemini(message, imageData);
+                    } else {
+                        throw new Error("Эта модель не поддерживает обработку изображений.");
+                    }
+                    
+                    aiChatContainer.removeChild(loaderDiv);
+                    addMessageToChat(aiResponse, 'ai');
+                    
+                    await saveChatHistoryToFirestore();
+                    
+                } catch (error) {
+                    aiChatContainer.removeChild(loaderDiv);
+                    addMessageToChat(error.message, 'ai');
+                } finally {
+                    fileInput.value = ''; // Сбросить поле ввода файла
+                }
+            };
+            reader.readAsDataURL(file);
         });
 
         // Функция для обработки отправки сообщения
@@ -871,7 +970,7 @@
             }
 
             // Проверяем, не является ли вопрос о модели
-            const modelKeywords = ["модель", "какой ты", "какая ты", "кто ты", "ты кто", "ты какая модель"];
+            const modelKeywords = ["модель", "какой ты", "какая ты", "кто ты", "ты кто", "ты какая модель", "какая версия"];
             const selectedModelName = aiSelector.options[aiSelector.selectedIndex].text;
             const isModelQuestion = modelKeywords.some(keyword => message.toLowerCase().includes(keyword));
 
@@ -935,6 +1034,9 @@
 
         // Обработка смены модели
         aiSelector.addEventListener('change', () => {
+            if (aiSelector.value.startsWith("gpt-")) {
+                 openaiWarningModal.classList.add('open');
+            }
             if (chatHistory.length > 0) {
                 const newModelName = aiSelector.options[aiSelector.selectedIndex].text;
                 const oldModelName = aiSelector.options.namedItem(lastSelectedModel)?.text || 'предыдущей';
