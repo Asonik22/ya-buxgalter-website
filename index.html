@@ -11,7 +11,7 @@
         /* Общие стили для тела страницы и звездного фона */
         body {
             font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
-            background: #000; /* Черный фон для звезд */
+            background: #000;
             color: #e0e0e0;
             margin: 0;
             padding: 0;
@@ -23,36 +23,39 @@
             overflow: hidden;
         }
 
-        /* Анимация звезд */
+        /* Анимация звезд - теперь с более крупными и красивыми звездами */
         @keyframes move-stars {
             from { background-position: 0 0; }
-            to { background-position: -10000px 5000px; }
+            to { background-position: -10000px -5000px; }
         }
-
+        
         body::before {
             content: '';
-            position: absolute;
+            position: fixed;
             top: 0;
             left: 0;
             width: 100%;
             height: 100%;
             background-image:
-                radial-gradient(2px 2px at 20px 30px, #eee, rgba(0,0,0,0)),
-                radial-gradient(2px 2px at 40px 70px, #fff, rgba(0,0,0,0)),
-                radial-gradient(1px 1px at 150px 10px, #fff, rgba(0,0,0,0)),
-                radial-gradient(2px 2px at 100px 20px, #ddd, rgba(0,0,0,0)),
-                radial-gradient(1px 1px at 130px 50px, #ddd, rgba(0,0,0,0)),
-                radial-gradient(2px 2px at 300px 500px, #fff, rgba(0,0,0,0)),
-                radial-gradient(1px 1px at 200px 40px, #fff, rgba(0,0,0,0)),
-                radial-gradient(1px 1px at 350px 80px, #fff, rgba(0,0,0,0)),
-                radial-gradient(2px 2px at 400px 120px, #fff, rgba(0,0,0,0));
+                radial-gradient(4px 4px at 20px 30px, #fff, rgba(0,0,0,0)),
+                radial-gradient(3px 3px at 40px 70px, #fff, rgba(0,0,0,0)),
+                radial-gradient(2px 2px at 150px 10px, #ddd, rgba(0,0,0,0)),
+                radial-gradient(4px 4px at 100px 20px, #fff, rgba(0,0,0,0)),
+                radial-gradient(2px 2px at 130px 50px, #ddd, rgba(0,0,0,0)),
+                radial-gradient(5px 5px at 300px 500px, #fff, rgba(0,0,0,0)),
+                radial-gradient(3px 3px at 200px 40px, #fff, rgba(0,0,0,0)),
+                radial-gradient(2px 2px at 350px 80px, #ddd, rgba(0,0,0,0)),
+                radial-gradient(4px 4px at 400px 120px, #fff, rgba(0,0,0,0)),
+                radial-gradient(3px 3px at 600px 200px, #ddd, rgba(0,0,0,0)),
+                radial-gradient(2px 2px at 700px 400px, #fff, rgba(0,0,0,0));
             background-repeat: repeat;
             background-size: 500px 500px;
             opacity: 0.7;
             animation: move-stars 100s linear infinite;
+            z-index: -1;
         }
 
-        /* Заголовок сайта в верхней части экрана */
+        /* Заголовок сайта */
         .header {
             display: flex;
             justify-content: space-between;
@@ -62,7 +65,7 @@
             backdrop-filter: blur(10px);
             border-bottom: 1px solid rgba(255, 255, 255, 0.1);
             box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
-            z-index: 10; /* Убедимся, что заголовок поверх звезд */
+            z-index: 10;
         }
 
         .logo {
@@ -72,11 +75,12 @@
             text-shadow: 0 0 15px rgba(0, 191, 255, 0.7);
         }
 
-        .auth-buttons {
+        /* Контейнер для кнопок аутентификации */
+        .auth-buttons-container {
             display: flex;
             gap: 15px;
         }
-
+        
         .auth-btn, .profile-btn {
             padding: 10px 20px;
             border: none;
@@ -92,16 +96,10 @@
             transform: translateY(-2px);
             box-shadow: 0 6px 15px rgba(0, 0, 0, 0.3);
         }
-
-        .google-btn {
-            background-color: #4285F4;
+        
+        .main-auth-btn {
+            background-color: #007bff;
             color: white;
-        }
-
-        .apple-btn {
-            background-color: #000;
-            color: white;
-            border: 1px solid rgba(255, 255, 255, 0.2);
         }
 
         /* Кнопка профиля в виде круга с аватаром */
@@ -124,6 +122,71 @@
             object-fit: cover;
         }
         
+        /* Модальное окно для выбора входа */
+        .modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.7);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 20;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.3s ease;
+        }
+
+        .modal.open {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .modal-content {
+            background-color: #1a1a1a;
+            padding: 30px;
+            border-radius: 15px;
+            text-align: center;
+            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.5);
+            max-width: 400px;
+            width: 90%;
+        }
+
+        .modal-content h2 {
+            margin-top: 0;
+            font-size: 1.5rem;
+            color: white;
+            margin-bottom: 20px;
+        }
+
+        .modal-buttons {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .modal-auth-btn {
+            padding: 15px;
+            border: none;
+            border-radius: 10px;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+
+        .modal-auth-btn.google-btn {
+            background-color: #4285F4;
+            color: white;
+        }
+        
+        .modal-auth-btn.apple-btn {
+            background-color: #000;
+            color: white;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
         /* Основной контейнер чата */
         .chat-container {
             flex-grow: 1;
@@ -169,13 +232,13 @@
             border-bottom-left-radius: 4px;
         }
 
-        /* Плавающая панель ввода в нижней части экрана */
+        /* Плавающая панель ввода */
         .chat-input-wrapper {
             position: sticky;
             bottom: 20px;
             width: 100%;
             display: flex;
-            flex-direction: column; /* Изменяем на column для размещения селектора над полем ввода */
+            flex-direction: column;
             gap: 10px;
             padding: 10px;
             border-radius: 15px;
@@ -268,29 +331,43 @@
     <header class="header">
         <h1 class="logo">Asonik AI</h1>
         
-        <!-- Кнопки аутентификации для неавторизованных пользователей -->
-        <div id="auth-buttons-container" class="auth-buttons">
-            <button id="google-signin-btn" class="auth-btn google-btn">
-                Войти с Google
-            </button>
-            <button id="apple-signin-btn" class="auth-btn apple-btn">
-                Войти с Apple
+        <!-- Кнопка аутентификации для неавторизованных пользователей -->
+        <div id="auth-container" class="auth-buttons-container">
+            <button id="main-signin-btn" class="auth-btn main-auth-btn">
+                Войти
             </button>
         </div>
 
         <!-- Кнопка профиля для авторизованных пользователей -->
-        <div id="profile-container" class="auth-buttons hidden">
+        <div id="profile-container" class="auth-buttons-container hidden">
             <label for="profile-pic-input" class="profile-btn" id="profile-btn-label">
                 <img id="profile-pic" src="https://placehold.co/40x40/2c2f33/white?text=A" alt="Profile Picture">
             </label>
             <input type="file" id="profile-pic-input" class="hidden" accept="image/*">
-            <button id="signout-btn" class="auth-btn apple-btn">Выйти</button>
+            <button id="signout-btn" class="auth-btn main-auth-btn">Выйти</button>
         </div>
     </header>
 
+    <!-- Модальное окно для выбора входа -->
+    <div id="auth-modal" class="modal">
+        <div class="modal-content">
+            <h2>Выберите способ входа</h2>
+            <div class="modal-buttons">
+                <button id="google-modal-btn" class="modal-auth-btn google-btn">
+                    Войти с Google
+                </button>
+                <button id="apple-modal-btn" class="modal-auth-btn apple-btn">
+                    Войти с Apple
+                </button>
+                <button id="gamecenter-modal-btn" class="modal-auth-btn apple-btn">
+                    Войти с Game Center
+                </button>
+            </div>
+        </div>
+    </div>
+
     <!-- Основной контейнер для чата -->
     <main class="chat-container">
-        
         <!-- Контейнер для сообщений чата (скрыт до входа) -->
         <div id="ai-chat" class="hidden">
             <div id="messages-container"></div>
@@ -339,58 +416,69 @@
         };
         
         // Ключ для доступа к Gemini API.
-        // Он предоставлен средой выполнения Canvas и не требует ввода.
         const geminiApiKey = "";
         
         // ВНИМАНИЕ: Для подключения к API ChatGPT или другим моделям
-        // тебе понадобится собственный API-ключ. Его нужно будет вставить
-        // здесь, например: const gptApiKey = "YOUR_GPT_API_KEY";
-        // Получить его можно на сайте OpenAI: https://platform.openai.com/account/api-keys
-        const gptApiKey = null; // Пока что ключ не установлен
+        // тебе понадобится собственный API-ключ.
+        const gptApiKey = null;
         
         // Инициализация Firebase
         firebase.initializeApp(firebaseConfig);
         const auth = firebase.auth();
         const googleProvider = new firebase.auth.GoogleAuthProvider();
-        const appleProvider = new firebase.auth.AppleAuthProvider();
         
         // Получение элементов DOM
-        const authButtonsContainer = document.getElementById('auth-buttons-container');
+        const authContainer = document.getElementById('auth-container');
         const profileContainer = document.getElementById('profile-container');
         const profilePicElement = document.getElementById('profile-pic');
         const profilePicInput = document.getElementById('profile-pic-input');
         const messagesContainer = document.getElementById('messages-container');
         const userMessageInput = document.getElementById('user-message-input');
         const sendMessageBtn = document.getElementById('send-message-btn');
-        const googleSignInBtn = document.getElementById('google-signin-btn');
-        const appleSignInBtn = document.getElementById('apple-signin-btn');
+        const mainSignInBtn = document.getElementById('main-signin-btn');
         const signOutBtn = document.getElementById('signout-btn');
         const aiSelector = document.getElementById('ai-selector');
         const aiChatContainer = document.getElementById('ai-chat');
         const chatInputWrapper = document.getElementById('chat-input-wrapper');
-        
-        // Обработчик входа через Google
-        googleSignInBtn.addEventListener('click', () => {
+        const authModal = document.getElementById('auth-modal');
+        const googleModalBtn = document.getElementById('google-modal-btn');
+        const appleModalBtn = document.getElementById('apple-modal-btn');
+        const gamecenterModalBtn = document.getElementById('gamecenter-modal-btn');
+
+        // Открытие модального окна
+        mainSignInBtn.addEventListener('click', () => {
+            authModal.classList.add('open');
+        });
+
+        // Закрытие модального окна при клике вне его
+        authModal.addEventListener('click', (event) => {
+            if (event.target === authModal) {
+                authModal.classList.remove('open');
+            }
+        });
+
+        // Обработчики входа
+        googleModalBtn.addEventListener('click', () => {
             auth.signInWithPopup(googleProvider)
                 .then((result) => {
                     console.log('Пользователь успешно вошел:', result.user.displayName);
+                    authModal.classList.remove('open');
                 })
                 .catch((error) => {
                     console.error('Ошибка входа:', error.message);
-                    addMessageToChat('Ошибка входа: пожалуйста, проверьте настройки Firebase и API-ключи.', 'ai');
+                    addMessageToChat('Ошибка входа: пожалуйста, проверьте настройки Firebase.', 'ai');
                 });
         });
 
-        // Обработчик входа через Apple
-        appleSignInBtn.addEventListener('click', () => {
-            auth.signInWithPopup(appleProvider)
-                .then((result) => {
-                    console.log('Пользователь успешно вошел:', result.user.displayName);
-                })
-                .catch((error) => {
-                    console.error('Ошибка входа:', error.message);
-                    addMessageToChat('Ошибка входа: пожалуйста, проверьте настройки Firebase и API-ключи.', 'ai');
-                });
+        // NOTE: Apple и Game Center не поддерживаются Firebase Web SDK "из коробки"
+        // для полноценной реализации требуется бэкенд и дополнительные настройки.
+        // Здесь мы просто имитируем их, чтобы показать функционал.
+        appleModalBtn.addEventListener('click', () => {
+            addMessageToChat('Вход через Apple временно недоступен. Пожалуйста, используйте другой способ.', 'ai');
+        });
+        
+        gamecenterModalBtn.addEventListener('click', () => {
+            addMessageToChat('Вход через Game Center временно недоступен. Пожалуйста, используйте другой способ.', 'ai');
         });
 
         // Обработчик выхода
@@ -406,17 +494,18 @@
         auth.onAuthStateChanged((user) => {
             if (user) {
                 // Пользователь вошел. Показываем чат и скрываем кнопки входа.
-                authButtonsContainer.classList.add('hidden');
+                authContainer.classList.add('hidden');
                 profileContainer.classList.remove('hidden');
                 aiChatContainer.classList.remove('hidden');
                 chatInputWrapper.classList.remove('hidden');
+                authModal.classList.remove('open');
 
                 if (user.photoURL) {
                     profilePicElement.src = user.photoURL;
                 }
             } else {
                 // Пользователь вышел. Скрываем чат и показываем кнопки входа.
-                authButtonsContainer.classList.remove('hidden');
+                authContainer.classList.remove('hidden');
                 profileContainer.classList.add('hidden');
                 aiChatContainer.classList.add('hidden');
                 chatInputWrapper.classList.add('hidden');
@@ -495,7 +584,7 @@
             
             const apiUrl = 'https://api.openai.com/v1/chat/completions';
             const payload = {
-                model: "gpt-3.5-turbo", // Модель можно изменить, если есть доступ к другим
+                model: "gpt-3.5-turbo",
                 messages: [{ role: "user", content: message }]
             };
 
@@ -525,7 +614,6 @@
                 sendMessageBtn.classList.remove('send-loading');
             }
         }
-
 
         // Обработчик отправки сообщения
         sendMessageBtn.addEventListener('click', () => {
