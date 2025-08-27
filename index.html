@@ -5,7 +5,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Asonik AI</title>
     <style>
-        /* General body and container styles for a cosmic theme */
+        /* CSS-стили для оформления сайта. Используется шрифт Inter. */
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap');
+
         body {
             font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
             background: linear-gradient(135deg, #1f0c3d, #000000);
@@ -15,88 +17,89 @@
             display: flex;
             flex-direction: column;
             min-height: 100vh;
-            justify-content: center;
-            align-items: center;
+            justify-content: space-between;
         }
 
-        /* Main application container */
-        .app-container {
+        /* Заголовок сайта в верхней части экрана */
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px 40px;
             background-color: rgba(255, 255, 255, 0.05);
             backdrop-filter: blur(10px);
-            border-radius: 20px;
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
-            padding: 40px;
-            max-width: 600px;
-            width: 100%;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            text-align: center;
-            margin: 20px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
         }
-        
-        /* Hidden class for dynamic content display */
-        .hidden {
-            display: none;
-        }
-        
-        /* Logo/Header styling */
+
         .logo {
-            font-size: 3rem;
+            font-size: 2rem;
             font-weight: 700;
             color: #fff;
-            margin-bottom: 20px;
             text-shadow: 0 0 10px rgba(0, 123, 255, 0.7);
         }
 
-        /* Auth button styling */
-        .auth-btn-container {
+        .auth-buttons {
             display: flex;
-            flex-direction: column;
-            width: 100%;
             gap: 15px;
-            margin-top: 20px;
         }
 
-        .auth-btn {
-            padding: 15px 30px;
+        .auth-btn, .profile-btn {
+            padding: 10px 20px;
             border: none;
-            border-radius: 10px;
+            border-radius: 8px;
             cursor: pointer;
             font-size: 1rem;
             font-weight: 600;
             transition: all 0.3s ease;
-            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
         }
 
-        .auth-btn:hover {
+        .auth-btn:hover, .profile-btn:hover {
             transform: translateY(-2px);
-            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
+            box-shadow: 0 6px 15px rgba(0, 0, 0, 0.3);
         }
 
         .google-btn {
             background-color: #4285F4;
             color: white;
         }
-        
+
         .apple-btn {
             background-color: #000;
             color: white;
         }
 
-        /* Chat interface styling */
-        #user-section {
-            width: 100%;
+        /* Кнопка профиля в виде круга с аватаром */
+        .profile-btn {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background-color: #555;
             display: flex;
-            flex-direction: column;
+            justify-content: center;
             align-items: center;
+            overflow: hidden;
+            padding: 0;
         }
 
-        #user-display-name {
-            font-size: 1.5rem;
-            color: #fff;
-            margin-bottom: 20px;
+        .profile-btn img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        
+        /* Основной контейнер чата */
+        .chat-container {
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+            width: 100%;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            box-sizing: border-box;
+            position: relative;
         }
 
         .ai-selection-container {
@@ -117,27 +120,16 @@
             appearance: none;
             cursor: pointer;
         }
-
-        #ai-chat {
-            width: 100%;
-            height: 400px;
-            display: flex;
-            flex-direction: column;
-            border-radius: 10px;
-            overflow: hidden;
-            background-color: rgba(0, 0, 0, 0.2);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-        }
-
-        #messages-container {
-            flex-grow: 1;
-            padding: 15px;
-            overflow-y: auto;
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-        }
         
+        #ai-chat {
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+            overflow-y: auto;
+            gap: 10px;
+            padding-bottom: 20px;
+        }
+
         .message {
             padding: 12px 18px;
             border-radius: 18px;
@@ -159,24 +151,33 @@
             border-bottom-left-radius: 4px;
         }
 
+        /* Плавающая панель ввода в нижней части экрана */
         .chat-input-wrapper {
+            position: sticky;
+            bottom: 20px;
+            width: 100%;
             display: flex;
-            padding: 15px;
-            border-top: 1px solid rgba(255, 255, 255, 0.1);
-            background-color: rgba(0, 0, 0, 0.2);
+            padding: 10px;
+            border-radius: 15px;
+            background-color: rgba(255, 255, 255, 0.08);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
             gap: 10px;
+            box-sizing: border-box;
         }
 
         #user-message-input {
             flex-grow: 1;
             padding: 12px;
-            border: 1px solid #444;
+            border: none;
             border-radius: 8px;
             background-color: #1a1a1a;
             color: white;
             font-size: 1rem;
+            outline: none;
         }
-
+        
         #send-message-btn {
             padding: 12px 20px;
             background-color: #00bfff;
@@ -192,66 +193,66 @@
             background-color: #0099e6;
         }
         
-        /* Sign-out button */
-        #signout-btn {
-            background-color: #dc3545;
-            color: white;
-            margin-top: 20px;
-            width: auto;
-            padding: 12px 20px;
-            border-radius: 8px;
+        /* Стили для динамического скрытия/показа элементов */
+        .hidden {
+            display: none;
         }
 
-        #signout-btn:hover {
-            background-color: #c82333;
-        }
-
-        /* Footer styling */
-        footer {
-            margin-top: 20px;
-            padding: 10px;
-            text-align: center;
-            color: #888;
-            font-size: 0.8rem;
+        /* Стили для кнопки во время загрузки */
+        .send-loading {
+            background-color: #777;
+            cursor: not-allowed;
         }
     </style>
 </head>
 <body>
 
-    <div class="app-container">
-        
+    <!-- Заголовок -->
+    <header class="header">
         <h1 class="logo">Asonik AI</h1>
-
-        <div id="auth-section" class="auth-btn-container">
+        
+        <!-- Кнопки аутентификации для неавторизованных пользователей -->
+        <div id="auth-buttons-container" class="auth-buttons">
             <button id="google-signin-btn" class="auth-btn google-btn">
-                Войти через Google
+                Войти
             </button>
             <button id="apple-signin-btn" class="auth-btn apple-btn">
-                Войти через Apple
+                Регистрация
             </button>
         </div>
 
-        <div id="user-section" class="hidden" style="width: 100%;">
-            <h2 id="user-display-name">Привет, <span id="user-name"></span>!</h2>
-            
-            <div class="ai-selection-container">
-                <select id="ai-selector">
-                    <option value="asonik">Asonik AI (бесплатно)</option>
-                    <option value="gemini">Gemini AI (платно)</option>
-                </select>
-            </div>
-
-            <div id="ai-chat">
-                <div id="messages-container"></div>
-                <div class="chat-input-wrapper">
-                    <input type="text" id="user-message-input" placeholder="Задайте вопрос нейросети...">
-                    <button id="send-message-btn">Отправить</button>
-                </div>
-            </div>
-            <button id="signout-btn" class="auth-btn">Выйти</button>
+        <!-- Кнопка профиля для авторизованных пользователей -->
+        <div id="profile-container" class="auth-buttons hidden">
+            <button id="profile-btn" class="profile-btn">
+                <img id="profile-pic" src="https://placehold.co/40x40/2c2f33/white?text=A" alt="Profile Picture">
+            </button>
+            <button id="signout-btn" class="auth-btn apple-btn">Выйти</button>
         </div>
-    </div>
+    </header>
 
+    <!-- Основной контейнер для чата -->
+    <main class="chat-container">
+        <!-- Выпадающий список для выбора AI (скрыт до входа) -->
+        <div class="ai-selection-container hidden" id="ai-selection-wrapper">
+            <select id="ai-selector">
+                <option value="asonik">Asonik AI (бесплатно)</option>
+                <option value="gemini">Gemini AI (бесплатно)</option>
+            </select>
+        </div>
+
+        <!-- Контейнер для сообщений чата (скрыт до входа) -->
+        <div id="ai-chat" class="hidden">
+            <div id="messages-container"></div>
+        </div>
+        
+        <!-- Панель ввода сообщений (скрыта до входа) -->
+        <div class="chat-input-wrapper hidden" id="chat-input-wrapper">
+            <input type="text" id="user-message-input" placeholder="Задайте вопрос нейросети...">
+            <button id="send-message-btn">Отправить</button>
+        </div>
+    </main>
+
+    <!-- Подвал сайта -->
     <footer>
         <p>&copy; 2024 Asonik AI. Все права защищены.</p>
     </footer>
@@ -261,33 +262,41 @@
     <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
     
     <script>
-        // Ваши данные из Firebase.
+        // Ваши данные из Firebase, которые ты предоставил
         const firebaseConfig = {
-            apiKey: "AlzaSyB1FLSf6PbNzb7_CWYH6Y0__jhq09MLQ",
+            apiKey: "AIzaSyB1FLSf6PBzNzb7_CWYH6Y0_--jhqO9MLQ",
             authDomain: "asonik-ai.firebaseapp.com",
             projectId: "asonik-ai",
-            storageBucket: "asonik-ai.appspot.com",
+            storageBucket: "asonik-ai.firebasestorage.app",
             messagingSenderId: "875716508614",
-            appId: "1:875716508614:web:802956f4d852a46c82092c"
+            appId: "1:875716508614:web:ad264fdd60a20eb7dd90c7",
+            measurementId: "G-HT5T20YPVE"
         };
         
-        // Инициализация Firebase.
+        // Ключ для доступа к Gemini API.
+        // Оставлен пустым, так как он будет предоставлен средой выполнения
+        const geminiApiKey = "";
+        
+        // Инициализация Firebase
         firebase.initializeApp(firebaseConfig);
         const auth = firebase.auth();
         const googleProvider = new firebase.auth.GoogleAuthProvider();
         
-        // Получение элементов DOM.
-        const authSection = document.getElementById('auth-section');
-        const userSection = document.getElementById('user-section');
-        const userNameElement = document.getElementById('user-name');
+        // Получение элементов DOM
+        const authButtonsContainer = document.getElementById('auth-buttons-container');
+        const profileContainer = document.getElementById('profile-container');
+        const profilePicElement = document.getElementById('profile-pic');
         const messagesContainer = document.getElementById('messages-container');
         const userMessageInput = document.getElementById('user-message-input');
         const sendMessageBtn = document.getElementById('send-message-btn');
         const googleSignInBtn = document.getElementById('google-signin-btn');
         const signOutBtn = document.getElementById('signout-btn');
         const aiSelector = document.getElementById('ai-selector');
+        const aiChatContainer = document.getElementById('ai-chat');
+        const aiSelectionWrapper = document.getElementById('ai-selection-wrapper');
+        const chatInputWrapper = document.getElementById('chat-input-wrapper');
         
-        // Обработчик входа через Google.
+        // Обработчик входа через Google
         googleSignInBtn.addEventListener('click', () => {
             auth.signInWithPopup(googleProvider)
                 .then((result) => {
@@ -295,10 +304,11 @@
                 })
                 .catch((error) => {
                     console.error('Ошибка входа:', error.message);
+                    addMessageToChat('Ошибка входа: пожалуйста, проверьте настройки Firebase и API-ключи.', 'ai');
                 });
         });
 
-        // Обработчик выхода.
+        // Обработчик выхода
         signOutBtn.addEventListener('click', () => {
             auth.signOut().then(() => {
                 console.log('Пользователь вышел');
@@ -307,21 +317,30 @@
             });
         });
 
-        // Отслеживание состояния аутентификации.
+        // Отслеживание состояния аутентификации
         auth.onAuthStateChanged((user) => {
             if (user) {
-                // Пользователь вошел.
-                authSection.classList.add('hidden');
-                userSection.classList.remove('hidden');
-                userNameElement.textContent = user.displayName || 'Пользователь';
+                // Пользователь вошел. Показываем чат и скрываем кнопки входа.
+                authButtonsContainer.classList.add('hidden');
+                profileContainer.classList.remove('hidden');
+                aiSelectionWrapper.classList.remove('hidden');
+                aiChatContainer.classList.remove('hidden');
+                chatInputWrapper.classList.remove('hidden');
+
+                if (user.photoURL) {
+                    profilePicElement.src = user.photoURL;
+                }
             } else {
-                // Пользователь вышел.
-                authSection.classList.remove('hidden');
-                userSection.classList.add('hidden');
+                // Пользователь вышел. Скрываем чат и показываем кнопки входа.
+                authButtonsContainer.classList.remove('hidden');
+                profileContainer.classList.add('hidden');
+                aiSelectionWrapper.classList.add('hidden');
+                aiChatContainer.classList.add('hidden');
+                chatInputWrapper.classList.add('hidden');
             }
         });
 
-        // Функция для добавления сообщения в чат.
+        // Функция для добавления сообщения в чат
         function addMessageToChat(text, sender) {
             const messageDiv = document.createElement('div');
             messageDiv.textContent = text;
@@ -335,7 +354,44 @@
             messagesContainer.scrollTop = messagesContainer.scrollHeight;
         }
 
-        // Обработчик отправки сообщения.
+        // Функция для отправки сообщения в Gemini AI
+        async function sendMessageToGemini(message) {
+            // URL для API Gemini
+            const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-05-20:generateContent?key=${geminiApiKey}`;
+            
+            const payload = {
+                contents: [{ parts: [{ text: message }] }]
+            };
+
+            try {
+                const response = await fetch(apiUrl, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(payload)
+                });
+
+                if (!response.ok) {
+                    throw new Error(`API request failed with status: ${response.status}`);
+                }
+
+                const result = await response.json();
+                const aiText = result.candidates[0].content.parts[0].text;
+                addMessageToChat(aiText, 'ai');
+
+            } catch (error) {
+                console.error('Error calling Gemini API:', error);
+                addMessageToChat('Извини, произошла ошибка при получении ответа от нейросети.', 'ai');
+            } finally {
+                // Снимаем блокировку кнопки после ответа
+                sendMessageBtn.disabled = false;
+                sendMessageBtn.classList.remove('send-loading');
+                sendMessageBtn.textContent = 'Отправить';
+            }
+        }
+
+        // Обработчик отправки сообщения
         sendMessageBtn.addEventListener('click', () => {
             const message = userMessageInput.value.trim();
             const selectedAi = aiSelector.value;
@@ -343,23 +399,30 @@
                 addMessageToChat(message, 'user');
                 userMessageInput.value = '';
                 
-                // Имитация ответа от выбранной нейросети.
-                let response = '';
-                if (selectedAi === 'asonik') {
-                    response = "Привет! Я - твоя бесплатная нейросеть Asonik. Пока я умею только имитировать ответы, но скоро мы добавим сюда реальные модели!";
-                } else if (selectedAi === 'gemini') {
-                    response = "Привет! Я - Gemini AI, платная нейросеть. Мои возможности значительно шире, чем у бесплатной версии!";
-                }
+                // Блокируем кнопку, пока ждем ответа
+                sendMessageBtn.disabled = true;
+                sendMessageBtn.classList.add('send-loading');
+                sendMessageBtn.textContent = 'Отправка...';
 
-                setTimeout(() => {
-                    addMessageToChat(response, 'ai');
-                }, 1000);
+                // Отправляем сообщение в зависимости от выбранной модели
+                if (selectedAi === 'gemini') {
+                    sendMessageToGemini(message);
+                } else if (selectedAi === 'asonik') {
+                    // Имитация ответа от "Asonik AI"
+                    setTimeout(() => {
+                        addMessageToChat("Привет! Я - твоя бесплатная нейросеть Asonik. Пока я умею только имитировать ответы, но скоро мы добавим сюда реальные модели!", 'ai');
+                        // Снимаем блокировку после имитации
+                        sendMessageBtn.disabled = false;
+                        sendMessageBtn.classList.remove('send-loading');
+                        sendMessageBtn.textContent = 'Отправить';
+                    }, 1500);
+                }
             }
         });
         
-        // Отправка по нажатию Enter.
+        // Отправка по нажатию Enter
         userMessageInput.addEventListener('keydown', (event) => {
-            if (event.key === 'Enter') {
+            if (event.key === 'Enter' && !sendMessageBtn.disabled) {
                 sendMessageBtn.click();
             }
         });
