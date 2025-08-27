@@ -5,149 +5,242 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Asonik AI</title>
     <style>
+        /* General body and container styles for a cosmic theme */
         body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
-            background-color: #f4f7f6;
-            color: #333;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            background: linear-gradient(135deg, #1f0c3d, #000000);
+            color: #e0e0e0;
             margin: 0;
             padding: 0;
             display: flex;
             flex-direction: column;
             min-height: 100vh;
-        }
-        header {
-            background-color: #007bff;
-            color: white;
-            padding: 20px;
-            text-align: center;
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-        }
-        main {
-            flex: 1;
-            display: flex;
             justify-content: center;
             align-items: center;
-            padding: 20px;
         }
-        .section {
-            background-color: white;
+
+        /* Main application container */
+        .app-container {
+            background-color: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
             padding: 40px;
-            border-radius: 10px;
-            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
-            text-align: center;
-            max-width: 500px;
+            max-width: 600px;
             width: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+            margin: 20px;
         }
+        
+        /* Hidden class for dynamic content display */
         .hidden {
             display: none;
         }
-        .auth-btn {
-            padding: 12px 24px;
-            margin: 10px 0;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
-            font-size: 16px;
-            width: 100%;
-            transition: background-color 0.3s ease;
+        
+        /* Logo/Header styling */
+        .logo {
+            font-size: 3rem;
+            font-weight: 700;
+            color: #fff;
+            margin-bottom: 20px;
+            text-shadow: 0 0 10px rgba(0, 123, 255, 0.7);
+        }
+
+        /* Auth button styling */
+        .auth-btn-container {
             display: flex;
-            justify-content: center;
-            align-items: center;
+            flex-direction: column;
+            width: 100%;
+            gap: 15px;
+            margin-top: 20px;
         }
+
+        .auth-btn {
+            padding: 15px 30px;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            font-size: 1rem;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+        }
+
         .auth-btn:hover {
-            filter: brightness(0.95);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
         }
+
         .google-btn {
             background-color: #4285F4;
             color: white;
         }
+        
         .apple-btn {
             background-color: #000;
             color: white;
         }
+
+        /* Chat interface styling */
         #user-section {
-            text-align: left;
-        }
-        #user-display-name {
-            text-align: center;
-        }
-        #ai-chat {
-            border: 1px solid #ddd;
-            border-radius: 8px;
-            padding: 10px;
-            margin-top: 20px;
-            min-height: 200px;
+            width: 100%;
             display: flex;
             flex-direction: column;
-            justify-content: flex-end;
+            align-items: center;
         }
+
+        #user-display-name {
+            font-size: 1.5rem;
+            color: #fff;
+            margin-bottom: 20px;
+        }
+
+        .ai-selection-container {
+            width: 100%;
+            margin-bottom: 15px;
+            text-align: left;
+        }
+
+        #ai-selector {
+            width: 100%;
+            padding: 10px;
+            border-radius: 8px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            background-color: rgba(255, 255, 255, 0.1);
+            color: #e0e0e0;
+            -webkit-appearance: none;
+            -moz-appearance: none;
+            appearance: none;
+            cursor: pointer;
+        }
+
+        #ai-chat {
+            width: 100%;
+            height: 400px;
+            display: flex;
+            flex-direction: column;
+            border-radius: 10px;
+            overflow: hidden;
+            background-color: rgba(0, 0, 0, 0.2);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
         #messages-container {
+            flex-grow: 1;
+            padding: 15px;
+            overflow-y: auto;
             display: flex;
             flex-direction: column;
             gap: 10px;
-            padding-bottom: 10px;
-            overflow-y: auto;
-            max-height: 300px;
         }
+        
         .message {
-            padding: 8px 12px;
-            border-radius: 10px;
-            max-width: 80%;
+            padding: 12px 18px;
+            border-radius: 18px;
+            max-width: 85%;
+            word-wrap: break-word;
         }
+
         .user-message {
-            background-color: #d1e7dd;
+            background-color: #007bff;
             align-self: flex-end;
+            color: white;
+            border-bottom-right-radius: 4px;
         }
+
         .ai-message {
-            background-color: #f1f1f1;
+            background-color: #2c2f33;
             align-self: flex-start;
+            color: #e0e0e0;
+            border-bottom-left-radius: 4px;
         }
+
         .chat-input-wrapper {
             display: flex;
-            margin-top: 10px;
-            border-top: 1px solid #eee;
-            padding-top: 10px;
+            padding: 15px;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            background-color: rgba(0, 0, 0, 0.2);
+            gap: 10px;
         }
+
         #user-message-input {
-            flex: 1;
-            padding: 10px;
-            border: 1px solid #ddd;
-            border-radius: 5px;
-            font-size: 14px;
+            flex-grow: 1;
+            padding: 12px;
+            border: 1px solid #444;
+            border-radius: 8px;
+            background-color: #1a1a1a;
+            color: white;
+            font-size: 1rem;
         }
+
         #send-message-btn {
-            background-color: #28a745;
+            padding: 12px 20px;
+            background-color: #00bfff;
             color: white;
             border: none;
-            padding: 10px 15px;
-            border-radius: 5px;
+            border-radius: 8px;
             cursor: pointer;
-            margin-left: 10px;
+            font-weight: 600;
+            transition: background-color 0.3s ease;
         }
+
+        #send-message-btn:hover {
+            background-color: #0099e6;
+        }
+        
+        /* Sign-out button */
+        #signout-btn {
+            background-color: #dc3545;
+            color: white;
+            margin-top: 20px;
+            width: auto;
+            padding: 12px 20px;
+            border-radius: 8px;
+        }
+
+        #signout-btn:hover {
+            background-color: #c82333;
+        }
+
+        /* Footer styling */
         footer {
+            margin-top: 20px;
+            padding: 10px;
             text-align: center;
-            padding: 20px;
-            color: #666;
-            font-size: 14px;
+            color: #888;
+            font-size: 0.8rem;
         }
     </style>
 </head>
 <body>
 
-    <header>
-        <h1>Asonik AI</h1>
-    </header>
+    <div class="app-container">
+        
+        <h1 class="logo">Asonik AI</h1>
 
-    <main id="main-content">
-        <section id="auth-section" class="section">
-            <h2>Добро пожаловать в мир нейросетей!</h2>
-            <p>Войдите, чтобы получить доступ к эксклюзивным нейросетям.</p>
-            <button id="google-signin-btn" class="auth-btn google-btn">Войти через Google</button>
-            <button id="apple-signin-btn" class="auth-btn apple-btn">Войти через Apple</button>
-        </section>
+        <div id="auth-section" class="auth-btn-container">
+            <button id="google-signin-btn" class="auth-btn google-btn">
+                Войти через Google
+            </button>
+            <button id="apple-signin-btn" class="auth-btn apple-btn">
+                Войти через Apple
+            </button>
+        </div>
 
-        <section id="user-section" class="section hidden">
+        <div id="user-section" class="hidden" style="width: 100%;">
             <h2 id="user-display-name">Привет, <span id="user-name"></span>!</h2>
+            
+            <div class="ai-selection-container">
+                <select id="ai-selector">
+                    <option value="asonik">Asonik AI (бесплатно)</option>
+                    <option value="gemini">Gemini AI (платно)</option>
+                </select>
+            </div>
+
             <div id="ai-chat">
                 <div id="messages-container"></div>
                 <div class="chat-input-wrapper">
@@ -156,14 +249,14 @@
                 </div>
             </div>
             <button id="signout-btn" class="auth-btn">Выйти</button>
-        </section>
-    </main>
+        </div>
+    </div>
 
     <footer>
         <p>&copy; 2024 Asonik AI. Все права защищены.</p>
     </footer>
 
-    <!-- Firebase SDK -->
+    <!-- Firebase SDKs -->
     <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
     
@@ -192,6 +285,7 @@
         const sendMessageBtn = document.getElementById('send-message-btn');
         const googleSignInBtn = document.getElementById('google-signin-btn');
         const signOutBtn = document.getElementById('signout-btn');
+        const aiSelector = document.getElementById('ai-selector');
         
         // Обработчик входа через Google.
         googleSignInBtn.addEventListener('click', () => {
@@ -244,14 +338,21 @@
         // Обработчик отправки сообщения.
         sendMessageBtn.addEventListener('click', () => {
             const message = userMessageInput.value.trim();
+            const selectedAi = aiSelector.value;
             if (message) {
                 addMessageToChat(message, 'user');
                 userMessageInput.value = '';
                 
-                // Имитация ответа от нейросети.
-                // Здесь будет место для реальной интеграции с нейросетью.
+                // Имитация ответа от выбранной нейросети.
+                let response = '';
+                if (selectedAi === 'asonik') {
+                    response = "Привет! Я - твоя бесплатная нейросеть Asonik. Пока я умею только имитировать ответы, но скоро мы добавим сюда реальные модели!";
+                } else if (selectedAi === 'gemini') {
+                    response = "Привет! Я - Gemini AI, платная нейросеть. Мои возможности значительно шире, чем у бесплатной версии!";
+                }
+
                 setTimeout(() => {
-                    addMessageToChat("Привет! Я - твоя бесплатная нейросеть Asonik. Пока я умею только имитировать ответы, но скоро мы добавим сюда реальные модели!", 'ai');
+                    addMessageToChat(response, 'ai');
                 }, 1000);
             }
         });
